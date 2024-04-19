@@ -1,0 +1,169 @@
+﻿@page "/participant-report"
+@using PB.Shared.Enum.Court;
+@using PB.Shared.Models.Spin;
+
+
+<PageLayoutNew>
+
+    <div class="main-container container-fluid">
+        <div class="row page-header ">
+            <div class="row mt-4">
+                <div class="col-md-12">
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Report</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="row" style="padding:15px">
+                                    <div class="col-12 col-md-6">
+                                        <label>Contest:</label>
+                                        <div class="form-group">
+                                            <select id="lead-quality-select" class="form-control form-select" @onchange="OnContestChange">
+                                                <option value="0" selected> Choose </option>
+                                                @foreach (var contest in ContestList)
+                                                {
+                                                    <option value="@contest.ID">@contest.Value</option>
+                                                }
+
+                                            </select>
+
+
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label>Status:</label>
+                                        <div class="form-group">
+                                            <select id="lead-quality-select" class="form-control form-select" @onchange="OnStatusChange">
+                                                @foreach (var item in Enum.GetValues(typeof(ContestParticipantStatus)))
+                                                {
+                                                    <option value="@((int)item)">
+                                                        @switch((int)item)
+                                                        {
+                                                            case (int)ContestParticipantStatus.GiftSend:
+                                                                @("Gift send")
+                                                                break;
+                                                            case (int)ContestParticipantStatus.GiftNotSend:
+                                                                @("Gift not send")
+                                                                break;
+                                                            default:
+                                                                @item.ToString()
+                                                                break;
+                                                        }
+                                                    </option>
+                                                }
+                                            </select>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @if (ViewModel.Count > 0)
+                            {
+                                <div class="row">
+                                    <div class="col-12 mt-5">
+                                        <div class="table-responsive">
+                                            <table class="table border  text-nowrap text-md-nowrap table-hover mb-0"
+                                               id="dataTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Name</th>
+                                                        <th>Phone</th>
+                                                        <th>Contest Name</th>
+                                                        <th>Gift</th>
+                                                        <th>Sent Status</th>
+                                                        <th>Sent On</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var item in ViewModel)
+                                                    {
+                                                        <tr>
+                                                            <td>@item.Name</td>
+                                                            <td>@item.Phone</td>
+                                                            <td>@item.ContestName</td>
+                                                            <td>@item.GiftName</td>
+                                                            <td>
+                                                                @if (item.IsSent == true)
+                                                                {
+                                                                    <span class="badge bg-success">Send</span>
+                                                                }
+                                                                else if(item.IsSent==false && item.GiftId!=null)
+                                                                {
+                                                                    <input type="checkbox" name="example-checkbox1" value="" checked="@(item.IsSent?"checked":null)" @onchange="eventArgs => { CheckboxClicked(item.ContactID.Value, eventArgs.Value); }">
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                @if (item.IsSent == true)
+                                                                {
+                                                                    <span>@item.SentOn.Value.ToString("dd/MM/yyyy")</span>
+                                                                }
+                                                            </td>
+
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+@code {
+    private List<IdnValuePair> ContestList = new();
+    private List<ContestReportViewModel> ViewModel = new();
+    private ContestGiftSendModel SendModel = new();
+    private ReportIDSentModel IDModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ContestList = await API.GetAsync<List<IdnValuePair>>($"spin/get-contest-list");
+    }
+
+    private async Task LoadData()
+    {
+        ViewModel = await API.PostAsync<List<ContestReportViewModel>, ReportIDSentModel>($"spin/get-contest-report-list", IDModel);
+    }
+
+    private async Task OnContestChange(ChangeEventArgs e)
+    {
+        IDModel.ContestID = Convert.ToInt32(e.Value);
+        await LoadData();
+    }
+
+    private async Task OnStatusChange(ChangeEventArgs e)
+    {
+        IDModel.StatusID = Convert.ToInt32(e.Value);
+        await LoadData();
+    }
+
+    private async Task CheckboxClicked(int id, object checkedValue)
+    {
+        if ((bool)checkedValue)
+            SendModel.IsSent = true;
+        else
+            SendModel.IsSent = false;
+        SendModel.ContactID = id;
+        var response = await API.PostAsync<int, ContestGiftSendModel>("spin/update-gift-send", SendModel);
+        if (response!=0)
+        {
+            await JS.ShowLoading();
+            await LoadData();
+            StateHasChanged();
+            await JS.HideLoading();
+        }
+    }
+}

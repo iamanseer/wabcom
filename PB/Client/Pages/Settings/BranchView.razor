@@ -1,0 +1,211 @@
+﻿@page "/branch-view/{BranchId:int}"
+@using PB.CRM.Model;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row">
+            <ListPageMenuLayout MenuCategories="listPageMenuCategories"
+                                MenuItems="menuItem"
+                                SinglePageURL="branch"
+                                SelectedMenuID="BranchData.BranchID"
+                                OnMenuItemSelect="LoadBranchData"
+                                OnMenuCategorySelect="OnMenuCategorySelectCallbackRecieved" />
+
+
+            <div class="itemlist-container">
+
+                <div class="page-header">
+                    <h1 class="page-title">@("Branch : " + BranchData.BranchName)</h1>
+                    <div class="btn-toolbar float-right mr-7">
+
+                        <a class="btn btn-white btn-md me-2" @onclick="NavigateToSinglePage">
+                            <i class="fa fa-pencil" style="color:var(--primary-bg-color)"></i>
+                        </a>
+                        <a class="btn btn-white btn-md me-2" @onclick="async () => await DeleteItem()">
+                            <i class="fa fa-trash" style="color:red"></i>
+                        </a>
+
+                        <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"branches"))">
+                            <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="panel panel-primary">
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <li><a href="#tab5" class="active" data-bs-toggle="tab">Overview</a></li>
+
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="tab5">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">Mobile</label>
+                                                                    <label class="col-7 col-auto">@BranchData.Phone</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Email </label>
+                                                                    <label class="col-md-7 col-auto ">@BranchData.EmailAddress</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Contact Person </label>
+                                                                    <label class="col-md-7 col-auto ">@BranchData.ContactPerson</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Contact Person's Email' </label>
+                                                                    <label class="col-md-7 col-auto ">@BranchData.ContactEmail</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Contact Person's Mobile' </label>
+                                                                    <label class="col-md-7 col-auto ">@BranchData.ContactPersonMobile</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Address Line 1 </label>
+                                                                    <label class="col-md-7 col-auto ">@BranchData.AddressLine1</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Address Line 2 </label>
+                                                                    <label class="col-md-7 col-auto ">@BranchData.AddressLine2</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">City </label>
+                                                                    <label class="col-md-7 col-auto ">@BranchData.City</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Pincode </label>
+                                                                    <label class="col-md-7 col-auto ">@BranchData.Pincode</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">State </label>
+                                                                    <label class="col-md-7 col-auto ">@BranchData.StateName</label>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Country </label>
+                                                                    <label class="col-md-7 col-auto ">@BranchData.CountryName</label>
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+    [Parameter] public int BranchId { get; set; }
+    private List<PB.Model.Models.ViewPageMenuModel> menuItem = new();
+
+
+    #region stage 2
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SwitchToStage2(BranchId);
+    }
+
+    private BranchModel BranchData = new();
+
+    private async Task SwitchToStage2(int branchID)
+    {
+        await LoadBranchMenuList();
+        await LoadBranchData(branchID);
+    }
+
+    private async Task LoadBranchMenuList()
+    {
+        menuItem = await API.GetAsync<List<PB.Model.Models.ViewPageMenuModel>>("branch/get-branch-menu-list");
+    }
+
+    private async Task LoadBranchData(int? branchID)
+    {
+        BranchData = await API.GetAsync<BranchModel>($"branch/get-branch-details/{branchID}");
+    }
+
+    private void NavigateToSinglePage()
+    {
+        Nav.NavigateTo($"branch/{BranchData.BranchID}");
+    }
+
+    private async Task DeleteItem()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete the '" + BranchData.BranchName + "' branch.?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            if (await API.GetAsync<bool>($"branch/delete-branch/{BranchData.BranchID}"))
+            {
+                Nav.NavigateTo("branches");
+            }
+        }
+    }
+
+    private List<string> listPageMenuCategories = new()
+    {
+        "All",
+        "Hot",
+        "Warm",
+        "Cold"
+
+    };
+
+    private void OnMenuCategorySelectCallbackRecieved(int index)
+    {
+        //Menu Category Selected
+    }
+
+    #endregion
+}

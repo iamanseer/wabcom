@@ -1,0 +1,40 @@
+﻿
+
+@if (Data == null)
+{
+	<center class="mt-4">
+		<div class="spinner-border" role="status">
+			<span class="sr-only">Loading...</span>
+		</div>
+	</center>
+}
+else
+{
+	@foreach (var item in Data)
+	{
+		<a class="dropdown-item d-flex @item.Active">
+            <div class="me-3 notifyimg bg-pink brround box-shadow-pink">
+				<i class="fe @item.Icon"></i>
+            </div>
+            <div class="mt-1 wd-80p">
+				@if (CultureInfo.CurrentCulture.ToString() == PDV.Language2)
+				{
+
+					<h5 class="notification-label mb-1">@item.Title2</h5>
+					<span class="notification-subtext">@item.NotificationText2</span>
+				}
+				else
+				{
+
+					<h5 class="notification-label mb-1">@item.Title</h5>
+					<span class="notification-subtext">@item.NotificationText</span>
+				}
+            </div>
+        </a>
+	}
+}
+
+
+@code {
+	[Parameter] public List<ViNotificationCustom> Data { get; set; }
+}

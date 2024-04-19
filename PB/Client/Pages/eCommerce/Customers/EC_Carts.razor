@@ -1,0 +1,141 @@
+﻿@page "/ec_carts"
+@using PB.Shared.Models.Common
+@using PB.Shared.Models.eCommerce.Cart
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    @if (IsHeaderReady)
+                    {
+                        <ListPageHeader Settings="CartHeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" />
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Sl No.
+                                        </th>
+                                        <th>
+                                            Name
+                                        </th>
+                                        <th>
+                                            Item Name
+                                        </th>
+                                        <th>
+                                            Added On
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in CartPagedList.Data.Select((value, i) => new { i, value }))
+                                    {
+                                        var entry = item.value;
+                                        var index = item.i;
+                                        <tr>
+
+                                            <td>
+                                                @if (CartPagedList.PageIndex == 1)
+                                                {
+                                                    @(index + 1)
+                                                }
+                                                else
+                                                {
+                                                    @((CartPagedList.PageIndex * CartPagedList.PageSize) + (index + 1) - 10)
+                                                }
+                                            </td>
+                                            <td>
+                                                @entry.Name
+                                            </td>
+                                            <td>
+                                                @entry.ItemName
+                                            </td>
+                                            <td>
+                                                @(((entry.AddedOn.Value != null ? entry.AddedOn.Value.ToString("dd/MM/yyyy") : "--/--/--")))
+                                            </td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <PaginationCustom PageSize="CartPagedList.PageSize" TotalCount="CartPagedList.TotalCount" TotalPages="CartPagedList.TotalPages" PageIndex="CartPagedList.PageIndex" LoadPageIndex="PageIndex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+    private PagedList<EC_CartListModel> CartPagedList = new();
+    private PagedListPostModelWithFilter searchmodel = new();
+    HeaderSettingsModel CartHeaderSettings = new();
+    private bool IsHeaderReady = false;
+    protected override async Task OnInitializedAsync()
+    {
+
+        List<FilterDateInputModel> DateFilterList = new()
+        {
+            new()
+            {
+                FieldName = "AddedOn",
+                DisplayName = "Date"
+            }
+        };
+        List<FilterIdnValueInputModel> FilterInputItems = new()
+        {
+            new()
+            {
+                DisplayName = "Item Name",
+                FiledName = "W.ItemVariantID",
+                CustomOptionApiPath = "ec_common/get-list-of-ec-item-varients"
+            }
+        };
+        List<FilterSortInputModel> SortMenuItems = new()
+        {
+            new()
+            {
+                DisplayName = "Customer Name",
+                FieldName = "FirstName"
+            },
+            new()
+            {
+                DisplayName = "Item Name",
+                FieldName = "ItemName"
+            },
+        };
+        CartHeaderSettings = new()
+            {
+                Heading = "Carts",
+                SearchPlaceHolder = "Search by item name..",
+                NeedAddButton = false,
+                NeedFilterOption = true,
+                DateFilters = DateFilterList,
+                //IdnValueFilters = FilterInputItems,
+                NeedSortOption = true,
+                SortMenuItems = SortMenuItems,
+            };
+        IsHeaderReady = true;
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        CartPagedList = await API.PostAsync<PagedList<EC_CartListModel>, PagedListPostModelWithFilter>("ec_customer/get-cart-paged-list", searchmodel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        searchmodel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        searchmodel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+}

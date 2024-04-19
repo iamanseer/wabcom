@@ -1,0 +1,117 @@
+﻿@page "/customer-ledger-report/{LedgerID:int}"
+
+@using PB.Shared.Enum.Accounts;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Court;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header">
+                    <div class="w-100 d-flex align-items-center  justify-content-between">
+                        <h5 style="margin-bottom: 0 !important;">Customer Ledger Report</h5>
+                    </div>
+                    <div class="d-flex flex-row justify-content-end">
+                        <button class="btn btn-white btn-md btn-outline-dark ms-2 filter-button" id="btnFilter" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasExample">
+                            <i class="fa fa-sort me-1"></i> Filter
+                        </button>
+
+                        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+
+                            <div class="offcanvas-header border-bottom">
+                                <h4 id="offcanvasRightLabel " class="mb-0">filters</h4>
+                                <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"><i class="fe fe-x fs-18"></i></button>
+                            </div>
+                            <div class="offcanvas-body p-0 h-100vh">
+                                <EditForm Model="Model" OnValidSubmit="LoadData">
+                                <div class="filter-item ">
+                                    <div class="card mb-1">
+                                        <div class="card-header p-3">
+                                            <div class="card-title text-muted">By Date</div>
+                                        </div>
+                                        <div class="card-body d-flex align-items-center gap-2 px-3 pt-1 pb-3 border-bottom bg-light">
+                                            <div class="form-group mb-0 w-100">
+                                                <label class="form-label">Start date</label>
+                                                <input class="form-control" placeholder="MM/DD/YYYY" type="date" @bind="@SearchModel.FromDate">
+                                            </div>
+                                            <div class="form-group mb-0 w-100">
+                                                <label class="form-label">End date</label>
+                                                <input class="form-control" placeholder="MM/DD/YYYY" type="date" @bind="@SearchModel.ToDate">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <DataAnnotationsValidator/>
+                                    <ValidationSummary/>
+                                </div>
+                                <div class="filter-footer border-top bg-light">
+                                    <div class="d-flex gap-2 px-2 py-4">
+                                        <button type="button" class="btn btn-success " @onclick="LoadData"> Apply </button>
+                                        <button type="button" class="btn btn-default" @onclick="async () => await CloseFilter()"> Cancel</button>
+                                    </div>
+                                </div>
+                                </EditForm>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Voucher No</th>
+                                <th>Particulars</th>
+                                <th>Debit</th>
+                                <th>Credit</th>
+                                <th>Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.Date.ToString("dd/MM/yyyy")</td>
+                                    <td>@item.JournalNo</td>
+                                    <td>@item.Particulars</td>
+                                    <td class="text-end">@item.Debit</td>
+                                    <td class="text-end">@item.Credit</td>
+                                    <td class="text-end">@item.Balance</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+@code {
+
+    [Parameter] public int LedgerID { get; set; }
+
+    private List<GeneralLedgerReportResultModel> Model = new();
+    private GeneralLedgerReportSearchModel SearchModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        SearchModel.LedgerID = LedgerID;
+        SearchModel.FromDate = DateTime.Now.AddMonths(-1).Date;
+        SearchModel.ToDate = DateTime.Now.Date;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        Model = await API.PostAsync<List<GeneralLedgerReportResultModel>, GeneralLedgerReportSearchModel>("accounts/get-general-ledger-report", SearchModel);
+    }
+
+    private async Task CloseFilter()
+    {
+        await JS.InvokeVoidAsync("HideFilter", "offcanvasRight");
+    }
+}

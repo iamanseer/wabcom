@@ -1,0 +1,412 @@
+﻿@page "/client-view/{ClientID:int}"
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row">
+            <ListPageMenuLayout MenuItems="menuItem"
+                                OnMenuItemSelect="LoadViewData"
+                                SelectedMenuID="ClientData.ClientID.Value"
+                                IsNeedAddNewButton=false />
+            <div class="itemlist-container">
+                <div class="page-header">
+                    <h1 class="page-title">@ClientData.Name</h1>
+                    <div class="btn-toolbar float-right mr-7">
+                        @* @if (ClientData.PaymentStatus == (int)PaymentStatus.Paid)
+                        {
+                        <a class="btn btn-white btn-md me-2" @onclick="async ()=> await ActiveAccount(ClientData.ClientID.Value)">
+                        Verify
+                        </a>
+                        }*@
+
+                        <a class="btn btn-success btn-md me-2" @onclick="OpenTaxCategoryModal">
+                            Generate Tax Categories
+                        </a>
+
+                        @if (ClientData.IsBlock)
+                        {
+                            <a class="btn btn-success btn-md me-2" @onclick="async ()=> await UnBlockClient(ClientData.ClientID.Value)">
+                                UnBlock
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-danger btn-md me-2" @onclick="async ()=> await BlockClient(ClientData.ClientID.Value)">
+                                Block
+                            </a>
+                        }
+
+                        <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"clients"))">
+                            <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <!--Switching Tabs-->
+                                <div class="panel panel-primary">
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <li><a href="#customerPageOverView" class="active" data-bs-toggle="tab">Details</a></li>
+                                                <li><a href="#customerinvoiceOverView" data-bs-toggle="tab">Invoice Details</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="customerPageOverView">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-10 col-12">
+                                                            <div class="group pb-3">
+
+                                                                <div class="row">
+                                                                    <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">
+                                                                        Basic Details
+                                                                    </label>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">Client Name</label>
+
+                                                                    <label class="col-7 col-auto">@ClientData.Name</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Mobile </label>
+                                                                    <label class="col-md-7 col-auto ">@ClientData.Phone</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class=" text-muted items-label col-md-5 col-auto">Email</label>
+                                                                    <label class="col-md-7 col-auto">@ClientData.EmailAddress</label>
+                                                                </div>
+                                                                @if (ClientData.PlanList != null)
+                                                                {
+                                                                    <div class="divider my-2"> </div>
+                                                                    <div class="row">
+                                                                        <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">
+                                                                            Plan Details
+                                                                        </label>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <label class=" text-muted items-label col-md-5 col-auto">Package</label>
+                                                                        <label class="col-md-7 col-auto">@ClientData.PlanList.PackageName</label>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <label class=" text-muted items-label col-md-5 col-auto">Features</label>
+                                                                        <label class="col-md-7 col-auto">@ClientData.PlanList.FeaturesName</label>
+                                                                    </div>
+                                                                    <div class="row">
+                                                                        <label class=" text-muted items-label col-md-5 col-auto">Plan</label>
+                                                                        <label class="col-md-7 col-auto">@ClientData.PlanList.PlanName</label>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <label class=" text-muted items-label col-md-5 col-auto">User Capacity</label>
+                                                                        <label class="col-md-7 col-auto">@ClientData.PlanList.Capacity</label>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <label class=" text-muted items-label col-md-5 col-auto">Amount</label>
+                                                                        <label class="col-md-7 col-auto">@ClientData.PlanList.Fee</label>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <label class=" text-muted items-label col-md-5 col-auto">Month Count</label>
+                                                                        <label class="col-md-7 col-auto">@ClientData.PlanList.MonthCount</label>
+                                                                    </div>
+
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="tab-pane" id="customerinvoiceOverView">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-10 col-12">
+                                                            <div class="group pb-3">
+
+                                                                <div class="row">
+                                                                    <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">
+                                                                        Invoice Details
+                                                                    </label>
+                                                                </div>
+
+
+                                                                @if (ClientData.InvoiceData.Count > 0)
+                                                                {
+                                                                    <div class="row">
+                                                                        <div class="tab-pane" id="tab6">
+                                                                            <div class="row table-responsive">
+                                                                                <table class="table border  text-wrap text-nowrap table-bordered mb-1 ">
+                                                                                    <thead>
+                                                                                        <tr>
+                                                                                            <th>InvoiceNo</th>
+                                                                                            <th>Invoice Date</th>
+                                                                                            <th>Package</th>
+                                                                                            <th>Amount</th>
+                                                                                            <th>Disconnection Date</th>
+                                                                                            <th>Status</th>
+                                                                                        </tr>
+                                                                                    </thead>
+                                                                                    <tbody>
+                                                                                        @foreach (var enquiry in ClientData.InvoiceData)
+                                                                                        {
+                                                                                            <tr>
+                                                                                                <td style="min-width:80px">@enquiry.InvoiceNo</td>
+                                                                                                <td style="min-width:80px">
+                                                                                                    @if (enquiry.InvoiceDate != null)
+                                                                                                    {
+                                                                                                        @enquiry.InvoiceDate.Value.ToString("dd/MM/yyyy")
+                                                                                                    }
+                                                                                                </td>
+
+                                                                                                <td style="min-width:200px">
+                                                                                                    @enquiry.PackageName
+                                                                                                </td>
+                                                                                                <td style="min-width:200px">
+                                                                                                    @enquiry.Fee
+                                                                                                </td>
+
+
+                                                                                                <td style="min-width:80px">
+                                                                                                    @if (enquiry.DisconnectionDate != null)
+                                                                                                    {
+                                                                                                        @enquiry.DisconnectionDate.Value.ToString("dd/MM/yyyy")
+                                                                                                    }
+                                                                                                </td>
+                                                                                                @if (enquiry.PaidStatus == (int)PaymentStatus.Pending)
+                                                                                                {
+                                                                                                    <td><span class="badge bg-info">Pending</span></td>
+                                                                                                }
+                                                                                                else if (enquiry.PaidStatus == (int)PaymentStatus.Paid)
+                                                                                                {
+                                                                                                    <td><span class="badge bg-secondary">Verifying</span></td>
+                                                                                                }
+                                                                                                else if (enquiry.PaidStatus == (int)PaymentStatus.Verified)
+                                                                                                {
+                                                                                                    <td><span class="badge bg-success">Completed</span></td>
+                                                                                                }
+                                                                                                else if (enquiry.PaidStatus == (int)PaymentStatus.Rejected)
+                                                                                                {
+                                                                                                    <td><span class="badge bg-danger">Rejected</span></td>
+                                                                                                }
+                                                                                                else if (enquiry.PaidStatus == (int)PaymentStatus.CheckoutNotComplete)
+                                                                                                {
+                                                                                                    <td><span class="badge bg-dark">Registration Pending</span></td>
+                                                                                                }
+                                                                                                else
+                                                                                                {
+                                                                                                    <td><span class="badge bg-success">Approved</span></td>
+                                                                                                }
+
+                                                                                            </tr>
+                                                                                        }
+
+                                                                                    </tbody>
+                                                                                </table>
+                                                                            </div>
+
+                                                                        </div>
+
+                                                                    </div>
+                                                                }
+
+
+
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+
+
+
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+<div class="modal fade" id="modalreason">
+    <div class="modal-dialog modal-dialog-centered modal-md " role="document">
+        <div class="modal-content modal-content-demo">
+
+            <div class="modal-body">
+                <div class="row">
+
+                    <div class="col-md-12">
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">Reason</label>
+                                    <textarea name="" class="textarea form-control" id="enquiry-description-text-area" rows="3" @bind="Model.Value"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-primary w-20" @onclick="UpdateClientBlockDeails">Save</button>
+                    <button type="button" class="btn btn-danger" @onclick="CloseModal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalTaxCategory">
+    <div class="modal-dialog modal-dialog-centered modal-md " role="document">
+        <div class="modal-content modal-content-demo">
+            <EditForm Model="GenerateTaxCategory" OnValidSubmit="InsertTaxCategory">
+                <DataAnnotationsValidator/>
+                <div class="modal-body">
+                    <div class="row">
+
+                        <div class="col-md-12">
+
+                            <div class="row">
+                                <DropdownSelect DivClass="col-md-7"
+                                                DropdownID="CountryDropDown"
+                                                Label="Country :"
+                                                Mode="(int)DropdownModes.Country"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                ItemSelected="DropdownItemSelected"
+                                                IsRequired="true"
+                                                ReadDataOnSearch="true"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=GenerateTaxCategory.CountryID,Value=GenerateTaxCategory.CountryName})" />
+                            </div>
+                            <ValidationSummary/>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="submit" class="btn btn-primary w-20">Save</button>
+                        <button type="button" class="btn btn-danger" @onclick="CloseTaxCategoryModal">Cancel</button>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? ClientID { get; set; }
+    private ClientViewModel ClientData = new();
+    private List<ViewPageMenuModel> menuItem = new();
+    private PaymentVerificationViewModel modalModel = new();
+
+    #region Main Fnction
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadViewMenuList();
+        await LoadViewData(ClientID);
+    }
+    private async Task LoadViewMenuList()
+    {
+        menuItem = await API.GetAsync<List<ViewPageMenuModel>>("support/get-client-menu-list", true);
+    }
+
+    private async Task LoadViewData(int? clientId)
+    {
+        ClientData = await API.GetAsync<ClientViewModel>($"support/get-clients/{clientId}", true);
+    }
+    #endregion
+
+    #region Block Region
+    private IdnValuePair Model = new();
+    private async Task BlockClient(int ClientID)
+    {
+        Model.ID = ClientID;
+        await OpenModal();
+    }
+    private async Task UnBlockClient(int clientID)
+    {
+        var res = await API.GetAsync<BaseSuccessResponse>($"support/unblock-client/{clientID}");
+        if (res != null)
+        {
+            await LoadViewData(ClientID);
+            await CloseModal();
+        }
+    }
+
+    private async Task OpenModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "modalreason");
+    }
+    private async Task CloseModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "modalreason");
+    }
+
+    private async Task UpdateClientBlockDeails()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, IdnValuePair>("support/block-client", Model);
+        if (res != null)
+        {
+            await LoadViewData(ClientID);
+            await CloseModal();
+        }
+    }
+    #endregion
+
+    #region TaxCategory
+
+    GenerateDefaultTaxCategoryModel GenerateTaxCategory = new();
+
+    private async Task OpenTaxCategoryModal()
+    {
+        GenerateTaxCategory.ClientID = ClientID;
+        await JS.InvokeVoidAsync("ShowModal", "modalTaxCategory");
+    }
+
+    private async Task CloseTaxCategoryModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "modalTaxCategory");
+    }
+
+    void DropdownItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Country:
+                GenerateTaxCategory.CountryID = data.ID;
+                GenerateTaxCategory.CountryName = data.Value;
+                break;
+        }
+    }
+
+    async Task InsertTaxCategory()
+    {
+        var response = await API.PostAsync<BaseSuccessResponse, GenerateDefaultTaxCategoryModel>("accounts/generate-tax-categories", GenerateTaxCategory);
+        if (response != null)
+        {
+            await JS.SuccessMessage(response.ResponseTitle);
+        }
+    }
+
+    #endregion
+
+}

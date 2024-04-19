@@ -1,0 +1,406 @@
+﻿@page "/client-register"
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Models.Common;
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+
+                <div class="col-12">
+                    <div class="card" style="min-height:500px;">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Client Details</h5>
+                        </div>
+                        <div class="card-body">
+
+                            <div class="row">
+                                <InputTextBox Label="Company name" IsRequired="true" @bind-Value="Model.CompanyName" ValidationFor="() => Model.CompanyName" DivClass="col-md-7" />
+                            </div>
+
+                            <div class="row">
+                                <InputTextBox Label="Contact person name" IsRequired="true" @bind-Value="Model.Name" ValidationFor="() => Model.Name" DivClass="col-md-7" />
+                            </div>
+
+                            <div class="row">
+                                <InputTextBox Label="Email" IsRequired="true" @bind-Value="Model.EmailAddress" ValidationFor="() => Model.EmailAddress" DivClass="col-md-7" />
+                            </div>
+
+                            <div class="row position-relative pb-3">
+                                <DropdownSelect DivClass="col-md-7"
+                                                DropdownID="@CustomerCountryDropdownID"
+                                                Label="Country :"
+                                                Mode="(int)DropdownModes.Country"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                ItemSelected="ItemSelected"
+                                                IsRequired="true"
+                                                ReadDataOnSearch="true"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})" />
+                                <div class="validation-for-dropdown">
+                                    <ValidationMessage For="()=>Model.CountryID" />
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align:left;">
+                                            Phone :
+                                            <span style="color:red">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text" style="min-width:40px;">
+                                                @Model.ISDCode
+                                            </span>
+                                            <input type="text" class="form-control" @bind="Model.Phone" />
+                                        </div>
+                                        <ValidationMessage For="() => Model.Phone" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label">Password</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" placeholder="" name="" @bind="Model.Password">
+
+                                        </div>
+                                        <ValidationMessage For="() => Model.Password" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label">Confirm Password</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control" placeholder="" name="" @bind="Model.ConfirmPassword">
+
+                                        </div>
+                                        <ValidationMessage For="() => Model.ConfirmPassword" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row position-relative pb-3">
+                                <DropdownSelect DivClass="col-md-7"
+                                                DropdownID="@MembershipPackageDropdownID"
+                                                Label="Membersip Package :"
+                                                Mode="(int)DropdownModes.Package"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                ItemSelected="ItemSelected"
+                                                IsRequired="true"
+                                                ReadDataOnSearch="true"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.PackageID,Value=Model.PackageName})" />
+                                <div class="validation-for-dropdown">
+                                    <ValidationMessage For="()=>Model.PackageID" />
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7 px-4">
+                                    <label>
+                                        <input type="checkbox" @bind="Model.IsPaid" id="IsPaid" />
+                                        <span class="form-check-sign" for="IsPaid">IsPaid</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            @if (Model.IsPaid)
+                            {
+                                <div class="row">
+                                    <div class="col-md-7">
+                                        <div class="formg-group">
+                                            <label class="form-label mt-0 me-1" style="text-align:left;">
+                                                Reciept Voucher Type :
+                                                <span class="ms-1" style="color:red">*</span>
+                                            </label>
+                                            <select class="form-control form-select" id="address-type-select" @bind="Model.VoucherTypeID">
+                                                <option value="0" selected>choose</option>
+                                                @foreach (var voucherType in VoucherTypes)
+                                                {
+                                                    <option value="@(voucherType.ID)" selected>@voucherType.Value</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer-action d-flex">
+            <a class="btn  btn-lg btn-danger ms-auto" @onclick="async () => await Close()">Discard</a>
+            <button type="submit" class="btn  btn-lg btn-primary ms-2">Save</button>
+
+        </div>
+    </EditForm>
+</PageLayoutNew>
+
+
+<!--Capacity Modal-->
+<div class="modal fade" id="AddNewCapacityModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Add Capacity</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="AddNewCapacityModal" @onclick="(async() =>await HideCapacityModal())"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="Capacity" OnValidSubmit="SaveCapacity" autocomplete="off">
+                    <DataAnnotationsValidator />
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">Capacity :</label>
+                                <input type="text" class="form-control" label="Name" @bind="Capacity.Capacity" placeholder="Enter The Capacity">
+                                <ValidationMessage For="()=>Capacity.Capacity" />
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-primary" type="submit">Save</button>
+                                <button class="btn btn-primary" type="button" @onclick="@(async ()=>await CancelCapacity())">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Capacity Modal-->
+<!--Plan Modal-->
+<div class="modal fade" id="AddNewPlanModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Add Plan</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="AddNewPlanModal" @onclick="(async() =>await HidePlanModal())"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="Plan" OnValidSubmit="SavePlan" autocomplete="off">
+                    <DataAnnotationsValidator />
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">Plan Name :</label>
+                                <input type="text" class="form-control" label="Name" @bind="Plan.PlanName" placeholder="Plan Name">
+                                <ValidationMessage For="()=>Plan.PlanName" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">Month Count :</label>
+                                <input type="number" class="form-control" label="MonthCount" @bind="Plan.MonthCount" placeholder="Month Count">
+                                <ValidationMessage For="()=>Plan.MonthCount" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="form-group">
+                                <button class="btn btn-primary" type="submit">Save</button>
+                                <button class="btn btn-primary" type="button" @onclick="@(async ()=>await CancelPlan())">Cancel</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </EditForm>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ClientRegisterModel Model = new();
+    private List<IdnValuePair> VoucherTypes = new();
+    private string CustomerCountryDropdownID = "customer-country-drop-down-select";
+    private string FeatureDropdownSelect = "feature-drop-down-select";
+    private string MembershipPackageDropdownID = "membership-package-drop-down-select";
+
+    #region Main function
+    protected override async Task OnInitializedAsync()
+    {
+        VoucherTypes = await API.PostAsync<List<IdnValuePair>, CommonSearchModel>($"common/get-list-of-voucher-types", new CommonSearchModel() { ReadDataOnSearch = false });
+    }
+
+    private async Task CheckboxClicked(ChangeEventArgs e, IdnValuePair list)
+    {
+
+        if ((Convert.ToBoolean(e.Value)))
+        {
+            Model.feature.Add(list);
+        }
+        else
+        {
+            Model.feature.Remove(Model.feature.Where(f => f.ID == list.ID).First());
+        }
+    }
+
+
+
+    private async Task SaveAsync()
+    {
+        var result = await API.PostAsync<BaseSuccessResponse, ClientRegisterModel>("support/add-client", Model);
+        if (result != null)
+        {
+            Nav.NavigateTo("clients");
+        }
+    }
+
+    private async Task Close()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to leave this page?", SweetAlertMessageType.question, "Yes, Leave", "No , Stay"))
+        {
+            Nav.NavigateTo("clients");
+        }
+    }
+
+    #endregion
+
+    #region Dropdown
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Country:
+
+                Model.CountryID = data.ID;
+                Model.CountryName = data.Value;
+                if (Model.CountryID != null)
+                {
+                    var res = await API.GetAsync<StringModel>($"common/get-country-isd-code/{Model.CountryID}", true);
+                    if (res != null)
+                    {
+                        Model.ISDCode = res.Value;
+                    }
+                    else
+                    {
+                        Model.ISDCode = "";
+                    }
+
+                }
+                break;
+            case (int)DropdownModes.Package:
+                Model.PackageID = data.ID;
+                Model.PackageName = data.Value;
+                break;
+
+            case (int)DropdownModes.Capacity:
+                Model.CapacityID = data.ID;
+                Model.Capacity = Convert.ToInt32(data.Value);
+                break;
+
+            case (int)DropdownModes.Plan:
+                Model.PlanID = data.ID;
+                Model.PlanName = data.Value;
+                break;
+
+            case (int)DropdownModes.TaxCategory:
+                Model.TaxCategoryID = data.ID;
+                Model.TaxCategoryName = data.Value;
+                break;
+        }
+    }
+    private async Task AddNewItem(int mode)
+    {
+        switch (mode)
+        {
+            case (int)DropdownModes.Plan:
+                await ShowPlanModal();
+                break;
+
+            case (int)DropdownModes.Capacity:
+                await ShowCapacitytModal();
+                break;
+
+        }
+    }
+    #endregion
+
+
+    #region Add Capacity Modal
+    private MembershipUserCapacityModel Capacity = new();
+
+    private async Task ShowCapacitytModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "AddNewCapacityModal");
+    }
+
+    private async Task HideCapacityModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "AddNewCapacityModal");
+    }
+
+    private async Task SaveCapacity()
+    {
+
+        var result = await API.PostAsync<UserCapacityAddResultModel, MembershipUserCapacityModel>("support/save-capacity", Capacity);
+        if (result != null)
+        {
+            Model.CapacityID = result.CapacityID;
+            Model.Capacity = result.Capacity;
+            Capacity = new MembershipUserCapacityModel();
+            await Task.Delay(100);
+            await HideCapacityModal();
+        }
+
+    }
+
+    private async Task CancelCapacity()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            Capacity = new();
+            await HideCapacityModal();
+
+        }
+    }
+    #endregion
+
+    #region Add Plan Modal
+    private MembershipPlanModel Plan = new();
+    private async Task ShowPlanModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "AddNewPlanModal");
+    }
+
+    private async Task HidePlanModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "AddNewPlanModal");
+    }
+    private async Task SavePlan()
+    {
+
+        var result = await API.PostAsync<MembershipPlanAddResultModel, MembershipPlanModel>("support/save-plan", Plan);
+        if (result != null)
+        {
+            Model.PlanID = result.PlanID;
+            Model.PlanName = result.PlanName;
+            Plan = new MembershipPlanModel();
+            await Task.Delay(100);
+            await HidePlanModal();
+        }
+
+    }
+
+    private async Task CancelPlan()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            Plan = new();
+            await HidePlanModal();
+
+        }
+    }
+    #endregion
+}

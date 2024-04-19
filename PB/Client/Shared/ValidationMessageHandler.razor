@@ -1,0 +1,13 @@
+﻿@*@inherits ValidationMessage
+
+
+<h3>ValidationMessageHandler</h3>
+
+@code {
+
+
+
+    private string ValidationErrorMessage => FieldIdentifier.FieldName != null ? EditContext.GetValidationMessages(FieldIdentifier).FirstOrDefault() : null;
+
+}
+*@

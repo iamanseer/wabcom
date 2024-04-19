@@ -1,0 +1,2371 @@
+﻿@page "/invoice-new"
+@page "/invoice-new/{InvoiceID:int}"
+@page "/invoice-new/{InvoiceID:int}/{QuotationID:int}"
+
+@using PB.CRM.Model.Enum;
+@using PB.Client.Shared.Common
+@using PB.Client.Shared.Entity
+@using PB.Client.Shared.Inventory.Customer
+@using PB.Client.Shared.Inventory.Item
+@using PB.Client.Shared.Inventory.Supplier
+@using PB.Shared.Models.CRM.Quotation;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Inventory.Invoices;
+@using PB.Model.Models;
+@using PB.Shared.Models.CRM.Customer;
+@using PB.Shared.Models.Inventory.InvoiceType;
+@using PB.Shared.Models.Inventory.Item;
+@using PB.Shared.Tables.Inventory.Invoices;
+@using System.ComponentModel.DataAnnotations;
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="async () => await SaveInvoice()">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+
+                <!--Invoice card-->
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Invoice Details</h5>
+                        </div>
+                        <div class="card-body">
+
+                            <!--Invoice Type-->
+                            <div class="row position-relative pb-3">
+                                <DropdownSelect DivClass="col-md-7"
+                                                Label="@Localizer["Invoice Type"]"
+                                                DropdownID="@InvoiceTypeSelectID"
+                                                PlaceHolder="Choose invoice type"
+                                                Mode="(int)DropdownModes.InvoiceType"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                ItemSelected="async (DropdownItemSelectedCallbackModel invoiceType) => await HandleInvoiceTypeSelected(invoiceType)"
+                                                ReadDataOnSearch="true"
+                                                IsRequired="true"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.InvoiceTypeID,Value=Model.InvoiceTypeName})" />
+                                <div class="validation-for-dropdown">
+                                    <ValidationMessage For="()=>Model.InvoiceTypeID" />
+                                </div>
+                            </div>
+
+                            <!--Sales or Sales Return Then Customer-->
+                            @if (Model.InvoiceTypeNatureID != null && (Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Sales || Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Sales_Return))
+                            {
+                                <!--Customer Dropdown-->
+                                @if (Model.CustomerEntityID == null)
+                                {
+                                    <div class="row">
+                                        <DropdownSelect @ref="@CustomerDropdown"
+                                                        DropdownID="@InvoiceCustomerSelectID"
+                                                        DivClass="col-md-7"
+                                                        Label="Customer :"
+                                                        IsRequired="true"
+                                                        ReadDataOnSearch="true"
+                                                        IsAddOptionNeed="true"
+                                                        Mode="(int)DropdownModes.Customer"
+                                                        RoleName="Customer"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.CustomerEntityID, Value=Model.CustomerName})"
+                                                        ItemSelected="async (DropdownItemSelectedCallbackModel customer) => await HandleCustomerSelected(customer)"
+                                                        NewButtonClicked="async (int dropdownMode) => await HandleNewCustomerButtonClick()"
+                                                        NewButtonText="Add New Customer" />
+                                        <ValidationMessage For="() => Model.CustomerEntityID" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="row">
+                                        <div class="col-md-7">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1">
+                                                    Customer :
+                                                    <span class="ms-1" style="color:red">*</span>
+                                                </label>
+                                                <div class="input-group">
+                                                    <DropdownSelect @ref="@CustomerDropdown"
+                                                                    DropdownID="@InvoiceCustomerSelectID"
+                                                                    DivClass="col-md-11 px-0"
+                                                                    IsRequired="true"
+                                                                    ReadDataOnSearch="true"
+                                                                    IsAddOptionNeed="true"
+                                                                    RoleName="Customer"
+                                                                    Mode="(int)DropdownModes.Customer"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.CustomerEntityID, Value=Model.CustomerName})"
+                                                                    ItemSelected="async (DropdownItemSelectedCallbackModel customer) => await HandleCustomerSelected(customer)"
+                                                                    NewButtonClicked="async (int dropdownMode) => await HandleNewCustomerButtonClick()"
+                                                                    NewButtonText="Add New Customer" />
+                                                    <div class="col-md-1 px-0">
+                                                        <button class="btn btn-light" type="button" id="button-addon2" @onclick="async () => await HandleCustomerUpdateButtonClick(Model.CustomerEntityID.Value)">
+                                                            <i class="fa fa-pencil"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <ValidationMessage For="() => Model.CustomerEntityID" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!--Tax Number-->
+                                    @if (!string.IsNullOrEmpty(Model.TaxNumber))
+                                    {
+                                        <div class="row">
+                                            <label class="col-auto item-label  text-muted">
+                                                TaxNumber
+                                            </label>
+                                            <label class="col-7 item-label col-auto">
+                                                @Model.TaxNumber
+                                            </label>
+                                        </div>
+                                    }
+
+                                    <!--Customer Address-->
+                                    <div class="row col-md-12 mb-3">
+                                        <!--Billing Address-->
+                                        <div class="col-md-5 border">
+                                            @if (IsBillingAddressSelected)
+                                            {
+                                                @if (!string.IsNullOrEmpty(SelectedBillingAddress.CompleteAddress))
+                                                {
+                                                    var addressLines = SelectedBillingAddress.CompleteAddress.Split(',');
+                                                    <div class="list-group">
+                                                        <div class="row">
+                                                            <div>
+                                                                <label>BILLING ADDRESS :</label>
+                                                            </div>
+                                                            <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between active">
+                                                                <div class="address-content">
+                                                                    @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                    {
+                                                                        <span>
+                                                                            @(line.ln)
+                                                                            @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                        </span> <br>
+                                                                    }
+                                                                </div>
+                                                                <div class="action d-flex flex-column">
+                                                                    <i class="fa fa-check-circle fs-5 text-success ms-auto"></i>
+                                                                    <span class="mt-auto text-primary" style="cursor:pointer;" @onclick="async () => await OpenAddressModal(SelectedBillingAddress.AddressID)"> Edit </span>
+                                                                </div>
+                                                            </a>
+                                                        </div>
+                                                        <div class="row mt-2">
+                                                            <div class="col-md-12">
+                                                                <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="() => HandleCustomerAddressChangeClicked()">
+                                                                    <i class="fa fa-exchange me-1"></i>
+                                                                    <span>Change address</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                @if (CustomerOrSupplierDataModel.CustomerAddresses.Count > 0)
+                                                {
+                                                    <div class="list-group">
+                                                        <div class="row">
+                                                            <div class="mb-1">
+                                                                <label>Select Address:</label>
+                                                            </div>
+                                                            <div style="max-height:300px;overflow-y:auto">
+                                                                @foreach (var billingAddress in CustomerOrSupplierDataModel.CustomerAddresses)
+                                                                {
+                                                                    @if (!string.IsNullOrEmpty(billingAddress.CompleteAddress))
+                                                                    {
+                                                                        var addressLines = billingAddress.CompleteAddress.Split(',');
+                                                                        if (Model.BillingAddressID == billingAddress.AddressID)
+                                                                        {
+                                                                            <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between active" @onclick="() => HandleCustomerAddressSelected(billingAddress, true)">
+                                                                                <div class="address-content">
+                                                                                    @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                                    {
+                                                                                        <span>
+                                                                                            @(line.ln)
+                                                                                            @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                                        </span> <br>
+                                                                                    }
+                                                                                </div>
+                                                                                <div class="action d-flex flex-column">
+                                                                                    <i class="fa fa-check-circle fs-5 text-success ms-auto"></i>
+                                                                                    <span class="mt-auto text-primary" style="cursor: pointer;" @onclick="async () => await OpenAddressModal(billingAddress.AddressID)"> Edit </span>
+                                                                                </div>
+                                                                            </a>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between" @onclick="() => HandleCustomerAddressSelected(billingAddress, true)">
+                                                                                <div class="address-content">
+                                                                                    @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                                    {
+                                                                                        <span>
+                                                                                            @(line.ln)
+                                                                                            @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                                        </span> <br>
+                                                                                    }
+                                                                                </div>
+                                                                                <div class="action d-flex flex-column">
+                                                                                    <span class="mt-auto text-primary" style="cursor: pointer;" @onclick="async () => await OpenAddressModal(billingAddress.AddressID)"> Edit </span>
+                                                                                </div>
+                                                                            </a>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-12 mt-2">
+                                                                <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="async () => await OpenAddressModal()">
+                                                                    <i class="fe fe-plus me-2"></i>
+                                                                    <span>Add new address</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="row">
+                                                        <div class="col-md-12 mt-2">
+                                                            <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="async () => await OpenAddressModal()">
+                                                                <i class="fe fe-plus me-2"></i>
+                                                                <span>Add new address</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                <div class="row">
+                                                    <ValidationMessage For="()=> Model.BillingAddressID" />
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <!--Shipping Address-->
+                                        @if (Model.NeedShippingAddress)
+                                        {
+                                            <div class="col-md-5 ms-2 border">
+                                                @if (IsShippingAddressSelected)
+                                                {
+                                                    @if (!string.IsNullOrEmpty(SelectedShippingAddress.CompleteAddress))
+                                                    {
+                                                        var addressLines = SelectedShippingAddress.CompleteAddress.Split(',');
+                                                        <div class="list-group">
+                                                            <div class="row">
+                                                                <div>
+                                                                    <label>SHIPPING ADDRESS :</label>
+                                                                </div>
+                                                                <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between active">
+                                                                    <div class="address-content">
+                                                                        @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                        {
+                                                                            <span>
+                                                                                @(line.ln)
+                                                                                @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                            </span> <br>
+                                                                        }
+                                                                    </div>
+                                                                    <div class="action d-flex flex-column">
+                                                                        <i class="fa fa-check-circle fs-5 text-success ms-auto"></i>
+                                                                        <span class="mt-auto text-primary" style="cursor: pointer;" @onclick="async () => await OpenAddressModal(SelectedShippingAddress.AddressID, false)"> Edit </span>
+                                                                    </div>
+                                                                </a>
+                                                            </div>
+                                                            <div class="row mt-2">
+                                                                <div class="col-md-12">
+                                                                    <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="() => HandleCustomerAddressChangeClicked(false)">
+                                                                        <i class="fa fa-exchange me-1"></i>
+                                                                        <span>Change address</span>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    @if (CustomerOrSupplierDataModel.CustomerAddresses.Count > 0)
+                                                    {
+                                                        <div class="list-group">
+                                                            <div class="row">
+                                                                <div class="mb-1">
+                                                                    <label>Select Address:</label>
+                                                                </div>
+                                                                <div style="max-height:300px;overflow-y:auto">
+                                                                    @foreach (var shippingAddress in CustomerOrSupplierDataModel.CustomerAddresses)
+                                                                    {
+                                                                        @if (!string.IsNullOrEmpty(shippingAddress.CompleteAddress))
+                                                                        {
+                                                                            var addressLines = shippingAddress.CompleteAddress.Split(',');
+                                                                            if (Model.ShippingAddressID == shippingAddress.AddressID)
+                                                                            {
+                                                                                <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between active" @onclick="() => HandleCustomerAddressSelected(shippingAddress, false)">
+                                                                                    <div class="address-content">
+                                                                                        @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                                        {
+                                                                                            <span>
+                                                                                                @(line.ln)
+                                                                                                @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                                            </span> <br>
+                                                                                        }
+                                                                                    </div>
+                                                                                    <div class="action d-flex flex-column">
+                                                                                        <i class="fa fa-check-circle fs-5 text-success ms-auto"></i>
+                                                                                        <span class="mt-auto text-primary" style="cursor: pointer;" @onclick="async () => await OpenAddressModal(shippingAddress.AddressID, false)"> Edit </span>
+                                                                                    </div>
+                                                                                </a>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between" @onclick="() => HandleCustomerAddressSelected(shippingAddress, false)">
+                                                                                    <div class="address-content">
+                                                                                        @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                                        {
+                                                                                            <span>
+                                                                                                @(line.ln)
+                                                                                                @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                                            </span> <br>
+                                                                                        }
+                                                                                    </div>
+                                                                                    <div class="action d-flex flex-column">
+                                                                                        <span class="mt-auto text-primary" style="cursor: pointer;" @onclick="async () => await OpenAddressModal(shippingAddress.AddressID, false)"> Edit </span>
+                                                                                    </div>
+                                                                                </a>
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-md-12 mt-2">
+                                                                    <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="async () => await OpenAddressModal(0,false)">
+                                                                        <i class="fe fe-plus me-2"></i>
+                                                                        <span>Add new address</span>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="row">
+                                                            <div class="col-md-12 mt-2">
+                                                                <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="async () => await OpenAddressModal(0,false)">
+                                                                    <i class="fe fe-plus me-2"></i>
+                                                                    <span>Add new address</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    <div class="row">
+                                                        <ValidationMessage For="()=> Model.ShippingAddressID" />
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="my-4">
+                                                <div class=" form-check form-check-inline font-large">
+                                                    <input id="item-model-check" class="ember-checkbox ember-view form-check-input" type="checkbox" @onchange="(ChangeEventArgs e) => HandleNeedShippingAddrssChecked(e)" checked="@(Model.NeedShippingAddress?"checked":null)">
+                                                    <label class="form-check-label fs-16 fw-bold" for="item-model-check">Need Shipping Address</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <DropdownSelect @ref="@CurrencyDropdown"
+                                                        DropdownID="@InvoiceCurrecyDropdownID"
+                                                        DivClass="col-md-7"
+                                                        IsRequired="true"
+                                                        Label="Currency :"
+                                                        ReadDataOnSearch="true"
+                                                        Mode="(int)DropdownModes.Currency"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.CurrencyID, Value=Model.CurrencyName})"
+                                                        ItemSelected="(DropdownItemSelectedCallbackModel customer) =>  HandleCurrencySelected(customer)" />
+                                        <ValidationMessage For="()=>Model.CurrencyID" />
+                                    </div>
+
+                                    <div class="row">
+                                        <DropdownSelect @ref="@PlaceOfSupplyDropdown"
+                                                        DropdownID="@InvoicePlaceOfSupplyDropdownID"
+                                                        DivClass="col-md-7"
+                                                        Label="Place Of Supply :"
+                                                        IsRequired="true"
+                                                        ReadDataOnSearch="true"
+                                                        Mode="(int)DropdownModes.PlaceOfSupply"
+                                                        ModeGroup="(int)DropdownModes.CommonSearchWithID"
+                                                        CommonSearch="@(new CommonSearchModel(){ ID = InvoiceSettings.CountryID  })"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.PlaceOfSupplyID, Value=Model.PlaceOfSupplyName})"
+                                                        ItemSelected="async (DropdownItemSelectedCallbackModel customer) => await HandlePlaceOfSupplySelected(customer)" />
+                                        <ValidationMessage For="()=>Model.PlaceOfSupplyID" />
+                                    </div>
+                                }
+                            }
+
+                            <!--Purchase or Purchase Return Then Spplier-->
+                            @if (Model.InvoiceTypeNatureID != null && (Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Purchase || Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Purchase_Return))
+                            {
+                                <!--Supplier Dropdown-->
+                                @if (Model.SupplierEntityID is null)
+                                {
+                                    <div class="row">
+                                        <DropdownSelect @ref="@SupplierSelectDropdown"
+                                                        DropdownID="@InvoiceSupplierSelectID"
+                                                        DivClass="col-md-7"
+                                                        Label="Supplier :"
+                                                        IsRequired="true"
+                                                        ReadDataOnSearch="true"
+                                                        IsAddOptionNeed="true"
+                                                        Mode="(int)DropdownModes.Supplier"
+                                                        RoleName="Customer"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.SupplierEntityID, Value=Model.SupplierName})"
+                                                        ItemSelected="async (DropdownItemSelectedCallbackModel supplier) => await HandleSupplierSelected(supplier)"
+                                                        NewButtonClicked="async (int dropdownMode) => await HandleNewSupplierButtonClick()"
+                                                        NewButtonText="Add New Supplier" />
+                                        <ValidationMessage For="() => Model.CustomerEntityID" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="row">
+                                        <div class="col-md-7">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1">
+                                                    Customer :
+                                                    <span class="ms-1" style="color:red">*</span>
+                                                </label>
+                                                <div class="input-group">
+                                                    <DropdownSelect @ref="@SupplierSelectDropdown"
+                                                                    DropdownID="@InvoiceSupplierSelectID"
+                                                                    DivClass="col-md-11 px-0"
+                                                                    IsRequired="true"
+                                                                    ReadDataOnSearch="true"
+                                                                    IsAddOptionNeed="true"
+                                                                    RoleName="Supplier :"
+                                                                    Mode="(int)DropdownModes.Customer"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.SupplierEntityID, Value=Model.SupplierName})"
+                                                                    ItemSelected="async (DropdownItemSelectedCallbackModel supplier) => await HandleSupplierSelected(supplier)"
+                                                                    NewButtonClicked="async (int dropdownMode) => await HandleNewSupplierButtonClick()"
+                                                                    NewButtonText="Add New Customer" />
+                                                    <div class="col-md-1 px-0">
+                                                        <button class="btn btn-light" type="button" id="button-addon2" @onclick="async () => await HandleSupplierUpdateButtonClick(Model.SupplierEntityID.Value)">
+                                                            <i class="fa fa-pencil"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <ValidationMessage For="() => Model.SupplierEntityID" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!--Tax Number-->
+                                    @if (!string.IsNullOrEmpty(Model.TaxNumber))
+                                    {
+                                        <div class="row">
+                                            <label class="col-auto item-label  text-muted">
+                                                TaxNumber
+                                            </label>
+                                            <label class="col-7 item-label col-auto">
+                                                @Model.TaxNumber
+                                            </label>
+                                        </div>
+                                    }
+
+                                    <!--Customer Address-->
+                                    <div class="row col-md-12 mb-3">
+                                        <!--Billing Address-->
+                                        <div class="col-md-5 border">
+                                            @if (IsBillingAddressSelected)
+                                            {
+                                                @if (!string.IsNullOrEmpty(SelectedBillingAddress.CompleteAddress))
+                                                {
+                                                    var addressLines = SelectedBillingAddress.CompleteAddress.Split(',');
+                                                    <div class="list-group">
+                                                        <div class="row">
+                                                            <div>
+                                                                <label>BILLING ADDRESS :</label>
+                                                            </div>
+                                                            <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between active">
+                                                                <div class="address-content">
+                                                                    @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                    {
+                                                                        <span>
+                                                                            @(line.ln)
+                                                                            @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                        </span> <br>
+                                                                    }
+                                                                </div>
+                                                                <div class="action d-flex flex-column">
+                                                                    <i class="fa fa-check-circle fs-5 text-success ms-auto"></i>
+                                                                    <span class="mt-auto text-primary" style="cursor:pointer;" @onclick="async () => await OpenAddressModal(SelectedBillingAddress.AddressID)"> Edit </span>
+                                                                </div>
+                                                            </a>
+                                                        </div>
+                                                        <div class="row mt-2">
+                                                            <div class="col-md-12">
+                                                                <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="() => HandleCustomerAddressChangeClicked()">
+                                                                    <i class="fa fa-exchange me-1"></i>
+                                                                    <span>Change address</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                @if (CustomerOrSupplierDataModel.CustomerAddresses.Count > 0)
+                                                {
+                                                    <div class="list-group">
+                                                        <div class="row">
+                                                            <div class="mb-1">
+                                                                <label>Select Address:</label>
+                                                            </div>
+                                                            <div style="max-height:300px;overflow-y:auto">
+                                                                @foreach (var billingAddress in CustomerOrSupplierDataModel.CustomerAddresses)
+                                                                {
+                                                                    @if (!string.IsNullOrEmpty(billingAddress.CompleteAddress))
+                                                                    {
+                                                                        var addressLines = billingAddress.CompleteAddress.Split(',');
+                                                                        if (Model.BillingAddressID == billingAddress.AddressID)
+                                                                        {
+                                                                            <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between active" @onclick="() => HandleCustomerAddressSelected(billingAddress, true)">
+                                                                                <div class="address-content">
+                                                                                    @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                                    {
+                                                                                        <span>
+                                                                                            @(line.ln)
+                                                                                            @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                                        </span> <br>
+                                                                                    }
+                                                                                </div>
+                                                                                <div class="action d-flex flex-column">
+                                                                                    <i class="fa fa-check-circle fs-5 text-success ms-auto"></i>
+                                                                                    <span class="mt-auto text-primary" style="cursor: pointer;" @onclick="async () => await OpenAddressModal(billingAddress.AddressID)"> Edit </span>
+                                                                                </div>
+                                                                            </a>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between" @onclick="() => HandleCustomerAddressSelected(billingAddress, true)">
+                                                                                <div class="address-content">
+                                                                                    @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                                    {
+                                                                                        <span>
+                                                                                            @(line.ln)
+                                                                                            @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                                        </span> <br>
+                                                                                    }
+                                                                                </div>
+                                                                                <div class="action d-flex flex-column">
+                                                                                    <span class="mt-auto text-primary" style="cursor: pointer;" @onclick="async () => await OpenAddressModal(billingAddress.AddressID)"> Edit </span>
+                                                                                </div>
+                                                                            </a>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-12 mt-2">
+                                                                <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="async () => await OpenAddressModal()">
+                                                                    <i class="fe fe-plus me-2"></i>
+                                                                    <span>Add new address</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="row">
+                                                        <div class="col-md-12 mt-2">
+                                                            <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="async () => await OpenAddressModal()">
+                                                                <i class="fe fe-plus me-2"></i>
+                                                                <span>Add new address</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                <div class="row">
+                                                    <ValidationMessage For="()=> Model.BillingAddressID" />
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <!--Shipping Address-->
+                                        @if (Model.NeedShippingAddress)
+                                        {
+                                            <div class="col-md-5 ms-2 border">
+                                                @if (IsShippingAddressSelected)
+                                                {
+                                                    @if (!string.IsNullOrEmpty(SelectedShippingAddress.CompleteAddress))
+                                                    {
+                                                        var addressLines = SelectedShippingAddress.CompleteAddress.Split(',');
+                                                        <div class="list-group">
+                                                            <div class="row">
+                                                                <div>
+                                                                    <label>SHIPPING ADDRESS :</label>
+                                                                </div>
+                                                                <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between active">
+                                                                    <div class="address-content">
+                                                                        @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                        {
+                                                                            <span>
+                                                                                @(line.ln)
+                                                                                @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                            </span> <br>
+                                                                        }
+                                                                    </div>
+                                                                    <div class="action d-flex flex-column">
+                                                                        <i class="fa fa-check-circle fs-5 text-success ms-auto"></i>
+                                                                        <span class="mt-auto text-primary" style="cursor: pointer;" @onclick="async () => await OpenAddressModal(SelectedShippingAddress.AddressID, false)"> Edit </span>
+                                                                    </div>
+                                                                </a>
+                                                            </div>
+                                                            <div class="row mt-2">
+                                                                <div class="col-md-12">
+                                                                    <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="() => HandleCustomerAddressChangeClicked(false)">
+                                                                        <i class="fa fa-exchange me-1"></i>
+                                                                        <span>Change address</span>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    @if (CustomerOrSupplierDataModel.CustomerAddresses.Count > 0)
+                                                    {
+                                                        <div class="list-group">
+                                                            <div class="row">
+                                                                <div class="mb-1">
+                                                                    <label>Select Address:</label>
+                                                                </div>
+                                                                <div style="max-height:300px;overflow-y:auto">
+                                                                    @foreach (var shippingAddress in CustomerOrSupplierDataModel.CustomerAddresses)
+                                                                    {
+                                                                        @if (!string.IsNullOrEmpty(shippingAddress.CompleteAddress))
+                                                                        {
+                                                                            var addressLines = shippingAddress.CompleteAddress.Split(',');
+                                                                            if (Model.ShippingAddressID == shippingAddress.AddressID)
+                                                                            {
+                                                                                <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between active" @onclick="() => HandleCustomerAddressSelected(shippingAddress, false)">
+                                                                                    <div class="address-content">
+                                                                                        @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                                        {
+                                                                                            <span>
+                                                                                                @(line.ln)
+                                                                                                @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                                            </span> <br>
+                                                                                        }
+                                                                                    </div>
+                                                                                    <div class="action d-flex flex-column">
+                                                                                        <i class="fa fa-check-circle fs-5 text-success ms-auto"></i>
+                                                                                        <span class="mt-auto text-primary" style="cursor: pointer;" @onclick="async () => await OpenAddressModal(shippingAddress.AddressID, false)"> Edit </span>
+                                                                                    </div>
+                                                                                </a>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between" @onclick="() => HandleCustomerAddressSelected(shippingAddress, false)">
+                                                                                    <div class="address-content">
+                                                                                        @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                                        {
+                                                                                            <span>
+                                                                                                @(line.ln)
+                                                                                                @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                                            </span> <br>
+                                                                                        }
+                                                                                    </div>
+                                                                                    <div class="action d-flex flex-column">
+                                                                                        <span class="mt-auto text-primary" style="cursor: pointer;" @onclick="async () => await OpenAddressModal(shippingAddress.AddressID, false)"> Edit </span>
+                                                                                    </div>
+                                                                                </a>
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                            <div class="row">
+                                                                <div class="col-md-12 mt-2">
+                                                                    <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="async () => await OpenAddressModal(0,false)">
+                                                                        <i class="fe fe-plus me-2"></i>
+                                                                        <span>Add new address</span>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <div class="row">
+                                                            <div class="col-md-12 mt-2">
+                                                                <button type="button" class="btn p-1 border" style="color:var(--primary-bg-color)" @onclick="async () => await OpenAddressModal(0,false)">
+                                                                    <i class="fe fe-plus me-2"></i>
+                                                                    <span>Add new address</span>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    <div class="row">
+                                                        <ValidationMessage For="()=> Model.ShippingAddressID" />
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="my-4">
+                                                <div class=" form-check form-check-inline font-large">
+                                                    <input id="item-model-check" class="ember-checkbox ember-view form-check-input" type="checkbox" @onchange="(ChangeEventArgs e) => HandleNeedShippingAddrssChecked(e)" checked="@(Model.NeedShippingAddress?"checked":null)">
+                                                    <label class="form-check-label fs-16 fw-bold" for="item-model-check">Need Shipping Address</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <DropdownSelect @ref="@CurrencyDropdown"
+                                                        DropdownID="@InvoiceCurrecyDropdownID"
+                                                        DivClass="col-md-7"
+                                                        IsRequired="true"
+                                                        Label="Currency :"
+                                                        ReadDataOnSearch="true"
+                                                        Mode="(int)DropdownModes.Currency"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.CurrencyID, Value=Model.CurrencyName})"
+                                                        ItemSelected="(DropdownItemSelectedCallbackModel customer) =>  HandleCurrencySelected(customer)" />
+                                        <ValidationMessage For="()=>Model.CurrencyID" />
+                                    </div>
+
+                                    <div class="row">
+                                        <DropdownSelect @ref="@SourceOfSupplyDropdown"
+                                                        DropdownID="@InvoiceSourceOfSupplyDropdownID"
+                                                        DivClass="col-md-7"
+                                                        Label="Place Of Supply :"
+                                                        IsRequired="true"
+                                                        ReadDataOnSearch="true"
+                                                        Mode="(int)DropdownModes.PlaceOfSupply"
+                                                        ModeGroup="(int)DropdownModes.CommonSearchWithID"
+                                                        CommonSearch="@(new CommonSearchModel(){ ID = InvoiceSettings.CountryID  })"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.PlaceOfSupplyID, Value=Model.PlaceOfSupplyName})"
+                                                        ItemSelected="async (DropdownItemSelectedCallbackModel customer) => await HandlePlaceOfSupplySelected(customer)" />
+                                        <ValidationMessage For="()=>Model.PlaceOfSupplyID" />
+                                    </div>
+                                }
+                            }
+
+                            <!--Invoice Number-->
+                            <div class="row">
+                                @if (Model.QuotationID == 0)
+                                {
+                                    <div class="col-md-7">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Invoice Number :</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text" style="background-color:var(--primary-bg-color);">
+                                                    @("IN")
+                                                </span>
+                                                <input type="text" class="form-control" value="New Invoice" style="pointer-events:none" disabled>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="col-md-7">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Invoice Number :</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text" style="background-color:var(--primary-bg-color);">
+                                                    @("IN")
+                                                </span>
+                                                <input type="number" class="form-control" @bind="Model.InvoiceNumber" style="pointer-events:none" disabled>
+                                            </div>
+                                            <ValidationMessage For="() => Model.InvoiceNumber" />
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+
+                            <!--Invoice Date-->
+                            <div class="row">
+                                <div class="col-md-7 ">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1"> Date :</label>
+                                        <input type="date" class="form-control" @bind="Model.InvoiceDate" id="invoice-date-picker">
+                                        <ValidationMessage For="()=>Model.InvoiceDate" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--Accounts Date-->
+                            <div class="row">
+                                <div class="col-md-7 ">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1"> Date :</label>
+                                        <input type="date" class="form-control" @bind="Model.AccountsDate" id="accounts-date-picker">
+                                        <ValidationMessage For="()=>Model.AccountsDate" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--Subject-->
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Subject :</label>
+                                        <textarea name="" class="textarea form-control" cols="2" rows="2" @bind="Model.Subject" placeholder="Let your customer know what this quotation for.."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <!--Invoice item-->
+                <div class="col-12 mt-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Invoice Items</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="">
+                                    <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    Item Name
+                                                </th>
+                                                <th>
+                                                    Description
+                                                </th>
+                                                <th>
+                                                    Quantity
+                                                </th>
+                                                <th>
+                                                    Rate
+                                                </th>
+                                                <th>
+                                                    Discount
+                                                </th>
+                                                <th>
+                                                    Tax
+                                                </th>
+                                                <th>
+                                                    Amount
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (Model.Items != null && Model.Items.Count > 0)
+                                            {
+                                                @foreach (var item in Model.Items.Select((value, i) => new { i, value }))
+                                                {
+                                                    var invoiceItem = item.value;
+                                                    int index = item.i;
+                                                    @if (!invoiceItem.IsRowInEditMode)
+                                                    {
+                                                        <tr>
+                                                            <td>
+                                                                <div class="d-flex align-items-center jusify-content-center">
+                                                                    <div>
+                                                                        @invoiceItem.ItemName
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td>
+                                                                @invoiceItem.Description
+                                                            </td>
+                                                            <td>
+                                                                @invoiceItem.Quantity
+                                                            </td>
+                                                            <td>
+                                                                @invoiceItem.Rate
+                                                            </td>
+                                                            <td>
+                                                                @invoiceItem.Discount
+                                                            </td>
+                                                            <td>
+                                                                @if (invoiceItem.TaxPreferenceTypeID == (int)TaxPreferences.NonTaxable)
+                                                                {
+                                                                    @("Non taxable")
+                                                                }
+                                                                else if (invoiceItem.TaxPreferenceTypeID == (int)TaxPreferences.NonGstSupply)
+                                                                {
+                                                                    @("Non gst supply")
+                                                                }
+                                                                else if (invoiceItem.TaxPreferenceTypeID == (int)TaxPreferences.OutOfScope)
+                                                                {
+                                                                    @("Out of scope")
+                                                                }
+                                                                else
+                                                                {
+                                                                    @invoiceItem.TaxCategoryName
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                @invoiceItem.TotalAmount
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="7" class="py-1 bg-light">
+                                                                <ul class="d-flex gap-2">
+                                                                    <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                                        <span @onclick="async () => await HandleInvoiceItemEditClick(invoiceItem)">
+                                                                            <i class="fe fe-edit me-1" style="color:var(--primary-bg-color)" aria-hidden="true"></i> Edit item
+                                                                        </span>
+                                                                    </li>
+                                                                    <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                                        <span @onclick="async () => await HandleInvoiceItemRemoveClick(invoiceItem)">
+                                                                            <i class="fa fa-trash me-1" style="color:red" aria-hidden="true"></i> Remove item
+                                                                        </span>
+                                                                    </li>
+                                                                </ul>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                    else
+                                                    {
+                                                        <tr>
+                                                            <td class="px-0" style="min-width:200px">
+                                                                <DropdownSelect DropdownID="@("row-item-drop-down-"+index)" @ref="@RowItemDropdown"
+                                                                                DivClass="col-md-12 px-0"
+                                                                                FormGroupClass="form-group mb-0"
+                                                                                FormControlClass="pb-select form-control form-control-custom"
+                                                                                IsAddOptionNeed="true"
+                                                                                ReadDataOnSearch="true"
+                                                                                Mode="(int)DropdownModes.Item"
+                                                                                RoleName="Item"
+                                                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = invoiceItem.ItemVariantID, Value = invoiceItem.ItemName})"
+                                                                                ItemSelected="@(async (DropdownItemSelectedCallbackModel itemModel) => await HandleInvoiceItemSelected(itemModel, invoiceItem))"
+                                                                                NewButtonText="New Item"
+                                                                                NewButtonClicked="@(async (int dropdownMode) => await HandleAddNewInvoiceItemButtonClick(dropdownMode, index))" />
+                                                            </td>
+                                                            <td class="px-0">
+                                                                <input type="text" class="form-control form-control-custom" @bind="invoiceItem.Description" />
+                                                            </td>
+                                                            <td class="px-0">
+                                                                @if (invoiceItem.ItemVariantID == null)
+                                                                {
+                                                                    <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <input type="number" class="form-control form-control-custom" id="@("row-item-quantity-"+index)" value="@invoiceItem.Quantity" @onchange="(ChangeEventArgs e) => HandleInvoiceItemQuantityChange(invoiceItem, e)">
+                                                                }
+                                                            </td>
+                                                            <td class="px-0">
+                                                                @if (invoiceItem.ItemVariantID == null)
+                                                                {
+                                                                    <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <input type="number" class="form-control form-control-custom" id="@("row-item-rate-"+index)" value="@invoiceItem.Rate" @onchange="(ChangeEventArgs e) => HandleInvoiceItemRateChange(invoiceItem, e)">
+                                                                }
+                                                            </td>
+                                                            <td class="px-0">
+                                                                @if (invoiceItem.ItemVariantID == null)
+                                                                {
+                                                                    <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <input type="number" class="form-control form-control-custom" id="@("row-item-discount-"+index)" value="@invoiceItem.Discount" @onchange="(ChangeEventArgs e) => HandleInvoiceItemDiscountChange(invoiceItem, e)" />
+                                                                }
+                                                            </td>
+                                                            <td class="px-0" style="min-width:200px">
+                                                                @if (invoiceItem.ItemVariantID == null)
+                                                                {
+                                                                    <input type="text" class="form-control form-control-custom" value="choose item" disabled />
+                                                                }
+                                                                else if (invoiceItem.TaxPreferenceTypeID == (int)TaxPreferences.NonTaxable)
+                                                                {
+                                                                    <input type="text" class="form-control form-control-custom" value="Non Taxable" disabled />
+                                                                }
+                                                                else if (invoiceItem.TaxPreferenceTypeID == (int)TaxPreferences.NonGstSupply)
+                                                                {
+                                                                    <input type="text" class="form-control form-control-custom" value="Non-Gst Supply" disabled />
+                                                                }
+                                                                else if (invoiceItem.TaxPreferenceTypeID == (int)TaxPreferences.OutOfScope)
+                                                                {
+                                                                    <input type="text" class="form-control form-control-custom" value="Out of scope" disabled />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <DropdownSelect DropdownID="@(RowTaxCategoryDropdownID)" @ref="@RowTaxCategoryDropdown"
+                                                                                    DivClass="col-md-12 px-0"
+                                                                                    FormGroupClass="form-group px-0"
+                                                                                    FormControlClass="pb-select form-control form-control-custom"
+                                                                                    IsAddOptionNeed="true"
+                                                                                    ReadDataOnSearch="false"
+                                                                                    Mode="(int)DropdownModes.TaxCategory"
+                                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = invoiceItem.TaxCategoryID, Value = invoiceItem.TaxCategoryName})"
+                                                                                    ItemSelected="@(async (DropdownItemSelectedCallbackModel taxCategory) => await HandleInvoiceItemTaxCategorySelected(taxCategory,invoiceItem))"
+                                                                                    NewButtonText="New Item"
+                                                                                    NewButtonClicked="@(async (int dropdownMode) => await HandelAddNewTaxCategoryButtonClick(dropdownMode, index))" />
+                                                                }
+                                                            </td>
+                                                            <td class="px-0">
+                                                                <input type="number" class="form-control form-control-custom" @bind="invoiceItem.TotalAmount" disabled style="pointer-events:none" />
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="7" class="py-1 bg-light">
+                                                                <ul class="d-flex gap-2">
+                                                                    <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                                        <span @onclick="async () => await HandleInvoiceItemUpdateClick(invoiceItem)">
+                                                                            <i class="fe fe-check me-1" style="color:green" aria-hidden="true"></i> Save item
+                                                                        </span>
+                                                                    </li>
+                                                                    <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                                        <span @onclick="async () => await HandleInvoiceItemRemoveClick(invoiceItem)">
+                                                                            <i class="fa fa-trash me-1" style="color:red" aria-hidden="true"></i> Remove item
+                                                                        </span>
+                                                                    </li>
+                                                                </ul>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            }
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td class="px-0" style="min-width:200px">
+                                                    <DropdownSelect DropdownID="@("footer-item-drop-down")" @ref="@FooterItemDropdown"
+                                                                    DivClass="col-md-12 px-0"
+                                                                    FormGroupClass="form-group mb-0"
+                                                                    FormControlClass="pb-select form-control form-control-custom"
+                                                                    IsAddOptionNeed="true"
+                                                                    ReadDataOnSearch="true"
+                                                                    Mode="(int)DropdownModes.Item"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Footer.ItemVariantID, Value = Footer.ItemName})"
+                                                                    ItemSelected="@(async (DropdownItemSelectedCallbackModel itemModel) => await HandleInvoiceItemSelected(itemModel, Footer))"
+                                                                    NewButtonText="New Item"
+                                                                    NewButtonClicked="@(async (int dropdownMode) => await HandleAddNewInvoiceItemButtonClick(dropdownMode))" />
+                                                </td>
+                                                <td class="px-0">
+                                                    <input type="text" class="form-control form-control-custom" @bind="@Footer.Description" />
+                                                </td>
+                                                <td class="px-0">
+                                                    @if (Footer.ItemVariantID == null)
+                                                    {
+                                                        <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="text" class="form-control form-control-custom" id="@("footer-item-quantity")" value="@Footer.Quantity" @onchange="(ChangeEventArgs e) => HandleInvoiceItemQuantityChange(Footer, e)">
+                                                    }
+                                                </td>
+                                                <td class="px-0">
+                                                    @if (Footer.ItemVariantID == null)
+                                                    {
+                                                        <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="text" class="form-control form-control-custom" id="@("footer-item-rate")" value="@Footer.Rate" @onchange="(ChangeEventArgs e) => HandleInvoiceItemRateChange(Footer, e)">
+                                                    }
+                                                </td>
+                                                <td class="px-0">
+                                                    @if (Footer.ItemVariantID == null)
+                                                    {
+                                                        <input type="number" class="form-control form-control-custom" value="0" disabled />
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="number" class="form-control form-control-custom" value="@Footer.Discount" @onchange="(ChangeEventArgs e) => HandleInvoiceItemDiscountChange(Footer, e)" />
+                                                    }
+                                                </td>
+                                                <td class="px-0" style="min-width:200px">
+                                                    @if (Footer.ItemVariantID == null)
+                                                    {
+                                                        <input type="text" class="form-control form-control-custom" value="choose item" disabled />
+                                                    }
+                                                    else if (Footer.TaxPreferenceTypeID == (int)TaxPreferences.NonTaxable)
+                                                    {
+                                                        <input type="text" class="form-control form-control-custom" value="Non Taxable" disabled />
+                                                    }
+                                                    else if (Footer.TaxPreferenceTypeID == (int)TaxPreferences.NonGstSupply)
+                                                    {
+                                                        <input type="text" class="form-control form-control-custom" value="Non-Gst Supply" disabled />
+                                                    }
+                                                    else if (Footer.TaxPreferenceTypeID == (int)TaxPreferences.OutOfScope)
+                                                    {
+                                                        <input type="text" class="form-control form-control-custom" value="Out of scope" disabled />
+                                                    }
+                                                    else
+                                                    {
+                                                        <DropdownSelect DropdownID="@(FooterTaxCategoryDropdoownID)" @ref="@FooterTaxCategoryDropdown"
+                                                                        DivClass="col-md-12 px-0"
+                                                                        FormGroupClass="form-group px-0"
+                                                                        FormControlClass="pb-select form-control form-control-custom"
+                                                                        IsAddOptionNeed="true"
+                                                                        ReadDataOnSearch="false"
+                                                                        Mode="(int)DropdownModes.TaxCategory"
+                                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Footer.TaxCategoryID, Value = Footer.TaxCategoryName})"
+                                                                        ItemSelected="@(async (DropdownItemSelectedCallbackModel taxCategory) => await HandleInvoiceItemTaxCategorySelected(taxCategory,Footer))"
+                                                                        NewButtonText="New Tax Category"
+                                                                        NewButtonClicked="@(async (int dropdownMode) => await HandelAddNewTaxCategoryButtonClick(dropdownMode))" />
+                                                    }
+                                                </td>
+                                                <td class="px-0">
+                                                    <input type="number" class="form-control form-control-custom" @bind="Footer.TotalAmount" disabled style="pointer-events:none" />
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colspan="7" class="py-1 bg-light">
+                                                    <ul class="d-flex gap-2">
+                                                        <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                            <span @onclick="async () => await HandleAddFooterButtonClick()">
+                                                                <i class="fe fe-plus plus-icon me-1" aria-hidden="true"></i> Add Item
+                                                            </span>
+                                                        </li>
+                                                        <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                            <span @onclick="async () => Footer = new(){IsRowInEditMode = false}">
+                                                                <i class="fa fa-refresh me-1" aria-hidden="true"></i> Reset footer
+                                                            </span>
+                                                        </li>
+                                                    </ul>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--Invoice summary-->
+                <div class="row mt-4">
+                    <div class="col-md-6 col-12">
+                        <div class="form-group">
+                            <label class="form-label mt-0 me-1">Customer Notes :</label>
+                            <textarea class="form-control" placeholder="Enter any notes to be displayed in your transaction" rows="10" @bind="Model.CustomerNote"></textarea> <br>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-12">
+                        <div class="card">
+                            <div class="card-body fee-card">
+
+                                <!--Sub Total-->
+                                <div class="row mt-1">
+                                    <div class="col-md-5 mt-2">
+                                        <p style="margin-bottom: 0 !important;">Sub Total :</p>
+                                    </div>
+                                    <div class="col-md-4 px-0">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mt-2" style="text-align: right;">
+                                            <p style="margin-bottom: 0 !important;" id="optText">
+                                                @(Math.Round((Model.TotalAmount), 2))
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (Model.InvoiceExtraChargeItems.Count > 0)
+                                {
+                                    <!--Charges that effects on Invoice items-->
+                                    @foreach (var charge in Model.InvoiceExtraChargeItems.Where(ch => ch.ChargeEffect == (int)InvoiceTypeChargeEffectMode.InvoiceItems).OrderBy(ch => ch.OrderNumber))
+                                    {
+                                        <div class="row mt-3">
+                                            <div class="col-md-5 mt-2 position-relative">
+                                                <p style="margin-bottom: 0 !important;">@charge.ChargeName : </p>
+                                                <br />
+                                                <p class="invoice-type-charge-effect-type">
+                                                    (Will be effect to the invoice items)
+                                                </p>
+                                            </div>
+                                            <div class="col-md-4 px-0">
+                                                <div class="form-group">
+                                                    <div class="position-relative">
+                                                        @if (charge.ChargeCalculation == (int)InvoiceTypeChargeCalulationMode.Percentage)
+                                                        {
+                                                            <input type="text" class="form-control" style="border-radius:7px !important;" placeholder="Percenatge" @onchange="(ChangeEventArgs e) => HandleExtraChargePercentageChange(e,charge)">
+                                                        }
+                                                        else
+                                                        {
+                                                            <input type="text" class="form-control" style="border-radius:7px !important;" placeholer="Amount" @onchange="(ChangeEventArgs e) => HandleExtraChargeAmountChange(e,charge)" />
+                                                        }
+
+                                                        <span class="invoice-type-charge-operation p-1">
+                                                            @if (charge.ChargeOperation == (int)InvoiceTypeChargeOperations.Add)
+                                                            {
+                                                                @("+")
+                                                            }
+                                                            else
+                                                            {
+                                                                @("-")
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 mt-2">
+                                                <div style="text-align: right;">
+                                                    <p style="margin-bottom: 0 !important;" id="optText">@charge.Amount</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <!--Charges that effects on Invoice-->
+                                    @foreach (var charge in Model.InvoiceExtraChargeItems.Where(ch => ch.ChargeEffect == (int)InvoiceTypeChargeEffectMode.Invoice).OrderBy(ch => ch.OrderNumber))
+                                    {
+                                        <div class="row mt-3">
+                                            <div class="col-md-5 mt-2 position-relative">
+                                                <p style="margin-bottom: 0 !important;">@charge.ChargeName : </p>
+                                                <br />
+                                                <p class="invoice-type-charge-effect-type">
+                                                    (Will be effect to the invoice)
+                                                </p>
+                                            </div>
+                                            <div class="col-md-4 px-0">
+                                                <div class="form-group">
+                                                    <div class="position-relative">
+                                                        @if (charge.ChargeCalculation == (int)InvoiceTypeChargeCalulationMode.Percentage)
+                                                        {
+                                                            <input type="text" class="form-control" style="border-radius:7px !important;" placeholder="Percenatge" @onchange="(ChangeEventArgs e) => HandleExtraChargePercentageChange(e,charge)">
+                                                        }
+                                                        else
+                                                        {
+                                                            <input type="text" class="form-control" style="border-radius:7px !important;" placeholer="Amount" @onchange="(ChangeEventArgs e) => HandleExtraChargeAmountChange(e,charge)" />
+                                                        }
+
+                                                        <span class="invoice-type-charge-operation p-1">
+                                                            @if (charge.ChargeOperation == (int)InvoiceTypeChargeOperations.Add)
+                                                            {
+                                                                @("+")
+                                                            }
+                                                            else
+                                                            {
+                                                                @("-")
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3 mt-2">
+                                                <div style="text-align: right;">
+                                                    <p style="margin-bottom: 0 !important;" id="optText">@charge.Amount</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="row mt-3">
+                                        <div class="col-md-12">
+                                            <p class="py-2" style="margin-bottom: 0 !important;">Charges that added to Invoice type will list here</p>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!--Discount-->
+                                <div class="row mt-1">
+                                    <div class="col-md-5 mt-2">
+                                        <p style="margin-bottom: 0 !important;">Discount :</p>
+                                    </div>
+                                    <div class="col-md-4 px-0">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mt-2" style="text-align: right;">
+                                            <p style="margin-bottom: 0 !important;" id="optText">
+                                                @(Math.Round(Model.TotalDiscount, 2))
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!--Total Net Amount-->
+                                <div class="row mt-1">
+                                    <div class="col-md-5 mt-2">
+                                        <p style="margin-bottom: 0 !important;">Net Amount :</p>
+                                    </div>
+                                    <div class="col-md-4 px-0">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mt-2" style="text-align: right;">
+                                            <p style="margin-bottom: 0 !important;" id="optText">
+                                                @(Math.Round(Model.NetAmount, 2))
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!--Tax category items-->
+                                @if (GroupedTaxCategoryItems.Count > 0)
+                                {
+                                    @foreach (var taxCategoryItem in GroupedTaxCategoryItems)
+                                    {
+                                        <div class="row mt-1">
+                                            <div class="col-md-5 mt-2">
+                                                <p style="margin-bottom: 0 !important;">@taxCategoryItem.TaxCategoryItemName</p>
+                                            </div>
+                                            <div class="col-md-4 px-0">
+                                                <div class="mt-2" style="text-align: right;">
+                                                    <p style="margin-bottom: 0 !important;" id="optText">
+                                                        @(taxCategoryItem.TaxAmount)
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                            </div>
+                                        </div>
+                                    }
+                                }
+
+                                <!--Total Tax Amount-->
+                                <div class="row mt-1">
+                                    <div class="col-md-5 mt-2">
+                                        <p style="margin-bottom: 0 !important;">Tax Amount :</p>
+                                    </div>
+                                    <div class="col-md-4 px-0">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mt-2" style="text-align: right;">
+                                            <p style="margin-bottom: 0 !important;" id="optText">
+                                                @(Math.Round(Model.TaxAmount, 2))
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!--Gross Amount-->
+                                <div class="row mt-1">
+                                    <div class="col-md-5 mt-2">
+                                        <p style="margin-bottom: 0 !important;">Gross Amount :</p>
+                                    </div>
+                                    <div class="col-md-4 px-0">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="mt-2" style="text-align: right;">
+                                            <p style="margin-bottom: 0 !important;" id="optText">
+                                                @(Math.Round(Model.GrossAmount, 2))
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--Terms and Conditions-->
+                <div class="row mt-4">
+                    <div class="col-md-6 col-12">
+                        <div class="form-group mt-2">
+                            <label class="form-label mt-0 me-1">Terms & Conditions :</label>
+                            <textarea placeholder="Enter the terms and conditions of your business to be displayed in your transaction" class="form-control" rows="4" @bind="Model.TermsandCondition"></textarea> <br>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-12">
+                        @*<label class="form-label">Attach File(s) to Estimate</label>
+                        <input id="demo" type="file" name="files" accept=".jpg, .png, image/jpeg, image/png" multiple="" class="ff_fileupload_hidden"><div class="ff_fileupload_wrap"><div class="ff_fileupload_dropzone_wrap"><button class="ff_fileupload_dropzone" type="button" aria-label="Browse, drag-and-drop, or paste files to upload"></button></div><table class="ff_fileupload_uploads"></table></div>
+                        <p style="font-size: 11px !important;">You can upload a maximum of 5 files, 5MB each</p>*@
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="page-footer-action d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+            <button type="button" class="btn btn-danger me-2 text-white" @onclick="async () => await Cancel()">Cancel</button>
+        </div>
+    </EditForm>
+</PageLayoutNew>
+
+@if (Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Sales || Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Sales_Return)
+{
+    <ModalCustomerNew @ref="childCustomerModal" Saved="(Func<IdnValuePair, Task>)HandleNewCustomerAdded" />
+}
+@if (Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Purchase || Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Purchase_Return)
+{
+    <ModalSupplierNew @ref="modalSupplier" Saved="(Func<IdnValuePair, Task>)HandleNewSupplierAdded" />
+}
+
+<ModalItem @ref="childItemModal" Saved="(Func<IdnValuePair, Task>)HandleNewItemAdded" /> 
+<ModalTaxCategory @ref="@childTaxCategory" CallbackWithIdnValue="(Func<IdnValuePair, Task>)HandleNewTaxCategoryAdded" />
+<ModalEntityAddress @ref="modalAddress" Saved="HandleNewAdressAdded" />
+
+@if (Model.CustomerEntityID is not null)
+{
+    <ModalPdfSendConfirmation @ref="modalPdfSendConfirmation" CustomerEntityID="Model.CustomerEntityID.Value" NavBackToUrl="invoice-view" GetPdfApiPath="inventory/get-invoice-pdf" />
+}
+
+@code {
+
+    [Parameter] public int InvoiceID { get; set; }
+    [Parameter] public int QuotationID { get; set; }
+
+    private InvoiceModel Model = new();
+    private InvoiceItemModel Footer = new();
+    private AddressModel NewAddressModel = new();
+    private QuotationInvoiceDefaultSettingsModel InvoiceSettings = new();
+    private List<IdnValuePair> Users = new();
+    private bool CanShowPage = false;
+
+    private DropdownSelect CustomerDropdown = new();
+    private DropdownSelect FooterItemDropdown = new();
+    private DropdownSelect RowItemDropdown = new();
+    private DropdownSelect AddressStateDropdown = new();
+    private DropdownSelect AddressCityDropdown = new();
+    private DropdownSelect CurrencyDropdown = new();
+    private DropdownSelect RowTaxCategoryDropdown = new();
+    private DropdownSelect FooterTaxCategoryDropdown = new();
+    private DropdownSelect PlaceOfSupplyDropdown = new();
+    private DropdownSelect SourceOfSupplyDropdown = new();
+    private ModalPdfSendConfirmation modalPdfSendConfirmation = new();
+
+    private ModalItem childItemModal = new();
+    private ModalTaxCategory childTaxCategory = new();
+
+    private string InvoiceTypeSelectID = "invoice-type-drop-down-select";
+    private string CountryDropdownID = "country-drop-down-select";
+    private string StateDropdownID = "state-drop-down-select";
+    private string CityDropdownID = "city-drop-down-select";
+    private string FooterTaxCategoryDropdoownID = "footer-tax-category-drop-down-select";
+    private string RowTaxCategoryDropdownID = "row-tax-category-drop-down-select";
+    private string InvoiceCurrecyDropdownID = "invoice-currency-drop-down";
+    private string InvoicePlaceOfSupplyDropdownID = "invoice-place-of-supply-drop-down";
+    private string InvoiceSourceOfSupplyDropdownID = "invoice-source-of-supply-drop-down";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Users = await API.GetAsync<List<IdnValuePair>>("common/get-client-users", true);
+        InvoiceSettings = await API.GetAsync<QuotationInvoiceDefaultSettingsModel>($"settings/get-invoice-default-settings", true);
+        if (InvoiceID == 0 && QuotationID > 0)
+        {
+            await ConvertQuotation();
+            HandleWholeInvoiceItemsCalculation();
+        }
+        else if (InvoiceID > 0)
+        {
+            await LoadInvoice();
+            HandleWholeInvoiceItemsCalculation();
+        }
+        else
+        {
+            Model = new();
+            IsBillingAddressSelected = false;
+            IsShippingAddressSelected = false;
+            Model.Subject = InvoiceSettings.Subject;
+            Model.CustomerNote = InvoiceSettings.CustomerNote;
+            Model.TermsandCondition = InvoiceSettings.TermsAndConditions;
+            Model.NeedShippingAddress = InvoiceSettings.NeedShippingAddress;
+            Model.CurrencyID = InvoiceSettings.CurrencyID;
+            Model.CurrencyName = InvoiceSettings.CurrencyName;
+            Model.PlaceOfSupplyID = InvoiceSettings.PlaceOfSupplyID;
+            Model.PlaceOfSupplyName = InvoiceSettings.PlaceOfSupplyName;
+        }
+        CanShowPage = true;
+        StateHasChanged();
+    }
+
+    #region Invoice Type
+
+    private async Task HandleInvoiceTypeSelected(DropdownItemSelectedCallbackModel data)
+    {
+        Model.InvoiceTypeID = data.ID;
+        Model.InvoiceTypeName = data.Value;
+        if (Model.InvoiceTypeID is not null)
+        {
+            var invoiceTypeData = await API.GetAsync<InvoiceTypeSelectedDetailsModel>($"inventory/get-invoice-type-details/{Model.InvoiceTypeID.Value}", true);
+            if (invoiceTypeData is not null)
+            {
+                Model.Prefix = invoiceTypeData.Prefix;
+                Model.InvoiceExtraChargeItems = invoiceTypeData.ExtraChargeItems;
+                Model.InvoiceTypeNatureID = invoiceTypeData.InvoiceTypeNatureID;
+            }
+        }
+        else
+        {
+            ResetInvoiceModel();
+        }
+    }
+    private void ResetInvoiceModel()
+    {
+        Model.Prefix = null;
+        Model.InvoiceExtraChargeItems = new();
+        Model.InvoiceTypeNatureID = null;
+        CustomerOrSupplierDataModel = new();
+        SelectedBillingAddress = new();
+        SelectedShippingAddress = new();
+        IsBillingAddressSelected = false;
+        IsShippingAddressSelected = false;
+    }
+
+    #endregion
+
+    #region Customer
+
+    private ModalCustomerNew childCustomerModal = new();
+    private string InvoiceCustomerSelectID = "customer-drop-down";
+    private async Task HandleCustomerSelected(DropdownItemSelectedCallbackModel data)
+    {
+        Model.CustomerEntityID = data.ID;
+        Model.CustomerName = data.Value;
+        await FetchCustomerOrSupplierData();
+    }
+    private async Task HandleNewCustomerButtonClick()
+    {
+        await childCustomerModal.OpenCustomerModal();
+    }
+    private async Task HandleNewCustomerAdded(IdnValuePair customer)
+    {
+        Model.CustomerEntityID = customer.ID;
+        Model.CustomerName = customer.Value;
+        await CustomerDropdown.RefreshList();
+        await FetchCustomerOrSupplierData();
+    }
+    private async Task HandleCustomerUpdateButtonClick(int customerEntityID)
+    {
+        await childCustomerModal.OpenCustomerModal(customerEntityID);
+    }
+
+    #endregion
+
+    #region Mail Recipient
+
+    private CustomerContactPersonModel NewContactPersonModel = new();
+    private async Task CloseCustomerContactPersonModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "contact-person-add-modal");
+    }
+    private async Task OpenCustomerContactPersonModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "contact-person-add-modal");
+    }
+    public async Task SaveMailRecipient()
+    {
+        NewContactPersonModel.CustomerEntityID = Model.CustomerEntityID;
+        var res = await API.PostAsync<ContactPersonAddResultModel, CustomerContactPersonModel>("customer/save-contact-person", NewContactPersonModel);
+        if (res != null)
+        {
+            Model.InvoiceMailReceipients = Model.InvoiceMailReceipients ?? new();
+            CustomerOrSupplierDataModel.MailReceipients.Add(new()
+                {
+                    EntityID = res.EntityID,
+                    EmailAddress = res.EmailAddress
+                });
+
+            Model.InvoiceMailReceipients.Add(new InvoiceMailReceipient()
+                {
+                    EntityID = res.EntityID,
+                });
+        }
+        NewContactPersonModel = new();
+        await CloseCustomerContactPersonModal();
+    }
+    private void HandleMailReciepientsSelectAllClicked(ChangeEventArgs e)
+    {
+        Model.InvoiceMailReceipients = new();
+        if (Convert.ToBoolean(e.Value))
+            CustomerOrSupplierDataModel.MailReceipients
+            .ForEach(mailReceipient =>
+                Model.InvoiceMailReceipients
+                .Add(new() { EntityID = mailReceipient.EntityID }));
+    }
+    private void HandleMailReciepientSelected(ChangeEventArgs e, MailRecipentsModel mailReciepient)
+    {
+        Model.InvoiceMailReceipients = Model.InvoiceMailReceipients ?? new();
+        if (Convert.ToBoolean(e.Value))
+            Model.InvoiceMailReceipients.Add(new() { EntityID = mailReciepient.EntityID });
+        else
+            Model.InvoiceMailReceipients.Remove(Model.InvoiceMailReceipients.Where(MR => MR.EntityID == mailReciepient.EntityID).First());
+    }
+
+    #endregion
+
+    #region Customer Or Supplier Common Functions
+
+    CustomerOrSupplierDataModel CustomerOrSupplierDataModel = new();
+    private async Task FetchCustomerOrSupplierData()
+    {
+        IsBillingAddressSelected = false;
+        IsShippingAddressSelected = false;
+        SelectedBillingAddress = new();
+        SelectedShippingAddress = new();
+        CustomerOrSupplierDataModel = new();
+        if (Model.CustomerEntityID is not null && (Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Sales || Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Sales_Return))
+        {
+            CustomerOrSupplierDataModel = await API.GetAsync<CustomerOrSupplierDataModel>($"customer/get-customer-details/{Model.CustomerEntityID.Value}", true);
+            await HandleCustomerDataLoaded();
+        }
+        if (Model.SupplierEntityID is not null && (Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Purchase || Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Purchase_Return))
+        {
+            CustomerOrSupplierDataModel = await API.GetAsync<CustomerOrSupplierDataModel>($"supplier/get-supplier-details/{Model.SupplierEntityID.Value}", true);
+            await HandleSupplierDataLoaded();
+        }
+    }
+    private async Task HandleCustomerDataLoaded()
+    {
+        if (CustomerOrSupplierDataModel.CountryID is null && Model.CustomerEntityID is not null)
+        {
+            await JS.ErrorMessage("Country for selected customer is not set yet, please choose a country first..");
+            await HandleCustomerUpdateButtonClick(Model.CustomerEntityID.Value);
+            Model.CustomerEntityID = null;
+            Model.CustomerName = null;
+            CustomerOrSupplierDataModel = new();
+            StateHasChanged();
+            return;
+        }
+        Model.CurrencyID = CustomerOrSupplierDataModel.CurrencyID;
+        await PlaceOfSupplyDropdown.RefreshList(CustomerOrSupplierDataModel.CountryID);
+        if (InvoiceID == 0)
+        {
+            if (CustomerOrSupplierDataModel.CustomerAddresses.Count > 0)
+            {
+                SetBiilingAddressAsSelected(CustomerOrSupplierDataModel.CustomerAddresses[0]);
+                if (Model.NeedShippingAddress)
+                    SetShippingAddressAsSelected(CustomerOrSupplierDataModel.CustomerAddresses[0]);
+            }
+        }
+    }
+    private async Task HandleSupplierDataLoaded()
+    {
+        if (CustomerOrSupplierDataModel.CountryID is null && Model.SupplierEntityID is not null)
+        {
+            await JS.ErrorMessage("Country for selected supplier is not set yet, please choose a country first..");
+            await modalSupplier.OpenSupplierModal(Model.SupplierEntityID.Value);
+            Model.CustomerEntityID = null;
+            Model.CustomerName = null;
+            CustomerOrSupplierDataModel = new();
+            StateHasChanged();
+            return;
+        }
+
+        Model.CurrencyID = CustomerOrSupplierDataModel.CurrencyID;
+        await SourceOfSupplyDropdown.RefreshList(CustomerOrSupplierDataModel.CountryID);
+        if (Model.InvoiceID == 0)
+        {
+            if (CustomerOrSupplierDataModel.CustomerAddresses.Count > 0)
+            {
+                SetBiilingAddressAsSelected(CustomerOrSupplierDataModel.CustomerAddresses[0]);
+                if (Model.NeedShippingAddress)
+                    SetShippingAddressAsSelected(CustomerOrSupplierDataModel.CustomerAddresses[0]);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Supplier
+
+    private ModalSupplierNew modalSupplier = new();
+    private string InvoiceSupplierSelectID = "supplier-drop-down";
+    private DropdownSelect SupplierSelectDropdown = new();
+    private async Task HandleSupplierSelected(DropdownItemSelectedCallbackModel data)
+    {
+        Model.SupplierEntityID = data.ID;
+        Model.SupplierName = data.Value;
+        StateHasChanged();
+        await FetchCustomerOrSupplierData();
+    }
+    private async Task HandleNewSupplierButtonClick()
+    {
+        await modalSupplier.OpenSupplierModal();
+    }
+    private async Task HandleNewSupplierAdded(IdnValuePair supplier)
+    {
+        Model.SupplierEntityID = supplier.ID;
+        Model.SupplierName = supplier.Value;
+        StateHasChanged();
+        await SupplierSelectDropdown.RefreshList();
+        await FetchCustomerOrSupplierData();
+    }
+    private async Task HandleSupplierUpdateButtonClick(int supplierEntityID)
+    {
+        await modalSupplier.OpenSupplierModal(supplierEntityID);
+    }
+
+    #endregion
+
+    #region Address
+
+    private ModalEntityAddress modalAddress = new();
+    private int CurrentAddressItemIndex = -1;
+    private bool IsAddingBillingAddress = true;
+    private async Task OpenAddressModal(int addressID = 0, bool isAddingBillingAddress = true)
+    {
+        IsAddingBillingAddress = isAddingBillingAddress;
+        int entityID = 0;
+        if (Model.CustomerEntityID is not null && (Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Sales || Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Sales_Return))
+            entityID = Model.CustomerEntityID.Value;
+        if (Model.SupplierEntityID is not null && (Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Purchase || Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Purchase_Return))
+            entityID = Model.SupplierEntityID.Value;
+        if (addressID > 0)
+            CurrentAddressItemIndex = CustomerOrSupplierDataModel
+            .CustomerAddresses
+            .IndexOf(CustomerOrSupplierDataModel
+                .CustomerAddresses
+                .Where(address => address.AddressID == addressID)
+                .First());
+        await modalAddress.OpenEntityAddressModal(entityID, addressID);
+    }
+    private void HandleNewAdressAdded(IdnValuePair address)
+    {
+        AddressView addressView = new()
+            {
+                AddressID = address.ID,
+                CompleteAddress = address.Value
+            };
+        if (CurrentAddressItemIndex == -1)
+            CustomerOrSupplierDataModel.CustomerAddresses.Add(addressView);
+        else
+            CustomerOrSupplierDataModel.CustomerAddresses[CurrentAddressItemIndex] = addressView;
+
+        if (IsAddingBillingAddress)
+            SetBiilingAddressAsSelected(addressView);
+        else
+            SetShippingAddressAsSelected(addressView);
+    }
+    private void HandleCustomerAddressSelected(AddressView address, bool isBillingAddress = true)
+    {
+        if (isBillingAddress)
+            SetBiilingAddressAsSelected(address);
+        else
+            SetShippingAddressAsSelected(address);
+    }
+    private void HandleCustomerAddressChangeClicked(bool isBillingAddress = true)
+    {
+        if (isBillingAddress)
+            IsBillingAddressSelected = false;
+        else
+            IsShippingAddressSelected = false;
+    }
+    private void HandleNeedShippingAddrssChecked(ChangeEventArgs e)
+    {
+        Model.NeedShippingAddress = Convert.ToBoolean(e.Value);
+        if (Model.NeedShippingAddress)
+        {
+            if (Model.ShippingAddressID == null)
+                SetShippingAddressAsSelected(CustomerOrSupplierDataModel.CustomerAddresses[0]);
+            else
+                SetShippingAddressAsSelected(CustomerOrSupplierDataModel.CustomerAddresses.Where(a => a.AddressID == Model.ShippingAddressID).First());
+        }
+        else
+        {
+            SelectedShippingAddress = new();
+            IsShippingAddressSelected = false;
+            Model.ShippingAddressID = null;
+        }
+    }
+
+    #region Billing Address
+
+    private AddressView SelectedBillingAddress = new();
+    private bool IsBillingAddressSelected = false;
+    private void SetBiilingAddressAsSelected(AddressView billingAddress)
+    {
+        SelectedBillingAddress = billingAddress;
+        IsBillingAddressSelected = true;
+        Model.BillingAddressID = billingAddress.AddressID;
+    }
+
+    #endregion
+
+    #region Shipping Address
+
+    private AddressView SelectedShippingAddress = new();
+    private bool IsNeedShippingAddress = false;
+    private bool IsShippingAddressSelected = false;
+    private void SetShippingAddressAsSelected(AddressView shippingAddress)
+    {
+        SelectedShippingAddress = shippingAddress;
+        IsShippingAddressSelected = true;
+        Model.ShippingAddressID = shippingAddress.AddressID;
+    }
+
+    #endregion
+
+    #endregion
+
+    #region Currecy
+
+    private void HandleCurrencySelected(DropdownItemSelectedCallbackModel currency)
+    {
+        Model.CurrencyID = currency.ID;
+        Model.CurrencyName = currency.Value;
+    }
+
+    #endregion
+
+    #region Place Of Supply
+
+    private async Task HandlePlaceOfSupplySelected(DropdownItemSelectedCallbackModel placeOfSupply)
+    {
+        Model.PlaceOfSupplyID = placeOfSupply.ID;
+        Model.PlaceOfSupplyName = placeOfSupply.Value;
+        if (Model.PlaceOfSupplyID is not null)
+            await FetchInvoiceItemsUpdationForPlaceOfSupplyOrSourceOfSupplyChange();
+    }
+
+    #endregion
+
+    #region Source Of Supply
+
+    private async Task HandleSourceOfSupplySelected(DropdownItemSelectedCallbackModel placeOfSupply)
+    {
+        Model.SourceOfSupplyID = placeOfSupply.ID;
+        Model.SourceOfSupplyName = placeOfSupply.Value;
+        if (Model.SourceOfSupplyID is not null)
+            await FetchInvoiceItemsUpdationForPlaceOfSupplyOrSourceOfSupplyChange();
+    }
+
+    #endregion
+
+    #region Item Variant
+
+    private async Task<InvoiceItemModel> FetchInvoiceItemDetails(int itemModelID)
+    {
+        ItemSelectedPostModel postModel = new()
+            {
+                ItemVariantID = itemModelID,
+                PlaceOfSupplyID = Convert.ToInt32(Model.PlaceOfSupplyID),
+            };
+
+        var quotationItem = await API.PostAsync<InvoiceItemModel, ItemSelectedPostModel>($"inventory/get-invoice-item-details", postModel);
+        return quotationItem;
+    }
+    private async Task HandleAddNewInvoiceItemButtonClick(int dropdownMode, int rowIndex = -1)
+    {
+        currentInvoiceItemIndex = rowIndex;
+        await childItemModal.OpenItemModal();
+    }
+    private async Task HandleNewItemAdded(IdnValuePair item)
+    {
+        await FooterItemDropdown.RefreshList();
+        await RowItemDropdown.RefreshList();
+        var invoiceItem = await FetchInvoiceItemDetails(item.ID);
+        HandleInvoiceItemCalculations(invoiceItem);
+        if (currentInvoiceItemIndex == -1)
+            Model.Items.Add(invoiceItem);
+        else
+            Model.Items[currentInvoiceItemIndex] = invoiceItem;
+    }
+
+    #endregion
+
+    #region Invoice Item
+
+    private int currentInvoiceItemIndex = -1;
+    private bool isAnyRowInEditMode = false;
+    private async Task HandleInvoiceItemSelected(DropdownItemSelectedCallbackModel itemModel, InvoiceItemModel invoiceItem)
+    {
+        if (Model.CustomerEntityID is null)
+        {
+            await JS.ErrorMessage("Please choose customer for the quotation");
+            return;
+        }
+        if (Model.PlaceOfSupplyID is null)
+        {
+            await JS.ErrorMessage("Please choose place of supply for the quotation");
+            return;
+        }
+        if (Model.CurrencyID is null)
+        {
+            await JS.ErrorMessage("Please choose a currency for the quotation");
+            return;
+        }
+
+        if (Model.Items.Count > 0)
+        {
+            InvoiceItemModel? existingItem = null;
+            existingItem = Model.Items
+                .Where(i => i.ItemVariantID == itemModel.ID)
+                .FirstOrDefault();
+
+            if (existingItem != null)
+            {
+                await JS.ErrorMessage("Item alredy added to the list, please choose a different one");
+                return;
+            }
+        }
+
+        invoiceItem.ItemVariantID = itemModel.ID;
+        invoiceItem.ItemName = itemModel.Value;
+        if (invoiceItem.ItemVariantID is not null)
+        {
+            currentInvoiceItemIndex = Model.Items.IndexOf(invoiceItem);
+            if (currentInvoiceItemIndex == -1)
+            {
+                Footer = await FetchInvoiceItemDetails(invoiceItem.ItemVariantID.Value);
+                HandleInvoiceItemCalculations(Footer);
+            }
+            else
+            {
+                invoiceItem = await FetchInvoiceItemDetails(invoiceItem.ItemVariantID.Value);
+                HandleInvoiceItemCalculations(invoiceItem);
+            }
+        }
+
+        StateHasChanged();
+    }
+    private void HandleInvoiceItemQuantityChange(InvoiceItemModel invoiceItem, ChangeEventArgs e)
+    {
+        invoiceItem.Quantity = Convert.ToInt32(e.Value);
+        HandleInvoiceItemCalculations(invoiceItem);
+    }
+    private void HandleInvoiceItemRateChange(InvoiceItemModel quotationItem, ChangeEventArgs e)
+    {
+        quotationItem.Rate = Convert.ToDecimal(e.Value);
+        HandleInvoiceItemCalculations(quotationItem);
+    }
+    private void HandleInvoiceItemDiscountChange(InvoiceItemModel quotationItem, ChangeEventArgs e)
+    {
+        quotationItem.Discount = Convert.ToDecimal(e.Value);
+        HandleInvoiceItemCalculations(quotationItem);
+    }
+    private async Task HandleInvoiceItemTaxCategorySelected(DropdownItemSelectedCallbackModel taxCategory, InvoiceItemModel quotationItem)
+    {
+        quotationItem.TaxCategoryID = taxCategory.ID;
+        quotationItem.TaxCategoryName = taxCategory.Value;
+        if (quotationItem.TaxCategoryID is not null)
+        {
+            var taxCategoryDetails = await FetchTaxCategoryDetails(quotationItem.TaxCategoryID.Value);
+            if (taxCategoryDetails is not null)
+            {
+                quotationItem.TaxCategoryID = taxCategoryDetails.TaxCategoryID;
+                quotationItem.TaxCategoryName = taxCategoryDetails.TaxCategoryName;
+                quotationItem.TaxPercentage = taxCategoryDetails.TaxPercentage;
+                quotationItem.TaxCategoryItems = taxCategoryDetails.TaxCategoryItems;
+                HandleInvoiceItemCalculations(quotationItem);
+            }
+        }
+    }
+    private async Task HandleInvoiceItemEditClick(InvoiceItemModel invoiceItem)
+    {
+        if (isAnyRowInEditMode)
+        {
+            await JS.ErrorMessage("There is already a row in edit mode, please complete it first");
+            return;
+        }
+
+        invoiceItem.IsRowInEditMode = true;
+        isAnyRowInEditMode = true;
+        await Task.Delay(50);
+    }
+    private string? ValidateInvoiceItem(InvoiceItemModel invoiceItem)
+    {
+        string? errorMessage = "";
+        var validationContext = new ValidationContext(invoiceItem, serviceProvider: null, items: null);
+        var validationResults = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(invoiceItem, validationContext, validationResults, validateAllProperties: true);
+        if (validationResults is not null)
+        {
+            foreach (var validationItem in validationResults)
+            {
+                errorMessage += validationItem.ErrorMessage + "\n";
+            }
+        }
+
+        if (invoiceItem.TaxPreferenceTypeID == (int)TaxPreferences.Taxable && invoiceItem.TaxCategoryID is null)
+            return errorMessage += "Please choose a tax category for the item \n";
+        else
+            return errorMessage;
+    }
+    private async Task HandleInvoiceItemUpdateClick(InvoiceItemModel invoiceItem)
+    {
+        if (invoiceItem.ItemVariantID == null)
+        {
+            await JS.ErrorMessage("Please choose a service first");
+            return;
+        }
+
+        if (invoiceItem.Quantity <= 0)
+        {
+            await JS.ErrorMessage("Quantity for the service should be above zero");
+            return;
+        }
+
+        var errorMessage = ValidateInvoiceItem(invoiceItem);
+        if (string.IsNullOrEmpty(errorMessage))
+        {
+            invoiceItem.IsRowInEditMode = false;
+            isAnyRowInEditMode = false;
+        }
+        else
+        {
+            await JS.ErrorMessage(errorMessage);
+        }
+    }
+    private async Task HandleAddFooterButtonClick()
+    {
+        if (Footer.ItemVariantID == null)
+        {
+            await JS.ErrorMessage("Please choose a service first");
+            return;
+        }
+
+        if (Footer.Quantity <= 0)
+        {
+            await JS.ErrorMessage("Quantity for the service should be above zero");
+            return;
+        }
+
+        var errorMessage = ValidateInvoiceItem(Footer);
+        if (string.IsNullOrEmpty(errorMessage))
+        {
+            Model.Items.Add(Footer);
+            Footer = new()
+                {
+                    IsRowInEditMode = true
+                };
+            HandleInvoiceSummaryCalculation();
+            HandleInvoiceItemsTaxCategoryItemGrouping();
+        }
+        else
+            await JS.ErrorMessage(errorMessage);
+    }
+    private async Task HandleInvoiceItemRemoveClick(InvoiceItemModel invoiceItem)
+    {
+        if (await JS.Confirm("Cofirm", "Are you sure you want to remove the invoice item '" + invoiceItem.ItemName + "'", SweetAlertMessageType.question, "Yes, Remove", "No, Don't Remove"))
+        {
+            Model.Items.Remove(invoiceItem);
+        }
+        HandleInvoiceSummaryCalculation();
+        HandleInvoiceItemsTaxCategoryItemGrouping();
+    }
+    private async Task FetchInvoiceItemsUpdationForPlaceOfSupplyOrSourceOfSupplyChange()
+    {
+        UpdateItemVariantsPostRequestModel postModel = new()
+            {
+                ItemVariantIDs = Model.Items.Select(qi => Convert.ToInt32(qi.ItemVariantID)).ToList()
+            };
+        if (Model.PlaceOfSupplyID is not null && (Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Sales || Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Sales_Return))
+            postModel.PlaceOfSupplyID = Convert.ToInt32(Model.PlaceOfSupplyID);
+        if (Model.SourceOfSupplyID is not null && (Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Purchase || Model.InvoiceTypeNatureID == (int)InvoiceTypeNatures.Purchase_Return))
+            postModel.PlaceOfSupplyID = Convert.ToInt32(Model.SourceOfSupplyID);
+
+        var updatedInvoiceItems = await API.PostAsync<List<InvoiceItemModel>, UpdateItemVariantsPostRequestModel>($"inventory/get-updated-invoice-items", postModel);
+        if (updatedInvoiceItems is not null)
+            HandelInvoiceItemUpdation(updatedInvoiceItems);
+    }
+    private void HandelInvoiceItemUpdation(List<InvoiceItemModel> updateQuotationItems)
+    {
+        foreach (var updatedQuotationItem in updateQuotationItems)
+        {
+            var existingInvoiceItem = Model.Items.Where(qi => qi.ItemVariantID == updatedQuotationItem.ItemVariantID).FirstOrDefault();
+            if (existingInvoiceItem is not null)
+            {
+                int rowIndex = Model.Items.IndexOf(existingInvoiceItem);
+                updatedQuotationItem.Quantity = existingInvoiceItem.Quantity;
+                updatedQuotationItem.Rate = existingInvoiceItem.Rate;
+                Model.Items[rowIndex] = updatedQuotationItem;
+                HandleInvoiceItemCalculations(Model.Items[rowIndex]);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Calculation
+
+    private void HandleWholeInvoiceItemsCalculation()
+    {
+        foreach (var invoiceItem in Model.Items)
+            HandleInvoiceItemCalculations(invoiceItem);
+    }
+    private void HandleInvoiceItemCalculations(InvoiceItemModel invoiceItem)
+    {
+        invoiceItem.TotalAmount = Math.Round(Convert.ToInt32(invoiceItem.Quantity) * invoiceItem.Rate, 2);
+        invoiceItem.NetAmount = Math.Round(invoiceItem.TotalAmount - invoiceItem.Discount, 2);
+        invoiceItem.TaxAmount = Math.Round(invoiceItem.NetAmount * (invoiceItem.TaxPercentage / 100));
+        invoiceItem.GrossAmount = Math.Round(invoiceItem.NetAmount + invoiceItem.TaxAmount, 2);
+        invoiceItem.TaxCategoryItems.ForEach(qi => qi.TaxAmount = Math.Round(invoiceItem.NetAmount * (qi.Percentage / 100), 2));
+        HandleInvoiceSummaryCalculation();
+        HandleInvoiceItemsTaxCategoryItemGrouping();
+    }
+    private void HandleInvoiceSummaryCalculation()
+    {
+        Model.TotalAmount = Math.Round(Model.Items.Sum(quotationItem => quotationItem.TotalAmount), 2);
+        Model.TotalDiscount = Math.Round(Model.Items.Sum(quotationItem => quotationItem.Discount), 2);
+        Model.NetAmount = Math.Round(Model.Items.Sum(quotationItem => quotationItem.NetAmount), 2);
+        Model.TaxAmount = Math.Round(Model.Items.Sum(quotationItem => quotationItem.TaxAmount), 2);
+        Model.GrossAmount = Math.Round(Model.Items.Sum(quotationItem => quotationItem.GrossAmount), 2);
+    }
+
+    #endregion
+
+    #region Tax Category
+
+    private List<TaxCategoryItemModel> GroupedTaxCategoryItems = new();
+    private async Task<TaxCategorySelectedGetModelNew> FetchTaxCategoryDetails(int taxCategoryID)
+    {
+        var result = await API.GetAsync<TaxCategorySelectedGetModelNew>($"settings/get-tax-category-details/{taxCategoryID}", true);
+        return result;
+    }
+    private async Task HandelAddNewTaxCategoryButtonClick(int dropdownMode, int rowIndex = -1)
+    {
+        currentInvoiceItemIndex = rowIndex;
+        await childTaxCategory.OpenTaxCategoryModal();
+    }
+    private async Task HandleNewTaxCategoryAdded(IdnValuePair taxCategory)
+    {
+        await FooterTaxCategoryDropdown.RefreshList();
+        await RowTaxCategoryDropdown.RefreshList();
+        var taxCategoryDetails = await FetchTaxCategoryDetails(taxCategory.ID);
+        if (taxCategoryDetails is not null)
+        {
+            InvoiceItemModel invoiceItem = new();
+            if (currentInvoiceItemIndex == -1)
+                invoiceItem = Footer;
+            else
+                invoiceItem = Model.Items[currentInvoiceItemIndex];
+            invoiceItem.TaxCategoryID = taxCategoryDetails.TaxCategoryID;
+            invoiceItem.TaxCategoryName = taxCategoryDetails.TaxCategoryName;
+            invoiceItem.TaxPercentage = taxCategoryDetails.TaxPercentage;
+            invoiceItem.TaxCategoryItems = taxCategoryDetails.TaxCategoryItems;
+            HandleInvoiceItemCalculations(invoiceItem);
+        }
+    }
+    private void HandleInvoiceItemsTaxCategoryItemGrouping()
+    {
+        GroupedTaxCategoryItems = Model.Items
+            .Where(qi => qi.TaxPreferenceTypeID is not null && qi.TaxPreferenceTypeID == (int)TaxPreferences.Taxable)
+            .SelectMany(item => item.TaxCategoryItems)
+            .GroupBy(item => item.TaxCategoryItemID)
+            .Select(group => new TaxCategoryItemModel
+                {
+                    TaxCategoryItemID = group.Key,
+                    TaxCategoryItemName = group.First().TaxCategoryItemName,
+                    Percentage = group.First().Percentage,
+                    TaxAmount = group.Sum(gItem => gItem.TaxAmount)
+                })
+            .ToList();
+    }
+
+    #endregion
+
+    #region Extra charge items
+
+    private void HandleExtraChargePercentageChange(ChangeEventArgs e, InvoiceChargeModel chargeItem)
+    {
+
+    }
+    private void HandleExtraChargeAmountChange(ChangeEventArgs e, InvoiceChargeModel chargeItem)
+    {
+
+    }
+
+    #endregion
+
+    #region Invoice FollowUp Assignees
+
+    private void HandleAssigneesSelectAllClicked(ChangeEventArgs e)
+    {
+        Model.InvoiceMailReceipients = new();
+        if (Users.Count > 0)
+        {
+            if (Convert.ToBoolean(e.Value))
+            {
+                Model.InvoiceMailReceipients = new();
+                Users.ForEach(user =>
+                    Model.InvoiceAssignees.Add(new() { EntityID = user.ID }));
+            }
+        }
+    }
+    private void HandleAssigneeSelected(ChangeEventArgs e, IdnValuePair user)
+    {
+        Model.InvoiceAssignees = Model.InvoiceAssignees ?? new();
+        if (Convert.ToBoolean(e.Value))
+            Model.InvoiceAssignees.Add(new() { EntityID = user.ID });
+        else
+            Model.InvoiceAssignees.Remove(Model.InvoiceAssignees.Where(assignee => assignee.EntityID == user.ID).First());
+    }
+
+    #endregion
+
+    #region Main Functions
+
+    private async Task ShowErrorMessage()
+    {
+        string? errorMessage = "";
+        var validationContext = new ValidationContext(Model, serviceProvider: null, items: null);
+        var validationResults = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(Model, validationContext, validationResults, validateAllProperties: true);
+        if (validationResults is not null)
+        {
+            foreach (var validationItem in validationResults)
+            {
+                errorMessage += validationItem.ErrorMessage + "\n";
+            }
+        }
+        await JS.ErrorMessage(errorMessage);
+    }
+    private async Task SaveInvoice()
+    {
+        if (await ValidateInvoice())
+        {
+            //Invoice tax items
+            Model.InvoiceTaxItems = GroupedTaxCategoryItems
+                .Select(taxCategoryItem => new InvoiceTaxItem
+                    {
+                        TaxCategoryItemID = taxCategoryItem.TaxCategoryItemID,
+                        TaxAmount = taxCategoryItem.TaxAmount
+                    })
+                .ToList();
+
+            if (await JS.Confirm("Confirm", "Would you like to proceed with generating the invoice PDF now, or would you prefer to do so later?", SweetAlertMessageType.question, "Generate now", "No, Later"))
+            {
+                Model.GenerateInvoicePdf = true;
+                var result = await API.PostAsync<MailDetailsModel, InvoiceModel>("inventory/save-invoice", Model);
+                if (result != null)
+                {
+                    Model.QuotationID = result.ID;
+                    await Task.Delay(100);
+                    await modalPdfSendConfirmation.OpenSendMailConfirmationModal(result);
+                }
+            }
+            else
+            {
+                var result = await API.PostAsync<InvoiceSuccessModel, InvoiceModel>("inventory/save-invoice", Model);
+                if (result != null)
+                    Nav.NavigateTo($"invoice-view/{result.InvoiceID}");
+            }
+        }
+    }
+    private async Task ConvertQuotation()
+    {
+        IsBillingAddressSelected = false;
+        IsShippingAddressSelected = false;
+        Model = await API.GetAsync<InvoiceModel>($"inventory/create-invoice-from-quotation/{QuotationID}", true);
+        if (Model.CustomerEntityID is not null)
+        {
+            DropdownItemSelectedCallbackModel customer = new() { ID = Model.CustomerEntityID, Value = Model.CustomerName };
+            await HandleCustomerSelected(customer);
+        }
+    }
+    private async Task LoadInvoice()
+    {
+        Model = await API.GetAsync<InvoiceModel>($"inventory/get-invoice/{InvoiceID}", true);
+        if (Model.CustomerEntityID is not null)
+        {
+            DropdownItemSelectedCallbackModel customer = new() { ID = Model.CustomerEntityID, Value = Model.CustomerName };
+            await HandleCustomerSelected(customer);
+            IsBillingAddressSelected = true;
+            SelectedBillingAddress = CustomerOrSupplierDataModel.CustomerAddresses.Where(adrs => adrs.AddressID == Model.BillingAddressID).First();
+
+            if (Model.ShippingAddressID != null)
+            {
+                IsShippingAddressSelected = true;
+                SelectedShippingAddress = CustomerOrSupplierDataModel.CustomerAddresses.Where(adrs => adrs.AddressID == Model.ShippingAddressID).First();
+                //IsNeedShippingAddress = true;
+            }
+        }
+        StateHasChanged();
+    }
+    private async Task<bool> ValidateInvoice()
+    {
+        if (Model.CurrencyID == null)
+        {
+            await JS.ErrorMessage("Please choose a currency");
+            return false;
+        }
+        else if (Model.PlaceOfSupplyID == null)
+        {
+            await JS.ErrorMessage("Please choose a place of supply");
+            return false;
+        }
+        else if (Model.Items.Count == 0)
+        {
+            await JS.ErrorMessage("Please add atleast one item for the item");
+            return false;
+        }
+
+        string? error = null;
+        foreach (var item in Model.Items)
+        {
+            error = ValidateInvoiceItem(item);
+            if (!string.IsNullOrEmpty(error))
+            {
+                error += "Validation error(s) for invoice '" + (item.ItemName) + "'\n" + error;
+                break;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            await JS.ErrorMessage(error);
+            return false;
+        }
+        return true;
+    }
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            if (InvoiceID == 0 && QuotationID > 0)
+            {
+                Nav.NavigateTo($"quotation-view/{QuotationID}");
+            }
+            else if (InvoiceID > 0 && QuotationID == 0)
+            {
+                Nav.NavigateTo($"invoice-view/{InvoiceID}");
+            }
+            else
+            {
+                Nav.NavigateTo("invoices");
+            }
+        }
+    }
+    private async Task ClearQuotationModel()
+    {
+        if (Model.InvoiceID == 0 && await JS.Confirm("Confirm?", "Are you sure you want to clear the data.?", SweetAlertMessageType.question, "Yes, Clear", "No, Cancel"))
+        {
+            Model = new();
+            Footer = new();
+            SelectedBillingAddress = new();
+            SelectedShippingAddress = new();
+            IsBillingAddressSelected = false;
+            IsShippingAddressSelected = false;
+            CustomerOrSupplierDataModel = new();
+            await FocusDropdown(InvoiceCustomerSelectID);
+        }
+        else
+        {
+            await JS.ErrorMessage("You cannot clear the quotation details that already saved");
+        }
+    }
+
+    #endregion
+
+    #region Other Functions
+
+    private async Task FocusElement(string elementID)
+    {
+        await JS.InvokeVoidAsync("focusElement", elementID);
+    }
+
+    private async Task FocusDropdown(string dropdownID)
+    {
+        await JS.InvokeVoidAsync("setDropdownFocus", dropdownID, "drop-down-focused");
+    }
+
+    #endregion
+}

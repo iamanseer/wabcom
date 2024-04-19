@@ -1,0 +1,266 @@
+﻿@page "/client-payments"
+@using PB.Model.Models;
+@using PB.Shared.Models
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.SuperAdmin.Client;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="ClientFilterSettings" OnFilterButtonClick="ApplyFilterTo" />
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    Name
+                                </th>
+                                <th>
+                                    Package
+                                </th>
+                                <th>
+                                    Amount
+                                </th>
+                                <th>
+                                    Disconnection Date
+                                </th>
+                                <th>
+                                    Payment Status
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in PaymentViewModel.Data.Select((value, i) => new { i, value }))
+                            {
+                                var entry = item.value;
+                                var index = item.i;
+                                <tr style="cursor:pointer">
+                                    <td>
+                                        @if (PaymentViewModel.PageIndex == 1)
+                                        {
+                                            @(index + 1)
+                                        }
+                                        else
+                                        {
+                                            @((PaymentViewModel.PageIndex * PaymentViewModel.PageSize) + (index + 1) - 10)
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @entry.Name
+                                    </td>
+
+                                    <td>
+                                        @entry.PackageName
+                                    </td>
+
+                                    <td>
+                                        @entry.Fee
+                                    </td>
+                                    <td>
+                                        @entry.DisconnectionDate
+                                    </td>
+                                    @if (entry.PaidStatus == (int)PaymentStatus.Pending)
+                                    {
+                                        <td><span class="badge bg-info">Pending</span></td>
+                                    }
+                                    else if (entry.PaidStatus == (int)PaymentStatus.Paid)
+                                    {
+                                        <td><span class="badge bg-secondary">Verifying</span></td>
+                                    }
+
+                                    <td>
+                                        @if (entry.PaidStatus == (int)PaymentStatus.Paid)
+                                        {
+                                            <button type="button" class="btn btn-info btn-md me-2" @onclick="async ()=> await ActiveAccount(entry.InvoiceID.Value)">
+                                                Verify
+                                            </button>
+                                        }
+                                    </td>
+
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="PaymentViewModel.PageSize" TotalCount="PaymentViewModel.TotalCount" TotalPages="PaymentViewModel.TotalPages" PageIndex="PaymentViewModel.PageIndex" LoadPageIndex="PageIndex" />
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+<div class="modal fade" id="modalverify">
+    <div class="modal-dialog modal-dialog-centered modal-md " role="document">
+        <EditForm Model="modalModel" OnValidSubmit="VerifyPament">
+            <div class="modal-content modal-content-demo">
+                <div class="modal-body">
+                    Payment Details
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+
+                        <InputTextBox Label="Reference No:" DivClass="col-md-12" @bind-Value="modalModel.PaymentRefNo" disabled />
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Receipt :
+                                </label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" @bind="fileName" />
+                                    <a class="btn btn-white btn-md me-2 input-group-text" style="min-width:40px;" href="@modalModel.FileName" download="@modalModel.FileName" target="_blank">
+                                        <i class="fa fa-download" style="color:var(--primary-bg-color)"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="formg-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Reciept Voucher Type :
+                                    <span class="ms-1" style="color:red">*</span>
+                                </label>
+                                <select class="form-control form-select" id="address-type-select" @bind="modalModel.ReceiptVoucherTypeID">
+                                    <option value="0" selected>choose</option>
+                                    @foreach (var voucherType in VoucherTypes)
+                                    {
+                                        <option value="@(voucherType.ID)" selected>@voucherType.Value</option>
+                                    }
+                                </select>
+                                <ValidationMessage For="() => modalModel.ReceiptVoucherTypeID"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary w-20">Verify</button>
+                    <button type="button" class="btn btn-danger" @onclick="async ()=> await RejectPayment(modalModel.InvoiceID)">Reject</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+
+@code {
+    private PagedList<ClientPaymentListModel> PaymentViewModel = new();
+    private PagedListPostModelWithFilter SearchModel = new();
+    private PaymentVerificationViewModel modalModel = new();
+    protected override async Task OnInitializedAsync()
+    {
+        ClientFilterSettings.SortMenuItems = SortMenuItems;
+        ClientFilterSettings.Heading = "Payments";
+        ClientFilterSettings.NeedAddButton = false;
+        ClientFilterSettings.NeedSortOption = false;
+        ClientFilterSettings.NeedFilterOption = true;
+        ClientFilterSettings.IdnValueFilters = StatusEnumFilterList;
+        SortMenuItems = SortMenuItems;
+        await LoadData();
+    }
+
+
+    #region Sort, Filter
+
+    List<FilterIdnValueInputModel> StatusEnumFilterList = new()
+    {
+        new()
+        {
+            FiledName = "PaidStatus",
+            DisplayName = "Payment Status",
+            EnumObject =PaymentStatus.Pending,
+            AvoidEnumValues=new(){(int)PaymentStatus.Verified,(int)PaymentStatus.Rejected,(int)PaymentStatus.CheckoutNotComplete},
+        },
+
+    };
+
+    HeaderSettingsModel ClientFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by client name..",
+            NeedSortOption = false,
+            NeedFilterOption = true,
+        };
+
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    private List<FilterSortInputModel> SortMenuItems = new()
+    {
+        new()
+        {
+            DisplayName = "Name",
+            FieldName = "Name"
+        },
+        new()
+        {
+            DisplayName = "Package",
+            FieldName = "PackageName"
+        },
+    };
+
+    #endregion
+
+    private async Task LoadData()
+    {
+        PaymentViewModel = await API.PostAsync<PagedList<ClientPaymentListModel>, PagedListPostModelWithFilter>("support/get-all-payment-details", SearchModel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+
+    #region Acc active
+
+    string fileName = "";
+    List<IdnValuePair> VoucherTypes = new();
+
+    private async Task ActiveAccount(int invoiceID)
+    {
+        await JS.InvokeVoidAsync("ShowModal", "modalverify");
+        modalModel = await API.GetAsync<PaymentVerificationViewModel>($"support/get-payment-details/{invoiceID}", true);
+        if(modalModel != null)
+        {
+            fileName = modalModel.FileName is not null ? modalModel.FileName.Substring(0, modalModel.FileName.LastIndexOf('/')) : "";
+            VoucherTypes = await API.PostAsync<List<IdnValuePair>, CommonSearchModel>($"common/get-list-of-voucher-types", new CommonSearchModel() { ReadDataOnSearch = false });
+        }
+    }
+
+    private async Task VerifyPament()
+    {
+        PaymentVerificationPostModel postModel = new() { InvoiceID = modalModel.InvoiceID, RecieptVoucherTypeID = modalModel.ReceiptVoucherTypeID.Value };
+        var res = await API.PostAsync<BaseSuccessResponse, PaymentVerificationPostModel>($"support/approve-invoice-payment", postModel);
+        if (res != null)
+        {
+            await JS.InvokeVoidAsync("HideModal", "modalverify");
+            await LoadData();
+        }
+
+    }
+
+    private async Task RejectPayment(int invoiceId)
+    {
+        var res = await API.GetAsync<BaseSuccessResponse>($"support/reject-invoice-payment/{invoiceId}", true);
+        if (res != null)
+        {
+            await JS.InvokeVoidAsync("HideModal", "modalverify");
+            await LoadData();
+        }
+    }
+
+
+    #endregion
+}

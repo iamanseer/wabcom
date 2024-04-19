@@ -1,0 +1,143 @@
+﻿@page "/ec_wishlists"
+@using PB.Shared.Models.Common
+@using PB.Shared.Models.eCommerce.WishList
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    @if (IsHeaderReady)
+                    {
+                        <ListPageHeader Settings="WishListHeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" />
+                    }
+                 </div>
+                <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Sl No.
+                                        </th>
+                                        <th>
+                                            Name
+                                        </th>
+                                        <th>
+                                            Item Name
+                                        </th>
+                                        <th>
+                                            Added On
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in WishListPagedList.Data.Select((value, i) => new { i, value }))
+                                    {
+                                        var entry = item.value;
+                                        var index = item.i;
+                                        <tr>
+
+                                            <td>
+                                                @if (WishListPagedList.PageIndex == 1)
+                                                {
+                                                    @(index + 1)
+                                                }
+                                                else
+                                                {
+                                                    @((WishListPagedList.PageIndex * WishListPagedList.PageSize) + (index + 1) - 10)
+                                                }
+                                            </td>
+                                            <td>
+                                                @entry.FirstName
+                                            </td>
+                                            <td>
+                                                @entry.ItemName
+                                            </td>
+                                            <td>
+                                                @(((entry.AddedOn.Value != null ? entry.AddedOn.Value.ToString("dd/MM/yyyy") : "--/--/--")))
+                                            </td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <PaginationCustom PageSize="WishListPagedList.PageSize" TotalCount="WishListPagedList.TotalCount" TotalPages="WishListPagedList.TotalPages" PageIndex="WishListPagedList.PageIndex" LoadPageIndex="PageIndex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+    private PagedList<EC_WishListViewModel> WishListPagedList = new();
+    private PagedListPostModelWithFilter searchmodel = new();
+    HeaderSettingsModel WishListHeaderSettings = new();
+    private bool IsHeaderReady = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+       
+        WishListHeaderSettings = new()
+            {
+                Heading = "Wishlist",
+                SearchPlaceHolder = "Search by item name..",
+                NeedAddButton = false,
+                NeedSortOption = true,
+                SortMenuItems = SortMenuItems,
+                NeedFilterOption=true,
+                DateFilters = DateFilterList,
+               // IdnValueFilters = FilterInputItems,
+            };
+        IsHeaderReady = true;
+        await LoadData();
+    }
+
+    List<FilterDateInputModel> DateFilterList = new()
+        {
+            new()
+            {
+                FieldName = "AddedOn",
+                DisplayName = "Date"
+            }
+        };
+    List<FilterIdnValueInputModel> FilterInputItems = new()
+        {
+            new()
+            {
+                DisplayName = "Item Name",
+                FiledName = "W.ItemVariantID",
+                CustomOptionApiPath = "ec_common/get-list-of-ec-item-varients"
+            }
+        };
+    List<FilterSortInputModel> SortMenuItems = new()
+        {
+            new()
+            {
+                DisplayName = "Customer Name",
+                FieldName = "FirstName"
+            },
+            new()
+            {
+                DisplayName = "Item Name",
+                FieldName = "ItemName"
+            },
+        };
+    private async Task LoadData()
+    {
+        WishListPagedList = await API.PostAsync<PagedList<EC_WishListViewModel>, PagedListPostModelWithFilter>("ec_customer/get-wishlist-paged-list", searchmodel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        searchmodel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        searchmodel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+}

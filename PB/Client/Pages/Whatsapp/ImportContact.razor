@@ -1,0 +1,92 @@
+﻿@page "/import-contact"
+@using PB.Shared.Models.WhatsaApp;
+@using PB.Shared.Tables
+@using System.Net.Http.Headers;
+using System.IO;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row page-header ">
+
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 style="margin-bottom: 0 !important;">Import Contacts</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="col-6">
+                            <ServerMessage/>
+                            <EditForm Model="Model" OnValidSubmit="UploadFile">
+                                <DataAnnotationsValidator />
+                                <div class="row">
+
+                                    <div class="mt-2">
+                                        <div class="input-group  mt-1">
+                                            <div class="custom-file">
+                                                <InputFile OnChange="OnInputFileChange" class="custom-file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" type="file" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-2 mr-3 mt-4">
+                                        <button type="submit" class="btn btn-primary ">@Localizer["Import"]</button>
+                                    </div>
+
+                                </div>
+                            </EditForm>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+@code {
+
+    private List<IdnValuePair> Templates = new();
+    FileUploadModel Model = new();
+    TemplateVariableListModel Variables = new();
+    List<WhatsappBroadcastRecipientSaveModel> Receipients;
+    MediaUpload? HeaderMedia;
+
+
+    #region Importdata
+
+
+    IBrowserFile file;
+    private byte[] buffer;
+    public void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        file = e.File;
+    }
+
+    public async Task<FileUploadResultModel> UploadFile()
+    {
+        @if (file != null)
+        {
+            using var content = new MultipartFormDataContent();
+
+            try
+            {
+                var fileContent = new StreamContent(file.OpenReadStream(50000000));
+
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+                content.Add(
+                    content: fileContent,
+                    name: "\"files\"",
+                    fileName: file.Name);
+            }
+            catch (Exception ex)
+            {
+
+            }
+            return await API.PostAsync<FileUploadResultModel>("whatsapp/import-contact", content);
+        }
+        return null;
+    }
+
+    #endregion
+
+}
+

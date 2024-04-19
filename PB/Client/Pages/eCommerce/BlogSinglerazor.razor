@@ -1,0 +1,202 @@
+﻿@page "/blog"
+@page "/blog/{blogID:int}"
+@using PB.Shared.Models.eCommerce.SEO;
+<PageLayoutNew>
+    <EditForm Model="@Model" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+
+                <div class="col-12">
+                    <div class="card" style="min-height:500px;">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Blog Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align: left;">
+                                            Name :
+                                        </label>
+                                        <input name="g-name" type="text" class="form-control w-100" @bind="Model.Name">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Date :</label>
+                                        <input type="date" class="form-control" @bind="Model.Date">
+                                        <ValidationMessage For="()=>Model.Date" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align: left;">
+                                            BodyContent :
+                                        </label>
+                                        <textarea class="form-control" placeholder="" rows="6" @bind="Model.BodyContent"></textarea> <br>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align: left;">
+                                            AuthorName :
+                                        </label>
+                                        <input name="g-name" type="text" class="form-control w-100" @bind="Model.AuthorName">
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align: left;">
+                                            AuthorDescription :
+                                        </label>
+                                        <textarea class="form-control" placeholder="" rows="2" @bind="Model.AuthorDescription"></textarea> <br>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Short Description :</label>
+                                        <textarea class="form-control" placeholder="" rows="2" @bind="Model.ShortDescription"></textarea> <br>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Modified Date :</label>
+                                            <input type="date" class="form-control" @bind="Model.ModifiedDate">
+                                            <ValidationMessage For="()=>Model.Date" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Slug URL :</label>
+                                        <textarea class="form-control" placeholder="" rows="2" @bind="Model.SlugURL"></textarea> <br>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Facebook ink :</label>
+                                        <textarea class="form-control" placeholder="" rows="2" @bind="Model.FacebookLink"></textarea> <br>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align: left;">
+                                            Meta Tittle :
+                                        </label>
+                                        <input name="g-name" type="text" class="form-control w-100" @bind="Model.MetaTittle">
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align: left;">
+                                            Meta Description :
+                                        </label>
+                                        <textarea class="form-control" placeholder="" rows="2" @bind="Model.MetaDescription"></textarea> <br>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Insta Link :</label>
+                                        <textarea class="form-control" placeholder="" rows="2" @bind="Model.InstaLink"></textarea> <br>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">LinkedIn Link :</label>
+                                        <textarea class="form-control" placeholder="" rows="2" @bind="Model.LinkedInLink"></textarea> <br>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 pe-0">
+                                    <Image @ref="Media" MediaID="Model.MediaID" FolderName="Testimonial" DivClass="col-md-8" />
+                                </div>
+                            </div>
+                            @if (Tags.Count > 0)
+                            {
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="mt-2 d-flex flex-row">
+                                            <label class="form-label" style="display: inline;">Assign To | </label>
+                                            @*<div style="width:100px" class="py-2">
+                                                <input type="checkbox" id="assigneeSelectAll" class="d-none" @onchange=" (ChangeEventArgs e) => HandleAssigneesSelectAllClicked(e)" />
+                                               
+                                                        <label class="form-label ms-2 text-info" style="display: inline;cursor:pointer;" for="assigneeSelectAll">
+                                                            <i class="fa fa-check text-success" aria-hidden="true"></i>
+                                                            Select All
+                                                        </label>
+                                                  
+                                                       
+                                                  
+                                            </div>*@
+                                        </div>
+
+                                        <div class="mt-2 border p-1 d-flex flex-row">
+                                            @for (int i = 0; i < Tags.Count; i++)
+                                            {
+                                                IdnValuePair assignee = Tags[i];
+                                                bool isAssigned = Model.BlogTags is not null && Model.BlogTags.Count > 0 && Model.BlogTags.Where(user => user.TagID == assignee.ID).FirstOrDefault() is not null ? true : false;
+                                                <div class="form-check form-check-inline bx-border">
+                                                    <input class="form-check-input" type="checkbox" checked="@(isAssigned?"checked":null)" id="@("assignee-"+assignee.ID)" @onchange="(ChangeEventArgs e) => HandleAssigneeSelected(e, assignee)">
+                                                    
+                                                    <label class="form-check-label ms-2" for="@("assignee-"+assignee.ID)">
+                                                        @assignee.Value
+                                                    </label>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="page-footer-action d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary me-2">Save</button>
+            </div>
+        </div>
+    </EditForm>
+</PageLayoutNew>
+@code {
+    [Parameter] public int blogID { get; set; }
+    private BlogModel Model = new();
+    private List<IdnValuePair> Tags = new();
+    Image Media;
+    int? TagCount;
+    protected override async Task OnInitializedAsync()
+    {
+        if (blogID != 0)
+        {
+           Model = await API.GetAsync<BlogModel>($"seo/get-blog/{blogID}"); 
+        }
+        
+        Tags = await API.GetAsync<List<IdnValuePair>>("seo/get-tags", true);
+    }
+    async Task Save()
+    {
+        Model.MediaID = await Media.UploadImage();
+        var res = await API.PostAsync<BaseSuccessResponse, BlogModel>("seo/save-Blog", Model);
+        if (res != null)
+        {
+            await JS.SuccessMessage("Saved Successfully");
+            Nav.NavigateTo("blog-list");
+        }
+    }
+    private void HandleAssigneeSelected(ChangeEventArgs e, IdnValuePair user)
+    {
+        Model.BlogTags = Model.BlogTags ?? new();
+        if (Convert.ToBoolean(e.Value))
+            Model.BlogTags.Add(new() { TagID = user.ID });
+        else
+            Model.BlogTags.Remove(Model.BlogTags.Where(assignee => assignee.TagID == user.ID).First());
+    }
+}

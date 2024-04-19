@@ -1,0 +1,937 @@
+﻿@page "/enquiry"
+@page "/enquiry/{EnquiryId:int}"
+@page "/enquiry/{EnquiryId:int}/{ContactID:int}"
+
+@using PB.CRM.Model.Enum;
+@using PB.Client.Shared.Inventory.Customer
+@using PB.Client.Shared.Inventory.Item
+@using PB.Model.Models;
+@using PB.Shared.Models;
+@using PB.Shared.Models.CRM.Enquiry;
+@using PB.Shared.Models.CRM;
+@using PB.Shared.Models.Common;
+@attribute [Authorize(Roles = "Enquiry")]
+
+@if (ShowComponent)
+{
+    <PageLayoutNew>
+        <EditForm Model="Model" OnValidSubmit="SaveEnquiry" autocomplete="off">
+            <DataAnnotationsValidator />
+            <div class="main-container container-fluid">
+                <div class="row page-header ">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 style="margin-bottom: 0 !important;">Enquiry Details</h5>
+                            </div>
+                            <div class="card-body">
+
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Date :</label>
+                                            <input type="date" class="form-control" @bind="Model.Date" id="@DatePickerID">
+                                            <ValidationMessage For="()=>Model.Date" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-5">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Customer :</label>
+                                            <div class="input-group">
+                                                @if (Model.CustomerEntityID == null)
+                                                {
+                                                    <DropdownSelect DropdownID="@CustomerDropdownSelect"
+                                                                    DivClass="col-md-12 px-0"
+                                                                    IsRequired="true"
+                                                                    IsAddOptionNeed="true"
+                                                                    ReadDataOnSearch="true"
+                                                                    Mode="(int)DropdownModes.Customer"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                    RoleName="Customer"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.CustomerEntityID, Value=Model.CustomerName})"
+                                                                    ItemSelected="ItemSelected"
+                                                                    NewButtonClicked="AddNewItem"
+                                                                    NewButtonText="Add New Customer">
+                                                        <ValidationMessage For="()=>Model.CustomerEntityID" />
+                                                    </DropdownSelect>
+                                                }
+                                                else
+                                                {
+                                                    <DropdownSelect DropdownID="@CustomerDropdownSelect"
+                                                                    DivClass="col-md-11 px-0"
+                                                                    IsRequired="true"
+                                                                    IsAddOptionNeed="true"
+                                                                    ReadDataOnSearch="true"
+                                                                    Mode="(int)DropdownModes.Customer"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                    RoleName="Customer"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.CustomerEntityID, Value=Model.CustomerName})"
+                                                                    ItemSelected="ItemSelected"
+                                                                    NewButtonClicked="AddNewItem"
+                                                                    NewButtonText="Add New Customer" />
+
+                                                    <div class="col-md-1 px-0">
+                                                        <button class="btn btn-light" type="button" id="button-addon2" @onclick="async () => await OpenCustomerModal(Model.CustomerEntityID.Value)">
+                                                            <i class="fa fa-pencil"></i>
+                                                        </button>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @if (Model.EnquiryID == 0)
+                                    {
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1">Enquiry Number :</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text" style="background-color:var(--primary-bg-color);">
+                                                        @("EN")
+                                                    </span>
+                                                    <input type="text" class="form-control" placeholder="enquiry number" value="New Enquiry" style="pointer-events:none" disabled>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1">Enquiry Number :</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text" style="background-color:var(--primary-bg-color);">
+                                                        @("EN")
+                                                    </span>
+                                                    <input type="text" class="form-control" @bind="Model.EnquiryNo" style="pointer-events:none" disabled>
+                                                </div>
+                                                <ValidationMessage For="() => Model.EnquiryNo" />
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="col-md-5">
+                                        <div class="form-group">
+                                            <label class="form-label" style="text-align: left; margin-top: 0 !important;">Lead Quality :</label>
+                                            <select id="lead-quality-select" class="form-control form-select" @bind="Model.LeadQuality">
+                                                <option value="0" selected> Choose </option>
+                                                <option value="@((int)LeadQualities.Hot)">Hot</option>
+                                                <option value="@((int)LeadQualities.Warm)">Warm</option>
+                                                <option value="@((int)LeadQualities.Cold)">Cold</option>
+                                            </select>
+                                            <ValidationMessage For="() => Model.LeadQuality" />
+                                        </div>
+                                    </div>
+
+                                    <DropdownSelect DivClass="col-md-5"
+                                                    Label="Lead Through:"
+                                                    IsRequired="false"
+                                                    IsAddOptionNeed="true"
+                                                    ReadDataOnSearch="false"
+                                                    ValidationFor="() => Model.LeadThroughID"
+                                                    Mode="(int)DropdownModes.LeadThrough"
+                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                    ItemSelected="ItemSelected"
+                                                    SelectedItem="new DropdownSelectedItemModel(){ID = Model.LeadThroughID,Value = Model.LeadThroughName}"
+                                                    NewButtonClicked="AddNewItem"
+                                                    NewButtonText="Lead Through" />
+
+                                    <div class="col-md-5">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Next Followup Date :</label>
+                                            <input type="date" class="form-control" @bind="Model.FirstFollowUpDate" id="followup-date-picker">
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-10">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Description</label>
+                                            <textarea name="" class="textarea form-control" id="enquiry-description-text-area" rows="5" @bind="Model.Description"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 style="margin-bottom: 0 !important;">Enquiry Items</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="">
+                                        <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+                                            <thead>
+                                                <tr>
+
+                                                    <th width="50px">
+                                                        Sl No
+                                                    </th>
+
+                                                    <th>
+                                                        Item Name
+                                                    </th>
+
+                                                    <th>
+                                                        Quantity
+                                                    </th>
+
+                                                    <th>
+                                                        Description
+                                                    </th>
+
+                                                    <th>
+                                                        Action
+                                                    </th>
+
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @if (Model.EnquiryItem != null && Model.EnquiryItem.Count > 0)
+                                                {
+                                                    @foreach (var item in Model.EnquiryItem)
+                                                    {
+                                                        <tr>
+                                                            @if (!item.IsEditMode)
+                                                            {
+                                                                <td style="width:30px">
+                                                                    <div class="d-flex align-items-center jusify-content-center">
+                                                                        <label>@item.RowIndex</label>
+                                                                    </div>
+                                                                </td>
+
+                                                                <td>
+                                                                    @item.ItemName
+                                                                </td>
+
+                                                                <td>
+                                                                    @item.Quantity
+                                                                </td>
+
+                                                                <td>
+                                                                    @item.Description
+                                                                </td>
+
+                                                                <td style="width:100px;">
+                                                                    <div class="d-flex justify-content-center align-items-center">
+                                                                        <ActionEdit Clicked="async () => await SwitchToRowEditMode(item)" />
+                                                                        <ActionDelete Clicked="async () => await RemoveRow(item)" />
+                                                                    </div>
+                                                                </td>
+                                                            }
+                                                            else
+                                                            {
+                                                                <td style="width:30px">
+                                                                    <div class="d-flex align-items-center jusify-content-center">
+                                                                        <label>@item.RowIndex</label>
+                                                                    </div>
+                                                                </td>
+
+                                                                <td class="px-1" style="max-width:300px">
+                                                                    <DropdownSelect DropdownID="@(RowItemDropdownID+item.RowIndex)" @ref="@RowItemDropdownSelect"
+                                                                                    DivClass="col-md-12 px-0"
+                                                                                    FormGroupClass="form-group mb-0"
+                                                                                    IsAddOptionNeed="true"
+                                                                                    ReadDataOnSearch="true"
+                                                                                    RoleName="Item"
+                                                                                    Mode="(int)DropdownModes.Item"
+                                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = item.ItemVariantID, Value = item.ItemName})"
+                                                                                    ItemSelected="ItemSelected"
+                                                                                    NewButtonText="New Item"
+                                                                                    NewButtonClicked="AddNewItem" />
+                                                                </td>
+
+                                                                <td class="px-1">
+                                                                    <div class="px-0">
+                                                                        @if (item.ItemVariantID == null)
+                                                                        {
+                                                                            <input type="text" class="form-control" value="0" disabled />
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <input type="text" class="form-control" id="@(RowItemQuantityBoxID+item.RowIndex)" @bind-value="item.Quantity">
+                                                                        }
+                                                                    </div>
+                                                                </td>
+
+                                                                <td class="px-1">
+                                                                    <input type="text" class="form-control" @bind-value="item.Description">
+                                                                </td>
+
+                                                                <td style="width:100px;" class="px-1">
+                                                                    <div class="d-flex justify-content-center align-items-center">
+                                                                        <ActionDone ButtonID="@("row-action-done-"+item.RowIndex)" Clicked="async () => await SwitchToRowDefaultMode(item)" />
+                                                                    </div>
+                                                                </td>
+                                                            }
+                                                        </tr>
+                                                    }
+
+                                                }
+                                            </tbody>
+                                            <tfoot>
+                                                <tr>
+
+                                                    <td style="width:30px" class="d-flex align-items-center jusify-content-center">
+                                                        @Footer.RowIndex
+                                                    </td>
+
+                                                    <td class="px-1" style="max-width:300px">
+                                                        <DropdownSelect DropdownID="@(FooterItemDropdownID)" @ref="@FooterItemDropdownSelect"
+                                                                        DivClass="col-md-12 px-0"
+                                                                        FormGroupClass="form-group mb-0"
+                                                                        IsAddOptionNeed="true"
+                                                                        ReadDataOnSearch="true"
+                                                                        RoleName="Item"
+                                                                        Mode="(int)DropdownModes.Item"
+                                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Footer.ItemVariantID, Value = Footer.ItemName})"
+                                                                        ItemSelected="ItemSelected"
+                                                                        NewButtonText="New Item"
+                                                                        NewButtonClicked="AddNewItem" />
+                                                    </td>
+
+                                                    <td class="px-1" style="width:100px">
+                                                        @if (Footer.ItemVariantID == null)
+                                                        {
+                                                            <input type="text" class="form-control" value="0" disabled />
+                                                        }
+                                                        else
+                                                        {
+                                                            <input type="text" class="form-control" id="@FooterItemQuantityBoxID" @bind-value="@Footer.Quantity">
+
+                                                        }
+                                                    </td>
+
+                                                    <td class="px-1">
+                                                        <input type="text" class="form-control" @bind-value="Footer.Description">
+                                                    </td>
+
+                                                    <td style="width:100px;" class="px-1">
+                                                        <div class="d-flex justify-content-evenly">
+                                                            <ActionAdd ButtonID="footer-add-button" Clicked="async () => await AddFooterToModel()" />
+                                                        </div>
+                                                    </td>
+
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                @if (EnquiryUsers != null && EnquiryUsers.Count > 0)
+                                {
+                                    <div class="row mt-2">
+                                        <div class="col-md-12">
+                                            <div class="mt-2">
+                                                <label class="form-label" style="display: inline;">Assign To | </label>
+                                                <input type="checkbox" id="assigneeSelectAll" class="d-none" @onchange=" (ChangeEventArgs e) => HandleAssigneesSelectAllClicked(e)" />
+                                                @if (Model.FollowupAssignees.Where(fA => fA.IsAssigned).Count() != EnquiryUsers.Count)
+                                                {
+                                                    <label class="form-label ms-2 text-success" style="display: inline;cursor:pointer;" for="assigneeSelectAll">Select All</label>
+                                                }
+                                                else
+                                                {
+                                                    <label class="form-label ms-2 text-info" style="display: inline;cursor:pointer;" for="assigneeSelectAll">Deselect All</label>
+                                                }
+                                            </div>
+
+                                            <div class="mt-2 border p-1 d-flex flex-row">
+                                                @for (int i = 0; i < EnquiryUsers.Count; i++)
+                                                {
+                                                    var salesPerson = EnquiryUsers[i];
+
+                                                    <div class="form-check form-check-inline bx-border">
+                                                        <input class="form-check-input" type="checkbox" checked="@(salesPerson.IsAssigned?"checked":null)" id="@("assignee-"+salesPerson.EntityID)" @onchange="(ChangeEventArgs e) => HandleAssigneeSelected(e, salesPerson)">
+                                                        <img class="ms-2" src="/assets/images/user.svg" style="width: 20px;" alt="">
+                                                        <label class="form-check-label ms-2" for="@("assignee-"+salesPerson.EntityID)">
+                                                            @salesPerson.Name
+                                                        </label>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-danger error-message-div-page py-1 d-none" id="div-Error-1" role="alert">
+                        <!--Bad Request Errors will display here-->
+                    </div>
+                    <FormValidator @ref="FormValidator">
+                    </FormValidator>
+                </div>
+            </div>
+
+            <div class="page-footer-action d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary me-2">Save</button> @*@onclick="async () => await SaveEnquiry()"*@
+                <button type="button" class="btn btn-secondary me-2" @onclick="ClearEnquiry">Clear</button>
+                <button type="button" class="btn btn-danger me-2" @onclick="Cancel">Cancel</button>
+            </div>
+        </EditForm>
+    </PageLayoutNew>
+
+
+    <!--Lead Through Modal-->
+    <div class="modal fade" id="LeadModal">
+        <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+            <div class="modal-content modal-content-demo">
+                <EditForm Model="NewLeadThroughModel" OnValidSubmit="SaveLead" autocomplete="off">
+                    <DataAnnotationsValidator />
+                    <div class="modal-header">
+                        <h6 class="modal-title fw-bold">Lead Through</h6><button type="button" aria-label="Close" class="btn-close" @onclick="(async() =>await HideLeadThroughModal())"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1" style="text-align:left">Lead Name :</label>
+                                    <input type="text" class="form-control" label="Name" @bind="NewLeadThroughModel.Name" placeholder="Lead Name">
+                                    <ValidationMessage For="()=>NewLeadThroughModel.Name" />
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" type="submit">Save</button>
+                        <button class="btn btn-danger" type="button" @onclick="@(async ()=>await HideLeadThroughModal())">Close</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+
+    <!--End Lead Through Modal-->
+    <ModalCustomerNew @ref="@customerChildModal" Saved="CustomerAdded" />
+    <ModalItem @ref="@modalItem" Saved="ItemAdded" />
+}
+
+@code {
+    [Parameter] public int EnquiryId { get; set; }
+    [Parameter] public int ContactID { get; set; }
+
+    private EnquiryModel Model = new();
+    private EnquiryItemModel Footer = new() { RowIndex = 1, IsEditMode = true };
+
+    private ModalCustomerNew customerChildModal = new();
+    private ModalItem modalItem = new();
+    FormValidator? FormValidator;
+
+    private DropdownSelect? FooterItemDropdownSelect;
+    private DropdownSelect? RowItemDropdownSelect;
+
+    private int currentRowIndex = -1;
+
+    private bool isAnyRowInEditMode = false;
+    private bool hasUnsavedChanges = false;
+    private bool IsEnquiryNumberEditMode = false;
+    private bool IsEnquiryNumberValid = false;
+    private bool IsViewMode = false;
+    private bool ShowComponent = false;
+
+    private string CustomerDropdownSelect = "enquiry-customer-drop-down-select";
+    private string EnquiryNumberBoxID = "voucher-number-box";
+    private string DatePickerID = "enquiry-date-picker";
+
+    private string RowItemDropdownID = "row-item-select-drop-down-";
+    private string RowItemQuantityBoxID = "row-item-qty-box-";
+
+    private string FooterItemDropdownID = "footer-item-select-drop-down";
+    private string FooterItemQuantityBoxID = "footer-item-qty-box";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (EnquiryId != 0)
+        {
+            await LoadEnquiry();
+            Footer.RowIndex = Model.EnquiryItem.Count + 1;
+        }
+        else if (ContactID != 0)
+        {
+            Model = await API.GetAsync<EnquiryModel>($"crm/create-enquiry-from-chat/{ContactID}", true);
+            IsEnquiryNumberValid = true;
+        }
+        else
+        {
+            IsViewMode = false;
+            IsEnquiryNumberValid = true;
+        }
+        await GetBranchUsers();
+        ShowComponent = true;
+    }
+
+    private List<EnquiryAssigneeModel>? EnquiryUsers = null;
+    #region Branch Related Functions
+
+    private async Task GetBranchUsers()
+    {
+        EnquiryUsers = await API.GetAsync<List<EnquiryAssigneeModel>>("common/get-branch-users", true);
+
+        if (Model.FollowupAssignees != null && Model.FollowupAssignees.Count > 0 && EnquiryUsers != null && EnquiryUsers.Count > 0)
+        {
+            for (int i = 0; i < Model.FollowupAssignees.Count; i++)
+            {
+                var assignee = Model.FollowupAssignees[i];
+                if (assignee.IsAssigned)
+                {
+                    EnquiryUsers.Where(bu => bu.EntityID == assignee.EntityID).First().IsAssigned = true;
+                }
+            }
+        }
+    }
+
+    #endregion
+
+    #region Enquiry Number Generation and Validation
+
+    private async Task SwitchToEnquiryNumberEditMode()
+    {
+        IsEnquiryNumberEditMode = true;
+        await Task.Delay(50);
+        await FormValidator.FocusElement(EnquiryNumberBoxID);
+    }
+
+    private async Task SwitchToEnquiryNumberNonEditMode()
+    {
+        if (IsEnquiryNumberValid)
+        {
+            IsEnquiryNumberEditMode = false;
+            await Task.Delay(50);
+            await FormValidator.FocusElement("lead-quality-select");
+        }
+        else
+        {
+            await JS.ErrorMessage("Enquiry number is not valid");
+        }
+    }
+
+    private int LastValidEnquiryNumber;
+    private async Task ValidateEnquiryNumberChange()
+    {
+        @if (Model.EnquiryNo > 0)
+        {
+            var res = await API.GetAsync<int>($"crm/get-enquiry-number/{Model.EnquiryNo}", true);
+            if (res == 0)
+            {
+                IsEnquiryNumberValid = true;
+                await SwitchToEnquiryNumberNonEditMode();
+            }
+            else
+            {
+                if (await JS.Confirm("Confirm", "There is a enquiry entry with '" + Model.EnquiryNo + "', Do you want to load entry.?", SweetAlertMessageType.question, "Yes, load entry", "No, I need new entry"))
+                {
+                    EnquiryId = res;
+                    IsEnquiryNumberEditMode = false;
+                    IsViewMode = true;
+                    await Task.Delay(100);
+                    await LoadEnquiry();
+                }
+                else
+                {
+                    Model.EnquiryNo = LastValidEnquiryNumber;
+                    IsEnquiryNumberValid = true;
+                    await SwitchToEnquiryNumberNonEditMode();
+                }
+            }
+        }
+        else
+        {
+            IsEnquiryNumberValid = false;
+            await JS.ErrorMessage("Enquiry number should be above zero");
+            return;
+
+        }
+    }
+
+    #endregion
+
+    #region Main Functions
+
+    private async Task LoadEnquiry()
+    {
+        Model = await API.GetAsync<EnquiryModel>($"crm/get-enquiry/{EnquiryId}", true);
+    }
+
+    private async Task SaveEnquiry()
+    {
+        var result = await API.PostAsync<EnquiryAddResultModel, EnquiryModel>("crm/save-enquiry", Model);
+        if (result != null)
+        {
+            Model = new EnquiryModel();
+            Footer = new EnquiryItemModel();
+            LastValidEnquiryNumber = 0;
+            await Task.Delay(100);
+            Nav.NavigateTo($"enquiry-view/{result.EnquiryID}/1");
+        }
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            if (Model.EnquiryID == 0)
+            {
+                Nav.NavigateTo("enquiries");
+            }
+
+            if (Model.EnquiryID > 0)
+            {
+                Nav.NavigateTo($"enquiry-view/{EnquiryId}/1");
+            }
+        }
+    }
+
+    private async Task ClearEnquiry()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to clear the data", SweetAlertMessageType.question, "Yes, Clear All", "No, Don't Clear"))
+        {
+            EnquiryId = 0;
+            Model = new();
+            Footer = new();
+            hasUnsavedChanges = false;
+            IsEnquiryNumberEditMode = false;
+            hasUnsavedChanges = false;
+            Model.EnquiryNo = LastValidEnquiryNumber = await API.GetAsync<int>($"crm/generate-enquiry-number", true);
+        }
+    }
+
+    public async Task FocusElement(string elementID, bool isDropdownBox = false)
+    {
+        if (isDropdownBox)
+            await JS.InvokeVoidAsync("setDropdownFocus", elementID, "drop-down-focused");
+        else
+            await JS.InvokeVoidAsync("focusElement", elementID);
+    }
+
+    #endregion
+
+    #region Customer Added
+
+    private async Task CustomerAdded(IdnValuePair customer)
+    {
+        Model.CustomerEntityID = customer.ID;
+        Model.CustomerName = customer.Value;
+        await FormValidator.FocusElement("lead-quality-selec");
+    }
+
+    private async Task OpenCustomerModal(int customerEntityId)
+    {
+        await customerChildModal.OpenCustomerModal(customerEntityId);
+    }
+
+    #endregion
+
+    #region Item Added
+
+    private async Task ItemAdded(IdnValuePair item)
+    {
+        if (currentRowIndex == -1)
+        {
+            Footer.ItemVariantID = item.ID;
+            Footer.ItemName = item.Value;
+            FooterItemDropdownSelect.AddToData(item);
+            await FormValidator.FocusElement(FooterItemQuantityBoxID);
+        }
+        else
+        {
+            Model.EnquiryItem[currentRowIndex].ItemVariantID = item.ID;
+            Model.EnquiryItem[currentRowIndex].ItemName = item.Value;
+            RowItemDropdownSelect.AddToData(item);
+            await FormValidator.FocusElement(RowItemQuantityBoxID + (currentRowIndex + 1));
+            await RowItemDropdownSelect.RefreshList();
+        }
+        await FooterItemDropdownSelect.RefreshList();
+    }
+
+    #endregion
+
+    #region FollowUp Assignees
+
+    private void HandleAssigneesSelectAllClicked(ChangeEventArgs e)
+    {
+        if (EnquiryUsers != null && EnquiryUsers.Count > 0)
+        {
+            if (Convert.ToBoolean(e.Value))
+            {
+                Model.FollowupAssignees = new();
+                for (int i = 0; i < EnquiryUsers.Count; i++)
+                {
+                    EnquiryUsers[i].IsAssigned = true;
+                    Model.FollowupAssignees.Add(EnquiryUsers[i]);
+                }
+            }
+            else
+            {
+                Model.FollowupAssignees = new();
+                for (int i = 0; i < EnquiryUsers.Count; i++)
+                {
+                    EnquiryUsers[i].IsAssigned = false;
+                    Model.FollowupAssignees.Add(EnquiryUsers[i]);
+                }
+            }
+        }
+    }
+
+    private void HandleAssigneeSelected(ChangeEventArgs e, EnquiryAssigneeModel assignee)
+    {
+        if (Convert.ToBoolean(e.Value))
+        {
+            var existAssignee = Model.FollowupAssignees.Where(fa => fa.EntityID == assignee.EntityID).FirstOrDefault();
+            if (existAssignee == null)
+            {
+                assignee.IsAssigned = true;
+                Model.FollowupAssignees.Add(assignee);
+            }
+        }
+        else
+        {
+            var existAssignee = Model.FollowupAssignees.Where(fa => fa.EntityID == assignee.EntityID).FirstOrDefault();
+            if (existAssignee != null)
+            {
+                existAssignee.IsAssigned = false;
+                Model.FollowupAssignees.Remove(existAssignee);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Dropdown Related Functions
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Customer:
+
+                Model.CustomerEntityID = data.ID;
+                Model.CustomerName = data.Value;
+                await FormValidator.FocusElement(CustomerDropdownSelect, true);
+
+                break;
+
+            case (int)DropdownModes.Item:
+
+                await HandleItemSelectedTasks(data);
+
+                break;
+
+            case (int)DropdownModes.LeadThrough:
+
+                Model.LeadThroughID = data.ID;
+                Model.LeadThroughName = data.Value;
+
+                break;
+        }
+    }
+
+    private async Task HandleItemSelectedTasks(DropdownItemSelectedCallbackModel item)
+    {
+        if (Model.EnquiryItem.Count > 0)
+        {
+            EnquiryItemModel? existingItem = null;
+            existingItem = Model.EnquiryItem
+                .Where(i => i.ItemVariantID == item.ID)
+                .FirstOrDefault();
+
+
+            if (existingItem != null)
+            {
+                await JS.ErrorMessage("Item alredy added to the list, please choose a different one");
+                return;
+            }
+        }
+
+        if (currentRowIndex == -1)
+        {
+            Footer.ItemVariantID = item.ID;
+            Footer.ItemName = item.Value;
+            await FocusElement(FooterItemQuantityBoxID);
+        }
+        else
+        {
+            Model.EnquiryItem[currentRowIndex].ItemVariantID = item.ID;
+            Model.EnquiryItem[currentRowIndex].ItemName = item.Value;
+            await FocusElement(RowItemQuantityBoxID + (currentRowIndex + 1));
+        }
+    }
+
+    private async Task AddNewItem(int mode)
+    {
+        switch (mode)
+        {
+            case (int)DropdownModes.Customer:
+                await customerChildModal.OpenCustomerModal();
+                break;
+
+            case (int)DropdownModes.Item:
+                await modalItem.OpenItemModal();
+                break;
+
+            case (int)DropdownModes.LeadThrough:
+                await OpenLeadThroughModal();
+                break;
+        }
+    }
+
+    #endregion
+
+    #region Enquiry Item Row
+
+    private async Task HandleEnquiryItemSelected(DropdownItemSelectedCallbackModel item)
+    {
+
+        if (Model.EnquiryItem.Count > 0)
+        {
+            EnquiryItemModel? existingItem = null;
+            existingItem = Model.EnquiryItem
+                .Where(i => i.ItemVariantID == item.ID)
+                .FirstOrDefault();
+            if (existingItem != null)
+            {
+                await JS.ErrorMessage("Item alredy added to the list, please choose a different one");
+                return;
+            }
+        }
+
+        if (currentRowIndex == -1)
+        {
+            Footer.ItemVariantID = item.ID;
+            Footer.ItemName = item.Value;
+            await FocusElement(FooterItemQuantityBoxID);
+        }
+        else
+        {
+            Model.EnquiryItem[currentRowIndex].ItemVariantID = item.ID;
+            Model.EnquiryItem[currentRowIndex].ItemName = item.Value;
+            await FocusElement(RowItemQuantityBoxID + (currentRowIndex + 1));
+        }
+    }
+
+    private async Task SwitchToRowEditMode(EnquiryItemModel row)
+    {
+        if (!isAnyRowInEditMode)
+        {
+            currentRowIndex = Model.EnquiryItem.IndexOf(row);
+            Model.EnquiryItem[currentRowIndex].IsEditMode = true;
+            isAnyRowInEditMode = true;
+            await Task.Delay(50);
+            await FormValidator.FocusElement(RowItemDropdownID + currentRowIndex, true);
+        }
+        else
+        {
+            await JS.ErrorMessage("There is already a row in edit mode, please complete it first");
+            await FormValidator.FocusElement("row-action-done-" + currentRowIndex + 1);
+            return;
+        }
+    }
+
+    private async Task SwitchToRowDefaultMode(EnquiryItemModel row)
+    {
+        if (await FormValidator.ValidateModel(row))
+        {
+            Model.EnquiryItem[currentRowIndex].IsEditMode = false;
+            isAnyRowInEditMode = false;
+            currentRowIndex = -1;
+            hasUnsavedChanges = true;
+            await FormValidator.FocusElement(FooterItemDropdownID, true);
+        }
+    }
+
+    private async Task RemoveRow(EnquiryItemModel row)
+    {
+        if (await JS.Confirm("Cofirm", "Are you sure you want to remove the enquiry item", SweetAlertMessageType.question, "Yes, Remove", "No, Don't Remove"))
+        {
+            var index = Model.EnquiryItem.IndexOf(row);
+            if (index == Model.EnquiryItem.Count - 1)
+                Model.EnquiryItem.Remove(row);
+            else
+            {
+                for (int i = index; i < Model.EnquiryItem.Count; i++)
+                {
+                    Model.EnquiryItem[i].RowIndex -= 1;
+                }
+                Model.EnquiryItem.Remove(row);
+            }
+
+            hasUnsavedChanges = true;
+            await FormValidator.FocusElement(FooterItemDropdownID, true);
+            // await FocusDropdown(FooterItemDropdownID);
+            Footer.RowIndex = Model.EnquiryItem.Count + 1;
+            // SetDataUpdatedMode();
+        }
+
+
+    }
+
+    private async Task AddFooterToModel()
+    {
+        if (Footer.ItemVariantID == null)
+        {
+            await JS.ErrorMessage("Please choose an item name");
+            return;
+        }
+        if (Footer.Quantity == 0)
+        {
+            await JS.ErrorMessage("Add atleast 1 Quantity");
+            return;
+        }
+
+
+        currentRowIndex = -1;
+        Footer.IsEditMode = false;
+        Model.EnquiryItem.Add(Footer);
+
+        Footer = new()
+            {
+                RowIndex = Model.EnquiryItem.Count + 1,
+                IsEditMode = true
+            };
+
+
+    }
+
+    #endregion
+
+    #region LeadThrough
+
+    private LeadThroughModel NewLeadThroughModel = new();
+
+    private async Task SaveLead()
+    {
+        var res = await API.PostAsync<LeadThroughAddResultModel, LeadThroughModel>("settings/save-lead", NewLeadThroughModel);
+        if (res != null)
+        {
+            Model.LeadThroughID = res.LeadThroughID;
+            Model.LeadThroughName = res.LeadThroughName;
+            NewLeadThroughModel = new();
+            await HideLeadThroughModal();
+        }
+
+    }
+
+    private async Task HideLeadThroughModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "LeadModal");
+    }
+
+    private async Task OpenLeadThroughModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "LeadModal");
+    }
+
+    #endregion
+}
+

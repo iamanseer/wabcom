@@ -1,0 +1,87 @@
+﻿@page "/newsletter-list"
+@using PB.Shared.Models.eCommerce.SEO;
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Sl No.
+                                        </th>
+                                        <th>
+                                            Subject
+                                        </th>
+                                        
+                                        <th>
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in NewLetterList.Data.Select((value, i) => new { i, value }))
+                                    {
+                                        var entry = item.value;
+                                        var index = item.i;
+                                        <tr>
+
+                                            <td>
+                                                @if (NewLetterList.PageIndex == 1)
+                                                {
+                                                    @(index + 1)
+                                                }
+                                                else
+                                                {
+                                                    @((NewLetterList.PageIndex * NewLetterList.PageSize) + (index + 1) - 10)
+                                                }
+                                            </td>
+                                            <td>
+                                                @entry.Subject
+                                            </td>
+                                           
+                                            <td>
+
+                                                <button type="button" class="btn btn-danger" @onclick="()=>Delete(entry.ID.Value)"><i class="fa fa-trash "></i></button>
+                                            </td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <PaginationCustom PageSize="NewLetterList.PageSize" TotalCount="NewLetterList.TotalCount" TotalPages="NewLetterList.TotalPages" PageIndex="NewLetterList.PageIndex" LoadPageIndex="PageIndex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+@code {
+    private PagedList<NewLetterModel> NewLetterList = new();
+    private PagedListPostModelWithFilter searchmodel = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        NewLetterList = await API.PostAsync<PagedList<NewLetterModel>, PagedListPostModelWithFilter>("seo/get-all-news-letter", searchmodel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        searchmodel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    async Task Delete(int id)
+    {
+        if (await API.DeleteAsync("seo/delete-newsletter", id, true, Localizer["Confirm"], Localizer["Are you sure you want to delete?"], Localizer["Confirm"], Localizer["Cancel"]))
+        {
+            await JS.SuccessMessage(Localizer["Deleted Successfully"]);
+            await LoadData();
+        }
+    }
+}

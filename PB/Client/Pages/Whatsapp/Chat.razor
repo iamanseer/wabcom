@@ -1,0 +1,1938 @@
+﻿@page "/chat"
+@using Microsoft.AspNetCore.SignalR.Client
+@using PB.Shared.Enum.WhatsApp;
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Tables
+@using System.Diagnostics;
+@using System;
+@using System.Windows;
+@using System.Collections;
+@using System.Drawing;
+@using Microsoft.VisualBasic;
+@using System.Data;
+@using System.Collections.Generic;
+@using System.Runtime.InteropServices;
+@using System.Net.Http.Headers;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Tables.Whatsapp;
+
+<PageLayoutNew NewMessageInInbox="RefreshChat" NewChatStatusUpdate="UpdateStatus">
+     <div class="main-container container-fluid">
+        <div class="row page-header ">
+        @if (WhatsappAccounts.Count>0)
+        {
+            <div class="row row-sm">
+                <div class="col-sm-12 col-md-12 col-lg-12 col-xl-3">
+                    <div class="card overflow-hidden d-none d-lg-block">
+                        <div class="main-content-app pt-0 main-chat-2 overflow-auto">
+                            <div class="main-content-left main-content-left-chat">
+                                <div class="card-body d-flex" id="profile">
+                                    <div class="main-img-user online"><img id="profile-img" src="/_content/Pb.ComponentHelper/img/profile.png" alt="avatar"></div>
+                                    <div class="main-chat-msg-name">
+                                        <h6>@(WhatsappAccounts.Where(s=>s.ID==WhatsappAccountID).FirstOrDefault().Value)</h6>
+                                        <span class="dot-label bg-success"></span><small class="me-3">Available</small>
+                                    </div>
+                                
+                                </div>
+                            
+                                <!-- main-chat-header -->
+                                <div class="card-body pb-2">
+                                    <div class="d-flex">
+                                        <button type="button" class="btn btn-primary me-2" @onclick="ShowAddNewContactModal"><i class="fe fe-plus"></i></button>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" @bind="ChatSearchModel.SearchString" placeholder="Search ...">
+                                            <span class="input-group-text btn btn-primary" @onclick="@(async()=>await LoadChatList())"> <i class="fa fa-search"></i></span>
+                                        </div>
+                                    </div>
+                                
+                                </div>
+                                <div class="tab-menu-heading border-top mt-3">
+                                    <div class="tabs-menu1">
+                                        <ul class="nav panel-tabs d-flex justify-content-around">
+                                            <li><a href="#ChatList" class="active" data-bs-toggle="tab">Messages</a></li>
+                                            <li><a href="#ChatContacts" data-bs-toggle="tab">Contacts</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="tab-content main-chat-list flex-2 main-chat-contacts-slider">
+                                    <!--chat-list -->
+                                    <div class="tab-pane active" id="ChatList">   
+                                        <ul class="px-0">
+                                        @foreach (var item in WhatsappChatLists)
+                                        {
+                                            <div class="wrap">
+                                                <div class="media new border-top-0" id="chatpresent" @onclick="@(async ()=>await LoadChatHistory(@item.ContactID,true))">
+                                                    <div class="main-img-user online">
+                                                        <img alt="" src="/_content/Pb.ComponentHelper/img/profile.png">
+                                                        @if (item.UnreadMessages > 0)
+                                                        {
+                                                            <span>@item.UnreadMessages</span>
+                                                        }
+                                                    </div>
+                                                    <div class="media-body">
+                                                        <div class="media-contact-name">
+                                                            <span>@item.Name</span> <span>@item.MessageOn</span>
+                                                        </div>
+                                                        <p class="preview">
+                                                            @if (!string.IsNullOrEmpty(item.Message))
+                                                            {
+                                                                @if (@item.Message.Length > 32)
+                                                                {
+                                                                    @($"{item.Message.Substring(0,32)}...")
+                                                                }
+                                                                else
+                                                                {
+                                                                    @item.Message
+                                                                }
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>                                         
+                                            </div>
+                                            }
+                                        </ul>                  
+                                    </div>
+                                    <!-- chat-list -->
+
+                                    <!--chat-contacts-->
+                                    <div class="tab-pane" id="ChatContacts">
+                                        <div>
+                                            @*<div class="py-4 px-6 fw-bold">@(WhatsappContacts.GroupBy(c=>c.Name.First()).Select(c=>c.Key))</div>*@
+                                            @foreach (var item in WhatsappContacts)
+                                            {
+                                                @if (OldCharecter == '\0')
+                                                {
+                                                    OldCharecter=@item.Name.First();
+                                                }
+                                                @if (OldCharecter != @item.Name.First())
+                                                {
+                                                    OldCharecter = @item.Name.First();
+                                                    <div class="py-4 px-6 -fwbold">@OldCharecter</div>
+                                                }   
+                                                <div class="d-flex align-items-center media">
+                                                    <div class="mb-0 me-2">
+                                                        <div class="main-img-user online">
+                                                            <img alt="" src="/_content/Pb.ComponentHelper/img/profile.png">
+                                                        </div>
+                                                    </div>
+                                                    <div class="align-items-center justify-content-between">
+                                                        <div class="media-body ms-2">
+                                                            <div class="media-contact-name">
+                                                                <span for="flexRadioDefault1">@item.Name</span>
+                                                            </div>
+                                                            <div class="d-flex align-items-center">
+                                                                <p class="text-muted fs-13">@item.Phone</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>                           
+                                    <div class="ps__rail-x" style="left: 0px; bottom: 0px;"><div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div></div><div class="ps__rail-y" style="top: 0px; right: 0px;"><div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 0px;"></div></div>
+                                </div>
+
+                                <!-- main-chat-list -->
+                            </div>
+                            <div class="ps__rail-x" style="left: 0px; bottom: 0px;"><div class="ps__thumb-x" tabindex="0" style="left: 0px; width: 0px;"></div></div><div class="ps__rail-y" style="top: 0px; height: 105px; right: 0px;"><div class="ps__thumb-y" tabindex="0" style="top: 0px; height: 10px;"></div></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-12 col-md-12 col-lg-12 col-xl-6">
+                    <div class="card">
+                        <div class="main-content-app pt-0">
+                            <div class="main-content-body main-content-body-chat h-100 ">
+                                @if (ContactId != 0)
+                                {
+                                    <div class="main-chat-header pt-3 d-block d-sm-flex">
+                                        <div class="back-btn d-md-none">
+                                            <a class="icons-list-item w-40p h-40"><i class="ion-ios7-arrow-back"></i></a>
+                                        </div>
+                                        @if (ChatHeader != null)
+                                        {
+                                            <div class="main-img-user online"><img alt="avatar" src="/_content/Pb.ComponentHelper/img/profile.png"></div>
+                                            <div class="main-chat-msg-name mt-2">
+                                                <h6>@ChatHeader.Name</h6>
+                                                <small>@ChatHeader.Phone</small>
+                                                @*<span class="dot-label bg-success"></span><small class="me-3">online</small>*@
+                                            </div>
+
+                                            <div>
+                                            <button type="button" class="btn btn-icon  btn-primary mx-2" @onclick="CreateEnquiry"><i class="fa fa-cart-plus me-1"></i>Create Enquiry</button>
+                                        </div>
+                                         @if (ChatHeader.SupportChatStarted)
+                                         {
+                                        <div>
+                                            <button type="button" class="btn btn-icon  btn-primary mx-2" @onclick="EndChatSession"><i class="fa fa-power-off me-1"></i>End Chat Session</button>
+                                        </div>
+                                         }
+                                        }  
+                                        
+
+                                        @*<div class="d-flex ms-auto">
+ <div class="assigned-users dropdown">
+  <a href="#" class="avatars__item agent-solo" name="test" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><img class="avatar" src="https://randomuser.me/api/portraits/women/26.jpg" alt="" /></a>
+  <div class="dropdown-menu dropdown-menu-end">
+   <a class="dropdown-item" href="javascript:void(0)">
+    <div class="account-dropdown">
+     <img alt="profile-user" class="avatar avatar-xl brround cover-image" src="https://randomuser.me/api/portraits/women/26.jpg" />
+     <h5 class="text-dark mb-0 fs-14 fw-semibold mt-2">Ariana Monino</h5>
+     <small class="text-muted fs-13">Administrator</small>
+     <button type="button" class="btn btn-danger btn-sm mb-1">Remove</button>
+    </div>
+   </a>
+  </div>
+  <a href="#" class="avatars__item" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><img class="avatar" src="https://randomuser.me/api/portraits/men/29.jpg" alt="" /></a>
+  <div class="dropdown-menu dropdown-menu-end">
+   <a class="dropdown-item" href="javascript:void(0)">
+    <div class="account-dropdown">
+     <img alt="profile-user" class="avatar avatar-xl brround cover-image" src="https://randomuser.me/api/portraits/men/29.jpg" />
+     <h5 class="text-dark mb-0 fs-14 fw-semibold mt-2">Monino</h5>
+     <small class="text-muted fs-13">Administrator</small>
+     <button type="button" class="btn btn-danger btn-sm mb-1">Remove</button>
+    </div>
+   </a>
+  </div>
+  <a href="#" class="avatars__item"><img class="avatar" src="https://randomuser.me/api/portraits/women/78.jpg" alt="" /></a>
+  <a href="#" class="avatars__item"><img class="avatar" src="https://randomuser.me/api/portraits/men/55.jpg" alt="" /></a>
+  <a href="#" class="avatars__item"><img class="avatar" src="https://via.placeholder.com/300/09f/fff.png" alt="" /></a>
+ </div>
+ <div class="assign-chat">
+  <div class="dropdown">
+   <a class="nav-link" href="" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> Assign<i class="fa fa-user-plus ms-2"></i></a>
+   <ul class="dropdown-menu pb-select-container dropdown-menu-end" role="menu">
+    <li class="dropdown-plus-title">
+     <input type="text" name="name" class="form-control" />
+    </li>
+    <ul class="list-data">
+     <li><a class="javascript:void(0)" href="">Anseer nk</a></li>
+     <li><a href="javascript:void(0)">Ajmal</a></li>
+     <li><a href="javascript:void(0)">Fayis</a></li>
+    </ul>
+   </ul>
+  </div>
+ </div>
+</div>*@
+                                    </div>
+                                }
+                                <!-- main-chat-header -->
+
+                                <div class="main-chat-body flex-2 offcanvas-parent overflow-auto" id="ChatBody" style="background-image: url('/assets/images/emptyscreen/dashboard.svg');background-repeat: no-repeat; background-position: center;">                                
+                                    <div class="messages">                                                              
+                                        @if (History != null)
+                                        {
+                                            @foreach (var item in History.Data)
+                                            {
+                                                <div class="content-inner">
+                                                    @*<label class="main-chat-time"><span>2 days ago</span></label>*@
+                                                    <div class="@(item.IsIncoming?"media chat-left":"media flex-row-reverse chat-right")">
+                                                        <div class="media-body">
+                                                            @switch(item.MessageTypeID)
+                                                            {
+                                                                case (int)MessageTypes.Image:
+                                                                    <div class="main-msg-wrapper with-breaks with-media">    
+                                                                        @if (string.IsNullOrEmpty(item.FileName))
+                                                                        {
+                                                                            <span class="chat-img-uploaded" @onclick="(async()=> await DownloadMedia(item,MessageTypes.Image))">
+                                                                                <img src="/_content/Pb.ComponentHelper/img/download.png" />
+                                                                            </span/>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="chat-img-uploaded">
+                                                                                <img src="@item.FileName" />
+                                                                            </span>
+                                                                        }  
+                                                                        @item.Message
+                                                                    </div>
+                                                                    break;
+                                                                case (int)MessageTypes.Audio:
+                                                                    <div class="main-msg-wrapper attachment-card">
+                                                                        @if (string.IsNullOrEmpty(item.FileName))
+                                                                        {
+																            <div class="contact-meta d-flex align-items-center gap-2">																	            																          																            
+                                                                                <span>
+                                                                                    <audio controls>                                     
+                                                                                        <source src="@item.FileName">
+                                                                                    </audio>   
+                                                                                    <i class="fe fe-download text-muted" href="@item.FileName" @onclick="(async()=> await DownloadMedia(item,MessageTypes.Audio))"></i> 
+                                                                                </span>
+                                                                            </div>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <audio controls>
+                                                                                <source src="@item.FileName">
+                                                                            </audio>
+                                                                        }
+                                                                    </div>
+                                                                    break;
+                                                                    case (int)MessageTypes.Video:
+                                                                        <div class="main-msg-wrapper attachment-card with-breaks with-media">
+                                                                            @if (string.IsNullOrEmpty(item.FileName))
+                                                                            {
+                                                                                    <span>
+                                                                                        <video width="200" height="150" controls>
+                                                                                            <source src="@item.FileName" type="video/mp4">
+                                                                                            <source src="@item.FileName" type="video/ogg">
+                                                                                            Your browser does not support the video tag.
+                                                                                        </video>
+                                                                                        <i class="fe fe-download text-muted" href="@item.FileName" @onclick="(async()=> await DownloadMedia(item,MessageTypes.Video))"></i>    
+                                                                                    </span>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <video width="200" height="150" controls>
+                                                                                    <source src="@item.FileName" type="video/mp4">
+                                                                                    <source src="@item.FileName" type="video/ogg">
+                                                                                    Your browser does not support the video tag.
+                                                                                </video>
+                                                                            }
+                                                                            @item.Message
+                                                                        </div>
+                                                                        break;
+                                                                    case (int)MessageTypes.Document:
+                                                                       
+                                                                        <div class="main-msg-wrapper contact-card with-breaks with-media">
+                                                                            <div class="contact-meta d-flex align-items-center gap-2">
+                                                                                <div class="main-img-user online"><img alt="avatar" src="/assets/images/pdf-icon.svg" style="border-radius: 0;" /></div>
+                                                                                <div class="d-flex flex-column">
+                                                                                    <h5 class="card-title contact-title mb-0">
+                                                                                        @item.DocumentName
+                                                                                    </h5>
+                                                                                    @*<small class="text-muted">545kb</small>*@
+                                                                                </div>
+                                                                            </div>
+                                                                            @if (string.IsNullOrEmpty(item.FileName))
+                                                                            {
+                                                                                <div class="border-top mt-2 py-1 d-flex justify-content-around">
+                                                                                    <a class="card-link" @onclick="(async()=> await DownloadMedia(item,MessageTypes.Document))" target="_blank">Get File</a>
+                                                                                </div>                                                                                
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <div class="border-top mt-2 py-1 d-flex justify-content-around">
+                                                                                    <a class="card-link" href="@item.FileName" target="_blank">Open</a>
+                                                                                </div>
+                                                                                
+                                                                            }
+
+                                                                            
+                                                                            @*<nav class="nav float-end more-msg mt-3">
+                                                                                <div class="dropdown">
+                                                                                    <a class="nav-link text-muted fs-20 p-0 ps-3" href="" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><i class="fe fe-more-vertical"></i></a>
+                                                                                    <div class="dropdown-menu dropdown-menu-end p-0">
+                                                                                        <div class="d-flex">
+                                                                                            <a class="dropdown-item" href="javascript:void(0)"> <i class="fe fe-repeat"></i> </a>
+                                                                                            <a class="dropdown-item" href="javascript:void(0)"> <i class="fe fe-edit-3"></i></a>
+                                                                                            <a class="dropdown-item" href="javascript:void(0)"> <i class="fe fe-trash-2"></i></a>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </nav>*@
+                                                                            @item.Message
+                                                                        </div>
+                                                                        break;                                                  
+                                                                    case (int)MessageTypes.Sticker:
+                                                                        @if (string.IsNullOrEmpty(item.FileName))
+                                                                        {
+                                                                             <span class="chat-img-uploaded" @onclick="(async()=> await DownloadMedia(item,MessageTypes.Image))">
+                                                                                <img src="/_content/Pb.ComponentHelper/img/download.png" />
+                                                                            </span/>
+                                                                        }                                                         
+                                                                        else
+                                                                        {
+                                                                            <img src="@item.FileName" download>
+                                                                        }
+                                                                        break;
+                                                                    case (int)MessageTypes.Contacts:
+                                                                            <div class="main-msg-wrapper contact-card">
+																                <div class="contact-meta d-flex align-items-center gap-2">
+																	                <div class="main-img-user online"><img alt="avatar" src="/assets/images/users/1.jpg"></div>
+																	                <h5 class="card-title contact-title mb-0">@item.FormattedName</h5>
+                                                                                    <small>@item.PhoneNo</small>
+																                </div>
+																                <div class="border-top mt-2 py-1 d-flex justify-content-around">
+																	                <a href="javascript:void(0)" @onclick="@(async ()=>await OpenChat(@item.FormattedName,item.PhoneNo,true))" class="card-link">Message</a>
+																	                <a href="javascript:void(0)" @onclick="@(async ()=>await SaveContact(@item.FormattedName,@item.PhoneNo))" class="card-link">Save</a>
+																                </div>
+																                <nav class="nav float-end more-msg mt-3">
+																	                <div class="dropdown">
+																		                <a class="nav-link text-muted fs-20 p-0 ps-3" href="" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                                                                            <i class="fe fe-more-vertical"></i>
+                                                                                        </a>
+																		                <div class="dropdown-menu dropdown-menu-end p-0">
+																		                    <div class="d-flex">  
+                                                                                                <a class="dropdown-item" href="javascript:void(0)"> <i class="fe fe-repeat"></i> </a>
+																				                <a class="dropdown-item" href="javascript:void(0)"> <i class="fe fe-edit-3"></i></a>
+																		                        <a class="dropdown-item" href="javascript:void(0)"> <i class="fe fe-trash-2"></i></a>
+																	                        </div>
+																	                    </div>
+																	                </div>
+																                </nav>
+															                </div>
+                                                                        break;
+                                                                    case (int)MessageTypes.Location:
+                                                                        if(item.Latitude!=null)
+                                                                        {                                         
+                                                                            @if(item.Longitude!=null)
+                                                                            {
+                                                                                <div class="main-msg-wrapper mt-3 col-6 mb-3">
+                                                                                    <GoogleMap Lat="@item.Latitude" Long="@item.Longitude"/>
+                                                                                </div>
+                                                                            }
+                                                                        }
+                                                                        break;
+                                                                    default:
+                                                                        <div class="main-msg-wrapper with-breaks with-media">
+                                                                            @if(!string.IsNullOrEmpty(item.FileName))
+                                                                            {
+                                                                                @if(item.FileName.Contains(".pdf"))
+                                                                                    {
+                                                                                        <a href="@item.FileName" target="_blank">
+                                                                                            <div class="contact-meta d-flex align-items-center gap-2 pb-2 border-bottom">
+                                                                                                <div class="doc-icon online">
+                                                                                        
+                                                                                                        <img alt="avatar" src="/assets/images/pdf-icon.svg">
+                                                                                        
+                                                                                                </div>
+                                                                                                <div class="d-flex flex-column">
+                                                                                                    <h5 class="card-title contact-title mb-0"> @(item.FileCaption+".pdf") </h5>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        </a>
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        <img src="@(item.FileName)"/>
+                                                                                    }
+                                                                            
+                                                                            }
+                                                                            @item.Message
+                                                                        </div>
+                                                                        break;
+                                                                }  
+                                                            <div>
+                                                                <small class="msg-time">@item.MessageOn</small>
+                                                                @if (!item.IsIncoming)
+                                                                {
+                                                                    @switch (item.StatusID)
+                                                                    {
+                                                                        case MessageStatus.Read:
+                                                                            <i class="read"></i>
+                                                                            break;
+                                                                        case MessageStatus.Delivered:
+                                                                            <i class="deliverd"></i>
+                                                                            break;
+                                                                        case MessageStatus.Sent:
+                                                                            <i class="send"></i>
+                                                                            break;      
+                                                                        case MessageStatus.Failed:
+                                                                            <i class="ion-close-circled text-danger ms-1" data-bs-toggle="tooltip" title="" data-bs-original-title="@item.FailedReason" aria-label="ion-close-circled"></i>
+                                                                            break;      
+                                                                        default:
+                                                                            <i class="fa fa-clock-o ms-1" data-bs-toggle="tooltip" title="" data-bs-original-title="waiting to send" aria-label="fa fa-clock-o"></i>
+                                                                            break;
+                                                                    }                                             
+                                                                }
+                                                            </div>                                                
+                                                        </div>
+                                                    </div>                                                                       
+                                                </div>
+                                                
+                                            }
+                                        } 
+                                        <div id="divChatEnd"></div>
+                                    </div>
+                                </div>
+                                @if (ContactId != 0)
+                                {
+                                    <EditForm Model="PM" class="main-chat-footer">                               
+                                        <input class="form-control" placeholder="Type your message here..." type="text" @bind-value="Message" id="txtChat">
+
+                                        <a class="nav-link" title="Attach a File" @onclick="ShowEmoji" id="divOpenEmoji">               
+                                            <i class="fa fa-smile-o"> </i>          
+                                        </a>
+
+                                        @*<a class="nav-link" title="Attach a File" id="toggle-button" @onclick="ShowRecorder">
+                                            <i class="fe fe-mic"></i>
+                                        </a>*@
+
+                                        <a class="nav-link" title="Attach a File" @onclick="ShowDivision">
+                                            <i class="fe fe-paperclip" ></i>
+                                        </a>    
+
+                                        <div class="action-btns-2" id="divEmoji" >
+                                            <emoji-picker class="dark"></emoji-picker>
+                                        </div>
+
+                                        @*<div class="voice-recorder container" id="divRecorder" style="display: none;">
+                                            <div class="recorder-content d-flex align-items-center justify-content-end gap-2">
+
+                                                <span class="del-btn " title="">
+                                                    <i class="ion-trash-b fs-25 text-primary"></i>
+                                                </span>
+
+                                                <span class="voice-timer" id="recording">
+                                                    0.00 <span>Recording..</span> </span> 
+
+                                                <span class="recorder-voice d-flex align-items-center">
+                                                    <audio controls id="player" controlsList="nodownload">
+                                                        <source type="audio/mp3">
+                                                    </audio>
+                                                </span>	 
+
+                                                <span class="del-btn " title="" id="toggle-button stop">
+                                                    <i class="fa fa-pause-circle-o fs-25 text-danger"></i>
+                                                </span>
+
+                                                <span class="del-btn " title="" id="start">
+                                                    <i class="fe fe-mic fs-25 text-danger"></i>
+                                                    <audio id="recorder" muted hidden></audio>
+                                                </span>
+
+                                                <button type="button" class="btn btn-icon  btn-primary brround mx-2"><i class="fa fa-paper-plane-o"></i></button>
+                                            </div>
+                                        </div>*@
+
+                                        <div class="action-btns" id="paperclip">
+                                            <ul class="action-btn-container">
+
+                                                <li>
+                                                    <a class="action-btns-item" title="Attach a File">
+                                                        <span class="action-icon bg-warning">
+                                                            <label for="file-input1" class="mb-0">
+                                                                <i class="fa fa-image"></i>
+                                                            </label>  
+                                                            <InputFile OnChange="async (e)=> await SendMediaByID(e,MessageTypes.Image)" class="d-none"  type="file" _bl_5="" id="file-input1"/>
+                                                        </span>
+                                                        <span class="action-text">Image</span>
+                                                    </a>
+                                                </li>
+
+
+                                                @*<li>
+                                                    <a class="action-btns-item" title="Attach a File">
+                                                        <span class="action-icon bg-pink">
+                                                            <label for="file-input2" class="mb-0">
+                                                                <i class="fa fa-file-image-o"></i>
+                                                            </label>
+                                                             <InputFile OnChange="SendStickerByID" class="d-none"  type="file" _bl_5="" id="file-input2"/>
+                                                            </span>                                               
+                                                        <span class="action-text">Sticker</span>
+                                                    </a>
+                                                </li>*@
+
+                                                <li>
+                                                    <a class="action-btns-item" title="Attach a File">
+                                                        <span class="action-icon bg-secondary">
+                                                            <label for="file-input3" class="mb-0">
+                                                                <i class="fa fa-file"></i>
+                                                            </label>
+                                                            <InputFile OnChange="async (e)=> await SendMediaByID(e,MessageTypes.Document)" class="d-none"  type="file" _bl_5="" id="file-input3"/>
+                                                        </span>                                                
+                                                        <span class="action-text">Document</span>
+                                                    </a>
+                                                </li>
+
+                                               @* <li>
+                                                    <a class="action-btns-item" title="Attach a File">
+                                                        <span class="action-icon bg-info"  @onclick="ShowContactModal">
+                                                            <label for="file-input4" class="mb-0">
+                                                                <i class="fa fa-id-badge"></i>
+                                                            </label>                             
+                                                        </span>
+                                                        <span class="action-text">Contact</span>
+                                                    </a>
+                                                </li>
+*@
+                                                <li>
+                                                    <a class="action-btns-item" title="Attach a File">
+                                                        <span class="action-icon bg-purple">
+                                                            <label for="file-input5" class="mb-0">
+                                                                <i class="fa fa-headphones"></i>
+                                                            </label>
+                                                             <InputFile OnChange="async (e)=> await SendMediaByID(e,MessageTypes.Audio)" class="d-none"  type="file" _bl_5="" id="file-input5"/>
+                                                            </span>                                                
+                                                        <span class="action-text">Audio</span>
+                                                    </a>
+                                                </li>
+
+                                                @*<li>
+                                                    <a class="action-btns-item" title="Send Location">
+                                                        <span class="action-icon bg-green" id="setLocation" @onclick="getLocation">
+                                                            <i class="fa fa-map-marker"></i>
+                                                        </span>
+                                                        <span class="action-text">Location</span>
+                                                    </a>
+                                                </li>*@
+                                            </ul>
+                                        </div>
+                                        <button type="submit" class="btn btn-icon  btn-primary brround" @onclick="SendMessage"><i class="fa fa-paper-plane-o"></i></button>
+                                        <nav class="nav"></nav>
+                                    </EditForm>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>      
+                <div class="col-sm-12 col-md-12 col-lg-12 col-xl-3">
+                    <div class="card pb-2">
+                        <div class="card-body profile-details-main pb-0 pt-0 overflow-y-scroll">
+                            <div class="main-content-app">
+                                @if (ContactId != 0)
+                                    {
+                             @*            <nav class="nav float-end mt-4">
+                                            <div class="dropdown">
+                                                <a class="nav-link text-muted fs-20 p-0 ps-3" href="" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" ><i class="fe fe-more-vertical"></i></a>
+                                                <div class="dropdown-menu dropdown-menu-end">  
+                                                    <a class="dropdown-item" href="javascript:void(0)"><i class="fe fe-user me-1"></i> Profile</a>
+                                                    <a class="dropdown-item" href="javascript:void(0)"><i class="fe fe-edit me-1"></i> Edit</a>
+                                                    <a class="dropdown-item" href="javascript:void(0)"><i class="fe fe-users me-1"></i> New Group</a>
+                                                    <a class="dropdown-item" href="javascript:void(0)"><i class="fe fe-settings me-1"></i> Settings</a>
+                                                    <a class="dropdown-item" href="javascript:void(0)"><i class="fe fe-trash-2 me-1"></i> Delete</a>
+                                                </div>
+                                            </div>
+                                        </nav> *@
+
+                                        <div class="text-center chat-image py-4 pb-0 mb-4 br-5 d-flex align-items-center flex-row">
+                                            <div class="avatar avatar-md chat-profile mb-3 brround">
+                                                <a class="">
+                                                    <img alt="avatar" src="/_content/Pb.ComponentHelper/img/profile.png" class="brround">
+                                                </a>
+                                            </div>
+                                            <div class="main-chat-msg-name">
+                                                <a><h5 class="mb-1 text-dark fw-semibold"> @ChatHeader.Name</h5></a>
+                                                <span class="dot-label bg-success"></span><small class="me-3">Available</small>
+                                            </div>
+                                        </div>
+                                        <div class="">
+                                            <h6 class="mb-3">Contact Details :</h6>
+                                            <div class="d-flex mb-2">
+                                                <div>
+                                                    <a class="nav-link border rounded-pill chat-profile me-2" href=""><i class="fe fe-mail"></i></a>
+                                                </div>
+                                                <div class="ms-2 w-100">
+                                                    <p class="fs-13 fw-semibold mb-0">Email
+                                                        <a class="float-end" @onclick="ShowEmailModal"><i class="fa fa-pencil"></i></a></p>
+                                                    <p class="fs-12 text-muted">@ChatHeader.EmailAddress</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-flex mb-2 mt-2">
+                                                <div>
+                                                    <a class="nav-link border rounded-pill chat-profile me-2" href=""><i class="fe fe-map-pin"></i ></a>
+                                                </div>
+                                                <div class="ms-2 w-100">
+                                                    <p class="fs-13 fw-semibold mb-0">Address
+                                                        <a class="float-end" @onclick="ShowAddressModal"> <i class="fa fa-pencil"></i></a>
+                                                    </p>
+                                                    <!-- <input class="form-control mb-4" placeholder="Input box" type="text"> -->
+                                                    <p class="fs-12 text-muted">
+                                                        @ChatHeader.Address
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="">
+                                            <div class="d-flex justify-content-between">
+                                                <h6 class="mt-5 mb-0">Tags :</h6>
+                                                <span class="float-end mt-5 mb-0" href="#"><i class="fe fe-plus-circle"></i></span>
+                                            </div>
+                                            <div class="input-group my-2">
+                                                <input type="text" class="form-control" placeholder="" @bind-value="TagSingle.Tag" id="txtTag" aria-label="Example text with button addon" aria-describedby="button-addon1"/>
+                                                <button class="btn btn-primary" type="button" id="button-addon2" @onclick="SaveTag">Save</button>
+                                            </div>
+                                            <div class="">
+                                                <div class="border-0 p-0 mb-4 pt-4">
+                                                    <div class="media mt-0 border gap-2 flex-wrap">
+                                                        @foreach (var tag in ChatHeader.Tags)
+                                                        {
+                                                            <span class="tag w-auto"> @tag.Tag <a href="javascript:void(0)" class="tag-addon" @onclick="@(async()=>await DeleteTag(@tag.ContactTagID))"><i class="fe fe-x"></i></a></span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="">
+                                            <div class="d-flex justify-content-between">
+                                                <h6 class="mt-5 mb-0">Notes :</h6>
+                                                <span class="float-end mt-5 mb-0" ><i class="fe fe-plus-circle"></i></span>
+                                            </div>
+                                            <div class="mt-0 my-2">
+                                                <textarea class="form-control mb-1" placeholder="Textarea" rows="4" @bind="NoteSingle.Note" id="txtNote"></textarea>
+                                                <button class="btn btn-sm btn-primary ms-auto" type="button" @onclick="SaveNote">@(NoteSingle.NoteID==0?"Save":"Edit")</button>
+                                            </div>
+                                            <div class="">
+                                                @foreach (var note in ChatHeader.Notes)
+                                                {
+                                                    <div class="border-0 p-0 mb-4 pt-4">
+                                                        <div class="media mt-0 border gap-2 flex-wrap">
+                                                            <div class="note-meta d-flex w-100">
+                                                                <span class="avatar brround cover-image me-3"
+                                                                data-bs-image-src="@note.ProfileImage"
+                                                                style="background: url('@note.ProfileImage')center center;"></span>
+                                                                <div class="note-meta-data">
+                                                                    <h5 class="mb-0 fs-13 fw-semibold text-dark">@note.AddedBy</h5>
+                                                                    <span class="mb-0 fs-13 text-muted">@(note.AddedOn.HasValue ? note.AddedOn.Value.ToString("MMM dd, hh:mm tt") : "")</span>
+                                                                </div>
+                                                                <div class="note-action ms-auto">
+                                                                    <div class="btn btn-outline-primary btn-sm ms-2" @onclick="@(async ()=>await EditNote(note))">
+                                                                        <i class="fa fa-pencil"></i>
+                                                                    </div>
+                                                                    <div class="btn btn-outline-primary btn-sm ms-2" @onclick="@(async ()=>await DeleteNote(note.NoteID))">
+                                                                        <i class="fa fa-trash"></i>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="note-data w-100">
+                                                                <span class="d-block">
+                                                                    @note.Note
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+
+                                           @if(TemplateCount!=0)
+                                            {
+                                                <div class="row">
+                                                    <span>Templates <span><button type="button" class="btn btn-primary" @onclick="OpenTemplateModal">send</button></span></span>
+                                                </div>
+
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <img src="/assets/images/empty-profile.svg"/>
+                                    }
+                                </div>
+                    </div>
+                </div>
+
+            </div>
+            </div>
+        }
+        </div>
+    </div>
+</PageLayoutNew>
+
+<div class="modal fade" id="ContactModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Send Contacts</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="ContactModal"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+				<div class="form-group">
+					<div class="input-group">
+						<input type="search" class="form-control" @bind="ChatSearchModel.SearchString" placeholder="Search ..." aria-label="Example text with button addon" aria-describedby="button-addon1">
+						<button class="btn btn-primary" type="button" id="button-addon2" @onclick="@(async()=>await LoadChatList())"><i class="fa fa-search"></i></button>
+					</div>
+				</div>
+                    
+				<ul class="wa-contact-list">
+                @foreach (var item in WhatsappContacts)
+                {
+					<li class="border py-2">
+						<label class="custom-control custom-checkbox d-flex align-items-center ms-2 mb-0" >
+							<input type="checkbox" class="custom-control-input" @bind="item.IsSelected">
+							<span class="custom-control-label d-flex ms-3">
+								<div class="main-img-user online">
+									<img alt="" src="../assets/images/users/5.jpg">
+								</div>
+								<div class="media-body">
+									<div class="media-contact-name d-flex flex-column ms-3">
+										<h6 class="fw-bold mb-1">@item.Name</h6>
+										<span class="text-muted">@item.Phone</span>
+									</div>
+								</div>
+							</span>
+						</label>
+					</li>
+                    }
+                    </ul>                           				    
+            </div>
+            <div class="modal-footer">
+                @foreach(var cnt in WhatsappContacts.Where(s=>s.IsSelected))
+                {
+                    @cnt.Name                        
+                }    
+                <button class="btn btn-primary" @onclick="@(async ()=>await SendContact())">Send Contact</button> <button class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>            
+        </div>
+     </div>
+</div>
+
+<div class="modal fade" id="AddNewContactModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Add To Contacts</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="AddNewContactModal"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+				<div class="form-group">
+					<div class="input-group">
+                        <input type="text" class="form-control" label="Name" @bind="newcontact.Name" placeholder="Enter The Name">
+                        <input type="text" class="form-control" label="Phone" @bind="newcontact.Phone" placeholder="Enter Your Phone Number">						
+                        <button class="btn btn-primary" type="button" @onclick="@(async ()=>await SaveContact(newcontact.Name,newcontact.Phone))">Save</button>
+					</div>
+				</div>                    
+			</div>		                          
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="EmailModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Email Address</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="EmailModal"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+				<div class="form-group">
+					<div class="input-group">
+                        <input type="text" class="form-control" @bind="ChatHeader.EmailAddress" placeholder="Email Address">					
+                        <button class="btn btn-primary" type="button" @onclick="SaveEmail">Save</button>
+					</div>
+				</div>                    
+			</div>		                          
+        </div>
+    </div>
+</div>
+
+<!-- Address Modal-->
+    <div class="modal fade" id="AddressModal">
+            <div class="modal-dialog modal-dialog-scrollable">
+                <EditForm Model="AddressModel" autocomplete="off" OnValidSubmit="SaveCustomerAddress">
+                    <DataAnnotationsValidator />
+                    <div class="modal-content modal-content-demo">
+
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">NEW ADDRESS</h5>
+                            <h6 class="modal-title"></h6><button type="button" aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                        </div>
+                        <div class="modal-body">
+
+
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <label class="form-label" style="text-align: left; margin-top: 0 !important;">
+                                        Address Type :
+                                    </label>
+                                    <select class="form-control form-select" id="address-type-select" @bind="AddressModel.AddressType">
+                                        <option value="0" selected>Choose</option>
+                                        <option value="@((int)AddressTypes.Home)">Home</option>
+                                        <option value="@((int)AddressTypes.Office)">Office</option>
+                                        <option value="@((int)AddressTypes.Billing)">Billing</option>
+                                        <option value="@((int)AddressTypes.Shipping)">Shipping</option>
+                                        <option value="@((int)AddressTypes.Other)">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0" style="text-align: left; margin-top: 0 !important;">
+                                            Address Line 1 :
+                                            <span style="color:red">*</span>
+                                        </label>
+                                        <textarea class="textarea form-control" id="address-line-1-text-area" rows="2" @bind="AddressModel.AddressLine1"></textarea>
+                                        <ValidationMessage For="() => AddressModel.AddressLine1" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0" style="text-align: left; margin-top: 0 !important;">
+                                            Address Line 2 :
+                                        </label>
+                                        <textarea class="textarea form-control" id="address-line-2-text-area" rows="2" @bind="AddressModel.AddressLine2"></textarea>
+                                        <ValidationMessage For="() => AddressModel.AddressLine2" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0" style="text-align: left; margin-top: 0 !important;">
+                                            Address Line 3 :
+                                        </label>
+                                        <textarea class="textarea form-control" id="address-line-3-text-area" rows="2" @bind="AddressModel.AddressLine3"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <InputTextBox Label="Pincode : "
+                                              ValidationFor="() => AddressModel.Pincode"
+                                              DivClass="col-md-12"
+                                @bind-Value="AddressModel.Pincode"
+                                              id="pincode-input-box" />
+
+                            </div>
+
+                            <div class="row">
+
+                                <!--COUNTRY-->
+                                <DropdownSelect DivClass="col-md-12"
+                                                DropdownID="@AddressCountryDropdownID"
+                                                Label="Country :"
+                                                Mode="(int)DropdownModes.Country"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                ItemSelected="HandleAddressDropdownItemSelected"
+                                                IsRequired="true"
+                                                ReadDataOnSearch="true"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=AddressModel.CountryID,Value=AddressModel.CountryName})" />
+
+                            </div>
+
+                            <div class="row" >
+                                <!--STATE-->
+                                <DropdownSelect DivClass="col-md-12"
+                                                DropdownID="@StateDropdownID"
+                                                Label="State : "
+                                                ReadDataOnSearch="true"
+                                                Mode="(int)DropdownModes.State"
+                                                ModeGroup="(int)DropdownModes.CommonSearchWithID"
+                                                ItemSelected="HandleAddressDropdownItemSelected"
+                                                @ref="@AddressStateDropdown"
+                                                CommonSearch="@(new CommonSearchModel(){ID=Convert.ToInt32(AddressModel.CountryID)})"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=AddressModel.StateID,Value=AddressModel.State})"
+                                                IsAddOptionNeed="true"
+                                                NewButtonClicked="AddNewState"
+                                                NewButtonText="Add New State" />
+
+
+                            </div>
+
+                            <div class="row">
+                                <!--CITY-->
+                                <DropdownSelect DivClass="col-md-12"
+                                                DropdownID="@CityDropdownID"
+                                                Label="City : "
+                                                ReadDataOnSearch="true"
+                                                Mode="(int)DropdownModes.City"
+                                                ModeGroup="(int)DropdownModes.CommonSearchWithID"
+                                                ItemSelected="HandleAddressDropdownItemSelected"
+                                                @ref="@AddressCityDropdown"
+                                                CommonSearch="@(new CommonSearchModel(){ID=Convert.ToInt32(AddressModel.StateID)})"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=AddressModel.CityID,Value=AddressModel.City})"
+                                                IsAddOptionNeed="true"
+                                                NewButtonClicked="AddNewCity"
+                                                NewButtonText="Add New City"
+                                                />
+
+
+                            </div>
+
+                            @* <ValidationSummary />*@
+
+                        </div>
+                        <div class="modal-footer">
+                            @if (AddressModel.AddressID == 0)
+                            {
+                                <button class="btn btn-primary" type="submit">Add Address</button> @*@onclick="async () => await SaveAddress()"*@
+                               @* <button class="btn btn-danger" type="button" @onclick="async () => await CloseAddressModal()">Close</button>*@
+                            }
+                            else
+                            {
+                                <button class="btn btn-primary" type="submit">Update Address</button>  @*@onclick="async () => await SaveAddress()"*@
+                                @*<button class="btn btn-danger" type="button" @onclick="async () => await CloseAddressModal()">Close</button>*@
+                            }
+                        </div>
+
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+
+
+
+<!--TemplateModal-->
+<div class="modal fade" id="TemplateModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Send Template</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="TemplateModal" @onclick="HideTemplateModal"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+				<div class="table-responsive">
+                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                        <thead>
+                            <tr>
+                                <th>Template</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(var item in templateList)
+                            {
+                                <tr>
+                                    <td>@item.TemplateName</td> 
+                                    @if(item.VariableCount>0)
+                                    {
+                                        <td><button type="button" class="btn btn-primary"  @onclick="(async()=>await OpenTeplateVarialeModal(item.TemplateID))">Add Variable</button></td> 
+
+                                    } 
+                                    else if(item.HeaderTypeID == (int)WhatsappTemplateHeaderType.MEDIA)
+                                    {
+                                        <td><button type="button" class="btn btn-primary" @onclick="(async()=>await ViewMediaTemplate(item.TemplateID))">Choose Media</button></td>
+                                    }
+                                    else
+                                    {
+                                         <td><button type="button" class="btn btn-primary" @onclick="(async()=>await SendTemplate(item.TemplateID))">Send</button></td> 
+
+                                    } 
+                                </tr>
+                            }
+                            
+                        </tbody>
+                    </table>  
+                </div>
+			</div>		                          
+        </div>
+    </div>
+</div>
+
+
+<!--VariableModal-->
+<div class="modal fade" id="VariableModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Add Variable</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="VariableModal" @onclick="HideTemplateVariableModal"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+				<div class="table-responsive">
+                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                        <thead>
+                            <tr>
+                                <th>Variables</th>
+                                <th>Field</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach(var item in variableList.template)
+                            {
+                                <tr>
+                                    <td>@item.VariableName</td> 
+                                    <td><input type="text" @bind="item.Value" class="form-control"  placeholder="variable"></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>  
+                </div>
+			</div>	
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" @onclick="SendChatTemplate">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--Media Template Modal-->
+<div class="modal fade" id="MediaModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Add Variable</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="VariableModal" @onclick="HideTemplateVariableModal"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                   <div class="row">
+                       <label>Media</label>
+                       @if(mediaTemplate.HeaderMediaID!=null)
+                        {
+                            <input type="text" @bind="mediaTemplate.FileName" disabled>
+                        }
+                        else
+                        {
+                            <div class="col-12">
+                                    <div class="form-group">
+                                        <FileUpload @ref="FileUpload" Label="Payment Screenshot" MediaID="mediaTemplate.HeaderMediaID" FolderName="template" />
+                                    </div>
+                                 @*   <ValidationMessage For="()=>Model.MediaID" />*@
+                                </div>
+                        }
+                </div>
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" @onclick="SendMediaTemplate">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--State Modal-->
+
+    <ModalState @ref="countryStateChildModel" CallbackWithIdnValue="NewStateAdded" />
+    <ModelCountryCity @ref="countryCityChildModel" CallbackWithIdnValue="NewCityAdded" />
+
+@code {
+    [Parameter] public double? Lat { get; set; }
+    [Parameter] public double? Long { get; set; }
+    private List<IdnValuePair> WhatsappAccounts = new();
+    private List<WhatsappChatListModel> WhatsappChatLists = new();
+    private WhatsappChatHeaderModel ChatHeader = new();
+    private List<WhatsappChatHistoryModel> WhatsappContacts = new();
+
+    private AddressModel AddressModel = new();
+    private Country CountryModel = new();
+    private DropdownSelect? AddressStateDropdown;
+    private DropdownSelect? AddressCityDropdown;
+    private int PreviousAddressID = 0;
+
+
+
+    private ModalState? countryStateChildModel;
+
+    private ModelCountryCity? countryCityChildModel;
+
+    private string AddressCountryDropdownID = "address-country-drop-down-select";
+    private string StateDropdownID = "state-drop-down-select";
+    private string CityDropdownID = "city-drop-down-select";
+    private string? StatePointerEvent = "pointer-events:none";
+    private string? CityPointerEvent = "pointer-events:none";
+
+    PagedList<WhatsappChatHistoryItemModel> History = new();
+    ChatHistoryPostModel SearchModel = new();
+    private ChatListPostModel ChatSearchModel = new();
+    int WhatsappAccountID, ContactId, MailSettingsID;
+    //bool ShowAccounts = false;
+    SendWhatsappChatModel PM = new();
+    WhatsappContact newcontact = new();
+    string? Message, statusClass, FileSize ;
+    int ChatCount;
+    MediaUpload? stickerUpload;
+    private Media MediaModel = new(); 
+    char OldCharecter='\0';
+    private DotNetObjectReference<Chat>? objPageRef;
+
+    int LastSessionID=0;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        WhatsappAccounts = await API.GetAsync<List<IdnValuePair>>("whatsapp/get-accounts", true);
+        if (WhatsappAccounts.Count > 0)
+        {
+            WhatsappAccountID = WhatsappAccounts.FirstOrDefault().ID;
+            await LoadChatList(true);
+        }
+        else
+        {
+            await JS.ShowMessage("Please add a whatsapp account");
+            Nav.NavigateTo("whatsapp-account");
+        }
+        objPageRef = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("activeGLightBox");
+
+
+    }
+
+    private async Task ChooseAccount(int whatsappAccountID)
+    {
+        WhatsappAccountID = whatsappAccountID;
+        await LoadChatList(true);
+    }
+
+    private async Task OpenChat(string name, string phone, bool needLoader = false)
+    {
+        var exContact = WhatsappChatLists.Where(s => s.Phone == phone).FirstOrDefault();
+
+        if(exContact!=null)
+        {
+            await LoadChatHistory(exContact.ContactID, true);
+        }
+        else
+        {
+            var response = await API.PostAsync<WhatsappContact,WhatsappContact>($"whatsapp/save-contacts",new WhatsappContact(){Name=name,Phone=phone});             
+            if(response!=null)
+            {
+                await JS.SuccessMessage("Contact Saved");
+                WhatsappContacts.Add(new() { ContactID=response.ContactID, Name =response.Name, Phone = response.Phone});    
+                await LoadChatHistory(response.ContactID, true);
+            }   
+        }
+    }
+
+    int TemplateCount = 0;
+    private async Task LoadChatList(bool needLoader = false)
+    {
+        ChatSearchModel.WhatsappAccountID = WhatsappAccountID;
+        WhatsappChatLists = await API.PostAsync<List<WhatsappChatListModel>, ChatListPostModel>($"whatsapp/get-chat-list", ChatSearchModel, needLoader);
+        WhatsappContacts = await API.PostAsync<List<WhatsappChatHistoryModel>, ChatListPostModel>($"whatsapp/get-all-contacts", ChatSearchModel, needLoader);
+        TemplateCount = await API.GetAsync<int>("whatsapp/get-template-count");
+    }
+
+    private async Task LoadChatHistory(int contactId, bool needLoader = false)
+    {
+        bool needToSetImoji = false;
+        History = new();
+
+        if (ContactId == 0)
+            needToSetImoji = true;
+
+        ContactId = contactId;
+        WhatsappChatLists.Where(s => s.ContactID == contactId).First().UnreadMessages = 0;
+        ChatHeader = await API.GetAsync<WhatsappChatHeaderModel>($"whatsapp/get-chat-header/{ContactId}", needLoader);
+        await GetChatHistory();
+        //await JS.InvokeVoidAsync("ActiveChatPScroll");
+        StateHasChanged();
+
+        if(needToSetImoji)
+            await JS.InvokeAsync<string>("SetEmoji", objPageRef);
+    }
+
+    private async Task GetChatHistory(bool needLoader = true)
+    {
+        SearchModel.TimeOffset = await JS.InvokeAsync<int>("GetUCTMinute");
+        SearchModel.ContactId = ContactId;
+        SearchModel.WhatsappAccountID = WhatsappAccountID;
+        SearchModel.PageSize = 100000;
+        SearchModel.OrderByFieldName = "ChatID asc";
+        History = await API.PostAsync<PagedList<WhatsappChatHistoryItemModel>, ChatHistoryPostModel>($"whatsapp/get-chat-history", SearchModel,needLoader);  
+        StateHasChanged();
+        await JS.InvokeVoidAsync("BgImage","chatpresent");
+        await JS.InvokeVoidAsync("scrollbottom");
+        await JS.InvokeVoidAsync("activeTooltip");
+    }
+
+    #region Send Message
+
+    private async Task SendMessage()
+    {
+        await JS.InvokeVoidAsync("DisableSubmitButton");
+        PM.Message = Message;
+        Message = "";
+        PM.ContactID = ContactId;
+        PM.WhatsappAccountID = WhatsappAccountID;
+        var res = await API.PostAsync<WhatsappChatHistoryItemModel, SendWhatsappChatModel>("whatsapp/send-text-message", PM, false);
+        if (res != null)
+        {
+            History.Data.Add(res);
+            PM.Message = "";
+            await JS.InvokeVoidAsync("scrollbottom");
+        }
+        await HideDivision();
+        await HideEmoji();
+        await JS.InvokeVoidAsync("EnableSubmitButton");
+    }    
+
+    private async Task SendMediaByID(InputFileChangeEventArgs e,MessageTypes messageType)
+    {
+        file = e.File;
+        var format = file.ContentType;
+        buffer = new byte[file.Size];
+        await file.OpenReadStream(50000000).ReadAsync(buffer);
+
+        string apiUrl="";
+        switch(messageType)
+        {
+            case MessageTypes.Image:
+                apiUrl="send-image-by-id";
+                break;
+            case MessageTypes.Audio:
+                apiUrl="send-audio-by-id";
+                break;
+            case MessageTypes.Document:
+                apiUrl="send-document-by-id";
+                break;
+                case MessageTypes.Sticker:
+                apiUrl="send-sticker-by-id";
+                break;
+        }
+
+        PM.Message = Message; 
+        Message = "";
+        var mediaResult =  await UploadFileToFb();
+        if (mediaResult != null)
+        {
+            PM.ContactID = ContactId;
+            PM.WhatsappAccountID = WhatsappAccountID;
+            PM.WMediaID = mediaResult.WMediaID;
+            PM.DocumentName = e.File.Name;
+            var res = await API.PostAsync<WhatsappChatHistoryItemModel, SendWhatsappChatModel>($"whatsapp/{apiUrl}", PM);
+            if (res != null)
+            {
+                History.Data.Add(res);
+                PM.Message = "";
+                await JS.InvokeVoidAsync("scrollbottom");
+            }
+        }
+        await HideDivision();
+        await HideEmoji();
+    }        
+
+    private async Task SendContact()
+    {             
+        PM.Message = "Contact";
+        PM.ContactID = ContactId;
+        PM.WhatsappAccountID = WhatsappAccountID;
+        PM.ContactName = WhatsappContacts.Where(s => s.IsSelected).FirstOrDefault().Name;
+        PM.FormattedName =WhatsappContacts.Where(s => s.IsSelected).FirstOrDefault().Name;
+        PM.PhoneNo = $"+{WhatsappContacts.Where(s => s.IsSelected).FirstOrDefault().Phone}";
+        var contact = await API.PostAsync<BaseSuccessResponse, SendWhatsappChatModel>("whatsappaccount/send-contacts", PM);
+        if (contact != null)
+        {
+            History.Data.Add(new() { IsIncoming = false, ContactName = PM.ContactName, FormattedName = PM.FormattedName, PhoneNo = PM.PhoneNo, MessageTypeID = 7 });
+            WhatsappChatLists.Where(s => s.ContactID == ContactId).FirstOrDefault().Message = PM.Message;
+            //WhatsappChatLists.Where(s => s.ContactID == ContactId).FirstOrDefault().Phone = PM.PhoneNo;
+            PM.Message=""; 
+        }
+        else
+        {
+            Message = PM.Message;
+        }
+    }    
+
+    [JSInvokable]
+    public async Task SendLocation(double? lati,double? longi)
+    {             
+        PM.Message = "Location";
+        PM.ContactID = ContactId;
+        PM.WhatsappAccountID = WhatsappAccountID;
+        PM.Latitude =lati;
+        PM.Longitude = longi;
+        var location = await API.PostAsync<BaseSuccessResponse, SendWhatsappChatModel>("whatsappaccount/send-location", PM);
+        if (location != null)
+        {
+            History.Data.Add(new() { IsIncoming = false, Latitude = PM.Latitude , Longitude = PM.Longitude,FileName = PM.Link, MessageTypeID = 8 });        
+            WhatsappChatLists.Where(s => s.ContactID == ContactId).FirstOrDefault().Message = PM.Message;
+            await JS.SuccessMessage("Location Sent Successfully");
+            PM.Message = "";
+        }
+        else
+        {
+            Message = PM.Message;
+        }
+    }
+
+    IBrowserFile file;
+    private byte[] buffer;
+
+    private async Task<int?> UploadFile()
+    {
+        if (buffer != null)
+        {
+            FileUploadModel Model = new FileUploadModel()
+			{
+				ContentType = file.ContentType,
+				Extension = Path.GetExtension(file.Name).Substring(1),
+				Content = buffer,
+				FolderName = "chat-media",
+			};
+
+            var response = await API.PostAsync<MediaIDModel, FileUploadModel>("media/upload-file", Model);
+            if (response != null)
+            {
+                return response.MediaID;
+            }
+        }
+        return null;
+    }	
+
+    public async Task<WhatsappMediaUploadResponseModel> UploadFileToFb()
+    {
+        @if (file != null)
+        {
+            using var content = new MultipartFormDataContent();
+
+            try
+            {
+                var fileContent = new StreamContent(file.OpenReadStream(50000000));
+
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+                content.Add(
+                    content: fileContent,
+                    name: "\"files\"",
+                    fileName: file.Name);
+            }
+            catch (Exception ex)
+            {
+
+            }
+            content.Add(new StringContent(WhatsappAccountID.ToString()), "WhatsappAccountID");
+            content.Add(new StringContent("0"), "NeedToSaveFile");
+            content.Add(new StringContent("chat-media"), "FolderName");
+            return await API.PostAsync<WhatsappMediaUploadResponseModel>("whatsapp/upload-media-to-fb", content);
+        }
+        return null;
+    }
+
+    private async Task getLocation()
+    {
+        await JS.InvokeAsync<object>("Mapinit",Lat, Long,DotNetObjectReference.Create(this));
+    }
+
+    private async Task ShowDivision()
+    {
+        await HideEmoji();
+        await JS.InvokeVoidAsync("ShowAttachment", "paperclip");
+    }    
+
+    private async Task HideDivision()
+    {
+        await JS.InvokeVoidAsync("HideAttachment", "paperclip");
+    } 
+
+    private async Task ShowEmoji()
+    {
+        await HideDivision();
+        await JS.InvokeVoidAsync("ShowAttachment", "divEmoji");
+    }
+
+    private async Task HideEmoji()
+    {
+        await JS.InvokeVoidAsync("HideAttachment", "divEmoji");
+    }
+
+    [JSInvokable("SelectEmoji")]
+    public async Task SelectEmoji(string value)
+    {   
+        Message += value;
+        StateHasChanged();
+    }
+
+    private async Task ShowRecorder()
+    {
+        await JS.InvokeVoidAsync("ShowHiddenDiv","divRecorder");
+    }
+
+    private async Task DownloadMedia(WhatsappChatHistoryItemModel item,MessageTypes type)
+    {
+        if (string.IsNullOrEmpty(item.FileName))
+        {
+            var res = await API.GetAsync<MediaDetailsModel>($"whatsapp/get-media-details/{WhatsappAccountID}/{item.WMediaID}",true);
+            if (res != null)
+            {
+                switch(type)
+                {
+                    case MessageTypes.Image:
+                        item.FileName = "data:image/png;base64," + Convert.ToBase64String(res.File);
+                        break;
+                    case MessageTypes.Audio:
+                        item.FileName = "data:audio/mp3;base64," + Convert.ToBase64String(res.File);
+                        break;
+                    case MessageTypes.Document:
+                        await JS.InvokeVoidAsync("downloadPDF",Convert.ToBase64String(res.File));
+                        break;
+                    case MessageTypes.Video:
+                        item.FileName = "data:video/mp4;base64," + Convert.ToBase64String(res.File);
+                        break;
+                }
+
+            }
+            StateHasChanged();
+        }
+    }   
+
+    #endregion
+
+    #region Contact
+
+    private async Task ShowAddNewContactModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "AddNewContactModal");
+    }
+
+    private async Task ShowContactModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "ContactModal");
+    }
+    private async Task SaveContact(string name,string phone)
+    {
+        newcontact.Name = name;
+        newcontact.Phone = phone;
+        var response = await API.PostAsync<WhatsappContact,WhatsappContact>($"whatsapp/save-contacts",newcontact);             
+        if(response!=null)
+        {
+            await JS.SuccessMessage("Contact Saved");
+            WhatsappContacts.Add(new() { ContactID=response.ContactID, Name =response.Name, Phone = response.Phone});    
+        }      
+    }
+
+    #endregion
+
+    #region Notification
+
+    private async Task RefreshChat(WhatsappChatHistoryItemModel data)
+    {
+        if(data.ContactID==ContactId)
+        {
+            History.Data.Add(data);
+            await JS.InvokeVoidAsync("scrollbottom");
+        }
+        else
+        {
+            await LoadChatList();
+        }
+    }
+
+    private void UpdateStatus(WhatsappChatStatusUpdateModel data)
+    {
+        if(data.ContactID==ContactId)
+        {
+            var chat=History.Data.Where(s=>s.ChatID==data.ChatID).FirstOrDefault();
+            if(chat!=null)
+            {
+                chat.StatusID = (MessageStatus)data.StatusID;
+            }
+        }
+    }
+
+    #endregion
+
+    #region Enqiry and Chat
+
+    void CreateEnquiry()
+    {
+        Nav.NavigateTo("enquiry/0/" + ContactId);
+    }
+
+    async Task EndChatSession()
+    {
+        if (await JS.Confirm(message :"Are you sure you want to end current agent chat session and activate chatbot reply"))
+        {
+            var res = await API.GetAsync<BaseSuccessResponse>($"whatsapp/stop-support-chat/{ContactId}");
+            if(res!=null)
+            {
+                ChatHeader.SupportChatStarted = false;
+            }
+        }   
+    }
+
+    #endregion
+
+    #region Note
+
+    private NoteListModel NoteSingle=new();
+
+    private async Task SaveNote()
+    {
+        NoteSingle.ContactID = ContactId;
+        var response = await API.PostAsync<NoteListModel,NoteListModel>($"whatsapp/save-note",NoteSingle);             
+        if(response!=null)
+        {
+            ChatHeader.Notes.RemoveAll(s => s.NoteID == response.NoteID);
+            ChatHeader.Notes.Add(response);
+            NoteSingle = new();
+        }
+        await JS.InvokeVoidAsync("focusElement", "txtNote");
+    }
+
+    private async Task EditNote(NoteListModel note)
+    {
+        NoteSingle = note;
+        await JS.InvokeVoidAsync("focusElement", "txtNote");
+    }
+
+    private async Task DeleteNote(int noteId)
+    {
+        if (await API.DeleteAsync("whatsapp/delete-note", noteId, true))
+        {
+            ChatHeader.Notes.RemoveAll(s => s.NoteID == noteId);
+        }
+    }
+
+    #endregion
+
+    #region Tag
+
+    private ContactTagModel TagSingle=new();
+
+    private async Task SaveTag()
+    {
+        if (!string.IsNullOrEmpty(TagSingle.Tag))
+        {
+            TagSingle.ContactID = ContactId;
+            var response = await API.PostAsync<ContactTagModel, ContactTagModel>($"whatsapp/save-contact-tag", TagSingle);
+            if (response != null)
+            {
+                ChatHeader.Tags.RemoveAll(s => s.ContactTagID == response.ContactTagID);
+                ChatHeader.Tags.Add(response);
+                TagSingle = new();
+            }
+        }
+        await JS.InvokeVoidAsync("focusElement", "txtTag");
+    }
+
+    private async Task DeleteTag(int contactTagID)
+    {
+        if (await API.DeleteAsync("whatsapp/delete-contact-tag", contactTagID, true))
+        {
+            ChatHeader.Tags.RemoveAll(s => s.ContactTagID == contactTagID);
+        }
+    }
+
+    #endregion
+
+    #region Email
+
+    private string MailAddressTemp="";
+    private async Task ShowEmailModal()
+    {
+        MailAddressTemp = ChatHeader.EmailAddress;
+        await JS.InvokeVoidAsync("ShowModal", "EmailModal");
+    }
+
+    private async Task SaveEmail()
+    {
+        ContactEmailEditModal EmailConfig = new();
+        if (!string.IsNullOrEmpty(ChatHeader.EmailAddress))
+        {
+            EmailConfig.EmailAddress = ChatHeader.EmailAddress;
+            EmailConfig.ContactID = ContactId;
+            var result=await API.PostAsync<BaseSuccessResponse, ContactEmailEditModal>($"whatsapp/update-email", EmailConfig);
+            if(result ==null)
+            {
+                ChatHeader.EmailAddress = MailAddressTemp;
+            }
+            await JS.InvokeVoidAsync("HideModal", "EmailModal"); 
+        }
+    }
+
+    #endregion
+
+    #region Address
+
+    private async Task ShowAddressModal()
+    {
+        MailAddressTemp = ChatHeader.Address;
+        if(ChatHeader.AddressID >0)
+        {
+            AddressModel = await API.GetAsync<AddressModel>($"customer/get-customer-address/{ChatHeader.AddressID}", true);
+            await AddressStateDropdown.RefreshList(AddressModel.CountryID);
+            StateHasChanged();
+            if(AddressModel.StateID > 0)
+                await AddressCityDropdown.RefreshList(AddressModel.StateID);
+
+            StateHasChanged();
+        }
+        else
+        {
+            CountryModel = await API.GetAsync<Country>($"common/get-default-country-details");  
+            AddressModel.CountryID=CountryModel.CountryID;
+            AddressModel.CountryName = CountryModel.CountryName;
+            await AddressStateDropdown.RefreshList(AddressModel.CountryID);
+        }
+        await JS.InvokeVoidAsync("ShowModal", "AddressModal");
+    }
+
+    public async Task SaveCustomerAddress()
+    {
+        AddressModel.EntityID = await API.GetAsync<int>($@"whatsapp/get-entityId/{ContactId}");
+        var res = await API.PostAsync<AddressAddResultModel, AddressModel>("customer/save-customer-address", AddressModel);
+        if (res != null)
+        {
+            ChatHeader.AddressID = res.AddressID;
+            var address = await API.GetAsync<StringModel>($"whatsapp/get-full-address/{ChatHeader.AddressID}");
+            ChatHeader.Address = address.Value;
+            AddressModel = new();
+
+        }
+        else
+        {
+            ChatHeader.Address = MailAddressTemp;
+        }
+        await JS.InvokeVoidAsync("HideModal", "AddressModal");
+    }
+
+    private async Task AddNewState()
+    {
+
+        await countryStateChildModel.OpenStateModal(AddressModel.CountryID, AddressModel.CountryName);
+
+    }
+
+    private async Task NewStateAdded(IdnValuePair res)
+    {
+        AddressModel.StateID = res.ID;
+        AddressModel.State = res.Value;
+        //CityPointerEvent ="pointer-events:pointed";
+        await AddressCityDropdown.RefreshList(AddressModel.StateID);
+
+        await JS.InvokeVoidAsync("setDropdownFocus", CityDropdownID, "drop-down-focused");
+    }
+
+    private async Task AddNewCity()
+    {
+
+        await countryCityChildModel.OpenCityModal(AddressModel.StateID, AddressModel.State);
+
+    }
+
+    private void NewCityAdded(IdnValuePair res)
+    {
+        AddressModel.CityID = res.ID;
+        AddressModel.City = res.Value;
+    }
+
+    private async Task HandleAddressDropdownItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Country:
+
+                AddressModel.CountryID = data.ID;
+                AddressModel.CountryName = data.Value;
+                AddressModel.StateID = null;
+                AddressModel.State = null;
+                AddressModel.CityID = null;
+                AddressModel.City = null;
+                if(AddressModel.CountryID != null)
+                {
+                    await AddressStateDropdown.RefreshList(AddressModel.CountryID);
+                    await JS.InvokeVoidAsync("setDropdownFocus", StateDropdownID, "drop-down-focused");
+                }
+
+
+                break;
+
+            case (int)DropdownModes.State:
+
+                AddressModel.StateID = data.ID;
+                AddressModel.State = data.Value;
+                AddressModel.CityID = null;
+                AddressModel.City = null;
+                if(AddressModel.StateID != null)
+                {
+                    await AddressCityDropdown.RefreshList(AddressModel.StateID);
+                    await JS.InvokeVoidAsync("setDropdownFocus", CityDropdownID, "drop-down-focused");
+
+                }
+
+                break;
+
+            case (int)DropdownModes.City:
+
+                AddressModel.CityID = data.ID;
+                AddressModel.City = data.Value;
+
+                break;
+        }
+    }
+
+    private async Task CloseModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "AddressModal");
+        await JS.InvokeVoidAsync("HideModal", "EmailModal");
+    }
+
+    #endregion
+
+    #region Sent Message commented
+
+    //private async Task SendImage(InputFileChangeEventArgs e)
+    //{
+    //    file = e.File;
+    //    var format = file.ContentType;
+    //    buffer = new byte[file.Size];
+    //    await file.OpenReadStream(50000000).ReadAsync(buffer);
+
+    //    PM.Message = Message; 
+    //    Message = "";
+    //    PM.MediaID = await UploadFile();
+    //    if (PM.MediaID != null)
+    //    {
+    //        PM.ContactID = ContactId;
+    //        PM.WhatsappAccountID = WhatsappAccountID;
+    //        var res = await API.PostAsync<WhatsappChatHistoryItemModel, SendWhatsappChatModel>("whatsapp/send-image", PM);
+    //        if (res != null)
+    //        {
+    //            History.Data.Add(res);
+    //            PM.Message = "";
+    //            await JS.InvokeVoidAsync("scrollbottom");
+    //        }
+    //    }
+    //    await HideDivision();
+    //    await HideEmoji();
+    //}
+
+    //private async Task SendAudio(InputFileChangeEventArgs e)
+    //{
+    //    file = e.File;
+    //    var format = file.ContentType;
+    //    buffer = new byte[file.Size];
+    //    await file.OpenReadStream(50000000).ReadAsync(buffer);
+
+    //    PM.Message = Message; 
+    //    Message = "";
+    //    PM.MediaID = await UploadFile();
+    //    if (PM.MediaID != null)
+    //    {
+    //        PM.ContactID = ContactId;
+    //        PM.WhatsappAccountID = WhatsappAccountID;
+
+    //        var res = await API.PostAsync<WhatsappChatHistoryItemModel, SendWhatsappChatModel>("whatsapp/send-audio", PM);
+    //        if (res != null)
+    //        {
+    //            History.Data.Add(res);
+    //            PM.Message = "";
+    //            await JS.InvokeVoidAsync("scrollbottom");
+    //        }
+    //    }
+    //    await HideDivision();
+    //    await HideEmoji();
+    //}
+
+    //private async Task SendDocument(InputFileChangeEventArgs e)
+    //{
+    //    file = e.File;
+    //    var format = file.ContentType;
+    //    buffer = new byte[file.Size];
+    //    await file.OpenReadStream(50000000).ReadAsync(buffer);
+
+    //    PM.Message = Message; 
+    //    Message = "";
+    //    PM.MediaID = await UploadFile();
+    //    if (PM.MediaID != null)
+    //    {
+    //        PM.ContactID = ContactId;
+    //        PM.WhatsappAccountID = WhatsappAccountID;
+
+    //        var res = await API.PostAsync<WhatsappChatHistoryItemModel, SendWhatsappChatModel>("whatsapp/send-document", PM);
+    //        if (res != null)
+    //        {
+    //            History.Data.Add(res);
+    //            PM.Message = "";
+    //            await JS.InvokeVoidAsync("scrollbottom");
+    //        }
+    //    }
+    //    await HideDivision();
+    //    await HideEmoji();
+    //}    
+
+    //private async Task SendSticker()
+    //{
+    //    PM.Message = "Sticker";
+    //    PM.ContactID = ContactId;
+    //    PM.WhatsappAccountID = WhatsappAccountID;
+    //    MediaModel.MediaID = await stickerUpload.UploadFile();
+    //    var stickerURL = await API.GetAsync<GalleryModel>($"media/get-file/{MediaModel.MediaID}");
+    //    PM.Link = stickerURL.URL;              
+    //    var sticker = await API.PostAsync<BaseSuccessResponse, SendWhatsappChatModel>("whatsapp/send-sticker", PM);
+    //    if (sticker != null)
+    //    {
+    //        History.Data.Add(new() { IsIncoming = false, FileName = PM.Link, MessageTypeID = 9 });
+    //        WhatsappChatLists.Where(s => s.ContactID == ContactId).FirstOrDefault().Message = PM.Message;
+    //        PM.Message = "";
+    //    }
+    //    else
+    //    {
+    //        Message = PM.Message;
+    //    }
+    //}    
+
+    #endregion
+
+
+    #region Template
+
+    private List<ChatTemplateListModel> templateList = new();
+    private ChatTemplateSentModel variableList = new();
+    private WhatsappTemplateMediaSentModel mediaTemplate = new();
+
+    private async Task OpenTemplateModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal","TemplateModal");
+        templateList = await API.GetAsync<List<ChatTemplateListModel>>($"whatsapp/get-chat-template");
+    }
+
+
+    private async Task OpenTeplateVarialeModal(int TemplateID)
+    {
+        await JS.InvokeVoidAsync("ShowModal","VariableModal");
+        variableList = await API.GetAsync<ChatTemplateSentModel>($"whatsapp/get-chat-template-variable/{TemplateID}");
+    }
+
+
+    private async Task HideTemplateModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "TemplateModal");
+    }
+
+    private async Task HideTemplateVariableModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "VariableModal");
+    }
+
+
+    private async Task SendChatTemplate()
+    {
+        variableList.ContactID = ContactId;
+        var res = await API.PostAsync<BaseSuccessResponse, ChatTemplateSentModel>("whatsapp/send-chat-template", variableList);
+    }
+
+    private async Task SendTemplate(int TemplateID)
+    {
+        variableList.TemplateID = TemplateID;
+        await SendChatTemplate();
+    }
+
+    private async Task ViewMediaTemplate(int TemplateID)
+    {
+        await JS.InvokeVoidAsync("ShowModal","MediaModal");
+        mediaTemplate = await API.GetAsync<WhatsappTemplateMediaSentModel>($"whatsapp/get-whatsapp-template-details/{TemplateID}");
+    }
+
+    //IBrowserFile files;
+
+    //private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    //{
+    //    files = e.GetMultipleFiles()[0];
+    //}
+    //public async Task<FileUploadResultModel> UploadFiles()
+    //{
+    //    @if (files != null)
+    //    {
+    //        using var content = new MultipartFormDataContent();
+
+    //        try
+    //        {
+    //            var fileContent = new StreamContent(files.OpenReadStream(50000000));
+
+    //            fileContent.Headers.ContentType = new MediaTypeHeaderValue(files.ContentType);
+
+    //            content.Add(
+    //                content: fileContent
+    //            );
+    //        }
+    //        catch (Exception ex)
+    //        {
+
+    //        }
+    //        content.Add(new StringContent(mediaTemplate.WhatsappAccountID.ToString()), "WhatsappAccountID");
+    //        content.Add(new StringContent("TemplateImage"), "FolderName");
+    //        return await API.PostAsync<FileUploadResultModel>("whatsapp/add-template-header-media", content);
+    //    }
+    //    return null;
+    //}
+
+
+    FileUpload FileUpload;
+    private async Task SendMediaTemplate()
+    {
+        if(mediaTemplate.HeaderMediaID==null)
+        {
+            mediaTemplate.HeaderMediaID =  await FileUpload.UploadFile();
+        }
+        variableList.TemplateID = mediaTemplate.TemplateID;
+        variableList.HeaderMediaID = mediaTemplate.HeaderMediaID;
+        await SendChatTemplate();
+    }
+
+    #endregion
+    
+}
+

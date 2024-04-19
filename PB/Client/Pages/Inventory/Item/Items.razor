@@ -1,0 +1,430 @@
+﻿@page "/items"
+
+@using PB.Shared.Models;
+@using PB.Model.Models;
+@using PB.Shared.Models.Common
+@using PB.Shared.Models.Inventory.Item;
+@using PB.Shared.Models.Inventory.Items;
+@using System.Net.Http.Headers;
+@using Blazored.LocalStorage
+@inject ILocalStorageService _localStorage
+@attribute [Authorize(Roles = "Item")]
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="ItemHeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" />
+                </div>
+                <div class="card-body">
+                    @if (canShowListPageExtraOptions)
+                    {
+                        <div class="row">
+                            <div class="col-md-12 d-flex justify-content-end">
+                                <div>
+                                    @if (ClientItemQrCodeState || ClientItemGroupQrCodeState)
+                                    {
+                                        <button type="button" class="btn btn-secondary btn-md me-2" @onclick="async () => await InitiateItemQrCodeGeneration()">
+                                            <i class="mdi mdi-qrcode"></i> Item 
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-primary me-2" @onclick="async () => await OpenImportItemModal()">
+                                        <i class="mdi mdi-import me-3"></i> Import Items
+                                    </button>
+                                    <button type="button" class="btn btn-primary" @onclick="async () => await ImportItemGroups()">
+                                        <i class="mdi mdi-import me-3"></i> Import Group
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <div class="row mt-2">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Sl No.
+                                        </th>
+                                        <th>
+                                            Item Name
+                                        </th>
+                                        <th>
+                                            Item Code
+                                        </th>
+                                        <th>
+                                            Type
+                                        </th>
+                                        <th>
+                                            SAC
+                                        </th>
+                                        @if (ClientItemQrCodeState)
+                                        {
+                                            <th>
+                                                QR Code
+                                            </th>
+                                        }
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in ItemsPagedList.Data.Select((value, i) => new { i, value }))
+                                    {
+                                        var entry = item.value;
+                                        var index = item.i;
+                                        <tr style="cursor:pointer" @onclick="@(()=>Nav.NavigateTo($"items-view/{entry.ItemID}"))">
+
+                                            <td>
+                                                @if (ItemsPagedList.PageIndex == 1)
+                                                {
+                                                    @(index + 1)
+                                                }
+                                                else
+                                                {
+                                                    @((ItemsPagedList.PageIndex * ItemsPagedList.PageSize) + (index + 1) - 10)
+                                                }
+                                            </td>
+                                            <td>
+                                                @entry.ItemName
+                                            </td>
+                                            <td>
+                                                @entry.ItemCode
+                                            </td>
+                                            <td>
+                                                @(entry.IsGoods ? "Goods" : "Service")
+                                            </td>
+                                            <td>
+                                                @entry.HSNSAC
+                                            </td>
+                                            <td>
+                                                @if (ClientItemQrCodeState && entry.IsGoods)
+                                                {
+                                                    <img src="@entry.QrCodeFileName" style="width:45px" alt="QR Code">
+                                                }
+                                            </td>
+
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <PaginationCustom PageSize="ItemsPagedList.PageSize" TotalCount="ItemsPagedList.TotalCount" TotalPages="ItemsPagedList.TotalPages" PageIndex="ItemsPagedList.PageIndex" LoadPageIndex="PageIndex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<div class="modal fade" id="import-item-modal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title">
+                    Import Items
+                </h6>
+                <button type="button" class="btn-close" @onclick="async () => await HideImportIteMModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row my-2">
+                    <div class="col-12 mt-2">
+                        <div class="alert alert-info position-relative" role="alert">
+                            <div class="position-absolute p-3" style="right: 20px;top: 10px;width:25px;height:25px;" @onclick="async () => await DownloadSampleExcel()">
+                                <i class="fa fa-download"></i>
+                            </div>
+                            <div>
+                                <label class="col-12 excel-header-label">Please upload an excel file that contains following fields</label>
+                                <label class="col-12 excel-header-label">@Localizer["ItemName"]</label>
+                                <label class="col-12 excel-header-label">@Localizer["ItemCode"]</label>
+                                <label class="col-12 excel-header-label">@Localizer["Price"]</label>
+                                <label class="col-12 excel-header-label">@Localizer["Image1"]</label>
+                                <label class="col-12 excel-header-label">@Localizer["Image2"]</label>
+                                <label class="col-12 excel-header-label">@Localizer["Image3"]</label>
+                                <label class="col-12 excel-header-label">@Localizer["Image4"]</label>
+                                <label class="col-12 excel-header-label">@Localizer["Image5"]</label>
+                                <label class="col-12 excel-header-label">@Localizer["Image fields is for providing image file name with extension(.jpg,.jpeg)"]</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="input-group  mt-1">
+                        <div class="custom-file">
+                            <InputFile OnChange="OnInputFileChange" class="custom-file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" type="file" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary me-2" type="button" @onclick="async () => await ImportItems()">Import </button>
+                <button class="btn btn-light me-2" type="button" @onclick="async () => await HideImportIteMModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="import-item-group-modal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title">
+                    Import Items
+                </h6>
+                <button type="button" class="btn-close" @onclick="async () => await HideImportGroupModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="input-group  mt-1">
+                        <div class="custom-file">
+                            <InputFile OnChange="OnGroupInputFileChange" class="custom-file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" type="file" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary me-2" type="button" @onclick="async () => await ImportItemGroup()">Import </button>
+                <button class="btn btn-light me-2" type="button" @onclick="async () => await HideImportGroupModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public int? ItemID { get; set; }
+
+    private PagedList<ItemListModel> ItemsPagedList = new();
+    private PagedListPostModelWithFilter Stage1SearchModel = new();
+    private int Stage = 1;
+    private bool canShowListPageExtraOptions = false;
+    private bool ClientItemQrCodeState = false;
+    private bool ClientItemGroupQrCodeState = false; 
+
+    #region Main Function
+
+    protected override async Task OnInitializedAsync()
+    {
+        ItemHeaderSettings.SortMenuItems = stage1SortMenuItems;
+        ItemHeaderSettings.BooleanFilters = ItemBooleanFilterList;
+        ItemHeaderSettings.NeedFilterOption = true;
+        ItemHeaderSettings.DateFilters = null;
+        ItemHeaderSettings.Heading = "Items";
+        ItemHeaderSettings.SinglePageURL = "item";
+        ItemHeaderSettings.AddButtonText = "New Item";
+        if (ItemID != null && ItemID != 0)
+        {
+            Nav.NavigateTo($"items-view/{ItemID}");
+        }
+        else
+        {
+            await LoadItems();
+        }
+        var qrCodeStateModel = await API.GetAsync<QrCodeStateModel>("settings/get-client-qr-code-state", true);
+        ClientItemQrCodeState = qrCodeStateModel.ItemQrCodeState;
+        ClientItemGroupQrCodeState = qrCodeStateModel.ItemGroupQrCodeState;
+        canShowListPageExtraOptions = true;
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        Stage1SearchModel.PageIndex = pageIndex;
+        await LoadItems();
+    }
+    private async Task LoadItems()
+    {
+        ItemsPagedList = await API.PostAsync<PagedList<ItemListModel>, PagedListPostModelWithFilter>("item/get-items-paged-list", Stage1SearchModel);
+    }
+
+    #endregion
+
+    #region Sort
+
+    private List<FilterSortInputModel> stage1SortMenuItems = new()
+    {
+        new()
+        {
+            DisplayName = "Name",
+            FieldName = "ItemName"
+        },
+        new()
+        {
+            DisplayName = "Item Code",
+            FieldName = "ItemCode"
+        },
+    };
+
+    #endregion
+
+    #region Sort, Filter
+
+    HeaderSettingsModel ItemHeaderSettings = new()
+        {
+            SearchPlaceHolder = "Search by service name..",
+            NeedSortOption = true,
+        };
+
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        Stage1SearchModel = filterModel == null ? new() : filterModel;
+        await LoadItems();
+    }
+
+    List<FilterDateInputModel> ItemDateFilterList = new()
+    {
+        new()
+        {
+            FieldName = "Date",
+            DisplayName = "Date"
+        }
+    };
+    List<FilterBooleanInputModel> ItemBooleanFilterList = new()
+    {
+        new()
+        {
+            FiledName = "I.IsGoods",
+            DisplayName = "Item Type",
+                DisplayItems = new()
+                {
+                    new()
+                    {
+                        ItemDisplayName = "Goods",
+                        ItemValue = true
+                    },
+                    new()
+                    {
+                        ItemDisplayName = "Service",
+                        ItemValue = false
+                    }
+                }
+        }
+    };
+
+    #endregion
+
+    #region Import Items
+
+    IBrowserFile? file;
+    public void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        file = e.File;
+    }
+    private async Task OpenImportItemModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "import-item-modal");
+    }
+    private async Task HideImportIteMModal()
+    {
+        file = null;
+        await JS.InvokeVoidAsync("HideModal", "import-item-modal");
+    }
+    private async Task DownloadSampleExcel()
+    {
+        var result = await API.GetAsync<byte[]?>($"item/get-item-import-sample-excel", true);
+        if (result is not null)
+        {
+            await JS.InvokeAsync<object>("JSInteropExt.saveAsFile", "sample.xlsx", "application/vnd.ms-excel", Convert.ToBase64String(result));
+        }
+    }
+    ItemImportPostModel importItemsFileModel = new();
+    private async Task ImportItems()
+    {
+        if (file != null)
+        {
+            importItemsFileModel.Content = new byte[file.Size];
+            await file.OpenReadStream(file.Size).ReadAsync(importItemsFileModel.Content);
+            string base64String = $"data:{file.ContentType};base64,{Convert.ToBase64String(importItemsFileModel.Content)}";
+            importItemsFileModel.ContentType = file.ContentType;
+            importItemsFileModel.Extension = Path.GetExtension(file.Name).Substring(1);
+            importItemsFileModel.Base64Image = base64String;
+            if (importItemsFileModel.Content == null)
+            {
+                await JS.ErrorMessage(Localizer["Please upload excel file"]);
+                return;
+            }
+
+            importItemsFileModel.DevideID = await _localStorage.GetItemAsync<string>("DeviceID");
+            var result = await API.PostAsync<BaseSuccessResponse, ItemImportPostModel>("item/import-items", importItemsFileModel);
+            {
+                if (result != null && result.ResponseMessage != null)
+                    await JS.SuccessMessage(result.ResponseMessage);
+            }
+            await HideImportIteMModal();
+        }
+    }
+
+    #endregion
+
+    #region Item Qr Code Generation
+
+    private async Task InitiateItemQrCodeGeneration()
+    {
+        ItemQrCodeGenerationPostModel postModel = new();
+        postModel.DeviceID = await _localStorage.GetItemAsync<string>("DeviceID");
+        bool isGenerateItemQrCode = await JS.Confirm("Generate QR Code", "Generate QR code(s) for:", SweetAlertMessageType.question, "Item", "Item Group");
+        if (isGenerateItemQrCode)
+        {
+            var result = await API.PostAsync<BaseSuccessResponse, ItemQrCodeGenerationPostModel>("item/generate-all-items-qr-code", postModel);
+            if (result is not null)
+            {
+                await JS.SuccessMessage("Pdf background process started, the pdf file will automatically downolad when it is ready");
+            }
+        }
+        else
+        {
+            var result = await API.PostAsync<BaseSuccessResponse, ItemQrCodeGenerationPostModel>("item/generate-all-item-groups-qr-code", postModel);
+            if (result is not null)
+            {
+                await JS.SuccessMessage("Pdf background process started, the pdf file will automatically downolad when it is ready");
+            }
+        }
+    }
+
+    #endregion
+
+    #region Item Group
+
+    private async Task ImportItemGroups()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "import-item-group-modal");
+    }
+    private async Task HideImportGroupModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "import-item-group-modal");
+    }
+    IBrowserFile? groupFile;
+    public void OnGroupInputFileChange(InputFileChangeEventArgs e)
+    {
+        groupFile = e.File;
+    }
+    FileUploadModel FileUploadModel = new();
+    private async Task ImportItemGroup()
+    {
+        if (groupFile != null)
+        {
+            FileUploadModel.Content = new byte[groupFile.Size];
+            await groupFile.OpenReadStream(groupFile.Size).ReadAsync(FileUploadModel.Content);
+            string base64String = $"data:{groupFile.ContentType};base64,{Convert.ToBase64String(FileUploadModel.Content)}";
+            FileUploadModel.ContentType = groupFile.ContentType;
+            FileUploadModel.Extension = Path.GetExtension(groupFile.Name).Substring(1);
+            FileUploadModel.Base64Image = base64String;
+            if (FileUploadModel.Content == null)
+            {
+                await JS.ErrorMessage(Localizer["Please upload excel file"]);
+                return;
+            }
+
+            var result = await API.PostAsync<BaseSuccessResponse, FileUploadModel>("item/import-item-group", FileUploadModel);
+            {
+                if (result != null && result.ResponseMessage != null)
+                    await JS.SuccessMessage(result.ResponseMessage);
+            }
+            await HideImportGroupModal();
+        }
+    }
+
+    #endregion
+}

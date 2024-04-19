@@ -1,0 +1,247 @@
+﻿@using PB.CRM.Model.Enum
+@using PB.Shared.Enum.Reports
+@using PB.Shared.Models.Reports
+@page "/sales-by-staff-report"
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header d-flex justify-content-between">
+            <h1 class="page-title">Reports</h1>
+            <div class="btn-toolbar float-right mr-7">
+                <div class="form-group">
+                    <select name="country" id="timePeriodSelect" class="form-control form-select" @onchange="(ChangeEventArgs e) => HandleReportPeriodSelected(e)">
+                        <option value="0">Choose</option>
+                        @foreach (var reportPeriod in Enum.GetValues(typeof(ReportPeriods)))
+                        {
+                            if (PeriodTypeID == (int)reportPeriod)
+                            {
+                                <option value="@((int)reportPeriod)" selected>@reportPeriod.ToString().Replace('_', ' ')</option>
+                            }
+                            else
+                            {
+                                <option value="@((int)reportPeriod)">@reportPeriod.ToString().Replace('_', ' ')</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row pt-5 pb-5">
+                            <div class="col-lg-12 text-center">
+                                <p class="fs-18 fw-bold mb-0">@SalesByStaffReportModel.ClientName</p>
+                                <p class="h3 mb-1">General Ledger</p>
+                                <p>@("From " + SalesByStaffReportPostModel.FromDate.Value.ToString("dd/MM/yyy") + " To " + SalesByStaffReportPostModel.ToDate.Value.ToString("dd/MM/yyy"))</p>
+                            </div>
+                        </div>
+                        <div class="table-responsive push">
+                            <table class="table table-bordered table-hover mb-0 text-nowrap">
+                                <tbody>
+                                    <tr class="">
+                                        <th>Sl No.</th>
+                                        <th>Customer Name</th>
+                                        <th>Invoice Count</th>
+                                        <th>Sales</th>
+                                        <th>Sales with Tax</th>
+                                    </tr>
+                                    @foreach (var item in SalesByStaffReportModel.Items)
+                                    {
+                                        <tr>
+                                            <td>@(SalesByStaffReportModel.Items.IndexOf(item) + 1)</td>
+                                            <td>@item.StaffName</td>
+                                            <td>@item.InvoiceCount</td>
+                                            <td>@item.SalesAmount</td>
+                                            <td>@item.SalesWithTaxAmount</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<div class="modal fade" id="ReportPeriodModal">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <EditForm Model="SalesByStaffReportPostModel" OnValidSubmit="async () => await LoadSaleByStaffReport()">
+                <div class="modal-header">
+                    <h6 class="modal-title">Custom</h6><button type="button" aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+
+                    @if (PeriodTypeID == (int)ReportPeriods.Custom)
+                    {
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">From Date : </label>
+                                    <input type="date" class="form-control" @bind="SalesByStaffReportPostModel.FromDate">
+                                    <ValidationMessage For="() => SalesByStaffReportPostModel.FromDate" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">To Date : </label>
+                                    <input type="date" class="form-control" @bind="SalesByStaffReportPostModel.ToDate">
+                                    <ValidationMessage For="() => SalesByStaffReportPostModel.ToDate" />
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (SalesByStaffReportPostModel.IsAdmin && Branches.Count > 1)
+                    {
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">Branch : </label>
+                                    <select name="country" id="timePeriodSelect" class="form-control form-select" @bind="SalesByStaffReportPostModel.BranchID">
+                                        <option value="0">Choose</option>
+                                        @foreach (var branch in Branches)
+                                        {
+                                            <option value="@(branch.ID)">@branch.Value</option>
+                                        }
+                                    </select>
+                                    <ValidationMessage For="() => SalesByStaffReportPostModel.BranchID" />
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Inject] public AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
+    SalesByStaffReportModel SalesByStaffReportModel = new();  
+    SalesByStaffReportPostModel SalesByStaffReportPostModel = new();  
+    List<IdnValuePair> Branches = new();
+
+    int PeriodTypeID = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateProvider is not null)
+        {
+            var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+            var authState = await localStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            bool IsAuthenticated = user.Identity is not null ? user.Identity.IsAuthenticated : false;
+            if (IsAuthenticated)
+            {
+                if (user.Claims.First(c => c.Type == "UserTypeID").Value == ((int)UserTypes.Client).ToString())
+                {
+                    SalesByStaffReportPostModel.IsAdmin = true;
+                    Branches = await API.GetAsync<List<IdnValuePair>>("common/get-branch-list", true);
+                    if (Branches.Count == 1)
+                        SalesByStaffReportPostModel.BranchID = Branches[0].ID;
+                }
+            }
+        }
+        SalesByStaffReportPostModel.FromDate = SalesByStaffReportPostModel.ToDate = DateTime.UtcNow;
+        PeriodTypeID = (int)ReportPeriods.Today;
+        await LoadSaleByStaffReport();
+    }
+    private async Task HandleReportPeriodSelected(ChangeEventArgs e)
+    {
+        PeriodTypeID = Convert.ToInt32(e.Value);
+        SalesByStaffReportPostModel.FromDate = SalesByStaffReportPostModel.ToDate = null;
+        if (PeriodTypeID == (int)ReportPeriods.Custom || Branches.Count > 1)
+        {
+            await JS.InvokeVoidAsync("ShowModal", "ReportPeriodModal");
+            return;
+        }
+        switch (PeriodTypeID)
+        {
+            case (int)ReportPeriods.Today:
+                SalesByStaffReportPostModel.FromDate = SalesByStaffReportPostModel.ToDate = DateTime.UtcNow;
+                break;
+
+            case (int)ReportPeriods.This_week:
+                SalesByStaffReportPostModel.ToDate = DateTime.UtcNow;
+                SalesByStaffReportPostModel.FromDate = SalesByStaffReportPostModel.ToDate.Value.AddDays(-(int)SalesByStaffReportPostModel.ToDate.Value.DayOfWeek);
+                break;
+
+            case (int)ReportPeriods.This_month:
+                SalesByStaffReportPostModel.ToDate = DateTime.UtcNow;
+                SalesByStaffReportPostModel.FromDate = new DateTime(SalesByStaffReportPostModel.ToDate.Value.Year, SalesByStaffReportPostModel.ToDate.Value.Month, 1);
+                break;
+
+            case (int)ReportPeriods.This_quarter:
+                SalesByStaffReportPostModel.ToDate = DateTime.UtcNow;
+                int quarter = (SalesByStaffReportPostModel.ToDate.Value.Month - 1) / 3 + 1;
+                SalesByStaffReportPostModel.FromDate = new DateTime(SalesByStaffReportPostModel.ToDate.Value.Year, (quarter - 1) * 3 + 1, 1);
+                break;
+
+            case (int)ReportPeriods.This_year:
+                SalesByStaffReportPostModel.ToDate = DateTime.UtcNow;
+                SalesByStaffReportPostModel.FromDate = new DateTime(SalesByStaffReportPostModel.ToDate.Value.Year, 1, 1);
+                break;
+
+            case (int)ReportPeriods.Yesterday:
+                SalesByStaffReportPostModel.ToDate = SalesByStaffReportPostModel.FromDate = DateTime.UtcNow.AddDays(-1);
+                break;
+
+            case (int)ReportPeriods.Previous_week:
+                int daysToPreviousSunday = (int)DateTime.UtcNow.DayOfWeek - (int)DayOfWeek.Sunday;
+                SalesByStaffReportPostModel.FromDate = DateTime.UtcNow.AddDays(-daysToPreviousSunday - 7);
+                SalesByStaffReportPostModel.ToDate = SalesByStaffReportPostModel.FromDate.Value.AddDays(6);
+                break;
+
+            case (int)ReportPeriods.Previous_month:
+                DateTime firstDayOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+                SalesByStaffReportPostModel.ToDate = firstDayOfMonth.AddDays(-1);
+                SalesByStaffReportPostModel.FromDate = SalesByStaffReportPostModel.ToDate.Value.AddMonths(-1).AddDays(1);
+                break;
+
+            case (int)ReportPeriods.Previous_quarter:
+                SalesByStaffReportPostModel.FromDate = GetPreviousQuarterStart(DateTime.UtcNow);
+                SalesByStaffReportPostModel.ToDate = GetPreviousQuarterEnd(DateTime.UtcNow);
+                break;
+
+            case (int)ReportPeriods.Previous_year:
+                int previousYear = DateTime.UtcNow.Year - 1;
+                SalesByStaffReportPostModel.FromDate = new DateTime(previousYear, 1, 1);
+                SalesByStaffReportPostModel.FromDate = new DateTime(previousYear, 12, 31);
+                break;
+        }
+        await LoadSaleByStaffReport();
+    }
+    static DateTime GetPreviousQuarterStart(DateTime date)
+    {
+        int quarter = (date.Month - 1) / 3;
+        int startMonth = quarter * 3 + 1;
+        return new DateTime(date.Year, startMonth, 1);
+    }
+    static DateTime GetPreviousQuarterEnd(DateTime date)
+    {
+        int quarter = (date.Month - 1) / 3;
+        int endMonth = quarter * 3 + 3;
+        int lastDay = DateTime.DaysInMonth(date.Year, endMonth);
+        return new DateTime(date.Year, endMonth, lastDay);
+    }
+    private async Task LoadSaleByStaffReport()
+    {
+        await JS.InvokeVoidAsync("HideModal", "ReportPeriodModal");
+        SalesByStaffReportModel = await API.PostAsync<SalesByStaffReportModel, SalesByStaffReportPostModel>("report/sales-by-staff-report", SalesByStaffReportPostModel);
+    }
+    private void NavigateToReportsPage()
+    {
+        Nav.NavigateTo("reports");
+    }
+}

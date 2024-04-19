@@ -1,0 +1,338 @@
+﻿@page "/items-view/{ItemID:int}"
+@using PB.Model.Models;
+@using PB.Shared.Models.Inventory.Item;
+@using PB.Shared.Models.Inventory.Items;
+@using PB.Shared.Tables;
+@using Blazored.LocalStorage
+@using System.Net.Http.Headers;
+@inject ILocalStorageService _localStorage
+@attribute [Authorize(Roles = "Item")]
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        @if (CanShowPage)
+        {
+            <div class="row">
+                <ListPageMenuLayout MenuCategories="listPageMenuCategories"
+                                    MenuItems="menuItem"
+                                    SinglePageURL="item"
+                                    OnMenuItemSelect="LoadViewData"
+                                    ListHeading="All Items"
+                                    SelectedMenuID="SelectedMenuID" />
+
+                <!-- Right Bar (Content) -->
+                <div class="itemlist-container" id="items-details-div">
+                    <div class="page-header">
+                        <h1 class="page-title">@ItemViewModel.ItemName</h1>
+                        <div class="btn-toolbar float-right mr-7">
+                            <a class="btn btn-white btn-md me-2" @onclick="NavigateToSinglePage">
+                                <i class="fa fa-pencil" style="color:var(--primary-bg-color)"></i>
+                            </a>
+                            @if (ItemViewModel.QrCodeMediaID is null && ClientItemQrCodeState)
+                            {
+                                <a class="btn btn-white btn-md me-2" @onclick="async () => await GenerateQrCode()">
+                                    <i class="mdi mdi-swap-horizontal"></i> Generate
+                                </a>
+                            }
+                            else if (!string.IsNullOrEmpty(ItemViewModel.QrCodeFileName))
+                            {
+                                <a class="btn btn-white btn-md me-2" href="@ItemViewModel.QrCodeFileName" download="@ItemViewModel.QrCodeFileName" target="_blank">
+                                    <i class="mdi mdi-qrcode"></i> Download
+                                </a>
+                            }
+                            <a class="btn btn-white btn-md me-2" @onclick="async () => await DeleteItem()">
+                                <i class="fa fa-trash" style="color:red"></i>
+                            </a>
+                            <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"items"))">
+                                <i class="ion-close-round"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="panel panel-primary">
+                                        <div class=" tab-menu-heading">
+                                            <div class="tabs-menu1">
+                                                <!-- Tabs -->
+                                                <ul class="nav panel-tabs">
+                                                    <li><a href="#tab5" class="active" data-bs-toggle="tab">Overview</a></li>
+
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="panel-body tabs-menu-body">
+                                            <div class="tab-content">
+                                                <div class="tab-pane active" id="tab5">
+                                                    <div class="item-details-page">
+                                                        <div class="row">
+                                                            <div class="col-lg-8 col-12">
+                                                                <div class="group pb-3">
+                                                                    <div class="row">
+                                                                        <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">Item Details </label>
+                                                                    </div>
+                                                                    <div class="row">
+                                                                        <label class="col-4 col-auto items-label text-muted">Item Name</label>
+                                                                        <label class="col-6 col-auto">@ItemViewModel.ItemName</label>
+                                                                    </div>
+                                                                    <div class="row">
+                                                                        <label class="col-4 col-auto items-label text-muted">Item Type</label>
+                                                                        <label class="col-6 col-auto">Services</label>
+                                                                    </div>
+                                                                    <div class="row">
+                                                                        <label class="col-4 col-auto items-label text-muted">Item Code</label>
+                                                                        <label class="col-6 col-auto">@ItemViewModel.ItemCode</label>
+                                                                    </div>
+                                                                    @if (ItemViewModel.IsGoods)
+                                                                    {
+                                                                        <div class="row">
+                                                                            <label class="col-md-4 col-auto items-label text-muted">SAC</label>
+                                                                            <label class="col-md-6 col-auto">@ItemViewModel.SacCode</label>
+                                                                        </div>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <div class="row">
+                                                                            <label class="col-md-4 col-auto items-label text-muted">HSN</label>
+                                                                            <label class="col-md-6 col-auto">@ItemViewModel.HsnCode</label>
+                                                                        </div>
+                                                                    }
+                                                                    <div class="row">
+                                                                        <label class="col-md-4 col-auto items-label text-muted">Created Source </label>
+                                                                        <label class="col-md-6 col-auto ">@ItemViewModel.AddedByUserName</label>
+                                                                    </div>
+                                                                    <div class="row">
+                                                                        <label class="col-md-4 col-auto items-label text-muted">Tax Preference </label>
+                                                                        <label class="col-md-6 col-auto ">@ItemViewModel.TaxPreferenceName</label>
+                                                                    </div>
+                                                                    @if (ItemViewModel.TaxPreferenceTypeID == (int)TaxPreferences.Taxable)
+                                                                    {
+                                                                        <div class="row">
+                                                                            <label class="col-md-4 col-auto items-label text-muted">Inter TaxCategory </label>
+                                                                            <label class="col-md-6 col-auto ">@ItemViewModel.InterTaxCategoryName</label>
+                                                                        </div>
+                                                                        <div class="row">
+                                                                            <label class="col-md-4 col-auto items-label text-muted">Intra TaxCategory </label>
+                                                                            <label class="col-md-6 col-auto ">@ItemViewModel.IntraTaxCategoryName</label>
+                                                                        </div>
+                                                                    }
+
+                                                                    @if (!ItemViewModel.HasMultipleModels && DefaultItemModel != null)
+                                                                    {
+                                                                        <div class="row">
+                                                                            <label class="col-md-4 col-auto items-label text-muted">Packing Unit</label>
+                                                                            <label class="col-md-8 col-auto">@DefaultItemModel.PackingTypeName</label>
+                                                                        </div>
+                                                                        <div class="row">
+                                                                            <label class="col-md-4 col-auto items-label text-muted">UM Unit</label>
+                                                                            <label class="col-md-8 col-auto">@DefaultItemModel.UMUnit</label>
+                                                                        </div>
+                                                                        @if (DefaultItemModel.SizeID != null)
+                                                                        {
+                                                                            <div class="row">
+                                                                                <label class="col-md-4 col-auto items-label text-muted">Size</label>
+                                                                                <label class="col-md-8 col-auto">@DefaultItemModel.Size</label>
+                                                                            </div>
+                                                                        }
+                                                                        <div class="row">
+                                                                            <label class="col-md-4 col-auto items-label text-muted">Unique url code</label>
+                                                                            <label class="col-md-8 col-auto">@DefaultItemModel.UrlCode</label>
+                                                                        </div>
+                                                                        <div class="row">
+                                                                            <label class="col-md-4 col-auto items-label text-muted">Purchase Cost</label>
+                                                                            <label class="col-md-8 col-auto">@DefaultItemModel.Cost</label>
+                                                                        </div>
+                                                                        <div class="row">
+                                                                            <label class="col-md-4 col-auto items-label text-muted">Selling Price</label>
+                                                                            <label class="col-md-8 col-auto">@DefaultItemModel.Price</label>
+                                                                        </div>
+                                                                        @if (DefaultItemModel.ColorID != null)
+                                                                        {
+                                                                            <div class="row">
+                                                                                <label class="col-md-4 col-auto items-label text-muted">Color</label>
+                                                                                <label class="col-md-8 col-auto">@DefaultItemModel.ColorName</label>
+                                                                            </div>
+                                                                        }
+                                                                    }
+                                                                    else if(ItemViewModel.ItemVariants is not null)
+                                                                    {
+                                                                        <div class="row mt-3">
+                                                                            <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">Item Variants </label>
+                                                                        </div>
+                                                                        @foreach (var itemModel in ItemViewModel.ItemVariants)
+                                                                        {
+                                                                            <div class="divider"></div>
+                                                                            <div class="row">
+                                                                                <label class="col-md-4 col-auto items-label text-muted">Packing Unit</label>
+                                                                                <label class="col-md-8 col-auto">@itemModel.PackingTypeName</label>
+                                                                            </div>
+                                                                            <div class="row">
+                                                                                <label class="col-md-4 col-auto items-label text-muted">UM Unit</label>
+                                                                                <label class="col-md-8 col-auto">@itemModel.UMUnit</label>
+                                                                            </div>
+                                                                            @if (itemModel.SizeID != null)
+                                                                            {
+                                                                                <div class="row">
+                                                                                    <label class="col-md-4 col-auto items-label text-muted">Size</label>
+                                                                                    <label class="col-md-8 col-auto">@itemModel.Size</label>
+                                                                                </div>
+                                                                            }
+                                                                            <div class="row">
+                                                                                <label class="col-md-4 col-auto items-label text-muted">Purchase Cost</label>
+                                                                                <label class="col-md-8 col-auto">@itemModel.Cost</label>
+                                                                            </div>
+                                                                            <div class="row">
+                                                                                <label class="col-md-4 col-auto items-label text-muted">Selling Price</label>
+                                                                                <label class="col-md-8 col-auto">@itemModel.Price</label>
+                                                                            </div>
+                                                                        }
+                                                                    }
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="tab-pane" id="tab6">
+                                                </div>
+                                                <div class="tab-pane" id="tab7">
+                                                    <table class="table details-page-table">
+                                                        <thead>
+                                                            <tr class="text-muted">
+                                                                <th width="25%">Date</th>
+                                                                <th>Details</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="text-muted">
+                                                                    05/01/2023 11:51 AM
+                                                                </td>
+                                                                <td>
+                                                                    updated by <i class="text-muted">
+                                                                        -
+                                                                        ashiquebinraheem
+                                                                    </i>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-muted">
+                                                                    05/01/2023 11:47 AM
+                                                                </td>
+                                                                <td>
+                                                                    updated. Initial stock changed from 0 to
+                                                                    10 <i class="text-muted">
+                                                                        -
+                                                                        ashiquebinraheem
+                                                                    </i>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-muted">
+                                                                    05/01/2023 11:42 AM
+                                                                </td>
+                                                                <td>
+                                                                    created by <i class="text-muted">
+                                                                        -
+                                                                        ashiquebinraheem
+                                                                    </i>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</PageLayoutNew>
+
+@code {
+    [Parameter] public int ItemID { get; set; } = 0;
+
+    private int SelectedMenuID;
+
+    private bool CanShowPage = false;
+
+    private ItemSingleModel ItemViewModel = new();
+    private ItemVariantModel? DefaultItemModel = null;
+    private bool ClientItemQrCodeState = false;
+
+    private List<ViewPageMenuModel> menuItem = new();
+    private List<string> listPageMenuCategories = new()
+    {
+        "All Items",
+        "By Type",
+        "By Category",
+        "By Group"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        CanShowPage = false;
+        SelectedMenuID = ItemID;
+        await LoadItemViewMenuList();
+        await LoadViewData(ItemID);
+        var qrCodeStateModel = await API.GetAsync<QrCodeStateModel>("settings/get-client-qr-code-state", true);
+        ClientItemQrCodeState = qrCodeStateModel.ItemQrCodeState;
+    }
+    private async Task LoadItemViewMenuList()
+    {
+        menuItem = await API.GetAsync<List<ViewPageMenuModel>>("item/get-item-menu-list", true);
+    }
+    private async Task LoadViewData(int? itemID)
+    {
+        ItemViewModel = await API.GetAsync<ItemSingleModel>($"item/get-item/{itemID}", true);
+        if (!ItemViewModel.HasMultipleModels && ItemViewModel.ItemVariants is null)
+        {
+            DefaultItemModel = new();
+            DefaultItemModel.ItemVariantID = ItemViewModel.ItemVariantID;
+            DefaultItemModel.ItemID = ItemViewModel.ItemID;
+            DefaultItemModel.UrlCode = ItemViewModel.UrlCode;
+            DefaultItemModel.PackingTypeID = ItemViewModel.PackingTypeID;
+            DefaultItemModel.UMUnit = ItemViewModel.UMUnit;
+            DefaultItemModel.Price = ItemViewModel.Price;
+            DefaultItemModel.Cost = ItemViewModel.Cost;
+            DefaultItemModel.SizeID = ItemViewModel.SizeID;
+            DefaultItemModel.Size = ItemViewModel.Size;
+            DefaultItemModel.PackingTypeName = ItemViewModel.PackingTypeName;
+            DefaultItemModel.ColorID = ItemViewModel.ColorID;
+            DefaultItemModel.ColorName = ItemViewModel.ColorName;
+        }
+        SelectedMenuID = ItemViewModel.ItemID;
+        CanShowPage = true;
+    }
+    private void NavigateToSinglePage()
+    {
+        Nav.NavigateTo($"item/{ItemViewModel.ItemID}");
+    }
+    private async Task DeleteItem()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete the item?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            int Id = ItemViewModel.ItemID;
+            if (await API.GetAsync<bool>($"item/delete-item/{Id}", true))
+            {
+                Nav.NavigateTo("items");
+            }
+        }
+    }
+    private async Task GenerateQrCode()
+    {
+        var result = await API.GetAsync<IdnValuePair>($"item/generate-item-qr-code/{ItemID}", true);
+        if (result is not null)
+        {
+            ItemViewModel.QrCodeMediaID = result.ID;
+            ItemViewModel.QrCodeFileName = result.Value;
+            StateHasChanged();
+        }
+    }
+}

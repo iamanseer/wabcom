@@ -1,0 +1,285 @@
+﻿@page "/edit-profile"
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="SaveDetails">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6>
+                                Basic information's
+                            </h6>
+                        </div>
+                        <div class="card-body">
+
+
+                            <div class="row">
+                                <div class="col-12 justify-content-center align-items-center">
+                                    <label class="form-label">Profile picture</label>
+                                    <small>Upload Image minimum size 250px X 250px (only jpg,png images accepted ) </small>
+                                    <div class="uploader-container py-2 border mt-3">
+                                        <label class="position-relative mb-0 ">
+                                            @*<img src="https://picsum.photos/200/200" alt="">
+                                            <button type="button" class="uploadremove" title="Remove"> Remove </button>*@
+                                            <Image @ref="Media" FileName="@Model.CompanyName" MediaID="Model.MediaID" Accept="image/png, image/jpeg" FolderName="Profile" DivClass="profile-pic-uploader" />
+                                        </label>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        @if (Model.UserTypeID == (int)UserTypes.Client)
+                                        {
+                                            <label class="form-label">Company Name</label>
+                                        }
+                                        else
+                                        {
+                                            <label class="form-label">Name</label>
+                                        }
+
+                                        <input type="text" class="form-control" placeholder="Company name" @bind="Model.CompanyName">
+                                        <ValidationMessage For="() => Model.CompanyName" />
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="form-label">User Name</label>
+                                        <input type="text" class="form-control" placeholder="user name" @bind="Model.UserName">
+                                        <ValidationMessage For="() => Model.UserName" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Phone</label>
+                                        <input type="text" class="form-control" placeholder="Phone" @bind="Model.Phone">
+                                        <ValidationMessage For="() => Model.Phone" />
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <div class="form-group">
+                                        <label class="form-label">Email</label>
+                                        <input type="text" class="form-control" placeholder="Email" @bind="Model.EmailAddress">
+                                        <ValidationMessage For="() => Model.EmailAddress" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (Model.UserTypeID == (int)UserTypes.Client)
+                            {
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="form-group">
+                                            <label class="form-label">GST Number</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" placeholder="" name="" @bind="Model.GSTNo">
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (Model.UserTypeID == (int)UserTypes.Client)
+                            {
+                                <div class="divider my-2"> </div>
+                                <div class="row">
+
+                                    <div class="row">
+                                        <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">Address Details </label>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="form-group">
+                                            <label class="form-label">Address Line 1 </label>
+                                            <textarea class="form-control" id="address-line-1-text-area" rows="2" @bind="Model.AddressLine1"></textarea>
+                                            <ValidationMessage For="() => Model.AddressLine1" />
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="form-group">
+                                            <label class="form-label">Address Line 2 </label>
+                                            <textarea class="textarea form-control" id="address-line-1-text-area" rows="2" @bind="Model.AddressLine2"></textarea>
+
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <div class="form-group">
+                                            <label class="form-label">Address Line 3</label>
+                                            <div class="input-group">
+                                                <textarea class="textarea form-control" id="address-line-1-text-area" rows="2" @bind="Model.AddressLine3"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <DropdownSelect DivClass="col-sm-6"
+                                                        DropdownID="@CountryDropdownID"
+                                                        Label="Country :"
+                                                        Mode="(int)DropdownModes.Country"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        ItemSelected="ItemSelected"
+                                                        IsRequired="true"
+                                                        ReadDataOnSearch="true"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})"
+                                                        ValidationFor="() => Model.CountryID" />
+
+                                        <DropdownSelect DivClass="col-md-6"
+                                                        DropdownID="@StateDropdownID"
+                                                        Label="State : "
+                                                        ReadDataOnSearch="true"
+                                                        Mode="(int)DropdownModes.State"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        ItemSelected="ItemSelected"
+                                                        IsRequired="true"
+                                                        CommonSearch="@(new CommonSearchModel(){ID=Convert.ToInt32(Model.CountryID)})"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.StateID,Value=Model.StateName})"
+                                                        IsAddOptionNeed="true"
+                                                        NewButtonText="Add New State"
+                                                        ValidationFor="() => Model.StateID" />
+
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label class="form-label">PinCode</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" placeholder="" name="" @bind="Model.PinCode">
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+
+                                    <div class="divider my-2"></div>
+                                    <div class="row">
+                                        <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">Contact Person Details </label>
+                                    </div>
+                                    <div class="row">
+
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label class="form-label">Contact Person Name</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" placeholder="" name="" @bind="Model.ContactPersonName">
+
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label class="form-label">Contact Person Phone</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" placeholder="" name="" @bind="Model.ContactPersonPhone">
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label class="form-label">Contact Person Email</label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" placeholder="" name="" @bind="Model.ContactPersonEmail">
+
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer-action d-flex">
+            <button type="submit" class="btn  btn-lg btn-primary me-2">Apply</button>
+            <button class="btn btn-lg btn-danger me-2" @onclick="async () => await Close()">Discard</button>
+
+
+        </div>
+    </EditForm>
+
+</PageLayoutNew>
+
+@code {
+
+    private AccountDetailsModel Model = new();
+
+    private string CountryDropdownID = "country-drop-down-select";
+    private string StateDropdownID = "state-drop-down-select";
+    private string? StatePointerEvent = "pointer-events:none";
+    private DropdownSelect? stateDropdown;
+    Image Media;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model = await API.GetAsync<AccountDetailsModel>($"user/get-account-details", true);
+    }
+
+    #region Main Function
+
+    private async Task SaveDetails()
+    {
+        Model.MediaID = await Media.UploadImage();
+        var res = await API.PostAsync<BaseSuccessResponse, AccountDetailsModel>("user/save-account-details", Model);
+        if (res != null)
+        {
+            Nav.NavigateTo($"home");
+        }
+    }
+
+    private async Task Close()
+    {
+        Nav.NavigateTo("home");
+    }
+
+    #endregion
+
+    #region Dropdown
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Country:
+
+                Model.CountryID = data.ID;
+                Model.CountryName = data.Value;
+                StatePointerEvent = "";
+                await stateDropdown.RefreshList();
+                await FocusDropdown(StateDropdownID);
+
+                break;
+
+            case (int)DropdownModes.State:
+
+                Model.StateID = data.ID;
+                Model.StateName = data.Value;
+
+                break;
+        }
+    }
+
+    private async Task FocusDropdown(string dropdownID)
+    {
+        await JS.InvokeVoidAsync("setDropdownFocus", dropdownID, "drop-down-focused");
+    }
+    #endregion
+
+}

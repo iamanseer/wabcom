@@ -1,0 +1,95 @@
+﻿@page "/court-price-groups"
+
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Court;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="CourtFilterSettings" OnFilterButtonClick="FilterListPageTo"/>
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    Price Group Name
+                                </th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in CourtListModel.Data.Select((data, index) => new { index, data }))
+                            {
+                                <tr @onclick="@(()=>Nav.NavigateTo($"court-price-group/{item.data.ID}"))" style="cursor:pointer">
+                                    <td>
+                                        @((CourtListModel.PageIndex - 1) * CourtListModel.PageSize + 1 + item.index)
+                                    </td>
+                                    <td>
+                                        @item.data.Value
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="CourtListModel.PageSize" TotalCount="CourtListModel.TotalCount" TotalPages="CourtListModel.TotalPages" PageIndex="CourtListModel.PageIndex" LoadPageIndex="PageIndex" />
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+
+@code {
+    [Parameter] public int? HallID { get; set; }
+    private PagedList<IdnValuePair> CourtListModel = new();
+    private PagedListPostModelWithFilter SearchModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourtData();
+    }
+    #region Sort, Filter
+
+    HeaderSettingsModel CourtFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by Price Group Name",
+            NeedSortOption = false,
+            NeedFilterOption = false,
+            // SortMenuItems = stage1SortMenuItems,
+
+            DateFilters = null,
+            Heading = "Price Group",
+            SinglePageURL = "court-price-group",
+            AddButtonText = "New Price Group",
+        };
+
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadCourtData();
+    }
+
+    private async Task PageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadCourtData();
+    }
+
+    #endregion
+
+    private async Task LoadCourtData()
+    {
+
+        CourtListModel = await API.PostAsync<PagedList<IdnValuePair>, PagedListPostModelWithFilter>("court/get-all-price-groups", SearchModel);
+
+    }
+}

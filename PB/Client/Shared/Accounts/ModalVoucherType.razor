@@ -1,0 +1,191 @@
+﻿@using PB.Model.Models;
+@using PB.Shared.Models.Accounts.VoucherTypes;
+@using PB.Shared.Models.Common;
+
+<!--Voucher Type Modal-->
+<div class="modal fade" id="account-group-modal">
+    <div class="modal-dialog modal-dialog-centered" style="overflow-y: scroll;">
+        <div class="modal-content modal-content-demo">
+            <EditForm Model="VoucherType" OnValidSubmit="SaveVoucherType">
+                <DataAnnotationsValidator />
+                <div class="modal-header">
+                    <h6 class="modal-title">
+                        @if (VoucherType.VoucherTypeID > 0)
+                        {
+                            @(VoucherType.VoucherTypeName)
+                        }
+                        else
+                        {
+                            @("Voucher Type")
+                        }
+                    </h6>
+                    <button type="button" class="btn-close" @onclick="async() => await HideVoucherTypeModal()">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <InputTextBox Label="Voucher Type Name :"
+                                      DivClass="col-md-12" @bind-Value="VoucherType.VoucherTypeName"
+                                      ValidationFor="() => VoucherType.VoucherTypeName"
+                                      IsRequired="true" id="voucher-type-name-text-box" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label" style="text-align: left; margin-top: 0 !important;">
+                                    Nature :
+                                    <span style="color:red">*</span>
+                                </label>
+                                <select name="nature-select-box" class="form-control form-select" @bind="VoucherType.VoucherTypeNatureID">
+                                    <option value="0" selected> Choose </option>
+                                    @foreach (var nature in VoucherTypeNatues)
+                                    {
+                                        if (VoucherType.VoucherTypeNatureID == nature.ID)
+                                        {
+                                            <option value="@nature.ID" selected> @nature.Value </option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@nature.ID"> @nature.Value </option>
+                                        }
+                                    }
+                                </select>
+                                <ValidationMessage For="() => VoucherType.VoucherTypeNatureID" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label" style="text-align: left; margin-top: 0 !important;">
+                                    Numbering Type :
+                                    <span style="color:red">*</span>
+                                </label>
+                                <select name="periodicity-select-box" class="form-control form-select" @bind="VoucherType.NumberingTypeID">
+                                    <option value="0" selected> Choose </option>
+                                    <option value="@((int)VoucherNumberingTypes.Automatic_Manual_Override)">Automatic Manual Override</option>
+                                    <option value="@((int)VoucherNumberingTypes.Automatic)">Automatic</option>
+                                    <option value="@((int)VoucherNumberingTypes.Manual)"> Manual</option>
+                                </select>
+                                <ValidationMessage For="() => VoucherType.NumberingTypeID" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label" style="text-align: left; margin-top: 0 !important;">
+                                    Periodicity :
+                                    <span style="color:red">*</span>
+                                </label>
+                                <select name="numbering-type-select-box" class="form-control form-select" @bind="VoucherType.PeriodicityID">
+                                    <option value="0" selected> Choose </option>
+                                    <option value="@((int)VoucherNumberingPeriodicity.Continuous)">Continuous</option>
+                                    <option value="@((int)VoucherNumberingPeriodicity.Daily)">Daily</option>
+                                    <option value="@((int)VoucherNumberingPeriodicity.Monthly)">Monthly</option>
+                                    <option value="@((int)VoucherNumberingPeriodicity.Yearly)">Yearly</option>
+                                </select>
+                                <ValidationMessage For="() => VoucherType.PeriodicityID" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <InputTextBox Label="Prefix :"
+                                      DivClass="col-md-12" @bind-Value="VoucherType.Prefix"
+                                      ValidationFor="() => VoucherType.Prefix"
+                                      IsRequired="true" id="voucher-type-prefix-text-box" />
+                    </div>
+
+                    <div class="row">
+                        <InputNumberBox DivClass="col-md-12"
+                                        Label="Starting Number :" @bind-Value="VoucherType.StartingNumber"
+                                        IsRequired="true" ValidationFor="() => VoucherType.StartingNumber" />
+                    </div>
+
+                    <div class="row">
+                        <InputTextBox Label="Header :"
+                                      DivClass="col-md-12" @bind-Value="VoucherType.HeaderText"
+                                      ValidationFor="() => VoucherType.HeaderText" id="voucher-type-prefix-text-box" />
+                    </div>
+
+                    <div class="row">
+                        <InputTextBox Label="Footer :"
+                                      DivClass="col-md-12" @bind-Value="VoucherType.FooterText"
+                                      ValidationFor="() => VoucherType.FooterText" id="voucher-type-prefix-text-box" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1">Remarks:</label>
+                                <textarea class="textarea form-control" id="voucher-type-remarks-text-area" rows="4" @bind="VoucherType.Remarks"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(VoucherType.VoucherTypeID > 0 ? "Update" : "Save")</button>
+                    @if(VoucherType.VoucherTypeID > 0)
+                    {
+                        <button type="button" class="btn btn-danger" @onclick="async () => await DeleteVoucherType()">Delete</button>
+                    }
+                    <button type="button" class="btn btn-light" @onclick="async() => await HideVoucherTypeModal()">Close</button>
+                </div>
+
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+    private VoucherTypeModel VoucherType = new();
+    private List<IdnValuePair> VoucherTypeNatues = new();
+    private DropdownSelect? ParentGroupDropdown;
+
+    public async Task OpenVoucherTypeModal(int voucherTypeID = 0)
+    {
+        VoucherTypeNatues = await API.PostAsync<List<IdnValuePair>, CommonSearchModel>("common/get-list-of-voucher-type-natures", new CommonSearchModel());
+        if (voucherTypeID == 0)
+        {
+            VoucherType = new();
+        }
+        else
+        {
+            VoucherType = await API.GetAsync<VoucherTypeModel>($"accounts/get-voucher-type/{voucherTypeID}", true);
+        }
+        await JS.InvokeVoidAsync("ShowModal", "account-group-modal");
+    }
+    public async Task HideVoucherTypeModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "account-group-modal");
+        VoucherTypeNatues = new();
+    }
+    private async Task SaveVoucherType()
+    {
+        var result = await API.PostAsync<VoucherTypeSaveResultModel, VoucherTypeModel>("accounts/save-voucher-type", VoucherType);
+        if (result is not null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair() { ID = result.VoucherTypeID, Value = result.VoucherTypeName });
+            await HideVoucherTypeModal();
+        }
+    }
+    private async Task DeleteVoucherType()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete " + VoucherType.VoucherTypeName + " voucher type?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel")&&
+        await API.GetAsync<bool>($"accounts/delete-voucher-type/{VoucherType.VoucherTypeID}", true))
+        {
+            await HideVoucherTypeModal();
+            Nav.NavigateTo("redirect/voucher-types");
+        }
+    }
+
+}

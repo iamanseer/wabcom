@@ -1,0 +1,265 @@
+﻿@using PB.Shared.Tables;
+@using Blazored.LocalStorage;
+@using PB.Shared.Models;
+@using PB.Model.Models;
+@using PB.Shared.Models.Common;
+
+@inject ILocalStorageService _localStorage
+<div class="modal fade" id="new-state-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+        <EditForm Model="Model" OnValidSubmit="Save" autocomplete="off">
+            <div class="modal-content modal-content-demo">
+
+
+                <div class="modal-header">
+                    @if (Model.StateID != 0)
+                    {
+                        <h6 class="modal-title">@Model.StateName</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New State</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await CloseModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body" style="@pointerEvent">
+
+
+                    <DataAnnotationsValidator />
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="my-4 d-flex gap-4">
+                                 <h5 style="font-weight:bold">Country : @Model.CountryName</h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <InputTextBox Label="State Name : "
+                                          IsRequired="true" @bind-Value="Model.StateName"
+                                            ValidationFor="() => Model.StateName"
+                                          DivClass="col-md-7" id="cst-name-box" /> 
+                        </div>
+
+                        <div class="row">
+                            <InputTextBox Label="State Code : "
+                                          IsRequired="false" @bind-Value="Model.StateCode"
+                                          ValidationFor="() => Model.StateCode"
+                                          DivClass="col-md-7" id="cst-name-box" />
+                                         
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">Latitude :</label>
+                                    <input type="number" class="form-control" @bind="Model.Lat">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">Longitude :</label>
+                                    <input type="number" class="form-control" @bind="Model.Long">
+                                </div>
+                            </div>
+                        </div>
+                       
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    @if (Model.StateID == 0)
+                    {
+                        <button type="submit" class="btn btn-primary">Add</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await CloseModal()">Close</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await CloseModal()">Close</button>
+                    }
+                </div>
+
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@*<div class="modal fade" id="new-state-modal">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <EditForm Model="Model" autocomplete="off" OnValidSubmit="Save">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    <h6 class="modal-title">
+                        @if (Model.StateID == 0)
+                        {
+                            @("Add new State")
+                        }
+                        else
+                        {
+                            @Model.StateName
+                        }
+                    </h6>
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await CloseModal()">
+                        <span aria-hidden="true">
+                            &times;
+                        </span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                
+                        <div class="row">
+                            <div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h5 style="font-weight:bold">Country : @Model.CountryName</h5> 
+                                    </div>
+                                </div>
+                           
+                                <InputTextBox Label="State Name :"
+                                              DivClass="col-md-12 "
+                                              IsRequired="true"
+                                              @bind-Value="Model.StateName"
+                                              id="city-name-text-box" />
+
+                                <ValidationMessage For="()=>Model.StateName" />
+                                <InputTextBox Label="State code :"
+                                              DivClass="col-md-12 "
+                                              IsRequired="false"
+                                              @bind-Value="Model.StateCode"
+                                              id="city-name-text-box" />
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Latitude :</label>
+                                            <input type="number" class="form-control" @bind="Model.Lat">
+                                        
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Longitude :</label>
+                                            <input type="number" class="form-control" @bind="Model.Long">
+
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                            </div>
+                       
+                        </div>
+                    
+                        <div class="modal-footer">
+                            @if (Model.StateID == 0)
+                            {
+                                <button type="button" class="btn btn-primary">Add</button>
+                                <button type="button" class="btn btn-danger" @onclick="async() => await CloseModal()">Close</button>
+                            }
+                            else
+                            {
+                           
+                                <button type="button" class="btn btn-primary">Update</button>
+                                <button type="button" @onclick="async() => await Delete()" class="btn btn-danger ms-3">Delete</button>
+                                <button type="button" class="btn btn-danger" @onclick="async() => await CloseModal()">Close</button>
+                            }
+                        </div>
+                    
+               
+                </div>
+       
+        </div>
+        </EditForm>
+    </div>
+</div>*@
+
+@code {
+
+    [Parameter] public EventCallback<IdnValuePair> CallbackWithIdnValue { get; set; }
+
+    private CountryStateModel Model = new();
+
+    private DropdownSelect? CountrySelect;
+
+    string errorMessage = "";
+
+    bool ReadOnly = false;
+    bool IsInQuickAddMode = false;
+
+    string disabledMode = "";
+    string pointerEvent = "";
+    int PreviousStateID = 0;
+
+    private bool IsViewOnly;
+
+    public async Task OpenStateModal(int? countryId, string countryName,int stateID = 0)
+    {
+
+        Model.CountryID = countryId;
+        Model.CountryName = countryName;
+        if (PreviousStateID != stateID)
+        {
+            Model = await API.GetAsync<CountryStateModel>($"common/get-state/{stateID}");
+            PreviousStateID = stateID;
+        }
+
+        StateHasChanged();
+        await OpenModal();
+    }
+
+    public async Task Save()
+    {
+        var res = await API.PostAsync<StateAddResultModel, CountryStateModel>("common/save-state", Model);
+        if (res != null)
+        {
+            Model = new();
+            errorMessage = "";
+
+            await CallbackWithIdnValue.InvokeAsync(new IdnValuePair()
+                {
+                    ID = res.StateID,
+                    Value = res.StateName
+                });
+            await CloseModal();
+        }
+    }
+
+    private async Task Delete()
+    {
+        if (await API.GetAsync<bool>($"common/delete-state/{Model.StateID}"))
+        {
+            Model = new();
+            PreviousStateID = 0;
+            errorMessage = "";
+            await CloseModal();
+            await CallbackWithIdnValue.InvokeAsync();
+        }
+    }
+
+    private async Task CloseModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "new-state-modal");
+    }
+
+    private async Task OpenModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "new-state-modal", "city-name-text-box");
+    }
+
+    private async Task FocusElement(string elementID)
+    {
+        await JS.InvokeVoidAsync("focusElement", elementID);
+    }
+
+    private void ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        Model.CountryID = data.ID;
+        Model.CountryName = data.Value;
+    }
+}

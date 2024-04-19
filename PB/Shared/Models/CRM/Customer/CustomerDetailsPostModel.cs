@@ -1,0 +1,14 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PB.Shared.Models.CRM.Customer
+{
+    public class CustomerDetailsPostModel
+    {
+        public int CustomerEntityID { get; set; }
+        public int? ID { get; set; }
+    }
+}

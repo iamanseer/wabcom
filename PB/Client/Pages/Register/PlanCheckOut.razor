@@ -1,0 +1,496 @@
+﻿@page "/plan-check-out/{ClientId:int}"
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+
+<LoginLayout>
+    <div class="page">
+        <div class="">
+
+            <div class="col-lg-10 offset-lg-1">
+                <div class="card">
+
+                    <div class="card-body">
+                        <div class="row">
+
+                            <div class="col-md-8">
+                                <h3 class="fw-semibold mb-2">Proceed with your selected plan</h3>
+
+                                <div class="d-flex flex-column">
+                                    <label for="radio-card" class="radio-card w-100">
+                                        <input type="radio" name="radio-card" id="radio-card" checked="@(Model.PackageID != null ? "checked" : null)" />
+                                        <div class="card-content-wrapper border on-checkout">
+                                            <span class="check-icon"></span>
+                                            <div class="card-content">
+
+                                                <p class="fs-18 fw-semibold mb-1 pe-0 w-100">@Model.PackageName</p>
+                                                <p class="fw-bold ">
+                                                    ₹ @Model.Fee
+                                                </p>
+
+                                                <p class="mb-0">you will be only billed after <strong>@Model.MonthCount month.</strong></p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <!-- /.radio-card -->
+                                    <a @onclick="async () => await ChangePlan(Model)" class="text-primary col-2"> Change Plan</a>
+
+                                </div>
+                                <EditForm Model="Model" OnValidSubmit="SavePayOut">
+
+                                    <DataAnnotationsValidator />
+                                    <div class="row my-4">
+
+                                        <h5> Add Billing Details @* <span class="text-muted"> (Optional)</span>*@</h5>
+                                        <div class="row">
+
+                                            @*<InputTextBox @bind-value="Model.FirstName" Label="First Name :" DivClass="col-sm-6 col-md-12" IsRequired="true" ValidationFor="()=>Model.FirstName" />*@
+
+                                            <div class="col-sm-6 col-md-12">
+                                                <div class="form-group">
+                                                    <label class="form-label">First Name <span class="text-red">*</span></label>
+                                                    <input type="text" class="form-control" placeholder="First name" @bind="Model.FirstName">
+                                                </div>
+                                                <ValidationMessage For="()=>Model.FirstName" />
+                                            </div>
+
+                                            @*<InputTextBox @bind-value="Model.CompanyName" Label="Company Name :" DivClass="col-sm-6 col-md-12" IsRequired="true" ValidationFor="()=>Model.CompanyName" />*@
+
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label class="form-label">Company Name <span class="text-red">*</span></label>
+                                                    <input type="text" class="form-control" placeholder="Company name" @bind="Model.CompanyName">
+                                                </div>
+                                                <ValidationMessage For="()=>Model.CompanyName" />
+                                            </div>
+
+                                            @*<InputTextBox @bind-value="Model.EmailAddress" Label="Email :" DivClass="col-sm-6 col-md-12" IsRequired="true" ValidationFor="()=>Model.EmailAddress" />*@
+
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label class="form-label">Email address <span class="text-red">*</span></label>
+                                                    <input type="email" class="form-control" placeholder="Email" @bind="Model.EmailAddress">
+                                                </div>
+                                                <ValidationMessage For="()=>Model.EmailAddress" />
+                                            </div>
+
+                                            @*<InputTextBox @bind-value="Model.AddressLine1" Label="Address :" DivClass="col-sm-6 col-md-12" IsRequired="true" ValidationFor="()=>Model.AddressLine1" />*@
+
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label class="form-label">Address <span class="text-red">*</span></label>
+                                                    <textarea class="form-control" placeholder="Address" rows="1" @bind="Model.AddressLine1"></textarea>
+                                                </div>
+                                                <ValidationMessage For="()=>Model.AddressLine1" />
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <DropdownSelect DivClass=""
+                                                                    DropdownID="@CountryDropdownID"
+                                                                    Label="Country :"
+                                                                    Mode="(int)DropdownModes.Country"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                    ItemSelected="ItemSelected"
+                                                                    IsRequired="true"
+                                                                    ReadDataOnSearch="true"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})" />
+                                                    <ValidationMessage For="()=>Model.CountryID" />
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <DropdownSelect DivClass="" @ref="stateDropdown"
+                                                                    DropdownID="@StateDropdownID"
+                                                                    Label="State : "
+                                                                    ReadDataOnSearch="true"
+                                                                    Mode="(int)DropdownModes.StateForSignup"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearchForSignup"
+                                                                    CommonSearch="@(new CommonSearchModel(){ID = Convert.ToInt32(Model.CountryID)})"
+                                                                    ItemSelected="ItemSelected"
+                                                                    IsRequired="true"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.StateID,Value=Model.State})" />
+                                                    <ValidationMessage For="()=>Model.StateID" />
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <DropdownSelect DivClass="" @ref="cityDropdown"
+                                                                    DropdownID="@CityDropdownID"
+                                                                    Label="City : "
+                                                                    ReadDataOnSearch="true"
+                                                                    Mode="(int)DropdownModes.CityForSignup"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearchForSignup"
+                                                                    ItemSelected="ItemSelected"
+                                                                    IsRequired="true"
+                                                                    CommonSearch="@(new CommonSearchModel(){ID=Convert.ToInt32(Model.StateID)})"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CityID,Value=Model.City})" />
+                                                    <ValidationMessage For="()=>Model.CityID" />
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <DropdownSelect DivClass="" @ref="zoneDropdown"
+                                                                    DropdownID="@ZoneDropdownID"
+                                                                    Label="Zone : "
+                                                                    ReadDataOnSearch="true"
+                                                                    Mode="(int)DropdownModes.Zone"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearchWithID"
+                                                                    ItemSelected="ItemSelected"
+                                                                    IsRequired="true"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.ZoneID,Value=Model.ZoneName})" />
+                                                    <ValidationMessage For="()=>Model.ZoneID" />
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6 col-md-6">
+                                                <div class="form-group">
+                                                    <label class="form-label">Postal Code </label>
+                                                    <input type="number" class="form-control" placeholder="ZIP Code" @bind="Model.PinCode">
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <div class="row mt-auto">
+
+                                        <div class="col-md-12">
+                                            <button type="submit" class="btn btn-primary btn-block modal-effect " data-bs-effect="effect-scale" data-bs-toggle="modal">Proceed To Pay</button>
+                                        </div>
+
+                                    </div>
+                                </EditForm>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="card p-3 border-primary pricing-card rounded-0 border-start h-100">
+                                    <div class="card-header d-block text-justified pt-2">
+                                        <p class="fs-18 fw-semibold mb-1 pe-0">@Model.PackageName</p>
+                                        <p class="text-justify fw-semibold mb-1">
+                                            <span class="fs-30 me-2">₹</span><span class="fs-30 me-1">@Model.Fee</span>
+                                            @*<span class="fs-25"><span class="op-0-5 text-muted text-20">/</span> year</span>*@
+                                        </p>
+                                        @*<p class="fs-13 mb-2">@Model.PackageDescription</p>*@
+
+                                        @if(Model.PackageDescription.Length>76)
+                                        {
+                                            <p class="fs-13 mb-2">
+                                                @Model.PackageDescription.Substring(0, characterCount) <span class="fs-13 mb-2 collapse" id="collapseContent">
+                                                    @Model.PackageDescription.Substring(characterCount)
+                                                </span><a class="p-0 mb-0 mt-2 btn-more d-flex align-items-center" data-bs-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">
+                                                    See <span class="see-more ms-1">more</span><span class="see-less ms-1">less</span><i class="fa fa-angle-down ms-2"></i>
+                                                </a>
+                                            </p>
+                                        }
+                                        else
+                                        {
+                                            <p class="fs-13 mb-2">
+                                                @Model.PackageDescription
+                                            </p>
+                                        }
+
+
+
+                                        @*<p class="fs-13 mb-1 text-primary">Billed monthly on regular basis!</p>*@
+                                    </div>
+                                    <div class="card-body pt-2 pricing-detail-view">
+                                        <ul class="text-justify pricing-body ps-0">
+                                            @foreach (var item in Model.features)
+                                            {
+                                                <li>
+                                                    <i class="mdi mdi-checkbox-marked-circle-outline text-primary p-2 fs-16"></i>
+                                                    <strong> @item</strong>
+                                                </li>
+                                            }
+
+
+                                        </ul>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</LoginLayout>
+
+<div class="modal fade" id="modalchangeplan">
+    <div class="modal-dialog modal-dialog-centered modal-lg " role="document">
+        <div class="modal-content modal-content-demo">
+
+            <div class="modal-body">
+                <div class="row">
+
+                    <div class="col-md-8">
+                        <h3 class="fw-semibold mb-2">
+                            Find the <span class="text-primary">Perfect Plan</span>
+                            for your Business.
+                        </h3>
+                        @* <p class="fs-13 mb-2">
+                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Iure
+                        quos debitis aliquam .
+                        </p>*@
+
+                        <div class=" d-flex justify-content-between align-items-center">
+
+                            <p class="mb-0 fw-bold"> Blling Type </p>
+
+                            <div class="custom-controls-stacked d-flex gap-2">
+                                @foreach (var plan in Plans)
+                                {
+                                    <label class="custom-control custom-radio">
+                                        <input type="radio"
+                                           class="custom-control-input" name="example-radios1" value="option5"
+                                           @onchange="(ChangeEventArgs e) => CheckboxClicked(true,plan)"> <span class="custom-control-label">@plan.PlanName</span>
+                                    </label>
+                                }
+
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3">
+                            @foreach (var package in Package)
+                            {
+                                @*<label for="radio-card-@package.PackageID" class="radio-card">
+                            @if (Model.PackageID == package.PackageID)
+                            {
+                            <input type="radio" name="radio-card" id="radio-card-@package.PackageID" checked />
+                            }
+                            else
+                            {
+                            <input type="radio" name="radio-card" id="radio-card-@package.PackageID" @onchange="(ChangeEventArgs e) => CheckboxClickedPackage(true,package.PackageID)" />
+                            }
+
+                            <div class="card-content-wrapper border position-relative">
+                            <span class="check-icon"></span>
+                            <div class="card-content">
+                            <img src="/assets/images/paperplane.png" alt="" />
+                            <p>@package.PackageName</p>
+                            <p class="fw-bold">₹ @package.Fee</p>
+                            </div>
+                            </div>
+                            </label>*@
+
+                                @if (Model.PackageID == package.PackageID)
+                                {
+                                    <label for="radio-card-@package.PackageID" class="radio-card">
+                                        <input type="radio" name="radio-card" id="radio-card-@package.PackageID" checked />
+                                        <div class="card-content-wrapper border position-relative">
+                                            <span class="check-icon"></span>
+                                            <div class="card-content">
+                                                <img src="@package.FileName" alt="" />
+                                                <p>@package.PackageName</p>
+                                                <p class="fw-bold">₹ @package.Fee</p>
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                }
+                                else
+                                {
+                                    <label for="radio-card-@package.PackageID" class="radio-card">
+                                        <input type="radio" name="radio-card" id="radio-card-@package.PackageID" @onchange="(ChangeEventArgs e) => CheckboxClickedPackage(true,package.PackageID)" />
+                                        <div class="card-content-wrapper border position-relative">
+                                            <span class="check-icon"></span>
+                                            <div class="card-content">
+                                                <img src="@package.FileName" alt="" />
+                                                <p>@package.PackageName</p>
+                                                <p class="fw-bold">₹ @package.Fee</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                }
+                            }
+
+
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                @* <button type="button" @onclick="async ()=> await UpdatePlan()" class="btn btn-primary w-80">Save</button>*@
+                <button class="btn btn-danger" data-bs-dismiss="modal" @onclick="HideModal">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public int? ClientId { get; set; }
+
+    private PlanCheckOutModel Model = new();
+
+    private string StateDropdownID = "state-drop-down-select";
+    private string CityDropdownID = "city-drop-down-select";
+    private string ZoneDropdownID = "zone-drop-down-select";
+    private string CountryDropdownID = "country-drop-down-select";
+
+    private bool CanShowDropdown = false;
+
+    private DropdownSelect? stateDropdown;
+    private DropdownSelect? cityDropdown;
+    private DropdownSelect? zoneDropdown;
+
+    #region Main function
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        Model = await API.GetAsync<PlanCheckOutModel>($"auth/get-check-out-details/{ClientId}", true);
+        //await stateDropdown.RefreshList(Model.CountryID);
+        StateHasChanged();
+        await stateDropdown.RefreshList(Model.CountryID);
+        await zoneDropdown.RefreshList(Model.CountryID);
+
+    }
+
+    private async Task SavePayOut()
+    {
+        var result = await API.PostAsync<BaseSuccessResponse, PlanCheckOutModel>($"auth/save-check-out", Model);
+        Nav.NavigateTo($"/payment-verification/{ClientId}");
+    }
+
+    #endregion
+
+
+    #region Dropdown related functions
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Country:
+
+                Model.CountryID = data.ID;
+                Model.CountryName = data.Value;
+                Model.StateID = null;
+                Model.State = null;
+                Model.CityID = null;
+                Model.City = null;
+                Model.ZoneID = null;
+                Model.ZoneName = null;
+                if (Model.CountryID != null)
+                {
+                    await stateDropdown.RefreshList(Model.CountryID);
+                    await FocusDropdown(StateDropdownID);
+                    await zoneDropdown.RefreshList(Model.CountryID);
+                }
+
+                break;
+
+            case (int)DropdownModes.StateForSignup:
+
+                Model.StateID = data.ID;
+                Model.State = data.Value;
+                Model.CityID = null;
+                Model.City = null;
+                if (Model.StateID != null)
+                {
+                    await cityDropdown.RefreshList(Model.StateID);
+                    await FocusDropdown(CityDropdownID);
+                }
+
+                break;
+
+            case (int)DropdownModes.CityForSignup:
+
+                Model.CityID = data.ID;
+                Model.City = data.Value;
+
+                break;
+            case (int)DropdownModes.Zone:
+
+                Model.ZoneID = data.ID;
+                Model.ZoneName = data.Value;
+
+                break;
+        }
+    }
+
+    #endregion
+
+
+    #region Change plan modal
+    private List<MembershipPlanModel> Plans = new();
+    private List<MembershipPackageListModel> Package = new();
+    private PlanCheckOutModel modalModel = new();
+    private MembershipPackageListModel Packagedetails = new();
+    string firstString = "";
+    string secondString = "";
+    int characterCount = 77;
+    private async Task ChangePlan(PlanCheckOutModel model)
+    {
+        Plans = await API.GetAsync<List<MembershipPlanModel>>("auth/get-membership-plans-list", true);
+        Package = await API.GetAsync<List<MembershipPackageListModel>>("auth/get-membership-packages-list", true);
+        await JS.InvokeVoidAsync("ShowModal", "modalchangeplan");
+        
+    }
+
+    private async Task CheckboxClickedPackage(bool value, int packageId)
+    {
+        bool values = value;
+        if (values)
+        {
+            Packagedetails = await API.GetAsync<MembershipPackageListModel>($"auth/get-membership-package-details/{packageId}", true);
+            Model.PackageID = Packagedetails.PackageID;
+            Model.Fee = Packagedetails.Fee.Value;
+            Model.MonthCount = Packagedetails.MonthCount;
+            Model.PackageName = Packagedetails.PackageName;
+            Model.PackageDescription = Packagedetails.PackageDescription;
+            Model.features = Packagedetails.featureList;
+            //int characterCount = 77;
+            //firstString = Model.PackageDescription.Substring(0, characterCount);
+            //secondString = Model.PackageDescription.Substring(characterCount);
+        }
+    }
+
+    private async Task UpdatePlan()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, PlanCheckOutModel>($"auth/update-change-plan", Model);
+        await HideModal();
+    }
+
+    private async Task CheckboxClicked(bool value, MembershipPlanModel list)
+    {
+        int PlanID = list.PlanID;
+        bool values = value;
+        if (values)
+        {
+            Package = await API.GetAsync<List<MembershipPackageListModel>>($"auth/get-packages-list/{PlanID}", true);
+        }
+
+    }
+    private async Task HideModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "modalchangeplan");
+        //await LoadData();
+    }
+    #endregion
+    #region Other Functions
+
+    private async Task FocusDropdown(string dropdownID)
+    {
+        await JS.InvokeVoidAsync("setDropdownFocus", dropdownID, "drop-down-focused");
+    }
+
+    private async Task FocusElement(string elementID)
+    {
+        await JS.InvokeVoidAsync("focusElement", elementID);
+    }
+
+    #endregion
+}

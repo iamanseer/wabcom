@@ -1,0 +1,170 @@
+﻿@using PB.CRM.Model.Enum
+@using PB.Shared.Models.CRM.Customer
+@using PB.Shared.Models.Common
+
+<div class="modal fade" id="customer-add-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document" style="overflow-y: scroll;">
+        <div class="modal-content modal-content-demo">
+            <EditForm Model="Model" OnValidSubmit="SaveCustomer" autocomplete="off">
+                <DataAnnotationsValidator />
+                <div class="modal-header">
+                    <h6 class="modal-title">@(Model.CustomerID != 0 ? Model.Name : "New Customer")</h6>
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HideCustomerModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="my-4 d-flex gap-4">
+                                <label class="custom-control custom-radio">
+                                    <input type="radio" class="custom-control-input" @onchange="@(() => Model.Type = (int)CustomerTypes.Individual)" name="example-radios" value="option1" checked="@(Model.Type == (int)CustomerTypes.Individual)">
+                                    <span class="custom-control-label">Individual</span>
+                                </label>
+                                <label class="custom-control custom-radio">
+                                    <input type="radio" class="custom-control-input" @onchange="@(() => Model.Type = (int)CustomerTypes.Business)" name="example-radios" value="option1" checked="@(Model.Type == (int)CustomerTypes.Business)">
+                                    <span class="custom-control-label">Business</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    @if (Model.Type == (int)CustomerTypes.Business)
+                    {
+                        <div class="row">
+                            <InputTextBox Label="Company Name : "
+                                          IsRequired="true"
+                                          ValidationFor="() => Model.Name"
+                                          DivClass="col-md-7"
+                                          @bind-Value="Model.Name"
+                                          id="cst-name-box" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row">
+                            <InputTextBox Label="Name : "
+                                          IsRequired="true"
+                                          ValidationFor="() => Model.Name"
+                                          DivClass="col-md-7"
+                                          @bind-Value="Model.Name"
+                                          id="cst-name-box" />
+                        </div>
+                    }
+                    <div class="row">
+                        <InputTextBox Label="Tax Number : "
+                                      IsRequired="false"
+                                      DivClass="col-md-7"
+                                      @bind-Value="Model.TaxNumber"
+                                      id="cst-taxno-box" />
+                    </div>
+
+                    <div class="row">
+                        <DropdownSelect DivClass="col-sm-7"
+                                        DropdownID="@CountryDropdownID"
+                                        Label="Country :"
+                                        Mode="(int)DropdownModes.Country"
+                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                        ItemSelected="HandleCustomerCountrySelected"
+                                        IsRequired="true"
+                                        ReadDataOnSearch="true"
+                                        SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})">
+                            <ValidationMessage For="()=>Model.CountryID" />
+                        </DropdownSelect>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Phone :
+                                    <span style="color:red">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="min-width: 60px;">
+                                        @Model.ISDCode
+                                    </span>
+                                    <input type="text" class="form-control" @bind="Model.Phone" />
+                                </div>
+                                <ValidationMessage For="() => Model.Phone" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Email :
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-envelope"></i>
+                                    </span>
+                                    <input type="text" class="form-control" @bind="Model.EmailAddress" />
+                                </div>
+                                <ValidationMessage For="() => Model.EmailAddress" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" type="submit">@(Model.CustomerID == 0 ? "Save Customer" : "Update Customer")</button>
+                    <button class="btn btn-danger" type="button" @onclick="async () => await HideCustomerModal()">Close</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+
+    private CustomerModelNew Model = new();
+    private string CountryDropdownID = "customer-country-drop-down-select";
+
+    public async Task OpenCustomerModal(int customerEntityID = 0)
+    {
+        Model = new();
+        if (customerEntityID > 0)
+        {
+            Model = await API.GetAsync<CustomerModelNew>($"customer/get-customer/{customerEntityID}", true);
+        }
+        else
+        {
+            var countryModel = await API.GetAsync<Country>("common/get-default-country-details", true);
+            if (countryModel is not null)
+                HandleCustomerCountryDataLoaded(countryModel);
+        }
+        await JS.InvokeVoidAsync("ShowModal", "customer-add-modal");
+    }
+    private async Task SaveCustomer()
+    {
+        var res = await API.PostAsync<CustomerAddResultModel, CustomerModelNew>("customer/save-customer-new", Model);
+        if (res is not null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair() { ID = res.EntityID, Value = res.Name });
+            await HideCustomerModal();
+        }
+    }
+    private async Task HandleCustomerCountrySelected(DropdownItemSelectedCallbackModel country)
+    {
+        Model.CountryID = country.ID;
+        Model.CountryName = country.Value;
+        if (Model.CountryID is not null)
+        {
+            var countryModel = await API.GetAsync<Country>($"common/get-country-details/{Model.CountryID}", true);
+            if (country is not null)
+                HandleCustomerCountryDataLoaded(countryModel);
+        }
+    }
+    private void HandleCustomerCountryDataLoaded(Country country)
+    {
+        Model.CountryID = country.CountryID;
+        Model.CountryName = country.CountryName;
+        Model.ISDCode = country.ISDCode;
+        Console.WriteLine(Model.ISDCode);
+    }
+    private async Task HideCustomerModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "customer-add-modal");
+    }
+}

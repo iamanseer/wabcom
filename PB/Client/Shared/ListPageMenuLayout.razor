@@ -1,0 +1,176 @@
+﻿@using PB.Model.Models;
+
+
+<!--List Menu Container-->
+<div class="sticky-itemlist px-0">
+    <div class="card ">
+        <div class="card-header">
+            <h3 class="card-title">@ListHeading</h3>
+            <div class="btn-toolbar me-auto">
+                <!--Pending Category or Group or-->
+               @* <a href="javascript:void(0)" class="btn btn-primary btn-sm btn-outline-dark ms-2" data-bs-toggle="dropdown"> <i class="fa fa-angle-down"></i> </a>
+                <ul class="dropdown-menu" role="menu">
+                    @if (MenuCategories != null && MenuCategories.Count > 0)
+                    {
+                        @foreach (var item in MenuCategories.Select((value, i) => new { i, value }))
+                        {
+                            var menuItem = item.value;
+                            var index = item.i;
+                            <li @onclick="async () => await HandleMenuCategorySelected(index, menuItem)" style="cursor:pointer">
+                                <a>
+                                    @menuItem
+                                </a>
+                            </li>
+                        }
+                        <li class="divider"></li>
+                        <li @onclick="async () => await HandleMenuCategorySelected(0, MenuCategories[0])" style="cursor:pointer">
+                            <a>
+                                Reset
+                            </a>
+                        </li>
+                    }
+                </ul>*@
+            </div>
+            <div class="card-options">
+                <!--Here-->
+                @if (Count > 0 && IsNeedDeleteOption)
+                {
+                    <a class="btn btn-danger btn-md me-2" @onclick="() => HandleDeleteButtonClicked()"> <i class="fa fa-trash" style="color:white;font-weight:500"></i></a>
+                }
+                @if (!string.IsNullOrEmpty(SinglePageURL))
+                {
+                    <a class="btn btn-primary btn-md me-2" @onclick="() => Nav.NavigateTo(SinglePageURL)"> <i class="fa fa-plus me-1"></i></a>
+                }
+                else
+                {
+                    if (IsNeedAddNewButton)
+                    {
+                        <a class="btn btn-primary btn-md me-2" @onclick="() => HandleAddButtonClick()"> <i class="fa fa-plus me-1"></i></a>
+                    }
+                    
+                }
+            </div>
+        </div>
+        <div class="item-list-short" id="@LoaderDivID">
+            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+
+                <tbody>
+
+                    @if (MenuItems != null && MenuItems.Count > 0)
+                    {
+                        @foreach (var menu in MenuItems)
+                        {
+                            @if (SelectedMenuID == menu.ID)
+                            {
+                                <tr class="selected-menu" id="@("menu-item-"+menu.ID)" @onclick="async () => await HandleMenuItemSelected(menu.ID)">
+                                    @if (IsNeedDeleteOption)
+                                    {
+                                        <td style="width: 25px;">
+                                            <input type="checkbox" checked="@(menu.IsChecked?"checked":null)" @onchange="(ChangeEventArgs e) => MenuItemCheckBoxChecked(e, menu)">
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td>
+                                            @menu.MenuName
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                            else
+                            {
+                                <tr id="@("menu-item-"+menu.ID)" @onclick="async () => await HandleMenuItemSelected(menu.ID)">
+                                    @if(IsNeedDeleteOption)
+                                    {
+                                        <td style="width: 25px;">
+                                            <input type="checkbox" checked="@(menu.IsChecked?"checked":null)" @onchange="(ChangeEventArgs e) => MenuItemCheckBoxChecked(e, menu)">
+                                        </td>
+                                        <td>
+                                            @menu.MenuName
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td>
+                                            @menu.MenuName
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    //Main Parameters
+    [Parameter] public EventCallback<int> OnMenuCategorySelect { get; set; }
+    [Parameter] public EventCallback OnAddButtonClick { get; set; }
+    [Parameter] public EventCallback<int?> OnMenuItemSelect { get; set; }
+    [Parameter] public EventCallback<List<int>> OnDeleteClick { get; set; }
+
+    [Parameter] public List<ViewPageMenuModel>? MenuItems { get; set; }
+    [Parameter] public string? ListHeading { get; set; } = "All Items";
+    [Parameter] public List<string>? MenuCategories { get; set; }
+    [Parameter] public string? SinglePageURL { get; set; }
+    [Parameter] public int SelectedMenuID { get; set; }
+    [Parameter] public bool IsNeedDeleteOption { get; set; } = false;
+    [Parameter] public string? LoaderDivID { get; set; } = "";
+    [Parameter] public bool IsNeedAddNewButton { get; set; } = true;
+
+    private List<int> DeleteList = new();
+
+    private int Count = 0;
+
+    private string? SelectedMenuCategory;
+
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (MenuCategories != null && MenuCategories.Count > 0)
+            SelectedMenuCategory = MenuCategories[0];
+    }
+
+    private void MenuItemCheckBoxChecked(ChangeEventArgs e, ViewPageMenuModel menuItem)
+    {
+        if (Convert.ToBoolean(e.Value))
+        {
+            Count++;
+            DeleteList.Add(menuItem.ID);
+        }
+        else
+        {
+            if (Count > 0)
+            {
+                Count--;
+                DeleteList.Remove(menuItem.ID);
+            }
+        }
+    }
+
+    private async Task HandleMenuItemSelected(int menuID)
+    {
+        await OnMenuItemSelect.InvokeAsync(menuID);
+    }
+
+    private async Task HandleMenuCategorySelected(int menuCategoryIndex, string menuCategoryName)
+    {
+        await OnMenuCategorySelect.InvokeAsync(menuCategoryIndex);
+        SelectedMenuCategory = menuCategoryName;
+    }
+
+    private async Task HandleDeleteButtonClicked()
+    {
+        await OnDeleteClick.InvokeAsync(DeleteList);
+    }
+
+    private async Task HandleAddButtonClick()
+    {
+        await OnAddButtonClick.InvokeAsync();
+    }
+}

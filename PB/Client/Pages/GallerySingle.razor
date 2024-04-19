@@ -1,0 +1,56 @@
+﻿@page "/gallery-single"
+@page "/gallery-single/{Id:int}"
+@using PB.Shared.Tables;
+
+<PageLayoutOld PageName="Gallery">
+    <div class="card">
+        <div class="card-body">
+            <EditForm Model="Model" OnValidSubmit="SaveAsync">
+                <DataAnnotationsValidator />
+                <TextBox Label="@Localizer["File Name"]" placeholder="@Localizer["Enter The File Name"]" @bind-Value="Model.Title" ValidationFor="()=>Model.Title" FormGroupClass="col-12"></TextBox>
+                <div style="width:150px">
+                    <Image @ref="ImageRef" MediaID="Model.MediaID" Accept="image/png, image/jpeg" FolderName="Image" DivClass="col-12 p-2"/>
+                </div>
+       
+                <div class="col-12 mt-3">
+                    <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>
+                </div>                  
+            </EditForm>
+        </div>
+    </div>
+</PageLayoutOld>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private MediaCustom Model = new();
+    Image ImageRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != 0)
+        {
+            Model = await API.GetAsync<MediaCustom>($"media/get-gallery-image/{Id}");
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        Model.MediaID = await ImageRef.UploadImage();
+        if (!Model.MediaID.HasValue)
+        {
+            await JS.ErrorMessage(Localizer["Please add an image "]);
+            return;
+        }
+        else
+        {
+            var result = await API.PostAsync<BaseSuccessResponse, MediaCustom>("media/save", Model);
+            if (result != null)
+            {
+                await JS.SuccessMessage();
+                Nav.NavigateTo("gallery");
+            }
+        }
+
+    }
+
+}

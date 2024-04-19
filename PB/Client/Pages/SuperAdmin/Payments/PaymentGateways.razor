@@ -1,0 +1,108 @@
+﻿@page "/payment-gateways"
+@using PB.Shared.Models.Common;
+@using PB.Shared.Tables;
+
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="GatewaySettings" OnFilterButtonClick="ApplyFilterTo" />  @*OnAddButtonClick="ShowPackageModal"*@
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                            <thead>
+                                <tr>
+                                    <th>SlNo</th>
+                                    <th>@Localizer["Gateway Name"]</th>
+                                    <th>@Localizer["Action"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in GatewayListPageModel.Data.Select((data, index) => new { index, data }))
+                                {
+                                    <tr>
+                                        <td>
+                                            @((GatewayListPageModel.PageIndex - 1) * GatewayListPageModel.PageSize + 1 + item.index)
+                                        </td>
+                                        <td>
+                                           @item.data.GatewayName
+                                        </td>
+                                        <td>
+                                            <i class="fe fe-edit" style="color:var(--primary-bg-color)" @onclick="async () => await Edit(item.data.GatewayID.Value)"></i>
+                                            <i class="fe fe-trash" style="color:var(--primary-bg-color)" @onclick="async () => await Remove(item.data.GatewayID.Value)"></i>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <PaginationCustom PageSize="GatewayListPageModel.PageSize" TotalCount="GatewayListPageModel.TotalCount" TotalPages="GatewayListPageModel.TotalPages" PageIndex="GatewayListPageModel.PageIndex" LoadPageIndex="PageIndex" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<!--End Plan Modal-->
+@code {
+    private PagedListPostModelWithFilter ListPageSearchModel = new();
+    private PagedList<PaymentGateway> GatewayListPageModel = new();
+    HeaderSettingsModel? GatewaySettings;
+
+    #region Package List
+
+    protected override async Task OnInitializedAsync()
+    {
+        GatewaySettings = new()
+            {
+                Heading = "Payment Gateways",
+                SearchPlaceHolder = "Search with gateway",
+                NeedAddButton = true,
+                AddButtonText = "Add Gateway",
+                SinglePageURL = "payment-gateway-single",
+                NeedSortOption = false,
+
+            };
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        GatewayListPageModel = await API.PostAsync<PagedList<PaymentGateway>, PagedListPostModelWithFilter>("gateway/get-all-gateways", ListPageSearchModel);
+    }
+
+    private async Task Edit(int packageId)
+    {
+        Nav.NavigateTo($"payment-gateway-single/{packageId}");
+    }
+
+
+    async Task Remove(int Id)
+    {
+        if (await API.DeleteAsync("gateway/delete-payment-gateway", Id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadData();
+        }
+    }
+
+
+    private async Task PageIndex(int pageIndex)
+    {
+        ListPageSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        ListPageSearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    #endregion
+
+}
+

@@ -1,0 +1,87 @@
+﻿@using System.ComponentModel.DataAnnotations;
+
+@if (ShowDiv)
+{
+    <div class="alert alert-danger py-1" role="alert">
+        @((MarkupString)ErrorMessage)
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public string DivClass { get; set; } = " error-message-div-page";
+
+    private static System.Timers.Timer _Timer;
+    private TimeSpan RemainingTime;
+    string? ErrorMessage;
+    private bool ShowDiv=false;
+
+    protected override void OnInitialized()
+    {
+        _Timer = new System.Timers.Timer();
+        _Timer.Interval = 1000; // 1 second
+        _Timer.Elapsed += CountDownTimer;
+    }
+
+    public async Task ShowErrorMessage(string errorMessage,int remainingTime=7)
+    {
+        //ErrorMessage = errorMessage;
+        //RemainingTime = TimeSpan.FromSeconds(remainingTime);
+        //_Timer.Start();
+        //ShowDiv = true;
+        await JS.ErrorMessage(errorMessage);
+    }
+
+    public async Task FocusElement(string elementID,bool isDropdownBox=false)
+    {
+        if (isDropdownBox)
+            await JS.InvokeVoidAsync("setDropdownFocus", elementID, "drop-down-focused");
+        else
+            await JS.InvokeVoidAsync("focusElement", elementID);
+    }
+
+    public async Task<bool> ValidateModel<T>(T model)
+    {
+        var context = new ValidationContext(model, serviceProvider: null, items: null);
+        var validationResults = new List<ValidationResult>();
+        var s = Validator.TryValidateObject(model, context, validationResults);
+        if (s)
+        {
+            return true;
+        }
+        else
+        {
+            string error = "";
+            foreach (var item in validationResults)
+            {
+                error += item.ErrorMessage + "<br/>";
+            }
+            await ShowErrorMessage(error);
+            return false;
+        }
+    }
+
+    //private void StartTimer()
+    //{
+    //    _Timer = new System.Timers.Timer(1000);
+    //    _Timer.Elapsed += CountDownTimer;
+    //    _Timer.Enabled = true;
+    //}
+
+    private void CountDownTimer(Object? source, System.Timers.ElapsedEventArgs? e)
+    {
+        if (RemainingTime.TotalSeconds > 0)
+        {
+            RemainingTime = RemainingTime.Subtract(TimeSpan.FromSeconds(1));
+        }
+        else
+        {
+            ShowDiv = false;
+            _Timer.Stop();
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+
+}

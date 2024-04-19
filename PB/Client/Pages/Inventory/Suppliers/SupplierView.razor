@@ -1,0 +1,302 @@
+﻿@page "/suppliers-view/{SupplierEntityID:int}"
+@using PB.CRM.Model.Enum
+@using PB.Client.Shared.Inventory.Supplier
+@using PB.Model.Models
+@using PB.Shared.Models.Inventory.Supplier
+@attribute [Authorize(Roles = "Supplier")]
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row">
+
+            <ListPageMenuLayout MenuCategories="listPageMenuCategories"
+                                MenuItems="menuItem"
+                                ListHeading="All Suppliers"
+                                SinglePageURL="supplier"
+                                OnMenuItemSelect="HandleItemMenuSelectedEventCallback"
+                                SelectedMenuID="SupplierData.EntityID" />
+
+            <div class="itemlist-container">
+                <div class="page-header">
+                    <h1 class="page-title">@SupplierData.Name</h1>
+                    <div class="btn-toolbar float-right mr-7">
+                        <a class="btn btn-white btn-md me-2" @onclick="EditCustomer">
+                            <i class="fa fa-pencil" style="color:var(--primary-bg-color)"></i>
+                        </a>
+                        <a class="btn btn-white btn-md me-2" @onclick="async () => await DeleteCustomer()">
+                            <i class="fa fa-trash" style="color:red"></i>
+                        </a>
+                        <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"suppliers"))">
+                            <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <!--Switching Tabs-->
+                                <div class="panel panel-primary">
+                                    <!--Tab Headings-->
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <li><a href="#customerPageOverView" class="active" data-bs-toggle="tab">Details</a></li>
+                                                @if (SupplierData.Addresses.Count > 0)
+                                                {
+                                                    <li><a href="#customerPageAddress" data-bs-toggle="tab">Addresses</a></li>
+                                                }
+                                                @if (SupplierData.ContactPersons.Count > 0)
+                                                {
+                                                    <li><a href="#customerPageContactPersons" data-bs-toggle="tab">Contact Persons</a></li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+                                            <!--Overview Tab-->
+                                            <div class="tab-pane active" id="customerPageOverView">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">Company Name</label>
+
+                                                                    <label class="col-7 col-auto">@SupplierData.Name</label>
+                                                                </div>
+                                                            </div>
+                                                            @if (!string.IsNullOrEmpty(SupplierData.TaxNumber))
+                                                            {
+                                                                <div class="group pb-3">
+                                                                    <div class="row">
+                                                                        <label class="col-md-5 col-auto items-label text-muted">Tax No </label>
+                                                                        <label class="col-md-7 col-auto ">@SupplierData.TaxNumber</label>
+                                                                    </div>
+                                                                </div>
+                                                            }
+
+                                                            <div class="group pb-3">
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Mobile </label>
+                                                                    <label class="col-md-7 col-auto ">@SupplierData.Phone</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class=" text-muted items-label col-md-5 col-auto">Email</label>
+                                                                    <label class="col-md-7 col-auto">@SupplierData.EmailAddress</label>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Status</label>
+                                                                    <label class="col-md-7 col-auto">
+                                                                        @(((CustomerStatus)SupplierData.Status).ToString())
+                                                                    </label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Remarks</label>
+                                                                    <label class="col-md-7 col-auto">
+                                                                        @SupplierData.Remarks
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            @if (SupplierData.Addresses.Count > 0)
+                                            {
+                                                <!--Addres Tab-->
+                                                <div class="tab-pane" id="customerPageAddress">
+                                                    <div class="item-details-page">
+                                                        <div class="row">
+                                                            <div class="col-lg-8 col-12">
+
+                                                                @for (int i = 0; i < SupplierData.Addresses.Count; i++)
+                                                                {
+                                                                    var address = SupplierData.Addresses[i];
+                                                                    <div class="group pb-3">
+
+                                                                        <div class="row">
+                                                                            <label class="col-7 col-auto items-label text-muted">@(((AddressTypes)address.AddressType) == 0 ? " " : ((AddressTypes)address.AddressType).ToString()) Address</label>
+                                                                        </div>
+                                                                        <div class="row">
+                                                                            <label class="col-md-5 col-auto items-label text-muted">Address Line 1 </label>
+                                                                            <label class="col-md-7 col-auto ">@address.AddressLine1</label>
+                                                                        </div>
+                                                                        <div class="row">
+                                                                            <label class="col-md-5 col-auto items-label text-muted">Address Line 2 </label>
+                                                                            <label class="col-md-7 col-auto ">@address.AddressLine2</label>
+                                                                        </div>
+                                                                        @if (!string.IsNullOrEmpty(address.AddressLine3))
+                                                                        {
+                                                                            <div class="row">
+                                                                                <label class="col-md-5 col-auto items-label text-muted">Address Line 3 </label>
+                                                                                <label class="col-md-7 col-auto ">@address.AddressLine3</label>
+                                                                            </div>
+                                                                        }
+                                                                        <div class="row">
+                                                                            <label class="col-md-5 col-auto items-label text-muted">Pincode </label>
+                                                                            <label class="col-md-7 col-auto ">@address.Pincode</label>
+                                                                        </div>
+                                                                        @*<div class="row">
+                                                                <label class="col-md-5 col-auto items-label text-muted">City </label>
+                                                                <label class="col-md-7 col-auto ">@address.City</label>
+                                                                </div>*@
+
+                                                                        <div class="row">
+                                                                            <label class="col-md-5 col-auto items-label text-muted">State </label>
+                                                                            <label class="col-md-7 col-auto ">@address.State</label>
+                                                                        </div>
+                                                                        <div class="row">
+                                                                            <label class="col-md-5 col-auto items-label text-muted">Country </label>
+                                                                            <label class="col-md-7 col-auto ">@address.CountryName</label>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="divider my-2"></div>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+
+                                            @if (SupplierData.ContactPersons.Count > 0)
+                                            {
+                                                <!--Contact Persons-->
+                                                <div class="tab-pane" id="customerPageContactPersons">
+                                                    <div class="item-details-page">
+                                                        <div class="row">
+                                                            <table class="table border text-wrap text-nowrap table-bordered table-responsive mb-0 ">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Sl No</th>
+                                                                        <th>Name</th>
+                                                                        <th>Phone</th>
+                                                                        <th>Mail</th>
+                                                                        <th>Designation</th>
+                                                                        <th>Department</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @if (SupplierData.ContactPersons.Count > 0)
+                                                                    {
+                                                                        @foreach (var person in SupplierData.ContactPersons)
+                                                                        {
+                                                                            <tr>
+                                                                                <td>
+                                                                                    @person.RowIndex
+                                                                                </td>
+                                                                                <td>
+                                                                                    @person.Name
+                                                                                </td>
+                                                                                <td>
+                                                                                    @person.Phone
+                                                                                </td>
+                                                                                <td>
+                                                                                    @person.Email
+                                                                                </td>
+                                                                                <td>
+                                                                                    @person.Designation
+                                                                                </td>
+                                                                                <td>
+                                                                                    @person.Department
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <tr>
+                                                                            <td colspan="5" class="text-center p-5" style="min-height:150px;pointer-events:none;">
+                                                                                <label>
+                                                                                    @("contact person's lis is empty")
+                                                                                </label>
+                                                                            </td>
+                                                                        </tr>
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+
+@code {
+    [Parameter]
+    public int SupplierEntityID { get; set; }
+
+    #region Main Function
+
+    private ModalSupplier? childSupplierModal;
+
+    private SupplierModel SupplierData = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadViewMenuList();
+        await LoadViewData();
+    }
+    private List<string> listPageMenuCategories = new()
+    {
+        "All",
+        "Active",
+        "in-active",
+        "Ledger converted"
+    };
+    private List<ViewPageMenuModel> menuItem = new();
+    private async Task LoadViewMenuList()
+    {
+        menuItem = await API.GetAsync<List<ViewPageMenuModel>>("supplier/get-supplier-menu-list", true);
+    }
+    private async Task LoadViewData()
+    {
+        SupplierData = await API.GetAsync<SupplierModel>($"supplier/get-supplier/{SupplierEntityID}", true);
+    }
+    private async Task HandleItemMenuSelectedEventCallback(int? supplierEntityID)
+    {
+        if(supplierEntityID is not null)
+        {
+            SupplierEntityID = supplierEntityID.Value;
+            await LoadViewData();
+        }
+    }
+    private void EditCustomer()
+    {
+        Nav.NavigateTo($"supplier/{SupplierData.EntityID}");
+    }
+    private async Task DeleteCustomer()
+    {
+        if (await JS.Confirm("Please confirm", "Are you sure you want to delete '" + SupplierData.Name + "' Supplier?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            if (await API.GetAsync<bool>($"supplier/delete-supplier/{SupplierData.EntityID}", true))
+            {
+                Nav.NavigateTo("suppliers");
+            }
+        }
+    }
+    private void NewCustomerAdded(SupplierModel supplier)
+    {
+        SupplierData = supplier;
+    }
+
+    #endregion
+}

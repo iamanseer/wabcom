@@ -1,0 +1,125 @@
+﻿@page "/customer-payment"
+@using PB.CRM.Model.Enum;
+@using PB.Shared.Enum.Court;
+@using PB.Shared.Models.Court;
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="SaveCustomerPayment" autocomplete="off">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Customer Payment</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <DropdownSelect DropdownID="@ClientDropdownSelect"
+                                                    DivClass=""
+                                                    Label="Customer"
+                                                    IsRequired="true"
+                                                    IsAddOptionNeed="false"
+                                                    ReadDataOnSearch="true"
+                                                    Mode="(int)DropdownModes.Customer"
+                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                    ItemSelected="ItemSelected"
+                                                    PlaceHolder="Select Customer" />
+                                    <div class="pb-3">
+                                        <ValidationMessage For="()=>Model.EntityID" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-end gap-3" style="margin-top:32px">
+                                        <p style="font-weight: 600;">Previous Balance <span style="color:#b1b1b1"></span></p>
+                                        <p style="font-weight: 600;">@Balance</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align:left;">
+                                            Collect Payment :
+                                        </label>
+                                        <InputNumber class="form-control " @bind-Value="Model.Amount" id="collect-amount-input-box" />
+                                        <ValidationMessage For="()=>Model.Amount" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align:left;">
+                                            Payment
+                                            <span class="ms-1" style="color:red">*</span>
+                                        </label>
+                                        <div class="pb-select form-control" tabindex="0" data-bs-toggle="dropdown" id="customer-payment-drop-down-select" aria-expanded="false">
+                                            <div class="pb-selected">@(Model.PaymentType!=0 ? ((PaymentTypes)Model.PaymentType).ToString() : "Select Payment Type")</div>
+                                            <div class="dropdown-toggle"></div>
+                                        </div>
+                                        <ul class="dropdown-menu pb-select-container" role="menu" style="z-index: 999; min-width: 350px !important;" id="items-list-customer-payment-drop-down-select">
+                                            <ul class="list-data" style="min-height:100px;" id="customer-payment-drop-down-select-ul">
+                                                @foreach (var item in Enum.GetValues(typeof(PaymentTypes)))
+                                                {
+                                                    if((int)item!=(int)PaymentTypes.Credit)
+                                                    {
+                                                        <li tabindex="0"><a @onclick="@(()=>Model.PaymentType=(int)item)">@item.ToString()</a></li>
+                                                    }
+                                                }
+                                            </ul>
+                                        </ul>
+                                    </div>
+                                    <ValidationMessage For="()=>Model.PaymentType" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-primary" type="submit">Save</button>
+                            <button class="btn btn-danger" type="button" @onclick="@(async ()=>await Cancel())">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+
+
+</PageLayoutNew>
+
+
+
+@code {
+    private CustomerPaymentPostModel Model = new();
+    private string ClientDropdownSelect = "enquiry-customer-drop-down-select";
+    decimal? Balance=0.00M;
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            Model = new();
+
+        }
+    }
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Customer:
+
+                Model.EntityID = data.ID.Value;
+                Balance = await API.GetAsync<decimal?>($"court/get-customer-balance/{Model.EntityID}");
+                break;
+        }
+    }
+
+    private async Task SaveCustomerPayment()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, CustomerPaymentPostModel>("court/save-customer-payment", Model);
+        if(res!=null)
+        {
+            await JS.SuccessMessage();
+            Model = new();
+            Balance = 0.00M;
+        }
+    }
+}

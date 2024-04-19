@@ -1,0 +1,307 @@
+﻿@page "/profit-and-loss-report"
+@using PB.Shared.Enum.Reports
+@using PB.Shared.Models.Reports
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header d-flex justify-content-between">
+            <h1 class="page-title">Reports</h1>
+            <div class="btn-toolbar float-right mr-7">
+                <div class="form-group">
+                    <select name="country" id="timePeriodSelect" class="form-control form-select" @onchange="(ChangeEventArgs e) => HandleReportPeriodSelected(e)">
+                        <option value="0">Choose</option>
+                        @foreach (var reportPeriod in Enum.GetValues(typeof(ReportPeriods)))
+                        {
+                            if (PeriodTypeID == (int)reportPeriod)
+                            {
+                                <option value="@((int)reportPeriod)" selected>@reportPeriod.ToString().Replace('_', ' ')</option>
+                            }
+                            else
+                            {
+                                <option value="@((int)reportPeriod)">@reportPeriod.ToString().Replace('_', ' ')</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <a class="btn btn-primary btn-md me-2 ms-2" style="height:38px;" @onclick="NavigateToReportsPage"> <i class="fa fa-times fs-15"></i></a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row pt-5 pb-5">
+                            <div class="col-lg-12 text-center">
+                                <p class="fs-18 fw-bold mb-0">@ProfitAndLossReportModel.ClientName</p>
+                                <p class="h3 mb-1">Profit and Loss</p>
+                                <p>@("From " + ProfitAndLossPostModel.FromDate.Value.ToString("dd/MM/yyy") + " To " + ProfitAndLossPostModel.ToDate.Value.ToString("dd/MM/yyy"))</p>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive push">
+                            <table class="table table-bordered table-hover mb-0 text-nowrap">
+                                <tbody>
+                                    <tr class="">
+                                        <th class="text-center"></th>
+                                        <th>Account</th>
+
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">1</td>
+                                        <td>
+                                            <p class="font-w600 mb-1">Direct Income</p>
+                                            <div class="text-muted">
+                                                <div class="text-muted">Total for Direct Income</div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.DirectIncome.Amount)</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="text-center">2</td>
+                                        <td>
+                                            <p class="font-w600 mb-1">Direct Expense</p>
+                                            <div class="text-muted">
+                                                <div class="text-muted">Total for Direct Expense</div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.DirectExpense.Amount)</td>
+                                    </tr>
+
+                                    @if (ProfitAndLossReportModel.GrossProfit > 0)
+                                    {
+                                        <tr>
+                                            <td colspan="2" class="fw-bold text-uppercase text-end">Gross Profit</td>
+                                            <td class="fw-bold text-end h4">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.GrossProfit)</td>
+                                        </tr>
+                                    }
+
+                                    @if (ProfitAndLossReportModel.GrossLoss > 0)
+                                    {
+                                        <tr>
+                                            <td colspan="2" class="fw-bold text-uppercase text-end">Gross Loss</td>
+                                            <td class="fw-bold text-end h4">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.GrossLoss)</td>
+                                        </tr>
+                                    }
+
+                                    <tr>
+                                        <td class="text-center">2</td>
+                                        <td>
+                                            <p class="font-w600 mb-1">Indirect Income</p>
+                                            <div class="text-muted">
+                                                <div class="text-muted">Total for Indirect Income</div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.IndirectIncome.Amount)</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="text-center">2</td>
+                                        <td>
+                                            <p class="font-w600 mb-1">Indirect Expense</p>
+                                            <div class="text-muted">
+                                                <div class="text-muted">Total for Indirect Expense</div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">@(ProfitAndLossReportModel.CurrencySymbol + @ProfitAndLossReportModel.IndirectExpense.Amount)</td>
+                                    </tr>
+
+                                    @if (ProfitAndLossReportModel.OperatingProfit > 0)
+                                    {
+                                        <tr>
+                                            <td colspan="2" class="fw-bold text-uppercase text-end">Operating Profit</td>
+                                            <td class="fw-bold text-end h4">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.OperatingProfit)</td>
+                                        </tr>
+                                    }
+
+                                    @if (ProfitAndLossReportModel.OperatingLoss > 0)
+                                    {
+                                        <tr>
+                                            <td colspan="2" class="fw-bold text-uppercase text-end">Operating Loss</td>
+                                            <td class="fw-bold text-end h4">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.OperatingLoss)</td>
+                                        </tr>
+                                    }
+
+                                    <tr>
+                                        <td class="text-center">2</td>
+                                        <td>
+                                            <p class="font-w600 mb-1">Asset</p>
+                                            <div class="text-muted">
+                                                <div class="text-muted">Total for Asset</div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.Asset.Amount)</td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="text-center">2</td>
+                                        <td>
+                                            <p class="font-w600 mb-1">Liability</p>
+                                            <div class="text-muted">
+                                                <div class="text-muted">Total for Liability</div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.Liability.Amount)</td>
+                                    </tr>
+
+                                    @if (ProfitAndLossReportModel.NetProfit > 0)
+                                    {
+                                        <tr>
+                                            <td colspan="2" class="fw-bold text-uppercase text-end">Net Profit</td>
+                                            <td class="fw-bold text-end h4">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.NetProfit)</td>
+                                        </tr>
+                                    }
+
+                                    @if (ProfitAndLossReportModel.NetLoss > 0)
+                                    {
+                                        <tr>
+                                            <td colspan="2" class="fw-bold text-uppercase text-end">Net Loss</td>
+                                            <td class="fw-bold text-end h4">@(ProfitAndLossReportModel.CurrencySymbol + ProfitAndLossReportModel.NetLoss)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<div class="modal fade" id="ReportPeriodModal">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <EditForm Model="ProfitAndLossPostModel" OnValidSubmit="async () => await LoadProfitAndLossReport()">
+                <div class="modal-header">
+                    <h6 class="modal-title">Custom</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1">From Date : </label>
+                                <input type="date" class="form-control" @bind="ProfitAndLossPostModel.FromDate">
+                                <ValidationMessage For="() => ProfitAndLossPostModel.FromDate" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1">To Date : </label>
+                                <input type="date" class="form-control" @bind="ProfitAndLossPostModel.ToDate">
+                                <ValidationMessage For="() => ProfitAndLossPostModel.ToDate" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    ProfitAndLossReportModel ProfitAndLossReportModel = new();
+    ProfitAndLossReportPostModel ProfitAndLossPostModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        ProfitAndLossPostModel.FromDate = ProfitAndLossPostModel.ToDate = DateTime.UtcNow;
+        PeriodTypeID = (int)ReportPeriods.Today;
+        await LoadProfitAndLossReport();
+    }
+    int PeriodTypeID = 0;
+    private async Task HandleReportPeriodSelected(ChangeEventArgs e)
+    {
+        PeriodTypeID = Convert.ToInt32(e.Value);
+        if (PeriodTypeID == (int)ReportPeriods.Custom)
+        {
+            await JS.InvokeVoidAsync("ShowModal", "ReportPeriodModal");
+            return;
+        }
+        switch (PeriodTypeID)
+        {
+            case (int)ReportPeriods.Today:
+                ProfitAndLossPostModel.FromDate = ProfitAndLossPostModel.ToDate = DateTime.UtcNow;
+                break;
+
+            case (int)ReportPeriods.This_week:
+                ProfitAndLossPostModel.ToDate = DateTime.UtcNow;
+                ProfitAndLossPostModel.FromDate = ProfitAndLossPostModel.ToDate.Value.AddDays(-(int)ProfitAndLossPostModel.ToDate.Value.DayOfWeek);
+                break;
+
+            case (int)ReportPeriods.This_month:
+                ProfitAndLossPostModel.ToDate = DateTime.UtcNow;
+                ProfitAndLossPostModel.FromDate = new DateTime(ProfitAndLossPostModel.ToDate.Value.Year, ProfitAndLossPostModel.ToDate.Value.Month, 1);
+                break;
+
+            case (int)ReportPeriods.This_quarter:
+                ProfitAndLossPostModel.ToDate = DateTime.UtcNow;
+                int quarter = (ProfitAndLossPostModel.ToDate.Value.Month - 1) / 3 + 1;
+                ProfitAndLossPostModel.FromDate = new DateTime(ProfitAndLossPostModel.ToDate.Value.Year, (quarter - 1) * 3 + 1, 1);
+                break;
+
+            case (int)ReportPeriods.This_year:
+                ProfitAndLossPostModel.ToDate = DateTime.UtcNow;
+                ProfitAndLossPostModel.FromDate = new DateTime(ProfitAndLossPostModel.ToDate.Value.Year, 1, 1);
+                break;
+
+            case (int)ReportPeriods.Yesterday:
+                ProfitAndLossPostModel.ToDate = ProfitAndLossPostModel.FromDate = DateTime.UtcNow.AddDays(-1);
+                break;
+
+            case (int)ReportPeriods.Previous_week:
+                int daysToPreviousSunday = (int)DateTime.UtcNow.DayOfWeek - (int)DayOfWeek.Sunday;
+                ProfitAndLossPostModel.FromDate = DateTime.UtcNow.AddDays(-daysToPreviousSunday - 7);
+                ProfitAndLossPostModel.ToDate = ProfitAndLossPostModel.FromDate.Value.AddDays(6);
+                break;
+
+            case (int)ReportPeriods.Previous_month:
+                DateTime firstDayOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+                ProfitAndLossPostModel.ToDate = firstDayOfMonth.AddDays(-1);
+                ProfitAndLossPostModel.FromDate = ProfitAndLossPostModel.ToDate.Value.AddMonths(-1).AddDays(1);
+                break;
+
+            case (int)ReportPeriods.Previous_quarter:
+                ProfitAndLossPostModel.FromDate = GetPreviousQuarterStart(DateTime.UtcNow);
+                ProfitAndLossPostModel.ToDate = GetPreviousQuarterEnd(DateTime.UtcNow);
+                break;
+
+            case (int)ReportPeriods.Previous_year:
+                int previousYear = DateTime.UtcNow.Year - 1;
+                ProfitAndLossPostModel.FromDate = new DateTime(previousYear, 1, 1);
+                ProfitAndLossPostModel.ToDate = new DateTime(previousYear, 12, 31);
+                break;
+        }
+        await LoadProfitAndLossReport();
+    }
+    static DateTime GetPreviousQuarterStart(DateTime date)
+    {
+        int quarter = (date.Month - 1) / 3;
+        int startMonth = quarter * 3 + 1;
+        return new DateTime(date.Year, startMonth, 1);
+    }
+    static DateTime GetPreviousQuarterEnd(DateTime date)
+    {
+        int quarter = (date.Month - 1) / 3;
+        int endMonth = quarter * 3 + 3;
+        int lastDay = DateTime.DaysInMonth(date.Year, endMonth);
+        return new DateTime(date.Year, endMonth, lastDay);
+    }
+    private async Task LoadProfitAndLossReport()
+    {
+        ProfitAndLossReportModel = await API.PostAsync<ProfitAndLossReportModel, ProfitAndLossReportPostModel>("report/profit-and-loss", ProfitAndLossPostModel);
+    }
+    private void NavigateToReportsPage()
+    {
+        Nav.NavigateTo("reports");
+    }
+}

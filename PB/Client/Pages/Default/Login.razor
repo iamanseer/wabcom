@@ -1,0 +1,323 @@
+﻿@page "/login"
+@using PB.Shared.Helpers
+@using Blazored.LocalStorage
+@using System.Text.RegularExpressions;
+@using System.Text;
+@inject ILocalStorageService _localStorage
+@inject PageHistoryState PageHistoryState
+
+@*
+@if (!string.IsNullOrEmpty(UserName))
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>@UserName!</strong> You were trying to access a page that you don't have permission.  <a href="@PageHistoryState.GetGoBackPage()">Go Back</a>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}*@
+
+<LoginLayout>
+    <div class="row bg-primary">
+
+        <!-- CONTAINER OPEN -->
+        <div class="col col-login mx-auto">
+            <div class="text-center side-image ">
+                <img src="/assets/images/brand/white.png" alt="" class="my-auto">
+                <h2>"Revolutionizing CRM through WhatsApp Automation"</h2>
+                <img src="/assets/accounting-gif.gif" alt="" class="my-auto w-50">
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="side-form bg-primary-transparent">
+                <EditForm Model="loginModel" OnValidSubmit="HandleLogin" class="login100-form validate-form p-6 w-500 ">
+                    <span class="login100-form-title pb-5" style="color:#333 !important;">
+                        Sign in using your username or registered email address
+                    </span>
+
+                    <div class="panel-body tabs-menu-body p-0 pt-5">
+                        <div class="tab-content">
+                            <div class="tab-pane active">
+                                <DataAnnotationsValidator />
+                                @if (!hasBranch)
+                                {
+                                    <div class="wrap-input100 validate-input input-group">
+                                        <a href="javascript:void(0)" class="input-group-text bg-white text-muted" tabindex="-1">
+                                            <i class="zmdi zmdi-email text-muted" aria-hidden="true"></i>
+                                        </a>
+                                        <input class="input100 border-start-0 form-control ms-0" type="text" @bind-value="loginModel.Username" placeholder="Email" id="txtUserName">
+                                    </div>
+
+                                    <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+                                        <a class="input-group-text bg-white text-muted" tabindex="-1" @onclick="() => showPassword = !showPassword">
+                                            <i class="zmdi zmdi-eye text-muted" aria-hidden="true"></i>
+                                        </a>
+                                        <input class="input100 border-start-0 form-control ms-0" @bind-value="loginModel.Password" type="@(showPassword ? "text" : "password")" placeholder="Password">
+                                    </div>
+
+                                }
+                                else
+                                {
+                                    @if (Clients != null)
+                                    {
+                                        <div class="mb-3 form-floating-label">
+                                            <label for="ClientID" class="placeholder">Client</label>
+                                            <select id="ClientID" Class="form-control" @bind="@loginModel.ClientID">
+                                                @foreach (var client in Clients)
+                                                {
+                                                    <option value="@client.ID">@client.Value</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        @if (loginModel.ClientID == 0)
+                                        {
+                                            loginModel.BranchID = 0;
+                                        }
+                                        else
+                                        {
+                                            <div class="mb-3 form-floating-label">
+                                                <label for="BranchID" class="placeholder">Branch</label>
+                                                <select id="BranchID" class="form-control" @bind="@loginModel.BranchID">
+                                                    @foreach (var branch in Branches.Where(s => s.ParentID == loginModel.BranchID).ToList())
+                                                    {
+                                                        <option value="@branch.ID">@branch.Value</option>
+                                                    }
+                                                </select>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="mb-3 form-floating-label">
+                                            <label for="BranchID" class="placeholder">Branch</label>
+                                            <select id="BranchID" class="form-control" @bind="@loginModel.BranchID">
+                                                @foreach (var branch in Branches)
+                                                {
+                                                    <option value="@branch.ID">@branch.Value</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    }
+                                }
+                                <div class="text-end pt-4">
+                                    <p class="mb-0"><a href="forgot-password" class="text-primary ms-1">@Localizer["Forgot your password?"]</a></p>
+                                </div>
+                                <div class="container-login100-form-btn">
+                                    <button type="submit" class="login100-form-btn btn-primary">
+                                        @Localizer["Login"]
+                                    </button>
+                                </div>
+                                <div class="text-center pt-3">
+                                    <p class="text-muted mb-0">Not a member?<a href="register" class="text-primary ms-1">@Localizer["Sign up"]</a></p>
+                                    @*<p class="text-dark mb-0">Not a member?<a href="register" class="text-primary ms-1">@Localizer["Sign up"]</a></p>*@
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <ValidationSummary />
+                    <div class="mt-3 py-1 alert alert-danger alert-dismissible fade show d-none text-center" role="alert" id="divError-0">
+                    </div>
+                </EditForm>
+
+
+            </div>
+
+        </div>
+    </div>
+</LoginLayout>
+
+
+
+
+
+<div class="modal fade" id="paymentNewModal" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-md " role="document">
+        <div class="modal-content modal-content-demo p-4">
+
+            <div class="modal-body">
+                <div class="row">
+                    <div class="d-flex justify-content-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.com/svgjs" width="150" height="150" x="0" y="0" viewBox="0 0 512 512" xml:space="preserve" class=""><g><path fill="#dff6fd" d="M420.065 406.06H91.935c-11.326 0-20.508-9.182-20.508-20.508V114.845h369.146v270.707c0 11.326-9.182 20.508-20.508 20.508z" data-original="#dff6fd"></path><path fill="#fd8087" d="m302.044 260.452 42.095-42.095c12.715-12.714 12.715-33.329 0-46.044-12.714-12.714-33.329-12.714-46.044 0L256 214.409l-42.095-42.095c-12.714-12.714-33.329-12.714-46.044 0s-12.715 33.329 0 46.044l42.095 42.095-42.095 42.095c-12.715 12.714-12.715 33.329 0 46.044 6.357 6.357 14.689 9.537 23.022 9.537 8.332 0 16.665-3.18 23.022-9.537L256 306.496l42.095 42.095c6.357 6.357 14.689 9.537 23.022 9.537s16.665-3.18 23.022-9.537c12.715-12.714 12.715-33.329 0-46.044z" data-original="#fd8087" class=""></path><path fill="#fe646f" d="m302.044 260.452 42.095-42.095c12.715-12.714 12.715-33.329 0-46.044-12.714-12.714-33.329-12.714-46.044 0l-28.31 28.31c.479 50.367-22.4 107.723-66.563 155.081a32.467 32.467 0 0 0 10.683-7.114L256 306.496l42.095 42.095c6.357 6.357 14.689 9.537 23.022 9.537 8.332 0 16.665-3.179 23.022-9.537 12.715-12.714 12.715-33.329 0-46.044z" data-original="#fe646f"></path><path fill="#c8effe" d="M409.811 114.845v270.707c0 11.326-9.182 20.508-20.508 20.508h30.762c11.326 0 20.508-9.182 20.508-20.508V114.845z" data-original="#c8effe"></path><path fill="#FE646F" d="M440.573 114.845H71.427V53.321c0-11.326 9.182-20.508 20.508-20.508h328.129c11.326 0 20.508 9.182 20.508 20.508v61.524z" data-original="#FA4350"></path><path fill="#FA4350" d="M420.065 32.813h-30.762c11.326 0 20.508 9.182 20.508 20.508v61.524h30.762V53.321c0-11.326-9.182-20.508-20.508-20.508z" data-original="#FA4350"></path><path fill="#bfbfbf" d="M321.626 65.626c-9.061 0-16.406-7.345-16.406-16.406V16.406C305.219 7.345 312.565 0 321.626 0s16.406 7.345 16.406 16.406v32.813c0 9.061-7.345 16.407-16.406 16.407zM387.252 65.626c-9.061 0-16.406-7.345-16.406-16.406V16.406C370.845 7.345 378.191 0 387.252 0s16.406 7.345 16.406 16.406v32.813c0 9.061-7.345 16.407-16.406 16.407zM256 65.626c9.061 0 16.406-7.345 16.406-16.406V16.406C272.406 7.345 265.061 0 256 0s-16.406 7.345-16.406 16.406v32.813c0 9.061 7.345 16.407 16.406 16.407zM190.374 65.626c9.061 0 16.406-7.345 16.406-16.406V16.406C206.781 7.345 199.435 0 190.374 0s-16.406 7.345-16.406 16.406v32.813c0 9.061 7.345 16.407 16.406 16.407zM124.748 65.626c9.061 0 16.406-7.345 16.406-16.406V16.406C141.155 7.345 133.809 0 124.748 0s-16.406 7.345-16.406 16.406v32.813c0 9.061 7.345 16.407 16.406 16.407z" data-original="#bfbfbf"></path>
+                         </g></svg>
+                    </div>
+                    @if (Renewal == (int)RenewalStatus.Disconnected)
+                    {
+                        <h4 class="fw-bold text-center">Your plan is expired</h4>
+                    }
+                    else
+                    {
+                        <h4 class="fw-bold text-center">Your plan will expire in few days</h4>
+                    }
+                    
+                    <p class="text-center">Please make payment and continue using progbiz pnl</p>
+                </div>
+            </div>
+
+            <div class="modal-footer border-0 justify-content-center">
+                <a @onclick="MakePayment" class="btn btn-danger w-50">Make Payment</a>
+                @if (Renewal != (int)RenewalStatus.Disconnected)
+                {
+                    <button class="btn btn-light" data-bs-dismiss="modal" @onclick="RemindPayment">
+                        Remind me later
+                    </button>
+                }
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+    string UserName = "";
+    private bool showPassword = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        UserName = await _localStorage.GetItemAsync<string>("username");
+
+        if (!string.IsNullOrEmpty(loginModel.Username))
+            Nav.NavigateTo("/lock-screen");
+
+        await JS.InvokeVoidAsync("focusElement", "txtUserName");
+    }
+
+
+    private readonly LoginRequestModel loginModel = new();
+    public List<IdnValuePair> Clients { get; set; }
+    public List<IdnValueParentPair> Branches { get; set; }
+
+    public LoginResponseModelCustom resultModel = new();
+
+    protected bool hasBranch = false;
+    int? Renewal = null;
+    int? ClientID = null;
+
+    private async Task HandleLogin()
+    {
+        loginModel.TimeOffset = await JS.InvokeAsync<int>("GetUCTMinute");
+        var result = await API.PostAsync<LoginResponseModelCustom, LoginRequestModel>("auth/login", loginModel);
+        if (result != null)
+        {
+            resultModel = result;
+            ClientID = result.ClientID;
+            Renewal = result.RenewalStatus;
+
+            //switch (result.PaymentStatus)
+            //{
+            //    case (int)PaymentStatus.Pending:
+            //        Nav.NavigateTo($"payment-verification/{result.ClientID}");
+            //        return;
+            //    case (int)PaymentStatus.Verifying:
+            //        await JS.ShowMessage("Your payment details are being verified. You can log in once the verification is complete.", "Thank you");
+            //        return;
+            //    case (int)PaymentStatus.CheckoutNotComplete:
+            //        Nav.NavigateTo($"plan-check-out/{result.ClientID}");
+            //        return;
+
+            //}
+            if(result.UserTypeID==(int)UserTypes.Client)
+            {
+                switch (result.RenewalStatus)
+                {
+                    case (int)RenewalStatus.Blocked:
+                        await JS.ErrorMessage("Sorry, your account has been blocked. Please contact customer support for assistance.", "Account Blocked");
+                        return;
+                    case (int)RenewalStatus.Disconnected:
+                        await JS.InvokeVoidAsync("ShowModal", "paymentNewModal");
+                        return;
+                    case (int)RenewalStatus.Due:
+                        await JS.InvokeVoidAsync("ShowModal", "paymentNewModal");
+                        return;
+                    case (int)RenewalStatus.NotCompleted:
+                        Nav.NavigateTo($"plan-check-out/{result.ClientID}");
+                        return;
+                    case (int)RenewalStatus.Generated:
+                        await JS.InvokeVoidAsync("ShowModal", "paymentNewModal");
+                        return;
+                    case (int)RenewalStatus.Paid:
+
+                        await ((LocalAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(result);
+
+                        var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+                        var authState = await localStateProvider.GetAuthenticationStateAsync();
+                        var user = authState.User;
+                        await _localStorage.SetItemAsync("profile-image", user.Claims.FirstOrDefault(c => c.Type == "ProfileURL").Value);
+
+
+                        Nav.NavigateTo("home");
+
+                        return;
+
+
+                }
+            }
+
+            if(result.UserTypeID==(int)UserTypes.Staff)
+            {
+                switch (result.RenewalStatus)
+                {
+                    case (int)RenewalStatus.Blocked:
+                        await JS.ErrorMessage("Sorry, your account has been blocked. Please contact customer support for assistance.", "Account Blocked");
+                        return;
+                    case (int)RenewalStatus.Disconnected:
+                        await JS.ErrorMessage("Sorry, your account has been blocked. Please contact customer support for assistance.","Account Blocked");
+                        return;                    
+                }
+
+            }
+
+
+            if (!result.EmailConfirmed)
+            {
+                await _localStorage.SetItemAsync("username", loginModel.Username);
+                int UserID = await API.PostAsync<int, StringModel>($"auth/get-user", new StringModel() { Value = loginModel.Username });
+                var res = await API.GetAsync<DateTime?>($"auth/regenerate-otp/{UserID}", true);
+                Nav.NavigateTo("verify-mail");
+            }
+
+            if (string.IsNullOrEmpty(result.AccessToken))
+            {
+                hasBranch = true;
+                if (result.Clients != null && result.Clients.Count > 0)
+                {
+                    Clients = result.Clients;
+                }
+                Branches = result.Branches;
+            }
+            else
+            {
+                await ((LocalAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(result);
+
+                var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+                var authState = await localStateProvider.GetAuthenticationStateAsync();
+                var user = authState.User;
+                await _localStorage.SetItemAsync("profile-image", user.Claims.FirstOrDefault(c => c.Type == "ProfileURL").Value);
+
+                Nav.NavigateTo("/home");
+            }
+        }
+    }
+
+    private async Task MakePayment()
+    {
+        await JS.InvokeVoidAsync("HideModal", "paymentNewModal");
+        Nav.NavigateTo($"payment-verification/{ClientID}");
+    }
+    private async Task RemindPayment()
+    {
+        await JS.InvokeVoidAsync("HideModal", "paymentNewModal");
+        await ((LocalAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(resultModel);
+
+        var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+        var authState = await localStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        await _localStorage.SetItemAsync("profile-image", user.Claims.FirstOrDefault(c => c.Type == "ProfileURL").Value);
+
+        Nav.NavigateTo("/home");
+    }
+    }

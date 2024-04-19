@@ -1,0 +1,135 @@
+﻿@using PB.Model.Models
+
+<!--Send Document Modal-->
+<div class="modal fade" id="send-confirmation-modal">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style="overflow-y: scroll;">
+        <div class="modal-content modal-content-demo">
+            <EditForm Model="SendDocumentModel" OnValidSubmit="async () => await SendPDF()">
+                <div class="modal-header">
+                    <h6 class="modal-title">
+                        Send PDF Document
+                    </h6>
+                    <button type="button" class="btn-close" @onclick="async() => await CloseSendMailConfirmationModal()">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-2">
+                        <InputTextBox Label="Subject :" DivClass="col-md-12" IsRequired="true" @bind-Value="SendDocumentModel.Subject" ValidationFor="() => SendDocumentModel.Subject" />
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0" style="text-align: left; margin-top: 0 !important;">
+                                    Message :
+                                    <span style="color:red">*</span>
+                                </label>
+                                <textarea class="textarea form-control" rows="8" @bind="SendDocumentModel.Message"></textarea>
+                                <ValidationMessage For="() => SendDocumentModel.Message" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-12 my-1">
+                            <label>Mail Recipents :</label>
+                        </div>
+                        @if (!string.IsNullOrEmpty(SendDocumentModel.MailRecipients))
+                        {
+                            <div class="col-md-12 my-0">
+                                <label class="ms-2">@SendDocumentModel.MailRecipients</label>
+                            </div>
+                        }
+                        else
+                        {
+                            <InputTextBox Label="Update customer mail :" DivClass="col-md-6" @bind-Value="CustomerMailUpdateModel.EmailAddress" />
+                            <div class="col-md-1" style="margin-top: 3%;margin-left: -4%;">
+                                <button class="btn btn-light" type="button" id="button-addon2" @onclick="async()=>await UpdateCustomerMail()">
+                                    <i class="fa fa-check"></i>
+                                </button>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    @if (!string.IsNullOrEmpty(SendDocumentModel.MailRecipients))
+                    {
+                        <button type="submit" class="btn btn-primary">Send</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary" disabled>Send</button>
+                    }
+
+                    @if (!string.IsNullOrEmpty(GetPdfApiPath))
+                    {
+                        <button type="submit" class="btn btn-secondary" @onclick="async () => await ViewQuotationPDF()">View Pdf</button>
+                    }
+                    <button type="button" class="btn btn-danger" @onclick="async() => await CloseSendMailConfirmationModal()">Close</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public int CustomerEntityID { get; set; }
+    [Parameter] public string NavBackToUrl { get; set; } = "";
+    [Parameter] public string GetPdfApiPath { get; set; } = "";
+
+    private MailDetailsModel SendDocumentModel = new();
+    public async Task OpenSendMailConfirmationModal(MailDetailsModel mailDetailsModel)
+    {
+        SendDocumentModel = mailDetailsModel;
+        await JS.InvokeVoidAsync("ShowModal", "send-confirmation-modal");
+        StateHasChanged();
+    }
+    private async Task CloseSendMailConfirmationModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "send-confirmation-modal");
+        if (!string.IsNullOrEmpty(NavBackToUrl))
+            Nav.NavigateTo($"{NavBackToUrl}/{SendDocumentModel.ID}");
+    }
+    private async Task ViewQuotationPDF()
+    {
+        await CloseSendMailConfirmationModal();
+        await Task.Delay(200);
+        await PrintPDF(SendDocumentModel.ID);
+    }
+    private async Task SendPDF()
+    {
+        var result = await API.PostAsync<BaseSuccessResponse, MailDetailsModel>("common/send-pdf-document", SendDocumentModel);
+        if (result != null)
+        {
+            await CloseSendMailConfirmationModal();
+            await Task.Delay(200);
+            await JS.SuccessMessage(result.ResponseMessage, result.ResponseTitle);
+            await Task.Delay(500);
+            if (!string.IsNullOrEmpty(NavBackToUrl))
+                Nav.NavigateTo($"{NavBackToUrl}/{SendDocumentModel.ID}");
+        }
+    }
+    public async Task PrintPDF(int quotationID, string loadingDivID = "")
+    {
+        var htmlContent = await API.GetAsync<StringModel>($"{GetPdfApiPath}/{SendDocumentModel.ID}", true);
+        if (htmlContent is not null && !string.IsNullOrEmpty(htmlContent.Value))
+            await JS.InvokeVoidAsync("PrintPdfDocument", htmlContent.Value);
+    }
+    private CustomerMailUpdateModel CustomerMailUpdateModel = new();
+    private async Task UpdateCustomerMail()
+    {
+        if(string.IsNullOrEmpty(CustomerMailUpdateModel.EmailAddress))
+        {
+            await JS.ErrorMessage("Please provide an email address for the customer");
+            return;
+        }
+
+        CustomerMailUpdateModel.CustomerEntityID = CustomerEntityID;
+        var res = await API.PostAsync<BaseSuccessResponse, CustomerMailUpdateModel>("customer/update-customer-email", CustomerMailUpdateModel);
+        if (res != null)
+        {
+            SendDocumentModel.MailRecipients = CustomerMailUpdateModel.EmailAddress;
+        }
+    }
+}

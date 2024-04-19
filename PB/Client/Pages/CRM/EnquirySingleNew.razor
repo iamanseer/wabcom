@@ -1,0 +1,116 @@
+﻿@page "/enquiry-new"
+@page "/enquiry-new/{EnquiryId:int}"
+@page "/enquiry-new/{EnquiryId:int}/{ContactID:int}"
+
+@using PB.CRM.Model.Enum;
+@using PB.Client.Shared.Inventory.Customer
+@using PB.Client.Shared.Inventory.Item
+@using PB.Model.Models;
+@using PB.Shared.Models;
+@using PB.Shared.Models.CRM.Enquiry;
+@using PB.Shared.Models.CRM;
+@using PB.Shared.Models.Common;
+@using System.ComponentModel.DataAnnotations
+@attribute [Authorize(Roles = "Enquiry")]
+
+@code {
+    [Parameter] public int EnquiryId { get; set; }
+    [Parameter] public int ContactID { get; set; }
+
+    private EnquiryModelNew Model = new();
+    private EnquiryItemModelNew Footer = new() { IsEditMode = true };
+
+    private ModalCustomerNew modalCustomer = new();
+    private ModalItem modalItem = new();
+
+    private DropdownSelect FooterItemDropdownSelect = new();
+    private DropdownSelect RowItemDropdownSelect = new();
+
+
+
+
+
+
+
+    #region Enquiry Item
+
+    private int currentRowIndex = -1;
+    private bool isAnyRowInEditMode = false;
+    private async Task HandleEnquiryItemSelected(DropdownItemSelectedCallbackModel item)
+    {
+        if (Model.Items.Count > 0)
+        {
+            EnquiryItemModelNew? existingItem = null;
+            existingItem = Model.Items
+                .Where(i => i.ItemVariantID == item.ID)
+                .FirstOrDefault();
+            if (existingItem != null)
+            {
+                await JS.ErrorMessage("Item alredy added to the list, please choose a different one");
+                return;
+            }
+        }
+
+        if (currentRowIndex == -1)
+        {
+            Footer.ItemVariantID = item.ID;
+            Footer.ItemName = item.Value;
+        }
+        else
+        {
+            Model.Items[currentRowIndex].ItemVariantID = item.ID;
+            Model.Items[currentRowIndex].ItemName = item.Value;
+        }
+    }
+    private async Task HandleEnquiryItemEditButtonClick(EnquiryItemModelNew row)
+    {
+        if (isAnyRowInEditMode)
+        {
+            await JS.ErrorMessage("There is already a row in edit mode, please complete it first");
+            return;
+        }
+
+        currentRowIndex = Model.Items.IndexOf(row);
+        Model.Items[currentRowIndex].IsEditMode = true;
+        isAnyRowInEditMode = true;
+    }
+    private async Task HandleEnquiryItemUpdateButtonClick(EnquiryItemModelNew row) 
+    {
+        string? errorMessage = ValidateEnquiryItem(row);
+        if (!string.IsNullOrEmpty(errorMessage))
+        {
+            errorMessage = $"Validation error(s) for '{row.ItemName}'\n" + errorMessage;
+            await JS.ErrorMessage(errorMessage);
+            return;
+        }
+
+        Model.Items[currentRowIndex].IsEditMode = false;
+        isAnyRowInEditMode = false;
+        currentRowIndex = -1;
+    }
+    private string? ValidateEnquiryItem(EnquiryItemModelNew row)
+    {
+        string? errorMessage = "";
+        var validationContext = new ValidationContext(row, serviceProvider: null, items: null);
+        var validationResults = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(row, validationContext, validationResults, validateAllProperties: true);
+        if (validationResults is not null)
+        {
+            foreach (var validationItem in validationResults)
+            {
+                errorMessage += validationItem.ErrorMessage + "\n";
+            }
+        }
+        return errorMessage;
+    }
+    private async Task HandleRemoveEnquiryItemButtonClick(EnquiryItemModelNew row)
+    {
+        if (await JS.Confirm("Cofirm", "Are you sure you want to remove the enquiry item", SweetAlertMessageType.question, "Yes, Remove", "No, Don't Remove"))
+        {
+            Model.Items.Remove(row);
+        }
+    }
+
+    #endregion
+
+}

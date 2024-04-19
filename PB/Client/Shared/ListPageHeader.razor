@@ -1,0 +1,647 @@
+﻿@using PB.Model.Models;
+@using PB.Shared.Models
+@using PB.Shared.Models.Common
+
+
+@if (CanShowFilter)
+{
+    <div class="w-100 d-flex align-items-center  justify-content-between">
+
+        <!--Heading-->
+
+        <h5>
+
+            <span class="me-4">
+                @(Settings.Heading)
+            </span>
+
+            <!--Header Notify Counts-->
+            @if (Settings.Notifications != null && Settings.Notifications.Count > 0)
+            {
+                @foreach (var notification in Settings.Notifications.Where(item => item.NotifyCount > 0))
+                {
+                    <span class="@notification.BadgeClass">@(notification.NotifyValue + " " + notification.NotifyCount)</span>
+                }
+            }
+
+        </h5>
+
+        <div class="d-flex flex-row justify-content-end">
+
+            <!--Search-->
+            @if (Settings.NeedSearchOption)
+            {
+                <div style="max-width:380px;min-width:300px">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="@Settings.SearchPlaceHolder" @onchange="async (ChangeEventArgs e) => await HandleSearchTextChange(e)">
+                        <div class="input-group-append">
+                            <button class="btn btn-secondary filter-search-btn" type="button" @onclick="async () => await ApplyFilterOnTheList()">
+                                <i class="fe fe-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!--Sort-->
+            @if (Settings.NeedSortOption)
+            {
+                <div class="">
+                    <button class="btn btn-white btn-md btn-outline-dark sort-btn ms-2" id="btnSort" data-bs-toggle="dropdown">
+                        <i class="fa fa-sort me-1"></i> Sort By
+                    </button>
+                    <ul class="dropdown-menu" role="menu">
+                        @if (Settings.SortMenuItems != null)
+                        {
+                            <li class="dropdown-plus-title">
+                                Sort By
+                            </li>
+                            @foreach (var menu in Settings.SortMenuItems.Select((value, i) => new { i, value }))
+                            {
+                                var menuItem = menu.value;
+                                var index = menu.i;
+                                <li class="d-flex align-items-center me-auto">
+                                    <span class="me-auto px-3">
+                                        @menuItem.DisplayName
+                                    </span>
+                                    <a class="sort-icon @(GetSortIconActiveClass(menuItem.FieldName,true))" @onclick="async () => await HandleSortClick(index, true)">
+                                        <i class="fa fa-sort-amount-asc mx-1"></i>
+                                    </a>
+                                    <a class="sort-icon @(GetSortIconActiveClass(menuItem.FieldName,false))" @onclick="async () => await HandleSortClick(index, false)">
+                                        <i class="fa fa-sort-amount-desc mx-1"></i>
+                                    </a>
+                                </li>
+                            }
+                        }
+                        <li class="divider"></li>
+                        <li><a @onclick="async () => await HandleSortClick(-1, false)" class="text-center"> Reset</a></li>
+                    </ul>
+                </div>
+            }
+
+            <!--Filter-->
+            @if (Settings.NeedFilterOption)
+            {
+                <div class="">
+                    <!--Filter Button-->
+                    <button class="btn btn-white btn-md btn-outline-dark ms-2 filter-button" id="btnFilter" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasExample">
+                        <i class="fa fa-sort me-1"></i> Filter
+                    </button>
+
+                    <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+
+                        <div class="offcanvas-header border-bottom">
+                            <h4 id="offcanvasRightLabel " class="mb-0">filters</h4>
+                            <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"><i class="fe fe-x fs-18"></i></button>
+                        </div>
+
+                        <div class="offcanvas-body p-0 h-100vh">
+
+                            <div class="filter-item ">
+
+                                <!--Date Filters-->
+                                @if (Settings.DateFilters != null)
+                                {
+                                    <div class="card mb-1">
+
+                                        @for (int i = 0; i < Settings.DateFilters.Count; i++)
+                                        {
+                                            FilterDateInputModel dateFilterInput = Settings.DateFilters[i];
+                                            <div class="card-header p-3">
+                                                <div class="card-title text-muted">@("By " + dateFilterInput.DisplayName)</div>
+                                            </div>
+                                            <div class="card-body d-flex align-items-center gap-2 px-3 pt-1 pb-3 border-bottom bg-light">
+                                                <div class="form-group mb-0 w-100">
+                                                    <label class="form-label">Start date</label>
+                                                    <input class="form-control" placeholder="MM/DD/YYYY" type="date" @bind="@dateFilterInput.StartDate">
+                                                </div>
+                                                <div class="form-group mb-0 w-100">
+                                                    <label class="form-label">End date</label>
+                                                    <input class="form-control" placeholder="MM/DD/YYYY" type="date" @bind="@dateFilterInput.EndDate">
+                                                </div>
+                                            </div>
+
+                                        }
+                                    </div>
+                                }
+
+                                <!--ID value Filters-->
+                                @if (Settings.IdnValueFilters != null)
+                                {
+                                    @for (int i = 0; i < Settings.IdnValueFilters.Count; i++)
+                                    {
+                                        FilterIdnValueInputModel IdnValueItem = Settings.IdnValueFilters[i];
+                                        <div class="card mb-1">
+                                            <div class="card-header p-3">
+                                                <div class="card-title text-muted">@("By " + IdnValueItem.DisplayName)</div>
+                                            </div>
+                                            <div class="card-body d-flex align-items-center gap-2 px-3 pt-2 pb-3 border-bottom bg-light">
+                                                <ul class="ks-cboxtags">
+                                                    @if (IdnValueItem.CustomOptions.Count > 0)
+                                                    {
+                                                        @foreach (var customItem in IdnValueItem.CustomOptions)
+                                                        {
+                                                            @if (IdnValueItem.AvoidEnumValues.Count > 0)
+                                                            {
+                                                                if (!IdnValueItem.AvoidEnumValues.Contains(customItem.ID))
+                                                                {
+                                                                    <li>
+                                                                        <input type="checkbox" id="checkbox-@IdnValueItem.DisplayName-@(customItem.ID)" value="@(customItem.ID)" checked="@(IdnValueItem.SelectedEnumValues.Contains(customItem.ID) ? "checked" : null)" @onchange="(ChangeEventArgs e)=> HandleFilterEnumItemChecked(e, IdnValueItem, customItem.ID)">
+                                                                        <label for="checkbox-@IdnValueItem.DisplayName-@(customItem.ID)">
+                                                                            @customItem.Value
+                                                                        </label>
+                                                                    </li>
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <li>
+                                                                    <input type="checkbox" id="checkbox-@IdnValueItem.DisplayName-@(customItem.ID)" value="@(customItem.ID)" checked="@(IdnValueItem.SelectedEnumValues.Contains(customItem.ID) ? "checked" : null)" @onchange="(ChangeEventArgs e)=> HandleFilterEnumItemChecked(e, IdnValueItem, customItem.ID)">
+                                                                    <label for="checkbox-@IdnValueItem.DisplayName-@(customItem.ID)">
+                                                                        @customItem.Value
+                                                                    </label>
+                                                                </li>
+                                                            }
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        object enumObject = IdnValueItem.EnumObject;
+                                                        Type enumType = enumObject.GetType();
+                                                        @foreach (var enumValue in Enum.GetValues(enumType))
+                                                        {
+                                                            @if (IdnValueItem.AvoidEnumValues.Count > 0)
+                                                            {
+                                                                if (!IdnValueItem.AvoidEnumValues.Contains((int)enumValue))
+                                                                {
+                                                                    <li>
+                                                                        <input type="checkbox" id="checkbox-@IdnValueItem.DisplayName-@((int)enumValue)" value="@((int)enumValue)" checked="@(Settings.IdnValueFilters[i].SelectedEnumValues.Contains((int)enumValue) ? "checked" : null)" @onchange="(ChangeEventArgs e)=> HandleFilterEnumItemChecked(e, IdnValueItem, (int)enumValue)">
+                                                                        <label for="checkbox-@(IdnValueItem.DisplayName)-@((int)enumValue)">
+                                                                            @enumValue
+                                                                        </label>
+                                                                    </li>
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <li>
+                                                                    <input type="checkbox" id="checkbox-@IdnValueItem.DisplayName-@((int)enumValue)" value="@((int)enumValue)" checked="@(Settings.IdnValueFilters[i].SelectedEnumValues.Contains((int)enumValue) ? "checked" : null)" @onchange="(ChangeEventArgs e)=> HandleFilterEnumItemChecked(e, IdnValueItem, (int)enumValue)">
+                                                                    <label for="checkbox-@(IdnValueItem.DisplayName)-@((int)enumValue)">
+                                                                        @enumValue
+                                                                    </label>
+                                                                </li>
+                                                            }
+                                                        }
+                                                    }
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+
+                                <!--Boolean Filters-->
+                                @if (Settings.BooleanFilters != null)
+                                {
+                                    @for (int i = 0; i < Settings.BooleanFilters.Count; i++)
+                                    {
+                                        FilterBooleanInputModel booleanFilterInput = Settings.BooleanFilters[i];
+                                        <div class="card mb-1">
+                                            <div class="card-header p-3">
+                                                <div class="card-title text-muted">@("By " + booleanFilterInput.DisplayName)</div>
+                                            </div>
+                                            <div class="card-body d-flex align-items-center gap-2 px-3 pt-1 pb-3 border-bottom bg-light">
+                                                <ul class="ks-cboxtags">
+                                                    @foreach (var booleanFilterItem in booleanFilterInput.DisplayItems)
+                                                    {
+                                                        <li>
+                                                            <input type="checkbox" id="checkbox-@booleanFilterItem.ItemDisplayName" value="@(@booleanFilterItem.ItemValue)" checked="@(booleanFilterInput.Value==booleanFilterItem.ItemValue ? "checked" : null)" @onchange="()=> HandleFilterBooleanIteChecked(booleanFilterItem.ItemValue,booleanFilterInput)">
+                                                            <label for="checkbox-@booleanFilterItem.ItemDisplayName">
+                                                                @booleanFilterItem.ItemDisplayName
+                                                            </label>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                    }
+                                }
+
+                                <!--Field Filters-->
+                                @if (Settings.FieldFilters != null)
+                                {
+                                    <div class="card mb-1">
+                                        <div class="card-header p-3">
+                                            <div class="card-title text-muted">@("By " + Settings.FieldFilters.DisplayName)</div>
+                                        </div>
+                                        <div class="card-body d-flex align-items-center gap-2 px-3 pt-1 pb-3 border-bottom bg-light">
+                                            <ul class="ks-cboxtags">
+                                                @foreach (var fieldfilter in Settings.FieldFilters.Fields)
+                                                {
+                                                    <li>
+                                                        <input type="checkbox" id="checkbox-@fieldfilter.DisplayName" value="" checked="@(fieldfilter.Value==true? "checked" : null)" @onchange="async (ChangeEventArgs e)=>HandleFilterFieldItemChecked(e,fieldfilter)">
+                                                        <label for="checkbox-@fieldfilter.DisplayName">
+                                                            @fieldfilter.DisplayName
+                                                        </label>
+                                                    </li>
+
+                                                }
+
+                                            </ul>
+                                        </div>
+
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="filter-footer border-top bg-light">
+                                <div class="d-flex gap-2 px-2 py-4">
+                                    <button type="button" class="btn btn-success" data-bs-dismiss="offcanvas" @onclick="ApplyFilterOnTheList"> Apply </button>
+                                    <button type="button" class="btn btn-dark " @onclick="ClearFilters"> Clear </button>
+                                    <button type="button" class="btn btn-default" data-bs-dismiss="offcanvas" @onclick="async () => await CloseFilter()"> Cancel</button>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            }
+
+            <!--Custom Button-->
+            @if (Settings.NeedCustomButton && !string.IsNullOrEmpty(Settings.CustomButtonIconClass) && !string.IsNullOrEmpty(Settings.CustomButtonApiPath))
+            {
+                <button type="button" class="btn btn-primary btn-md btn-outline-dark ms-2" @onclick="async () => await HandleCustomButtonClicked()">
+                    <i class="@Settings.CustomButtonIconClass"></i>
+                </button>
+            }
+
+            <!--Add Button-->
+            @if (Settings.NeedAddButton)
+            {
+                @if (!string.IsNullOrEmpty(Settings.SinglePageURL))
+                {
+                    <button type="button" class="btn btn-primary btn-md btn-outline-dark ms-2" @onclick="@(() => Nav.NavigateTo(Settings.SinglePageURL))">
+                        <i class="fa fa-plus me-2"></i>@Settings.AddButtonText
+                    </button>
+
+                }
+                else
+                {
+                    <button type="button" class="btn btn-primary btn-md btn-outline-dark ms-2" @onclick="@(async() => await OnAddButtonClick.InvokeAsync())">
+                        <i class="fa fa-plus me-2"></i>@Settings.AddButtonText
+                    </button>
+                }
+            }
+
+        </div>
+
+    </div>
+}
+
+
+
+@code {
+
+    [Parameter] public HeaderSettingsModel Settings { get; set; } = new();
+
+    //Filter Button click event callback
+    [Parameter] public EventCallback<PagedListPostModelWithFilter?> OnFilterButtonClick { get; set; }
+
+    //button click to modal
+    [Parameter] public EventCallback OnAddButtonClick { get; set; }
+
+    private PagedListPostModelWithFilter FilterSearchModel = new();
+
+    private bool CanShowFilter = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CanShowFilter = false;
+        if (Settings != null && Settings.NeedFilterOption)
+        {
+            //Date Default Filters
+            if (Settings.DateFilters != null)
+            {
+                for (int dateFilterIndex = 0; dateFilterIndex < Settings.DateFilters.Count; dateFilterIndex++)
+                {
+                    if (Settings.DateFilters[dateFilterIndex].SetTodayDate)
+                    {
+                        Settings.DateFilters[dateFilterIndex].StartDate = Settings.DateFilters[dateFilterIndex].EndDate = DateTime.UtcNow;
+                        DateFilterModel DateFilterModel = new()
+                            {
+                                StartDate = DateTime.UtcNow,
+                                EndDate = DateTime.UtcNow,
+                                FieldName = Settings.DateFilters[dateFilterIndex].FieldName
+                            };
+                        FilterSearchModel.FilterByDateOptions.Add(DateFilterModel);
+                    }
+                }
+            }
+
+            //Enum Default Filters
+            if (Settings.IdnValueFilters != null)
+            {
+                for (int i = 0; i < Settings.IdnValueFilters.Count; i++)
+                {
+                    if (Settings.IdnValueFilters[i].SelectedEnumValues.Count > 0)
+                    {
+                        IdnValueFilterModel enumFilterModel = new()
+                            {
+                                FieldName = Settings.IdnValueFilters[i].FiledName,
+                                SelectedEnumValues = Settings.IdnValueFilters[i].SelectedEnumValues
+                            };
+                        FilterSearchModel.FilterByIdOptions.Add(enumFilterModel);
+                    }
+
+                    if (!string.IsNullOrEmpty(Settings.IdnValueFilters[i].CustomOptionApiPath))
+                    {
+                        if (Settings.IdnValueFilters[i].IsGet)
+                        {
+                            Settings.IdnValueFilters[i].CustomOptions = await API.GetAsync<List<IdnValuePair>>(Settings.IdnValueFilters[i].CustomOptionApiPath, true);
+                        }
+                        else
+                        {
+                            Settings.IdnValueFilters[i].CustomOptions = await API.PostAsync<List<IdnValuePair>, CommonSearchModel>(Settings.IdnValueFilters[i].CustomOptionApiPath, new CommonSearchModel());
+                        }
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(Settings.OrderByFieldName))
+            {
+                FilterSearchModel.OrderByFieldName = Settings.OrderByFieldName;
+            }
+
+            if (Settings.HasDefaultSettings)
+                await OnFilterButtonClick.InvokeAsync(FilterSearchModel);
+        }
+
+        CanShowFilter = true;
+    }
+
+    #region Sort
+
+
+
+    private async Task HandleSortClick(int index, bool isAscending)
+    {
+        if (Settings.NeedSortOption && Settings.SortMenuItems != null)
+        {
+            if (index == -1)
+            {
+                FilterSearchModel.OrderByFieldName = "1 " + (isAscending ? "ASC" : "DESC");
+
+            }
+            else
+            {
+                for (int i = 0; i < Settings.SortMenuItems.Count; i++)
+                {
+                    if (index == i)
+                        FilterSearchModel.OrderByFieldName = Settings.SortMenuItems[i].FieldName + (isAscending ? " ASC" : " DESC");
+
+                }
+            }
+        }
+        await ApplyFilterOnTheList();
+    }
+
+    string GetSortIconActiveClass(string? fieldName, bool isAscending)
+    {
+        fieldName += (isAscending ? " ASC" : " DESC");
+        if (fieldName == FilterSearchModel.OrderByFieldName)
+            return " sort-icon-active";
+        else
+            return "";
+    }
+
+    #endregion
+
+    #region Filter
+
+    private async Task ApplyFilterOnTheList()
+    {
+        FilterSearchModel.PageIndex = 1;
+        //Moving Selected date values to the Post Model
+        FilterSearchModel.FilterByDateOptions = new();
+        if (Settings.DateFilters != null)
+        {
+            for (int i = 0; i < Settings.DateFilters.Count; i++)
+            {
+                if (Settings.DateFilters[i].StartDate != null && Settings.DateFilters[i].EndDate != null)
+                {
+                    DateFilterModel dateFilterItem = new()
+                        {
+                            FieldName = Settings.DateFilters[i].FieldName,
+                            StartDate = Settings.DateFilters[i].StartDate,
+                            EndDate = Settings.DateFilters[i].EndDate
+                        };
+                    FilterSearchModel.FilterByDateOptions.Add(dateFilterItem);
+                }
+            }
+        }
+
+        //Moving IDnValue filter selected value to the Post model
+        FilterSearchModel.FilterByIdOptions = new();
+        if (Settings.IdnValueFilters != null)
+        {
+            for (int i = 0; i < Settings.IdnValueFilters.Count; i++)
+            {
+                if (Settings.IdnValueFilters[i].SelectedEnumValues.Count > 0)
+                {
+                    IdnValueFilterModel enumFilterModel = new()
+                        {
+                            FieldName = Settings.IdnValueFilters[i].FiledName,
+                            SelectedEnumValues = Settings.IdnValueFilters[i].SelectedEnumValues
+                        };
+                    FilterSearchModel.FilterByIdOptions.Add(enumFilterModel);
+                }
+            }
+        }
+
+        //Moving boolean filter value to the Post model
+        FilterSearchModel.FilterByBooleanOptions = new();
+        if (Settings.BooleanFilters != null)
+        {
+            foreach (var booleanFilter in Settings.BooleanFilters)
+            {
+                if (booleanFilter.Value is not null)
+                {
+                    BooleanFilterModel booleanFilterModel = new()
+                        {
+                            FieldName = booleanFilter.FiledName,
+                            Value = Convert.ToBoolean(booleanFilter.Value) ? 1 : 0
+                        };
+                    FilterSearchModel.FilterByBooleanOptions.Add(booleanFilterModel);
+                }
+            }
+        }
+
+
+        //Moving field filter value to the Post model
+        FilterSearchModel.FilterByFieldOptions = new();
+        if (Settings.FieldFilters != null)
+        {
+            foreach (var fieldFilter in Settings.FieldFilters.Fields)
+            {
+                if (fieldFilter.Value)
+                {
+                    FieldFiltermodel fieldFilterModel = new()
+                        {
+                            FieldName = fieldFilter.FiledName,
+                            Value = true
+                        };
+                    FilterSearchModel.FilterByFieldOptions.Add(fieldFilterModel);
+                }
+            }
+        }
+
+        await OnFilterButtonClick.InvokeAsync(FilterSearchModel);
+        await JS.InvokeVoidAsync("HideFilter", "offcanvasRight");
+    }
+
+    private void ClearFilters()
+    {
+        // Clearing the IDnValue filter values
+        if (Settings.IdnValueFilters != null)
+        {
+            foreach (var enumItem in Settings.IdnValueFilters)
+            {
+                enumItem.SelectedEnumValues = new List<int>();
+            }
+        }
+
+        // Clearing the date filter values
+        if (Settings.DateFilters != null)
+        {
+            foreach (var dateItem in Settings.DateFilters)
+            {
+                dateItem.StartDate = dateItem.EndDate = null;
+            }
+        }
+
+        // Clearing the boolean filter values
+        if (Settings.BooleanFilters != null)
+        {
+            Settings.BooleanFilters.ForEach(booleanFilter => booleanFilter.Value = null);
+        }
+    }
+
+    private async Task CloseFilter()
+    {
+        ClearFilters();
+        await OnFilterButtonClick.InvokeAsync(null);
+        await JS.InvokeVoidAsync("HideFilter", "offcanvasRight");
+    }
+
+    #endregion
+
+    #region Search
+
+    private async Task HandleSearchTextChange(ChangeEventArgs e)
+    {
+        FilterSearchModel.SearchString = Convert.ToString(e.Value);
+        FilterSearchModel.PageIndex = 1;
+        await ApplyFilterOnTheList();
+    }
+
+    #endregion
+
+    #region Handle Filter Enum Item Checked
+
+    private void HandleFilterEnumItemChecked(ChangeEventArgs e, FilterIdnValueInputModel enumItem, int valueID)
+    {
+        if (Settings.IdnValueFilters != null)
+        {
+            bool flag = Convert.ToBoolean(e.Value);
+
+            int index = Settings.IdnValueFilters.IndexOf(enumItem);
+            if (flag)
+            {
+                Settings.IdnValueFilters[index].SelectedEnumValues.Add(valueID);
+            }
+            else
+            {
+                Settings.IdnValueFilters[index].SelectedEnumValues.Remove(valueID);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Handle Custom items Checked
+
+    private void HandleCustomOptionItemChecked(ChangeEventArgs e, FilterIdnValueInputModel enumItem, int valueID)
+    {
+        if (Settings.IdnValueFilters != null)
+        {
+            bool flag = Convert.ToBoolean(e.Value);
+
+            int index = Settings.IdnValueFilters.IndexOf(enumItem);
+            if (flag)
+            {
+                Settings.IdnValueFilters[index].SelectedEnumValues.Add(valueID);
+            }
+            else
+            {
+                Settings.IdnValueFilters[index].SelectedEnumValues.Remove(valueID);
+            }
+        }
+    }
+
+    #endregion
+
+    #region Custom Button
+
+    private async Task HandleCustomButtonClicked()
+    {
+        if (!string.IsNullOrEmpty(Settings.CustomButtonApiPath))
+        {
+            var result = await API.GetAsync<byte[]?>(Settings.CustomButtonApiPath, true);
+            if (result is not null)
+            {
+                await JS.InvokeAsync<object>("JSInteropExt.saveAsFile", "Customer'sList.xlsx", "application/vnd.ms-excel", Convert.ToBase64String(result));
+            }
+        }
+    }
+
+    #endregion
+
+    #region Handle Filter Boolean Item Check
+
+    private void HandleFilterBooleanIteChecked(bool value, FilterBooleanInputModel booleanInputItem)
+    {
+        if (Settings.BooleanFilters != null)
+        {
+            int index = Settings.BooleanFilters.IndexOf(booleanInputItem);
+            if (Settings.BooleanFilters[index].Value is not null)
+            {
+                Settings.BooleanFilters[index].Value = Settings.BooleanFilters[index].Value == value ? null : value;
+                return;
+            }
+            else
+            {
+                Settings.BooleanFilters[index].Value = value;
+            }
+        }
+    }
+
+    #region  Handle Filter Field Item Check
+
+    private void HandleFilterFieldItemChecked(ChangeEventArgs e,FieldInputItemModel fieldFilter)
+    {
+
+        if (Settings.FieldFilters != null)
+        {
+            int index = Settings.FieldFilters.Fields.IndexOf(fieldFilter);
+
+            Settings.FieldFilters.Fields[index].Value = Convert.ToBoolean(e.Value);
+
+        }
+    }
+
+    #endregion
+
+
+    #endregion
+}

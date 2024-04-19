@@ -1,0 +1,441 @@
+﻿@using PB.Shared.Models.Accounts
+@using System.ComponentModel.DataAnnotations
+<div class="modal fade" id="bill-tobill-references">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Bill To Bill References</h6>
+                <button type="button" class="btn-close" @onclick="async () => await CloseModal()"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table border text-nowrap table-hover text-md-nowrap mb-0 mt-2 ">
+                        <thead>
+                            <tr>
+                                <th>Ref Type</th>
+                                <th>Reference No</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                @foreach (var billToBillItem in Model.BillToBillItems)
+                                {
+                                    <td>
+                                        <select class="form-control form-select" @onchange="async (ChangeEventArgs e) => await HandleBillItemReferenceTypeSelected(e,billToBillItem, false)">
+                                            @switch (billToBillItem.ReferenceTypeID)
+                                            {
+                                                case 0:
+                                                case null:
+                                                    <option value="0" selected> Choose </option>
+                                                    <option value="@((int)ReferenceTypes.Advance)"> Advance </option>
+                                                    <option value="@((int)ReferenceTypes.AgainstReference)"> Against Reference </option>
+                                                    break;
+                                                case (int)ReferenceTypes.Advance:
+                                                    <option value="0"> Choose </option>
+                                                    <option value="@((int)ReferenceTypes.Advance)" selected> Advance </option>
+                                                    <option value="@((int)ReferenceTypes.AgainstReference)"> Against Reference </option>
+                                                    break;
+                                                case (int)ReferenceTypes.AgainstReference:
+                                                    <option value="0"> Choose </option>
+                                                    <option value="@((int)ReferenceTypes.Advance)"> Advance </option>
+                                                    <option value="@((int)ReferenceTypes.AgainstReference)" selected> Against Reference </option>
+                                                    break;
+                                            }
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control " value="@billToBillItem.ReferenceNo" disabled />
+                                    </td>
+                                    <td>
+                                        <div class="input-group">
+                                            @if (billToBillItem.IsDebit)
+                                            {
+                                                <input type="text" class="input-with-limit form-control" value="@billToBillItem.Debit" @onchange="async (ChangeEventArgs e) => await HandleBillToBillReferenceItemAmountChange(e,billToBillItem)" />
+                                                <span class="custom-input-group-text-count small-width">@Model.DrOrCr</span>
+                                            }
+                                            else
+                                            {
+                                                <input type="text" class="input-with-limit form-control" value="@billToBillItem.Credit" @onchange="async (ChangeEventArgs e) => await HandleBillToBillReferenceItemAmountChange(e,billToBillItem)" />
+                                                <span class="custom-input-group-text-count small-width">@Model.DrOrCr</span>
+                                            }
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button class="btn" type="button" @onclick="async () => await RemoveBillItem(billToBillItem)">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                }
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>
+                                    <select class="form-control form-select" @onchange="async (ChangeEventArgs e) => await HandleBillItemReferenceTypeSelected(e,Footer)">
+                                        @switch (Footer.ReferenceTypeID)
+                                        {
+                                            case 0:
+                                            case null:
+                                                <option value="0" selected> Choose </option>
+                                                <option value="@((int)ReferenceTypes.Advance)"> Advance </option>
+                                                <option value="@((int)ReferenceTypes.AgainstReference)"> Against Reference </option>
+                                                break;
+                                            case (int)ReferenceTypes.Advance:
+                                                <option value="0"> Choose </option>
+                                                <option value="@((int)ReferenceTypes.Advance)" selected> Advance </option>
+                                                <option value="@((int)ReferenceTypes.AgainstReference)"> Against Reference </option>
+                                                break;
+                                            case (int)ReferenceTypes.AgainstReference:
+                                                <option value="0"> Choose </option>
+                                                <option value="@((int)ReferenceTypes.Advance)"> Advance </option>
+                                                <option value="@((int)ReferenceTypes.AgainstReference)" selected> Against Reference </option>
+                                                break;
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control " value="@Footer.ReferenceNo" disabled />
+                                </td>
+                                <td>
+                                    <div class="input-group">
+                                        @if (Footer.IsDebit)
+                                        {
+                                            <input type="text" class="input-with-limit form-control" value="@Footer.Debit" @onchange="async (ChangeEventArgs e) => await HandleBillToBillReferenceItemAmountChange(e,Footer)" />
+                                            <span class="custom-input-group-text-count small-width">@Model.DrOrCr</span>
+                                        }
+                                        else
+                                        {
+                                            <input type="text" class="input-with-limit form-control" value="@Footer.Credit" @onchange="async (ChangeEventArgs e) => await HandleBillToBillReferenceItemAmountChange(e,Footer)" />
+                                            <span class="custom-input-group-text-count small-width">@Model.DrOrCr</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="btn" type="button" @onclick=" () =>  AddFooterToBillItems()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" @onclick="async() => await Proceed()">Proceed</button>
+                <button type="button" class="btn btn-light" @onclick="async() => await CloseModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bill-to-bill-items-modal">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h6 class="modal-title">Against reference items</h6>
+                <button type="button" class="btn-close" @onclick="async () => await CloseAgainstReferenceModal()"></button>
+            </div>
+            <div class="modal-body">
+                <div class="">
+                    <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    Reference No.
+                                </th>
+                                <th>
+                                    Date
+                                </th>
+                                <th>
+                                    Days
+                                </th>
+                                <th>
+                                    Amount
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var againstReferenceItem in AgainstReferences)
+                            {
+                                <tr @onclick="async () => await HandleAgainstReferenceItemSelected(againstReferenceItem)" style="cursor:pointer">
+                                    <td>
+                                        @againstReferenceItem.ReferenceNo
+                                    </td>
+                                    <td>
+                                        @againstReferenceItem.Date
+                                    </td>
+                                    <td>
+                                        @againstReferenceItem.Days
+                                    </td>
+                                    <td>
+                                        @againstReferenceItem.Amount
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public EventCallback<List<BillToBillModel>> Save { get; set; }
+
+    ModalBillToBillModel Model = new();
+
+    #region Main functions
+
+    public async Task OpenBillToBillReferenceModal(decimal totalAmount, int ledgerID, int voucherTypeID, int voucherTypeNatureID, string voucherNumber)
+    {
+        Model.TotalAmount = Model.RemainingAmount = totalAmount;
+        Model.LedgerID = ledgerID;
+        Model.VoucherTypeID = voucherTypeID;
+        Model.VoucherTypeNatureID = voucherTypeNatureID;
+        Model.VoucherNumer = voucherNumber;
+        if (Model.VoucherTypeNatureID == (int)VoucherTypeNatures.Receipt)
+        {
+            Model.IsDebit = false;
+            Model.DrOrCr = "Cr";
+        }
+        if (Model.VoucherTypeNatureID == (int)VoucherTypeNatures.Payment)
+        {
+            Model.IsDebit = true;
+            Model.DrOrCr = "Dr";
+        }
+        await JS.InvokeVoidAsync("ShowModal", "bill-tobill-references");
+    }
+    private async Task CloseModal()
+    {
+        Model = new();
+        Footer = new();
+        await JS.InvokeVoidAsync("HideModal", "bill-tobill-references");
+    }
+    private async Task Proceed()
+    {
+        if (Model.BillToBillItems.Count == 0)
+        {
+            await JS.ErrorMessage("Please add bill items");
+            return;
+        }
+
+        //Removing invalid data
+        Model.BillToBillItems
+        .RemoveAll
+        (
+            billToBillItem =>
+            billToBillItem.ReferenceTypeID == null ||
+            billToBillItem.IsDebit && (billToBillItem.Debit == null || billToBillItem.Debit == 0) ||
+            billToBillItem.IsDebit == false && (billToBillItem.Credit == null || billToBillItem.Credit == 0)
+        );
+
+        //Validating items
+        foreach (var billItem in Model.BillToBillItems)
+        {
+            var errorMessage = ValidateBillItem(billItem);
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                errorMessage = $"Validation error(s) for {billItem.ReferenceNo} \n" + errorMessage;
+                await JS.ErrorMessage(errorMessage);
+                return;
+            }
+        }
+
+        //comparing journal entry amount and sum of bill items
+        decimal? totalAmount = Model.BillToBillItems.Sum(billToBillItem => billToBillItem.Debit);
+        if (!Model.IsDebit)
+            totalAmount = Model.BillToBillItems.Sum(billToBillItem => billToBillItem.Credit);
+
+        if (totalAmount != Model.TotalAmount)
+        {
+            await JS.ErrorMessage($"The splitting of the journal entry amount '{Model.TotalAmount}' is incorrect. Please review and clarify it.");
+            return;
+        }
+
+        await Save.InvokeAsync(Model.BillToBillItems);
+        await CloseModal();
+    }
+
+    #endregion
+
+    #region BillToBill Reference item functions
+
+    private BillToBillModel Footer = new();
+    private int BillToBillReferenceItemIndex = -1;
+    private async void AddFooterToBillItems()
+    {
+        var errorMessage = ValidateBillItem(Footer);
+        if (!string.IsNullOrEmpty(errorMessage))
+        {
+            errorMessage = $"Validation error(s) \n" + errorMessage;
+            await JS.ErrorMessage(errorMessage);
+            return;
+        }
+        Model.BillToBillItems.Add(Footer);
+        BillToBillReferenceItemIndex = -1;
+        Footer = new();
+    }
+    private async Task RemoveBillItem(BillToBillModel billToBillModel)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the bill item.?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel"))
+        {
+            Model.BillToBillItems.Remove(billToBillModel);
+        }
+    }
+    private async Task HandleBillItemReferenceTypeSelected(ChangeEventArgs e, BillToBillModel billToBillModel, bool isFooter = true)
+    {
+        billToBillModel.ReferenceTypeID = Convert.ToInt32(e.Value);
+        if (!isFooter)
+            BillToBillReferenceItemIndex = Model.BillToBillItems.IndexOf(billToBillModel);
+        switch (billToBillModel.ReferenceTypeID)
+        {
+            case (int)ReferenceTypes.Advance:
+                billToBillModel.ReferenceNo = Model.VoucherNumer;
+                billToBillModel.LedgerID = Model.LedgerID;
+                break;
+
+            case (int)ReferenceTypes.AgainstReference:
+                await HandleAgainstReferenceSelected(billToBillModel);
+                break;
+        }
+    }
+    private async Task HandleBillToBillReferenceItemAmountChange(ChangeEventArgs e, BillToBillModel billToBillModelItem)
+    {
+        decimal billToBillItemAmount = Convert.ToDecimal(e.Value);
+        //checking entered amount is more than the referenced bill amount
+        if (billToBillModelItem.ReferenceTypeID == (int)ReferenceTypes.AgainstReference && billToBillModelItem.MaximumAmount < billToBillItemAmount)
+        {
+            await JS.ErrorMessage("You cant add a bill item that contain more than the voucher entry amount " + billToBillModelItem.MaximumAmount);
+            return;
+        }
+        await ValidateBillItemsAmountWithTotalAmount(billToBillModelItem, billToBillItemAmount);
+        StateHasChanged();
+    }
+    private async Task ValidateBillItemsAmountWithTotalAmount(BillToBillModel billToBillModel, decimal billItemAmount)
+    {
+        decimal? sum;
+        if (billToBillModel.IsDebit)
+        {
+            sum = Model.BillToBillItems.Sum(b2b => b2b.Debit);
+            if (sum > Model.TotalAmount)
+            {
+                await JS.InvokeVoidAsync("Total of bill to bill items must be equal or less than journal entry amount " + Model.TotalAmount);
+                billToBillModel.Debit = Model.TotalAmount - (Model.BillToBillItems.Sum(b2b => b2b.Debit));
+                billToBillModel.Credit = 0;
+            }
+            else
+            {
+                billToBillModel.Debit = billItemAmount;
+                billToBillModel.Credit = 0;
+            }
+        }
+        else
+        {
+            sum = Model.BillToBillItems.Sum(b2b => b2b.Credit);
+            if (sum > Model.TotalAmount)
+            {
+                await JS.InvokeVoidAsync("Total of bill to bill items must be equal or less than journal entry amount " + Model.TotalAmount);
+                billToBillModel.Credit = Model.TotalAmount - (Model.BillToBillItems.Sum(b2b => b2b.Credit));
+                billToBillModel.Debit = 0;
+            }
+            else
+            {
+                billToBillModel.Credit = billItemAmount;
+                billToBillModel.Debit = 0;
+            }
+        }
+    }
+    private string? ValidateBillItem(BillToBillModel billToBillModel)
+    {
+        ICollection<ValidationResult> validationResults = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(billToBillModel, new ValidationContext(billToBillModel), validationResults, true);
+        string? errorMessage = null;
+        if (!isValid && validationResults is not null)
+        {
+            foreach (var result in validationResults)
+            {
+                errorMessage = result.ErrorMessage + '\n';
+            }
+        }
+        return errorMessage;
+    }
+
+    #endregion
+
+    #region Against Reference
+
+    private async Task HandleAgainstReferenceSelected(BillToBillModel billToBillModel)
+    {
+        AgainstReferences = await API.GetAsync<List<AgainstReferenceBillItemModel>>($"accounts/get-bill-to-bill-items/{Model.LedgerID}/{Model.VoucherTypeID}", true);
+        if (AgainstReferences.Count == 0)
+        {
+            await JS.ErrorMessage("There is no bill to bill items to show for against reference");
+            return;
+        }
+
+        switch (Model.BillToBillItems.Count)
+        {
+            case 0:
+                await JS.InvokeVoidAsync("ShowModal", "bill-to-bill-items-modal");
+                break;
+            case 1:
+                Model.BillToBillItems.Remove(Model.BillToBillItems.Where(billItem => billItem.BillID == Model.BillToBillItems[0].ParentBillID).First());
+                await JS.InvokeVoidAsync("ShowModal", "bill-to-bill-items-modal");
+                break;
+            case > 1:
+                foreach (var modelItem in Model.BillToBillItems)
+                {
+                    Model.BillToBillItems.Remove(Model.BillToBillItems.Where(b2b => b2b.BillID == modelItem.ParentBillID).First());
+                }
+                if (Model.BillToBillItems.Count > 0)
+                    await JS.InvokeVoidAsync("ShowModal", "bill-to-bill-items-modal");
+                break;
+        }
+    }
+
+    #endregion
+
+    #region Against reference modal functions
+
+    private List<AgainstReferenceBillItemModel> AgainstReferences = new();
+    private async Task OpenAgainstReferenceModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "against-reference-bill-items");
+    }
+    private async Task CloseAgainstReferenceModal()
+    {
+        AgainstReferences = new();
+        await JS.InvokeVoidAsync("HideModal", "against-reference-bill-items");
+    }
+    private async Task HandleAgainstReferenceItemSelected(AgainstReferenceBillItemModel againstReferenceBillItemModel)
+    {
+        BillToBillModel billToBillModel = new()
+            {
+                Date = DateTime.UtcNow,
+                ReferenceTypeID = (int)ReferenceTypes.AgainstReference,
+                LedgerID = Model.LedgerID,
+                IsDebit = Model.IsDebit,
+                ParentBillID = againstReferenceBillItemModel.BillID,
+                MaximumAmount = Convert.ToDecimal(againstReferenceBillItemModel.Amount)
+            };
+
+        if (BillToBillReferenceItemIndex == -1)
+        {
+            Footer = billToBillModel;
+        }
+        else
+        {
+            Model.BillToBillItems[BillToBillReferenceItemIndex] = billToBillModel;
+        }
+        await CloseAgainstReferenceModal();
+    }
+
+    #endregion
+}

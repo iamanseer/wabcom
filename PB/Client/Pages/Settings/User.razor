@@ -1,0 +1,322 @@
+﻿@page "/user"
+@page "/user/{id:int}"
+
+@using PB.CRM.Model;
+@using PB.Model.Models;
+@using PB.Shared.Models.Common;
+
+@attribute [Authorize(Roles = "Users")]
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="SaveUser">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6>
+                                User Details
+                            </h6>
+                        </div>
+                        <div class="card-body">
+
+                            <InputTextBox DivClass="col-md-7" Label="Name : " IsRequired="true" ValidationFor="() =>Model.FirstName" @bind-Value="Model.FirstName" />
+
+                            <InputTextBox DivClass="col-md-7" Label="Email : " IsRequired="true" ValidationFor="() =>Model.EmailAddress" @bind-Value="Model.EmailAddress" />
+
+                            <InputTextBox DivClass="col-md-7" Label="Mobile : " IsRequired="true" ValidationFor="() =>Model.Phone" @bind-Value="Model.Phone" />
+
+                            <InputTextBox DivClass="col-md-7" Label="Username : " IsRequired="true" ValidationFor="() =>Model.UserName" @bind-Value="Model.UserName" />
+
+                            @if (Model.UserID == 0)
+                            {
+                                <InputTextBox type="password" DivClass="col-md-7" Label="Password : " IsRequired="true" ValidationFor="() =>Model.Password" @bind-Value="Model.Password" />
+
+                                <InputTextBox type="password" DivClass="col-md-7" Label="Confirm Password : " IsRequired="true" ValidationFor="() =>Model.ConfirmPassword" @bind-Value="Model.ConfirmPassword" />
+                            }
+
+                            <div class="row">
+                                <label class="mt-1">
+                                    <input type="checkbox" @bind="Model.LoginStatus" id="LoginStatus" disabled="@ReadOnly">
+                                    <span class="form-check-sign" for="LoginStatus">@Localizer["Can Login?"]</span>
+                                </label>
+                            </div>
+                            @if (Model.Branches.Count > 1)
+                            {
+                                <div class="row mt-2">
+                                    <div class="form-group mb-0 row">
+                                        <label style="margin-top: 5px; margin-right: 13px; font: bold">@Localizer["Accessible Branch"]</label>
+                                        <div class="form-group">
+
+                                            @foreach (var branch in Model.Branches)
+                                            {
+                                                <div class="form-check-inline my-2">
+                                                    <div class="custom-control custom-checkbox">
+                                                        <input type="checkbox" checked="@(branch.CanAccess?"checked":null)" @bind-value="branch.CanAccess" class="custom-control-input" id="branch_@branch.BranchID" disabled="@ReadOnly">
+                                                        <label class="custom-control-label ps-1" for="branch_@branch.BranchID"> @branch.BranchName</label>
+                                                    </div>
+                                                </div>
+                                            }
+                                            }
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="col-md-8 col-lg-8">
+                                <div class="row d-flex justify-content-center">
+                                    <div class="table-responsive" style="min-height:500px">
+                                        <table class="table border text-nowrap text-md-nowrap table-bordered mb-0">
+
+                                            <thead>
+
+                                                <tr>
+
+                                                    <th>
+                                                        Role
+                                                    </th>
+                                                    <th class="col-1"><input type="checkbox" checked="@(Model.IsAccessOnAllRole?"checked":null)" @onchange="AllSelected" disabled="@ReadOnly"></th>
+                                                    <th>
+                                                        Select All
+                                                    </th>
+                                                    <th>
+                                                        Add
+                                                    </th>
+                                                    <th>
+                                                        Edit
+                                                    </th>
+                                                    <th>
+                                                        Delete
+                                                    </th>
+                                                    <th>
+                                                        Mail
+                                                    </th>
+                                                    <th>
+                                                        Whatsapp
+                                                    </th>
+                                                </tr>
+
+                                            </thead>
+                                            <tbody>
+                                                @foreach (var item in Model.Roles)
+                                                {
+                                                    <tr>
+                                                        <td class="col-4">@item.RoleName</td>
+                                                        <td class="col-1"><input type="checkbox" @onchange="(ChangeEventArgs e) => AccessCheckboxChanged(e, item)" checked="@(item.HasAccess?"checked":null)" disabled="@ReadOnly"></td>
+
+                                                        @if (item.HasAccess)
+                                                        {
+                                                            <td class="col-1"><input type="checkbox" @onchange="(ChangeEventArgs e) => IsRowWiseChanged(e, item)" checked="@(item.IsRowWise?"checked":null)" disabled="@ReadOnly"></td>
+                                                            <td class="col-1"><input type="checkbox" @bind-value="item.CanAdd" checked="@(item.CanAdd?"checked":null)" disabled="@ReadOnly"></td>
+                                                            <td class="col-1"><input type="checkbox" @bind-value="item.CanEdit" checked="@(item.CanEdit?"checked":null)" disabled="@ReadOnly"></td>
+                                                            <td class="col-1"><input type="checkbox" @bind-value="item.CanDelete" checked="@(item.CanDelete?"checked":null)" disabled="@ReadOnly"></td>
+                                                            <td class="col-1"><input type="checkbox" @bind-value="item.CanMail" checked="@(item.CanMail?"checked":null)" disabled="@ReadOnly"></td>
+                                                            <td class="col-1"><input type="checkbox" @bind-value="item.CanWhatsapp" checked="@(item.CanWhatsapp?"checked":null)" disabled="@ReadOnly"></td>
+
+                                                        }
+                                                        else
+                                                        {
+                                                            <td colspan="7"></td>
+                                                        }
+                                                    </tr>
+                                                }
+
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer-action d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+            <button type="button" class="btn btn-danger me-2" @onclick="Cancel">Cancel</button>
+            @if (Model.UserID != 0)
+            {
+                <a class="btn btn-secondary me-2" @onclick="DeleteUser">Delete</a>
+            }
+
+        </div>
+    </EditForm>
+</PageLayoutNew>
+
+
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public int IsView { get; set; }
+
+    private string? ReadOnly;
+
+    private UserSingleModel Model = new();
+
+    private string? errorMessage = null;
+
+    private bool NeedDeleteOption = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != 0)
+        {
+            await LoadData();
+            NeedDeleteOption = true;
+
+        }
+        else
+        {
+            Model = Model ?? new UserSingleModel();
+            Model.Roles = await API.GetAsync<List<UserTypeAccessModel>>($"user/get-roles");
+            Model.Branches = await API.GetAsync<List<BranchUserModel>>($"user/get-branches/{Id}");
+
+            //Model.RolesList  = await API.GetAsync<UserRoleAccessViewModel>("get-roles-list");
+
+            if (Model.Branches.Count == 1)
+            {
+                Model.Branches.FirstOrDefault().CanAccess = true;
+            }
+            //Model.Reports = await API.GetAsync<List<ReportsModel>>($"user/get-user-reports");
+            NeedDeleteOption = false;
+        }
+
+        if (IsView == 1)
+        {
+            ReadOnly = "true";
+        }
+        //  await JS.Focus("txtUsername");
+    }
+    private async Task LoadData()
+    {
+        Model = await API.GetAsync<UserSingleModel>($"user/get-user/{Id}", true);
+    }
+
+    async Task SaveUser()
+    {
+        errorMessage = Model.ValidateUser(Model);
+        if (string.IsNullOrEmpty(errorMessage))
+        {
+            var response = await API.PostAsync<UserAddResultModel, UserSingleModel>("user/save-user", Model);
+            if (response != null)
+            {
+                Nav.NavigateTo($"users-view/{response.UserID}");
+            }
+        }
+        else
+        {
+            await JS.ErrorMessage(errorMessage, "", 0);
+        }
+    }
+
+    private async Task DeleteUser()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete the user '" + Model.FirstName + "'.?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            if (await API.GetAsync<bool>($"user/delete-user/{Model.UserID}"))
+            {
+                Nav.NavigateTo("users");
+            }
+        }
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to leave this page .?", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            if (Model.UserID != 0)
+            {
+                Nav.NavigateTo($"users-view/{Model.UserID}");
+            }
+            else
+            {
+                Nav.NavigateTo("users");
+            }
+        }
+    }
+
+    // private void HandleCheckInput(ChangeEventArgs e, int? reportID)
+    //{
+    //    if (Convert.ToBoolean(e.Value))
+    //    {
+    //        Model.Reports.Where(r => r.ReportID == reportID).First().HasAccess = true;
+    //        var count = Model.Reports.Where(re => re.HasAccess == true).Count();
+    //        if (count == Model.Reports.Count)
+    //            Model.IsAllReports = true;
+
+    //    }
+    //    else
+    //    {
+    //        Model.Reports.Where(r => r.ReportID == reportID).First().HasAccess = false;
+    //        var count = Model.Reports.Where(re => re.HasAccess == true).Count();
+    //        if (count != Model.Reports.Count)
+    //            Model.IsAllReports = false;
+    //    }
+    //}
+
+    #region User Roles Access
+
+    private void AllSelected(ChangeEventArgs e)
+    {
+        if (Convert.ToBoolean(e.Value))
+        {
+            Model.Roles.Select(x => { x.HasAccess = true; return x; }).ToList();
+        }
+        else
+        {
+            Model.Roles.Select(x => { x.HasAccess = x.IsRowWise = x.CanEdit = x.CanAdd = x.CanDelete = x.CanMail = x.CanWhatsapp = false; return x; }).ToList();
+        }
+    }
+
+    private void AccessCheckboxChanged(ChangeEventArgs e, UserTypeAccessModel role)
+    {
+        role.HasAccess = Convert.ToBoolean(e.Value);
+        var count = Model.Roles.Where(r => r.HasAccess == true).Count();
+
+        if (!role.HasAccess)
+        {
+            role.IsRowWise = role.CanEdit = role.CanAdd = role.CanDelete = role.CanMail = role.CanWhatsapp = false;
+            if (count != Model.Roles.Count)
+                Model.IsAccessOnAllRole = false;
+        }
+        else
+        {
+            if (count == Model.Roles.Count)
+                Model.IsAccessOnAllRole = true;
+        }
+
+
+        var temp = Model.Roles.Where(s => s.RoleID == role.RoleID).FirstOrDefault();
+        var index = Model.Roles.IndexOf(temp);
+        if (index != -1)
+        {
+            Model.Roles[index] = role;
+        }
+    }
+
+    private void IsRowWiseChanged(ChangeEventArgs e, UserTypeAccessModel role)
+    {
+        Model.Roles.Where(r => r.RoleID == role.RoleID).Select(r => r.IsRowWise = r.CanEdit = r.CanAdd = r.CanDelete = r.CanMail = r.CanWhatsapp = Convert.ToBoolean(e.Value)).ToList();
+    }
+
+    #endregion
+
+    #region User Report Access
+
+    //private void AllReportsSelected(ChangeEventArgs e)
+    //{
+    //    Model.IsAllReports = Convert.ToBoolean(e.Value);
+    //    Model.Reports = Model.Reports.Select(re => { re.HasAccess = Model.IsAllReports; return re; }).ToList();
+    //}
+
+    #endregion
+
+}

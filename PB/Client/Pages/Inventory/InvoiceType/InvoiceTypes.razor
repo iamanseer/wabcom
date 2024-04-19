@@ -1,0 +1,148 @@
+﻿@page "/invoice-types"
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Inventory.Invoice;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="@InvoiceTypeFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)ApplyFilterTo" />
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table border text-nowrap table-hover text-md-nowrap mb-0 mt-2">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Sl No
+                                    </th>
+                                    <th>
+                                        Invoice Type
+                                    </th>
+                                    <th>
+                                        Invoice Type Nature
+                                    </th>
+                                    <th>
+                                        Periodicity
+                                    </th>
+                                    <th>
+                                        Numbering Type
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (InvoiceTypeList.Data != null && InvoiceTypeList.Data.Count > 0)
+                                {
+                                    @foreach (var item in InvoiceTypeList.Data.Select((value, i) => new { i, value }))
+                                    {
+                                        var entry = item.value;
+                                        var index = item.i;
+                                        <tr @onclick="@(()=>Nav.NavigateTo($"invoice-type/{entry.InvoiceTypeID}"))" style="cursor:pointer">
+                                            <td>
+                                                @if (InvoiceTypeList.PageIndex == 1)
+                                                {
+                                                    @(index + 1)
+                                                }
+                                                else
+                                                {
+                                                    @((InvoiceTypeList.PageIndex * InvoiceTypeList.PageSize) + (index + 1) - 10)
+                                                }
+                                            </td>
+                                            <td>
+                                                @entry.InvoiceTypeName
+                                            </td>
+                                            <td>
+                                                @(((InvoiceTypeNatures)entry.InvoiceTypeNatureID).ToString().Replace('_',' '))
+                                            </td>
+                                            <td>
+                                                @(((VoucherNumberingPeriodicity)entry.PeriodicityID).ToString().Replace('_', ' '))
+                                            </td>
+                                            <td>
+                                                @(((VoucherNumberingTypes)entry.NumberingTypeID).ToString().Replace('_', ' '))
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+@code {
+    private PagedList<InvoiceTypeModel> InvoiceTypeList = new();
+    private PagedListPostModelWithFilter ListPageSearchModel = new();
+    private HeaderSettingsModel? InvoiceTypeFilterSettings;
+
+    protected override async Task OnInitializedAsync()
+    {
+        List<FilterIdnValueInputModel> InvoicetypeEnumFilterList = new()
+        {
+            new()
+            {
+                FiledName = "InvoiceTypeNatureID",
+                DisplayName = "Invoice Type Nature",
+                EnumObject = InvoiceTypeNatures.Sales
+            },
+            new()
+            {
+                FiledName = "NumberingTypeID",
+                DisplayName = "Numbering Type",
+                EnumObject = VoucherNumberingTypes.Automatic_Manual_Override
+            },
+            new()
+            {
+                FiledName = "PeriodicityID",
+                DisplayName = "Periodicity",
+                EnumObject = VoucherNumberingPeriodicity.Continuous
+            },
+        };
+
+        List<FilterSortInputModel> SortInputItems = new()
+        {
+            new()
+            {
+                DisplayName = "InvoiceType Name",
+                FieldName = "InvoiceTypeName"
+            },
+        };
+        InvoiceTypeFilterSettings = new()
+            {
+                Heading = "Invoice Type",
+                NeedAddButton = true,
+                AddButtonText = "Invoice Type",
+                SinglePageURL = "invoice-type",
+                SearchPlaceHolder = "Search invoice type..",
+                NeedSortOption = true,
+                SortMenuItems = SortInputItems,
+                NeedFilterOption = true,
+                IdnValueFilters = InvoicetypeEnumFilterList,
+            };
+
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        InvoiceTypeList = await API.PostAsync<PagedList<InvoiceTypeModel>, PagedListPostModelWithFilter>("inventory/get-invoice-type-paged-list", ListPageSearchModel);
+    }
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        ListPageSearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    private async Task SetPageIndex(int pageIndex)
+    {
+        ListPageSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    private void NavigateToSinglePage(int Id)
+    {
+        Nav.NavigateTo($"invoice-type/{Id}");
+    }
+}

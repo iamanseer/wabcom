@@ -1,0 +1,215 @@
+﻿@page "/quotations"
+
+@using PB.Model.Models;
+@using PB.Shared.Enum.CRM;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common
+
+@attribute [Authorize(Roles = "Quotation")]
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="QuotationFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" />
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+
+                                <th>
+                                    Quotation No
+                                </th>
+
+                                <th>
+                                    Customer Name
+                                </th>
+
+                                <th>
+                                    Added On
+                                </th>
+
+                                <th>
+                                    Added By
+                                </th>
+
+                                <th>
+                                    Expire On
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            @foreach (var item in QuotationList.Data.Select((value, i) => new { i, value }))
+                            {
+                                var entry = item.value;
+                                var index = item.i;
+                                <tr @onclick="@(()=>Nav.NavigateTo($"quotation-view/{entry.QuotationID}"))" style="cursor:pointer">
+                                    <td>
+                                        @if (QuotationList.PageIndex == 1)
+                                        {
+                                            @(index + 1)
+                                        }
+                                        else
+                                        {
+                                            @(((QuotationList.PageIndex * QuotationList.PageSize) + (index + 1)) - 10)
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @entry.QuotationNo
+                                    </td>
+
+                                    <td>
+                                        @entry.CustomerName
+                                    </td>
+
+                                    <td>
+                                        @(entry.AddedOn.HasValue ? entry.AddedOn.Value.ToString("dd/MM/yyy") : "--:--:----")
+                                    </td>
+
+                                    <td>
+                                        @entry.Username
+                                    </td>
+
+                                    <td>
+                                        @(entry.ExpireOn.HasValue ? entry.ExpireOn.Value.ToString("dd/MM/yyy") : "--:--:----")
+                                    </td>
+
+                                    <td>
+                                        <div>
+                                            @if (entry.CurrentFollowupNature == 0)
+                                            {
+                                                <span class="@entry.NatureBadgeClass p-1">Quotaion Created</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="@entry.NatureBadgeClass p-1">@(((FollowUpNatures)entry.CurrentFollowupNature).ToString())</span>
+                                            }
+                                        </div>
+                                    </td>
+
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="QuotationList.PageSize" TotalCount="QuotationList.TotalCount" TotalPages="QuotationList.TotalPages" PageIndex="QuotationList.PageIndex" LoadPageIndex="LoadPageIndex" />
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+@code {
+
+    [Parameter] public int QuotationID { get; set; }
+
+    private int Stage = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        QuotationFilterSettings.IdnValueFilters = QuotationEnumFilterList;
+        QuotationFilterSettings.DateFilters = QuotationDateFilterList;
+        QuotationFilterSettings.SortMenuItems = QuotationSortMenuItems;
+        QuotationFilterSettings.Heading = "Quotations";
+        QuotationFilterSettings.SinglePageURL = "quotation";
+        QuotationFilterSettings.AddButtonText = "New Quotation";
+
+        await LoadData();
+    }
+
+    #region Stage 1
+
+    private PagedListPostModelWithFilter QuotationsStage1SearchModel = new();
+    private PagedList<QuotationListModel> QuotationList = new();
+
+    #region Sort
+
+    #endregion
+
+    #region Filter
+
+    HeaderSettingsModel QuotationFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by customer name..",
+            NeedSortOption = true,
+            NeedFilterOption = true,
+        };
+    private List<FilterSortInputModel> QuotationSortMenuItems = new()
+    {
+        new()
+        {
+            DisplayName = "Quotation Number",
+            FieldName = "Q.QuotationNo"
+        },
+        new()
+        {
+            DisplayName = "Date",
+            FieldName = "Q.Date"
+        },
+        new()
+        {
+            DisplayName = "Status",
+            FieldName = "Q.CurrentFollowupNature"
+        },
+    };
+    List<FilterIdnValueInputModel> QuotationEnumFilterList = new()
+    {
+        new()
+        {
+            FiledName = "Q.CurrentFollowupNature",
+            DisplayName = "Status",
+            EnumObject = FollowUpNatures.Converted
+        }
+    };
+    List<FilterDateInputModel> QuotationDateFilterList = new()
+    {
+        new()
+        {
+            FieldName = "Date",
+            DisplayName = "Added On"
+        },
+
+        new()
+        {
+            FieldName = "ExpiryDate",
+            DisplayName = "Expire On"
+        }
+    };
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        QuotationsStage1SearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    #endregion
+
+    private async Task LoadData()
+    {
+        QuotationList = await API.PostAsync<PagedList<QuotationListModel>, PagedListPostModelWithFilter>("crm/get-quotation-paged-list", QuotationsStage1SearchModel);
+    }
+    private async Task LoadPageIndex(int pageIndex)
+    {
+        QuotationsStage1SearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    #endregion
+
+
+
+
+
+}

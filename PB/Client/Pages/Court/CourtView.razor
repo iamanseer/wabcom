@@ -1,0 +1,189 @@
+﻿@page "/court-view/{CourtID:int}"
+@using PB.Model.Models;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Court;
+@attribute [Authorize(Roles = "Hall")]
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row">
+            <ListPageMenuLayout MenuItems="menuItem"
+                                OnMenuItemSelect="LoadViewData"
+                                SinglePageURL="court"
+                                SelectedMenuID="CourtData.CourtID" />
+
+            <div class="itemlist-container">
+
+                <div class="page-header">
+                    <h1 class="page-title">@CourtData.CourtName</h1>
+                    <div class="btn-toolbar float-right mr-7">
+
+                        <a class="btn btn-white btn-md me-2" @onclick="EditCourt">
+                            <i class="fa fa-pencil" style="color:var(--primary-bg-color)"></i>
+                        </a>
+
+                        <a class="btn btn-white btn-md me-2" @onclick="async () => await DeleteCourt()">
+                            <i class="fa fa-trash" style="color:red"></i>
+                        </a>
+                        <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"courts"))">
+                            <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="panel panel-primary">
+                                    <!--Tab Headings-->
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <li><a href="#hallOverView" class="active" data-bs-toggle="tab">Details</a></li>
+                                               
+
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+                                            <!--Overview Tab-->
+                                            <div class="tab-pane active" id="hallOverView">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+
+                                                                    <label class="col-5 col-auto items-label text-muted">Court Name</label>
+
+                                                                    <label class="col-7 col-auto">@CourtData.CourtName</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+
+                                                                    <label class="col-5 col-auto items-label text-muted">Hall</label>
+
+                                                                    <label class="col-7 col-auto">@CourtData.HallName</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+
+                                                                    <label class="col-5 col-auto items-label text-muted">Game</label>
+
+                                                                    <label class="col-7 col-auto">@CourtData.GameName</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+
+                                                                    <label class="col-5 col-auto items-label text-muted">Sections Used</label>
+                                                                   
+                                                                    <label class="col-7 col-auto">@CourtData.Sections</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+
+                                                                    <label class="col-5 col-auto items-label text-muted">Price Group</label>
+
+                                                                    <label class="col-7 col-auto">@CourtData.PriceGroupName</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+
+                                           
+                                            
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+
+@code {
+    [Parameter] public int? CourtID { get; set; }
+
+
+    #region Court View
+
+    private CourtModel CourtData = new();
+    
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SwitchToView(CourtID.Value);
+    }
+
+    private async Task SwitchToView(int courtID)
+    {
+        await LoadViewMenuList();
+        await LoadViewData(courtID);
+    }
+
+    private List<ViewPageMenuModel> menuItem = new();
+
+
+    private async Task LoadViewMenuList()
+    {
+        menuItem = await API.GetAsync<List<ViewPageMenuModel>>("court/get-court-menu-list", true);
+    }
+    private async Task LoadViewData(int? courtID)
+    {
+        CourtData = await API.GetAsync<CourtModel>($"court/get-court-view/{courtID}", true);
+    }
+
+    private async Task EditCourt()
+    {
+        Nav.NavigateTo($"court/{CourtID}");
+    }
+
+
+    private async Task DeleteCourt()
+    {
+        if (await JS.Confirm("Please confirm", "Are you sure you want to delete '" + CourtData.CourtName + "' Hall?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            if (await API.DeleteAsync("court/delete-court", CourtData.CourtID, false))
+            {
+                await JS.SuccessMessage("Deleted Successfully");
+                Nav.NavigateTo("courts");
+
+            }
+        }
+    }
+    #endregion
+
+   
+}

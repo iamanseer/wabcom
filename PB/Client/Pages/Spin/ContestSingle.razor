@@ -1,0 +1,325 @@
+﻿@page "/contest"
+@page "/contest/{ContestId:int}"
+@using PB.Shared.Models.Spin;
+<PageLayoutNew>
+
+    <EditForm Model="Model" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="row mt-4">
+                    <div class="col-md-12">
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 style="margin-bottom: 0 !important;">Contest</h5>
+                            </div>
+                            <div class="card-body">
+
+
+                                <div class="row">
+                                    <div class="row" style="padding:15px">
+                                        <div class="col-12 col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1" style="text-align: left;">
+                                                    Contest Name : <span style="color:red">*</span>
+                                                </label>
+                                                <input name="g-name" type="text" class="form-control w-100" @bind-value="Model.ContestName">
+                                                <ValidationMessage For="()=>Model.ContestName"></ValidationMessage>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1" style="text-align: left;">
+                                                    Expected Participants :
+                                                    <span style="color:red">*</span>
+                                                </label>
+                                                <input type="number" class="form-control mb-4" rows="3" name="g-name" @bind-value="Model.ExpectedParticipants"></input>
+                                                <ValidationMessage For="()=>Model.ExpectedParticipants"></ValidationMessage>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1" style="text-align: left;">
+                                                    Start Date : <span style="color:red">*</span>
+                                                </label>
+                                                <input type="date" class="form-control w-100" @bind-value="Model.StartDate">
+                                                <ValidationMessage For="()=>Model.StartDate"></ValidationMessage>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1" style="text-align: left;">
+                                                    End Date : <span style="color:red">*</span>
+                                                </label>
+                                                <input type="date" class="form-control w-100" @bind-value="Model.EndDate">
+                                                <ValidationMessage For="()=>Model.EndDate"></ValidationMessage>
+
+                                            </div>
+                                        </div>
+                                        <div class="d-flex justify-content-start mt-4 mb-3">
+                                            <button type="button" @onclick="async()=>await ShowPrizeModal()" class="btn btn-secondary me-2"><i class="fa fa-plus me-1"></i>Add Prize</button>
+                                        </div>
+
+
+                                        <div class="col-12 mt-5">
+                                            <div class="table-responsive">
+                                                <table class="table border  text-nowrap text-md-nowrap table-hover mb-0"
+                                                       id="dataTable">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Sl.No</th>
+                                                            <th>GiftName</th>
+                                                            <th>PrizeType</th>
+                                                            <th>Quantity</th>
+                                                            <th></th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var (value, i) in Model.Gifts.Select((value, i) => (value, i)))
+                                                        {
+                                                            <tr>
+                                                                <td>@(i+1)</td>
+                                                                <td>@value.GiftName</td>
+                                                                <td>@Enum.GetName(typeof(PrizeTypes),value.PrizeType)</td>
+                                                                <td>@value.NumberOfPiece</td>
+                                                                <td style="width:50px">
+                                                                    @if (DateTime.UtcNow<Model.StartDate)
+                                                                    {
+                                                                        <button type="button" align="center" class="btn btn-dark waves-effect waves-light" @onclick="async()=>await ShowPrizeModal(value)"><i class="fa fa-edit"></i></button>
+                                                                    }
+                                                                    <button type="button" align="center" class="btn btn-dark waves-effect waves-light" @onclick="async()=>await DeleteGift(value)"><i class="fa fa-trash"></i></button>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="modal-footer mt-5" style="display:block">
+                                        @if (Model.Winners.Count == 0 && Model.ContestID != 0 && Model.EndDate<=System.DateTime.UtcNow.Date)
+                                        {
+                                            <div class="d-flex justify-content-start">
+                                                <button type="button" @onclick="SelectBumberPrizeWinners" class="btn btn-primary" id="showWinners">Do Final Draw</button>
+                                            </div>
+                                        }
+
+                                        @if (Model.Winners != null)
+                                        {
+                                            <div id="winnersDiv">
+                                                <div class="mt-5">
+                                                    <div class="col-12 col-md-6">
+                                                        @foreach (var item in Model.Winners)
+                                                        {
+                                                            <div class="card-w">
+                                                                <div class="row">
+                                                                    @*<div class="col-6">
+                                                                        <img src="/assets/images/empty-profile.svg" style="border-radius: 8px;" alt="">
+                                                                    </div>*@
+                                                                    <div class="col-6 mt-4">
+                                                                        <p style="margin-bottom: 4px!important; text-align: left;">
+                                                                            <span style="font-weight: 600;">Name :</span>@item.Name
+                                                                        </p>
+                                                                        <p style="margin-bottom: 4px!important; text-align: left;">
+                                                                            <span style="font-weight: 600;">Gift :</span> @item.GiftName
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    </div>
+
+                                                </div>
+
+
+                                            </div>
+                                        }
+
+                                    </div>
+
+
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-footer-action d-flex">
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+            @*<a class="btn btn-danger me-2" @onclick="Delete">Delete</a>*@
+        </div>
+    </EditForm>
+
+
+    <div class="modal fade" id="prize-modal">
+        <div class="modal-dialog modal-dialog-scrollable modal-md" role="document">
+            <EditForm Model="GiftSingle" autocomplete="off" OnValidSubmit="UploadPrize">
+                <div class="modal-content modal-content-demo">
+                    <div class="modal-header">
+                        <h6 class="modal-title">New Gift</h6>
+                        <button aria-label="Close" class="btn-close" @onclick="async() => await ClosePrizeModal()"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                
+                    <div class="modal-body">
+                        <DataAnnotationsValidator />
+
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align: left;">
+                                    Prize Type : <span style="color:red">*</span>
+                                </label>
+                                <select class="form-select js-choice  z-index-9 bg-transparent" aria-label=".form-select-sm" data-placeholder-val="select" @bind="GiftSingle.PrizeType">
+                                    <option value="" selected>Select</option>
+                                    @foreach (var item in Enum.GetValues(typeof(PrizeTypes)))
+                                    {
+                                        if (GiftSingle.PrizeType == (int)item)
+                                        {
+                                            <option value="@((int)item)" selected>@item.ToString()</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)item)">@item.ToString()</option>
+                                        }
+                                    }
+
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align: left;">
+                                    Gift Name : <span style="color:red">*</span>
+                                </label>
+                                <input name="g-name" type="text" class="form-control w-100" @bind-value="GiftSingle.GiftName">
+                                <ValidationMessage For="()=>GiftSingle.GiftName"></ValidationMessage>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align: left;">
+                                    Number Of Piece :
+                                    <span style="color:red">*</span>
+                                </label>
+                                <input name="g-name" type="number" class="form-control w-100" @bind-value="GiftSingle.NumberOfPiece">
+                                <ValidationMessage For="()=>GiftSingle.NumberOfPiece"></ValidationMessage>
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-group" style="width:20%;border-radius:8 px">
+                                <label class="form-label mt-0" style="text-align: left;">Image :</label>
+                                @*  <input class="form-control" id="imageInput" type="file">*@
+                                <Image @ref="ImageRef" MediaID="GiftSingle.MediaID" />
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Add</button>
+                        <button type="button" class="btn btn-light" @onclick="async() => await ClosePrizeModal()">Close</button>
+                        </div>
+                    </div>
+            </EditForm>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+@code {
+    [Parameter] public int ContestId { get; set; }
+    private ContestModel Model = new();
+    private ContestGiftModel GiftSingle = new();
+    Image ImageRef;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (ContestId != 0)
+        {
+            StateHasChanged();
+            Model = await API.GetAsync<ContestModel>($"spin/get-contest-by/{ContestId}");
+            if (Model.ContestID != 0)
+                await LoadContestGifts();
+        }
+        else
+        {
+            Model = new();
+        }
+    }
+
+    async Task Save()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, ContestModel>("spin/save-contest", Model, true);
+        if (res!=null)
+        {
+            Nav.NavigateTo("contests");
+        }
+    }
+
+    async Task SelectBumberPrizeWinners()
+    {
+        if (await JS.Confirm("Confirm", "Are You Sure Do You Want To Select Bumber Lot", SweetAlertMessageType.question, "Yes", "No"))
+        {
+            Model.Winners = await API.GetAsync<List<WinnersListModel>>($"spin/get-bumber-prize-winners/{Model.ContestID}");
+        }
+    }
+
+
+    #region Gift
+
+    async Task LoadContestGifts()
+    {
+        Model.Gifts = await API.GetAsync<List<ContestGiftModel>>($"spin/get-gift-by/{Model.ContestID}");
+    }
+
+    async Task ShowPrizeModal(ContestGiftModel? gift=null)
+    {
+        if (gift != null)
+            GiftSingle = gift;
+        else
+            GiftSingle = new();
+        await JS.InvokeVoidAsync("ShowModal", "prize-modal", "txtVariableName");
+    }
+
+    async Task ClosePrizeModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "prize-modal");
+    }
+
+    async Task UploadPrize()
+    {
+        GiftSingle.MediaID = await ImageRef.UploadImage();
+        Model.Gifts.Add(GiftSingle);
+        GiftSingle = new();
+        await ClosePrizeModal();
+    }
+
+    async Task DeleteGift(ContestGiftModel data)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want delete", SweetAlertMessageType.question, "Yes", "No"))
+        {
+            if (data.GiftID == 0)
+            {
+                Model.Gifts.Remove(data);
+            }
+            else
+            {
+                if (await API.DeleteAsync("spin/delete-gift", data.GiftID, false))
+                {
+                    Model.Gifts.Remove(data);
+                }
+            }
+        }
+    }
+
+    #endregion
+}

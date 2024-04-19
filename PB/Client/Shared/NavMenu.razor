@@ -1,0 +1,143 @@
+﻿
+
+
+<div class="sticky">
+    <div class="app-sidebar__overlay" data-bs-toggle="sidebar"></div>
+    <div class="app-sidebar">
+        <div class="side-header">
+            <a class="header-brand1" href="/">
+                <img src="/assets/images/brand/logo.png" class="header-brand-img desktop-logo" alt="logo">
+                <img src="/assets/images/brand/logo-1.png" class="header-brand-img toggle-logo" alt="logo">
+                <img src="/assets/images/brand/logo-2.png" class="header-brand-img light-logo" alt="logo">
+                <img src="/assets/images/brand/logo-3.png" class="header-brand-img light-logo1" alt="logo">
+            </a>
+            <!-- LOGO -->
+        </div>
+        <div class="main-sidemenu">
+            <div class="slide-left disabled" id="slide-left">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     fill="#7b8191" width="24" height="24" viewBox="0 0 24 24">
+                    <path d="M13.293 6.293 7.586 12l5.707 5.707 1.414-1.414L10.414 12l4.293-4.293z" />
+                </svg>
+            </div>
+            <ul class="side-menu">
+
+                <NavMenuCategory CategoryName="Main" IconClass="mdi-view-dashboard">
+                    <NavMenuItem Label="Dashboard" Link="home" IconClass="ri-home-7-fill" />
+                </NavMenuCategory>
+
+                <AuthorizeView Roles="BroadCast,Chat,Template,ChatbotSetup,WhatsappAccount">
+                    <NavMenuCategory CategoryName="Whatsapp">
+                        <NavMenuItem Label="Broadcasts" Link="broadcasts" IconClass="mdi mdi-comment-multiple-outline" Roles="BroadCast" />
+                        <NavMenuItem Label="Chat" Link="chat" IconClass="mdi mdi-wechat" Roles="Chat" />
+                        <NavMenuItem Label="Templates" Link="whatsapp-templates" IconClass="mdi mdi-content-paste" Roles="Template" />
+                        <NavMenuItem Label="Chatbot Setup" Link="Chatbot-replies" IconClass="mdi mdi-robot" Roles="ChatbotSetup" />
+                        <NavMenuItem Label="Whatsapp Accounts" Link="whatsapp-accounts" IconClass="mdi mdi-whatsapp" Roles="WhatsappAccount" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Court,Hall,HallTiming,CourtBooking">
+                    <NavMenuCategory CategoryName="Court Managment" IconClass="mdi-face-agent">
+                        <NavMenuItem Label="Bookings" Link="court-booking" IconClass="fa fa-google-wallet" Roles="CourtBooking" />
+                        <NavMenuItem Label="Bulk Bookings" Link="bulk-booking" IconClass="fa fa-google-wallet" Roles="CourtBooking" />
+                        <NavMenuItem Label="View All Bookings" Link="bookings" IconClass="fa fa-google-wallet" Roles="CourtBooking" />
+                        <NavMenuItem Label="Package Purchase" Link="package-purchase" IconClass="fa fa-cubes" Roles="CourtBooking" />
+                        <NavMenuItem Label="Customer Balance" Link="customer-ledger-balance" IconClass="fa fa-cubes" Roles="CourtBooking" />
+                        @*<NavMenuItem Label="Customer Payment" Link="customer-payment" IconClass="fa fa-cubes" Roles="CourtBooking" />*@
+                        <NavMenuItem Label="Hall" Link="halls" IconClass="mdi mdi-bank" Roles="Hall" />
+                        <NavMenuItem Label="Court Price Groups" Link="court-price-groups" IconClass="fa fa-forumbee" Roles="Court" />
+                        <NavMenuItem Label="Court" Link="courts" IconClass="fa fa-forumbee" Roles="Court" />
+                        <NavMenuItem Label="Court Package" Link="court-packages" IconClass="mdi mdi-bank" Roles="Court" />
+                        <NavMenuItem Label="Court Counter Code" Link="counter-codes" IconClass="zmdi zmdi-dialpad" Roles="Court" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="SpinWheel">
+                    <NavMenuCategory CategoryName="Spin Wheel" IconClass="mdi-face-agent">
+                        <NavMenuItem Label="Contest" Link="contests" IconClass="ri-home-7-fill" />
+                        <NavMenuItem Label="Contest Participants" Link="participant-report" IconClass="ri-home-7-fill" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Item,Enquiry,Quotation,FollowUp,Customer">
+                    <NavMenuCategory CategoryName="CRM" IconClass="mdi-face-agent">
+                        <NavMenuItem Label="Followups" Link="follow-ups" IconClass="fa fa-phone" Roles="FollowUp" />
+                        <NavMenuItem Label="Enquiries" Link="enquiries" IconClass="ti-headphone-alt" Roles="Enquiry" />
+                        <NavMenuItem Label="Quotations" Link="quotations" IconClass="fa fa-clipboard" Roles="Quotation" />
+                        <NavMenuItem Label="Customers" Link="customers" IconClass="fa fa-group" Roles="Customer" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Invoice,Item,InvoiceType,Supplier">
+                    <NavMenuCategory CategoryName="Inventory Mangement" IconClass="mdi-face-agent">
+                        <NavMenuItem Label="Items" Link="items" IconClass="fa fa-cubes" Roles="Item" />
+                        <NavMenuItem Label="Item Stock" Link="item-stock" IconClass="fa fa-cubes" />
+                        <NavMenuItem Label="Stock Adjustment" Link="item-stock-adjustment" IconClass="fa fa-cubes" />
+                        <NavMenuItem Label="Invoice Types" Link="invoice-types" Roles="InvoiceType" IconClass="ti-headphone-alt" />
+                        <NavMenuItem Label="Invoices" Link="invoices" Roles="Invoice" IconClass="fa fa-clipboard" />
+                        <NavMenuItem Label="Suppliers" Link="suppliers" Roles="Supplier" IconClass="fa fa-user-o" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Accounts,AccountsGroup,VoucherEntry,VoucherType">
+                    <NavMenuCategory CategoryName="Accounts Mangement" IconClass="mdi-face-agent">
+                        <NavMenuItem Label="Account Groups" Roles="AccountsGroup" Link="account-groups" IconClass="fa fa-phone" />
+                        <NavMenuItem Label="Ledgers" Link="ledgers" Roles="Accounts" IconClass="ti-headphone-alt" />
+                        <NavMenuItem Label="Voucher Types" Link="voucher-types" Roles="VoucherType" IconClass="fa fa-clipboard" />
+                        <NavMenuItem Label="Voucher Entry" Link="voucher-entry" Roles="VoucherEntry" IconClass="fa fa-group" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Users,ClientSetting,ClientInvoice">
+                    <NavMenuCategory CategoryName="Settings" IconClass="mdi-face-agent">
+                        <NavMenuItem Label="Users" Link="users" IconClass="fa fa-user-o" Roles="Users" />
+                        <NavMenuItem Label="Client Settings" Link="general-settings" IconClass="fa fa-gears" Roles="ClientSetting" />
+                        <NavMenuItem Label="Client Invoice" Link="client-invoices" IconClass="fa fa-gears" Roles="ClientInvoice" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="BalanceSheet,GeneralLedger,JournalReport,ProfitAndLoss,TrialBalance,RAndD">
+                    <NavMenuCategory CategoryName="Reports" IconClass="mdi-face-agent">
+                        <NavMenuItem Label="Reports" Link="reports" IconClass="fa fa-user-o" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="PaymentsManagment">
+                    <NavMenuCategory CategoryName="Payment Management" IconClass="mdi-face-agent">
+                        <NavMenuItem Label="Invoice Payments" Link="client-payments" IconClass="mdi mdi-comment-multiple-outline" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="ClientManagement">
+                    <NavMenuCategory CategoryName="Client Management" IconClass="mdi-face-agent">
+                        <NavMenuItem Label="Clients" Link="clients" IconClass="mdi mdi-comment-multiple-outline" />
+                        <NavMenuItem Label="Update Package" Link="update-client-package" IconClass="mdi mdi-content-paste" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="MembershipManagment">
+                    <NavMenuCategory CategoryName="Membership Managment" IconClass="mdi-face-agent">
+                        <NavMenuItem Label="Membership Packages" Link="membership-packages" IconClass="mdi mdi-whatsapp" />
+                        <NavMenuItem Label="Membership Features" Link="membership-features" IconClass="mdi mdi-wechat" />
+                        <NavMenuItem Label="User Capacities" Link="membership-capacity-list" IconClass="mdi mdi-content-paste" />
+                        <NavMenuItem Label="Membership Plans" Link="membership-plan" IconClass="mdi mdi-robot" />
+                    </NavMenuCategory>
+                </AuthorizeView>
+
+                <NavMenuItem Label="Change Password" Link="change-password" IconClass="fa fa-key" />
+
+                <AuthorizeView Roles="PaymentsManagment">
+                    <NavMenuItem Label="Payment Gateways" Link="payment-gateways" IconClass="mdi mdi-cash-multiple" />
+                </AuthorizeView>
+
+            </ul>
+            <div class="slide-right" id="slide-right">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191"
+                     width="24" height="24" viewBox="0 0 24 24">
+                    <path d="M10.707 17.707 16.414 12l-5.707-5.707-1.414 1.414L13.586 12l-4.293 4.293z" />
+                </svg>
+            </div>
+
+        </div>
+    </div>
+</div>

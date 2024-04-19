@@ -1,0 +1,488 @@
+﻿@page "/broadcast-recipients/{id:int}"
+@using PB.Model.Models;
+@using PB.Shared.Enum.WhatsApp;
+@using PB.Shared.Models.WhatsaApp;
+@using PB.Shared.Tables
+@using PB.Shared.Models.Common
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="BroadcastRecipientFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)SearchByItem" />
+                </div>
+                @if (canShowListPageExtraOptions)
+                {
+                    <div class="row py-2 my-0 px-3">
+                        <div class="col-md-12 d-flex justify-content-end">
+
+                            <div>
+                                <button type="button" class="btn btn-secondary" @onclick="async () => await Download()">
+                                    Download Report
+                                </button>
+                            </div>
+
+                            <div>
+                                <button class="btn btn-primary ms-2" type="button" @onclick="async () => await OpenResendBroadcastConfirmationModal()">
+                                    Recreate Broadcast
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                }
+                <div class="row my-0">
+                    <div class="card-body mt-0">
+                        <div class="row">
+                            <div class="table-responsive">
+                                <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                                    <thead>
+                                        <tr>
+                                            <th>SlNo</th>
+                                            <th scope="col">@Localizer["Name"]</th>
+                                            <th scope="col">@Localizer["Phone"]</th>
+                                            <th scope="col">@Localizer["Sent On"]</th>
+                                            <th scope="col">@Localizer["Delivered On"]</th>
+                                            <th scope="col">@Localizer["Seen On"]</th>
+                                            <th scope="col">@Localizer["Status"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Model.Data.Select((data, index) => new { index, data }))
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @((Model.PageIndex - 1) * Model.PageIndex + 1 + item.index)
+                                                </td>
+                                                <td>@item.data.Name</td>
+                                                <td>@item.data.Phone</td>
+                                                <td>@item.data.SentOn</td>
+                                                <td>@item.data.DeliveredOn</td>
+                                                <td>@item.data.SeenOn</td>
+                                                <td>
+                                                    <span class="@item.data.MessageStatusBadgeClass">
+                                                        @(((MessageStatus)item.data.SentStatus).ToString())
+                                                        @if (item.data.SentStatus == (int)MessageStatus.Failed)
+                                                        {
+                                                            <!--Faled Tool tip here-->
+                                                        }
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <Pagination PageSize="Model.PageSize" PageIndex="Model.PageIndex" TotalPages="Model.TotalPages" LoadPageIndex="LoadPageIndex"></Pagination>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<!--Download Reciepient report-->
+<div class="modal fade" id="excelModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-body">
+                <div class="row">
+                    <p>There are @(Model.TotalCount) recipients on the basis of applied filter. Please click the button below to download the report</p>
+                </div>
+                <div class="row">
+                    <div class="col-md">
+                        <div class="form-group">
+                            <label class="col-5 col-auto items-label text-muted">Download Excel:</label>
+                            <label class="col-7 col-auto">
+                                <a class="btn btn-white btn-md me-2" href="@downloadModel.Value" download target="_blank">
+                                    <i class="fa fa-download" style="color:var(--primary-bg-color)"></i>
+                                </a>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Resend Broadcast Confirmation Modal-->
+@if (ResendModel is not null)
+{
+    <div class="modal fade" id="resendModal">
+        <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+            <div class="modal-content modal-content-demo">
+                <EditForm Model="ResendModel" OnValidSubmit="ResendBroadcast">
+                    <div class="modal-body">
+                        <div class="row">
+
+                            <!--Filter summary-->
+                            @* <div class="filter-summary">
+                        <h1>Filter summary</h1>
+
+                        <ul>
+                        <li>Followup nature: All</li>
+                        <li>IDN value: 1234567890</li>
+                        <li>Date range: 2023-09-22 to 2023-09-23</li>
+                        <li>Boolean filter: Yes</li>
+                        <li>Field filter: Value 1</li>
+                        </ul>
+                        </div> *@
+                        </div>
+                        <div class="row">
+                            <p>There are @(Model.TotalCount) recipients on the basis of applied filter. Please fill the below details for sending the broadcast</p>
+                        </div>
+                        @if (TemplatesList is not null)
+                        {
+                            <div class="row">
+
+                                <InputTextBox DivClass="col-md-12" IsRequired="true" Label="Broadcast Title : " @bind-Value="ResendModel.BroadcastModel.Title" />
+
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align:left;">
+                                            Template :
+                                            <span style="color:red">*</span>
+                                        </label>
+                                        <select class="form-control" @onchange="async (ChangeEventArgs e) => await HandleTemplateChange(e)">
+                                            <option value="0" selected>Choose</option>
+                                            @foreach (var template in TemplatesList)
+                                            {
+                                                @if (ResendModel.BroadcastModel.TemplateID == template.ID)
+                                                {
+                                                    <option value="@template.ID" selected>@template.Value</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@template.ID">@template.Value</option>
+                                                }
+                                            }
+                                        </select>
+                                        <ValidationMessage For="()=>ResendModel.BroadcastModel.TemplateID" />
+                                    </div>
+                                </div>
+
+                                @if (TemplateDetails is not null)
+                                {
+                                    <div class="col-12 mt-2">
+                                        <div class="alert alert-info" role="alert">
+
+                                            <ul>
+                                                <li>Please upload an excel file that contains following fields</li>
+                                                <li>@Localizer["Phone"]</li>
+
+                                                @foreach (var field in TemplateDetails.Variables)
+                                                {
+                                                    <li>@field.Value</li>
+                                                }
+
+                                            </ul>
+                                        </div>
+                                        <div class="mt-2">
+                                            <div class="input-group  mt-1">
+                                                <div class="custom-file">
+                                                    <InputFile OnChange="OnInputFileChange" class="custom-file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" type="file" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @if (TemplateDetails.HeaderTypeID == (int)WhatsappTemplateHeaderType.MEDIA)
+                                    {
+                                        <div class="col-12 mt-3">
+                                            <label for="users-list-verified"> @Localizer["Upload Header File"] </label>
+                                            <br>
+                                            <div class="input-group  mt-1">
+                                                <div class="custom-file">
+                                                    <MediaUpload FolderName="send-template" Id="file-input1" @ref="HeaderMedia" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="col-12">
+                                        <label class="form-label mt-0 me-1" style="text-align:left;">@Localizer["Send at"]:</label>
+                                        <select @bind="ResendModel.BroadcastModel.MessageSendingTypes" class="form-control valid form-select form-select select2">
+                                            <option value="0">@Localizer["Choose"]</option>
+                                            <option value="@((int)MessageSendingTypes.SendImmediately)">SendImmediately</option>
+                                            <option value="@((int)MessageSendingTypes.Scheduled)">Scheduled</option>
+                                            <option value="@((int)MessageSendingTypes.Periodic)">Periodic</option>
+                                        </select>
+                                    </div>
+
+                                    @if (ResendModel.BroadcastModel.MessageSendingTypes == (int)MessageSendingTypes.Scheduled)
+                                    {
+                                        <div class="col-6 mt-2 pt-1">
+                                            <label for="users-list-verified">@Localizer["Schedule Time (If any)"]</label>
+                                            <br>
+                                            <div class="form-group row" style="margin: 0;">
+                                                <div class="input-group">
+                                                    <input type='datetime-local' class="form-control" @bind="ResendModel.BroadcastModel.ScheduleTime" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    @if (ResendModel.BroadcastModel.MessageSendingTypes == (int)MessageSendingTypes.Periodic)
+                                    {
+
+                                        <div class="col-3">
+                                            <label for="users-list-verified">@Localizer["Every month"]</label>
+                                            <SelectBox class="form-control rounded-cu valid" @bind-Value="ResendModel.BroadcastModel.PeriodicDay">
+                                                <Options>
+                                                    @for (var i = 1; i <= 31; i++)
+                                                    {
+                                                        <option value="@i">@i</option>
+                                                    }
+                                                </Options>
+                                            </SelectBox>
+                                        </div>
+                                    }
+                                   @* @if (ResendModel.IsSent == false)
+                                    {
+                                        <div class="col-lg-2 mr-3 mt-4">
+                                            <button type="submit" class="btn btn-primary ">@Localizer["Create Broadcast"]</button>
+                                        </div>
+                                    }*@
+
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideResendBradcastModal()">Close</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    private MessageReceipientSearchModel SearchModel = new();
+
+    private PagedList<BroadcastReceipientHistory> Model = new();
+    HeaderSettingsModel BroadcastRecipientFilterSettings = new();
+
+    private RecreatBroadcastModel? ResendModel = null;
+    private List<IdnValuePair>? TemplatesList = null;
+    private TemplateDetailsModel? TemplateDetails = null;
+
+    private bool canShowListPageExtraOptions = false;
+
+    MediaUpload? HeaderMedia;
+
+    #region Filters
+
+    FilterFieldInputModel filterFieldInputModel = new()
+        {
+            DisplayName = "Coloumns",
+            Fields = new()
+        {
+            new()
+            {
+                DisplayName="Deliverd On",
+                FiledName="W.DeliveredOn",
+            },
+            new()
+            {
+                DisplayName="Seen On",
+                FiledName="W.SeenOn"
+            },
+        }
+        };
+
+    List<FilterSortInputModel> sortInupuItems = new()
+    {
+        new ()
+        {
+            DisplayName = "Name",
+            FieldName = "C.Name"
+        },
+        new()
+        {
+            DisplayName = "Phone",
+            FieldName = "C.Phone"
+        }
+    };
+
+    List<FilterIdnValueInputModel> BroadCastIdnValueFilterList = new()
+    {
+        new()
+        {
+            FiledName = "MessageStatus",
+            DisplayName = "Message Status",
+            EnumObject = MessageStatus.Sent
+        },
+    };
+
+    private async Task SearchByItem(PagedListPostModelWithFilter searchModel)
+    {
+        if (searchModel is not null)
+        {
+            SearchModel.FilterByBooleanOptions = searchModel.FilterByBooleanOptions;
+            SearchModel.FilterByIdOptions = searchModel.FilterByIdOptions;
+            SearchModel.FilterByDateOptions = searchModel.FilterByDateOptions;
+            SearchModel.OrderByFieldName = searchModel.OrderByFieldName;
+            SearchModel.SearchString = searchModel.SearchString;
+            SearchModel.FilterByFieldOptions = searchModel.FilterByFieldOptions;
+        }
+        else
+        {
+            SearchModel = new();
+        }
+        await LoadData();
+    }
+
+    #endregion
+
+    protected override async Task OnInitializedAsync()
+    {
+        BroadcastRecipientFilterSettings = new()
+            {
+                SearchPlaceHolder = "Search by name..",
+                NeedSortOption = true,
+                NeedFilterOption = true,
+                Heading = "Broadcast Recepients",
+                NeedAddButton = false,
+                FieldFilters = filterFieldInputModel,
+                SortMenuItems = sortInupuItems,
+                IdnValueFilters = BroadCastIdnValueFilterList,
+
+            };
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        canShowListPageExtraOptions = false;
+        SearchModel.BroadcastID = Id;
+        Model = await API.PostAsync<PagedList<BroadcastReceipientHistory>, MessageReceipientSearchModel>("whatsapp/get-recipients", SearchModel);
+        canShowListPageExtraOptions = true;
+        StateHasChanged();
+    }
+
+    private async Task LoadPageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    #region Excel Export
+
+    private StringModel downloadModel = new();
+    private async Task Download()
+    {
+        SearchModel.BroadcastID = Id;
+        downloadModel = await API.PostAsync<StringModel, MessageReceipientSearchModel>("whatsapp/get-broadcast-recipient-details", SearchModel);
+        if (downloadModel.Value != null)
+        {
+            Console.WriteLine(downloadModel.Value);
+            await JS.InvokeVoidAsync("ShowModal", "excelModal");
+        }
+    }
+
+    #endregion
+
+    #region Get template details
+
+    private async Task HandleTemplateChange(ChangeEventArgs e)
+    {
+        if (ResendModel is not null)
+        {
+            ResendModel.BroadcastModel.TemplateID = Convert.ToInt32(e.Value);
+            if (ResendModel.BroadcastModel.TemplateID is not 0)
+                await GetTemplateDetails(ResendModel.BroadcastModel.TemplateID);
+        }
+    }
+
+    private async Task GetTemplateDetails(int templateID)
+    {
+        TemplateDetails = await API.GetAsync<TemplateDetailsModel>($"whatsapp/v2/get-template-details/{templateID}", true);
+    }
+
+    #endregion
+
+    #region Upload excelIBrowserFile file
+
+    IBrowserFile? file;
+    private byte[]? buffer;
+    public void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        file = e.File;
+    }
+
+    #endregion
+
+    #region Resend Broadcast
+
+    // (skipped)
+    // 1) Get the filter summary
+    // 2) Confirm the filter and gather broadcast name and schedule time
+    // 3) if confirmed then call api with filter model and broadcast ID
+
+    private FilterSummaryModel FilterSummary = new();
+    private async Task OpenResendBroadcastConfirmationModal()
+    {
+        ResendModel = new() { BroadcastID = Id };
+        TemplatesList = await API.GetAsync<List<IdnValuePair>>("whatsapp/get-templates", true);
+        await JS.InvokeVoidAsync("ShowModal", "resendModal");
+
+    }
+
+    private async Task ResendBroadcast()
+    {
+        if (ResendModel is not null && TemplateDetails is not null && file != null)
+        {
+            buffer = new byte[file.Size];
+            await file.OpenReadStream(file.Size).ReadAsync(buffer);
+            string base64String = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+
+            ResendModel.BroadcastModel.ContentType = file.ContentType;
+            ResendModel.BroadcastModel.Extension = Path.GetExtension(file.Name).Substring(1);
+            ResendModel.BroadcastModel.Content = buffer;
+            ResendModel.BroadcastModel.Base64Image = base64String;
+
+            @if (TemplateDetails.HeaderTypeID == (int)WhatsappTemplateHeaderType.MEDIA)
+                ResendModel.BroadcastModel.MediaID = await HeaderMedia.UploadFile();
+
+            if (ResendModel.BroadcastModel.Content == null)
+            {
+                await JS.ErrorMessage(Localizer["Please upload excel file"]);
+                return;
+            }
+
+            var res = await API.PostAsync<WhatsappBroadcastSaveResultModel, RecreatBroadcastModel>("whatsapp/v2/recreate-broadcast", ResendModel);
+            if (res != null)
+            {
+                await HideResendBradcastModal();
+                await Task.Delay(500);
+                Nav.NavigateTo($"broadcast-recipients/{res.BroadcastID}");
+            }
+        }
+    }
+
+    private async Task HideResendBradcastModal()
+    {
+        ResendModel = null;
+        TemplatesList = null;
+        TemplateDetails = null;
+        await JS.InvokeVoidAsync("HideModal", "resendModal");
+    }
+
+    // private void GetFilterSummary(PagedListPostModelWithFilter filterModel)
+    // {
+    //     FilterSummaryModel filterSummary = new();
+
+    //     //IdnValue Filter
+
+    // }
+
+    #endregion
+}

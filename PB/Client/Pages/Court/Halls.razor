@@ -1,0 +1,208 @@
+﻿@page "/halls"
+
+@using PB.CRM.Model.Enum;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Court;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="HallFilterSettings" OnFilterButtonClick="FilterListPageTo" OnAddButtonClick="ShowAddHallModal" />
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    Hall Name
+                                </th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in HallListModel.Data.Select((data, index) => new { index, data }))
+                            {
+                                <tr @onclick="@(()=>Nav.NavigateTo($"hall-view/{item.data.HallID}"))" style="cursor:pointer">
+                                    <td>
+                                        @((HallListModel.PageIndex - 1) * HallListModel.PageSize + 1 + item.index)
+                                    </td>
+                                    <td>
+                                        @item.data.HallName
+                                    </td>
+                                </tr>
+                            }
+
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="HallListModel.PageSize" TotalCount="HallListModel.TotalCount" TotalPages="HallListModel.TotalPages" PageIndex="HallListModel.PageIndex" LoadPageIndex="PageIndex" />
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+<!--Add Hall-->
+<div class="modal fade" id="HallModal">
+    <EditForm Model="Model" OnValidSubmit="SaveHall" autocomplete="off">
+        <DataAnnotationsValidator />
+        <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Hall</h6><button type="button" aria-label="Close" class="btn-close" @onclick="(async() =>await HideModal())"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">Hall Name :</label>
+                                <input type="text" class="form-control" label="Name" @bind="Model.HallName" placeholder="Hall Name">
+                                <ValidationMessage For="()=>Model.HallName" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">No of courts :</label>
+                                <input type="number" class="form-control" @bind="Model.AtomCourtCount">
+                                <ValidationMessage For="()=>Model.AtomCourtCount" />
+                            </div>
+                        </div>
+
+                        <DropdownSelect DivClass="col-md-12"
+                                        @ref="@GameMasterDrowpdownSelect"
+                                        Label="Game :"
+                                        Mode="(int)DropdownModes.GameMaster"
+                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                        ItemSelected="ItemSelected"
+                                        IsRequired="true"
+                                        ReadDataOnSearch="true"
+                                        ValidationFor="() => Model.GameID"
+                                        SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.GameID,Value=Model.GameName})" />
+
+                        <DropdownSelect @ref="@PriceGroupDropdown"
+                                        DropdownID="@PriceGroupDropdownID"
+                                        DivClass="col-md-12"
+                                        IsRequired="true"
+                                        Label="Price Group :"
+                                        ReadDataOnSearch="true"
+                                        Mode="(int)DropdownModes.PriceGroup"
+                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.PriceGroupID, Value=Model.PriceGroupName})"
+                                        ItemSelected="ItemSelected" 
+                                        ValidationFor="() => Model.PriceGroupID" />
+                     </div>
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-danger" @onclick="async() => await HideModal()">Close</button>
+
+                </div>
+
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public int? HallID { get; set; }
+    private PagedList<HallModel> HallListModel = new();
+    private PagedListPostModelWithFilter SearchModel = new();
+
+    private DropdownSelect? GameMasterDrowpdownSelect;
+    private DropdownSelect? PriceGroupDropdown;
+
+    private string PriceGroupDropdownID = "price-group-dropdown";
+
+    private NewHallModel Model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadHallData();
+    }
+    #region Sort, Filter
+
+    HeaderSettingsModel HallFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by Hall",
+            NeedSortOption = false,
+            NeedFilterOption = false,
+            // SortMenuItems = stage1SortMenuItems,
+
+            DateFilters = null,
+            Heading = "Hall",
+            //SinglePageURL = "hall",
+            AddButtonText = "New Hall",
+        };
+
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadHallData();
+    }
+
+    private async Task PageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadHallData();
+    }
+
+    #endregion
+    private async Task ShowAddHallModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "HallModal");
+    }
+    private async Task HideModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "HallModal");
+    }
+
+    #region Hall Functions
+    private async Task SaveHall()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, NewHallModel>("court/add-new-hall", Model);
+        if (res != null)
+        {
+            await JS.SuccessMessage("Saved Successfully");
+            await LoadHallData();
+            Model ??= new();
+            await HideModal();
+        }
+    }
+    private async Task LoadHallData()
+    {
+        HallListModel = await API.PostAsync<PagedList<HallModel>, PagedListPostModelWithFilter>("court/get-hall-list", SearchModel);
+    }
+
+    #endregion
+
+    #region Dropdown Related functions
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.GameMaster:
+                Model.GameID = data.ID;
+                Model.GameName = data.Value;
+                break;
+            case (int)DropdownModes.PriceGroup:
+
+                Model.PriceGroupID = data.ID;
+                Model.PriceGroupName = data.Value;
+
+                break;
+        }
+    }
+
+    #endregion
+}

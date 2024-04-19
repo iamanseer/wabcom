@@ -1,0 +1,163 @@
+﻿@page "/users-view/{UserID:int}"
+@using PB.CRM.Model;
+@using PB.Model.Models;
+@attribute [Authorize(Roles = "Users")]
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row">
+
+            <ListPageMenuLayout MenuCategories="listPageMenuCategories"
+                                MenuItems="menuItem"
+                                SelectedMenuID="UserViewData.UserID"
+                                SinglePageURL="user"
+                                OnMenuItemSelect="LoadStage2Data"
+                                ListHeading="All Users"
+                                OnMenuCategorySelect="OnMenuCategorySelectCallbackRecieved" />
+ 
+            <div class="itemlist-container">
+
+                <div class="page-header">
+                    <h1 class="page-title">@("User : " + UserViewData.UserName)</h1>
+                    <div class="btn-toolbar float-right mr-7">
+
+                        <a class="btn btn-white btn-md me-2" @onclick="NavigateToSinglePage">
+                            <i class="fa fa-pencil" style="color:var(--primary-bg-color)"></i>
+                        </a>
+
+                        <a class="btn btn-white btn-md me-2" @onclick="async () => await DeleteUser()">
+                            <i class="fa fa-trash" style="color:red"></i>
+                        </a>
+
+                        <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"users"))">
+                            <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                        </a>
+
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="panel panel-primary">
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <li><a href="#tab5" class="active" data-bs-toggle="tab">Overview</a></li>
+
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="tab5">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted"> Name</label>
+                                                                    <label class="col-7 col-auto">@UserViewData.FirstName</label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="group pb-3">
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Phone </label>
+                                                                    <label class="col-md-7 col-auto ">@UserViewData.Phone</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">UserName </label>
+                                                                    <label class="col-md-7 col-auto ">@UserViewData.UserName</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Email </label>
+                                                                    <label class="col-md-7 col-auto ">@UserViewData.EmailAddress</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">User Type </label>
+                                                                    <label class="col-md-7 col-auto ">@(UserViewData.UserTypeID.HasValue ? (((UserTypes)UserViewData.UserTypeID).ToString()) : "")</label>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+@code {
+    [Parameter] public int UserID { get; set; }
+    private UserSingleModel UserViewModel = new();
+    private List<ViewPageMenuModel> menuItem = new();
+
+
+    private UserSingleModel UserViewData = new();
+
+    #region Stage2
+    protected override async Task OnInitializedAsync()
+    {
+        await SwitchToStage2(UserID);
+    }
+
+    async Task SwitchToStage2(int userId)
+    {
+        await LoadSTage2MenuList();
+        await LoadStage2Data(userId);
+    }
+
+    async Task LoadSTage2MenuList()
+    {
+        menuItem = await API.GetAsync<List<ViewPageMenuModel>>("user/get-user-menu-list");
+    }
+
+    async Task LoadStage2Data(int? userId)
+    {
+        UserViewData = await API.GetAsync<UserSingleModel>($"user/get-user/{userId}", true);
+    }
+
+    private void NavigateToSinglePage()
+    {
+        Nav.NavigateTo($"user/{UserViewData.UserID}");
+    }
+
+    private async Task DeleteUser()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete the '" + UserViewData.FirstName + "' user?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            if (await API.GetAsync<bool>($"user/delete-user/{UserViewData.UserID}"))
+            {
+                 Nav.NavigateTo("users");
+            }
+        }
+    }
+
+    private List<string> listPageMenuCategories = new()
+    {
+    };
+
+    private void OnMenuCategorySelectCallbackRecieved(int index)
+    {
+        //Menu Category Selected
+    }
+
+    #endregion
+}

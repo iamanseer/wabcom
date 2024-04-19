@@ -1,0 +1,308 @@
+﻿@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Models.Inventory.Item;
+@using System.ComponentModel.DataAnnotations
+@using PB.Shared.Models.Inventory.Items
+
+<div class="modal fade" id="item-variant-modal">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document" style="overflow-y: scroll;">
+        <div class="modal-content modal-content-demo">
+            <EditForm Model="Model" OnValidSubmit="SaveItemVariant" autocomplete="off">
+                <DataAnnotationsValidator />
+                <div class="modal-header">
+                    <h6 class="modal-title">
+                        @if (Model.ItemVariantID > 0)
+                        {
+                            @Model.ItemModelName
+                        }
+                        else
+                        {
+                            @("New item variant")
+                        }
+                    </h6>
+                    <button aria-label="Close" type="button" class="btn-close" @onclick="async() => await CloseItemVariantModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row">
+                        <InputTextBox Label="Url Code:" @bind-Value="Model.UrlCode"
+                                      DivClass="col-md-7"
+                                      IsRequired="false"
+                                      PlaceHolder="Unique url code"/>
+                    </div>
+
+                    <div class="row position-relative pb-3">
+                        <DropdownSelect DivClass="col-md-7" @ref="@PackingTypeDrowpdownSelect"
+                                        Label="Unit:"
+                                        PlaceHolder="Select Unit"
+                                        IsRequired="false"
+                                        IsAddOptionNeed="true"
+                                        ReadDataOnSearch="false"
+                                        ValidationFor="() => Model.PackingTypeID"
+                                        Mode="(int)DropdownModes.ItemPackingType"
+                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                        ItemSelected="HandleItemPackingTypeSelected"
+                                        SelectedItem="new DropdownSelectedItemModel(){ID = Model.PackingTypeID,Value = Model.PackingTypeName}"
+                                        NewButtonClicked="HandleNewItemPackingTypeAddButtonClick"
+                                        NewButtonText="Packing Type" />
+                       @*  <div class="validation-for-dropdown">
+                            <ValidationMessage For="()=>Model.PackingTypeID" />
+                        </div> *@
+                    </div>
+
+                    <div class="row">
+                        <InputNumberBox Label="UM Unit :" @bind-Value="@Model.UMUnit"
+                                        DivClass="col-md-7"
+                                        IsRequired="false"
+                                        ValidationFor="() => Model.UMUnit"
+                                        PlaceHolder=""
+                                        id="item-um-unit-box" />
+                    </div>
+
+                    @if (IsGoods)
+                    {
+                        <div class="row position-relative pb-3">
+                            <DropdownSelect DivClass="col-md-7" @ref="@ItemSizeDrowpdownSelect"
+                                            Label="Size:"
+                                            PlaceHolder="Select size"
+                                            IsAddOptionNeed="true"
+                                            ReadDataOnSearch="true"
+                                            IsRequired="false"
+                                            ValidationFor="() => Model.SizeID"
+                                            Mode="(int)DropdownModes.ItemSize"
+                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                            ItemSelected="HandleItemSizeSelected"
+                                            SelectedItem="new DropdownSelectedItemModel(){ID = Model.SizeID,Value = Model.Size}"
+                                            NewButtonClicked="HandleNewItemPackingTypeAddButtonClick"
+                                            NewButtonText="Item Size" />
+                           @*  <div class="validation-for-dropdown">
+                                <ValidationMessage For="()=>Model.SizeID" />
+                            </div> *@
+                        </div>
+
+                        <div class="row position-relative pb-3">
+                            <DropdownSelect DivClass="col-md-7"
+                                            Label="Color :"
+                                            PlaceHolder="Select color"
+                                            IsAddOptionNeed="true"
+                                            ReadDataOnSearch="true"
+                                            ValidationFor="() => Model.ColorID"
+                                            Mode="(int)DropdownModes.ItemColor"
+                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                            ItemSelected="HandleItemColorSelected"
+                                            SelectedItem="new DropdownSelectedItemModel(){ID = Model.ColorID,Value = Model.ColorName}"
+                                            NewButtonClicked="HandleItemColorAddButtonClick"
+                                            NewButtonText="Item Color" />
+                          @*   <div class="validation-for-dropdown">
+                                <ValidationMessage For="()=>Model.ColorID" />
+                            </div> *@
+                        </div>
+                    }
+
+                    <div class="row">
+                        <InputNumberBox Label="Purchase cost :" @bind-Value="@Model.Cost"
+                                        DivClass="col-md-7"
+                                        ValidationFor="() => Model.Cost"
+                                        id="item-selling-cost-box" />
+
+                    </div>
+
+                    <div class="row">
+                        <InputNumberBox Label="Selling price :" @bind-Value="@Model.Price"
+                                        DivClass="col-md-7" id="item-um-unit-box"
+                                        ValidationFor="() => Model.Price"
+                                        IsRequired="true"
+                                        PlaceHolder="" />
+
+                    </div>
+
+                    @if (IsGoods)
+                    {
+                        @* <ImageUploader ImageItemsInput="Model.Images" ItemVariantID="Model.ItemVariantID" FileSelectorID="item-single-multiple-variant-image-chooser" Updated="HandelItemModelImageUpdated" /> *@
+                        @if (ImageItems.Count > 0)
+                        {
+                            <div class="row">
+                                @foreach (var itemImage in ImageItems)
+                                {
+                                    <div class="col-md-1">
+                                        <input type="checkbox" class="top-left" @onchange=" (ChangeEventArgs e) => HandleToCheckItemImage(e,itemImage)" checked="@(Model.ItemVariantImages.Where(p=>p.MediaID==itemImage.MediaID).FirstOrDefault()!=null?"checked":null)">
+                                        <img style="height:60px;width:60px;" src="@itemImage.FileName" alt="@itemImage.AltText">
+                                    </div>
+                                }
+                            </div>
+
+                        }
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Add</button>
+                    <button type="button" class="btn btn-danger" @onclick="async() => await CloseItemVariantModal()">Close</button>
+                </div>
+
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+<ModalPackingType @ref="@modalItemPackingType" Saved="HandleNewItemPackingTypeAdded" />
+<ModalItemSize @ref="@modalItemSize" Saved="HandleNewItemSizeAdded" />
+<ModalItemColor @ref="@modalItemColor" Saved="HandleNewItemColorAdded" />
+
+@code {
+    [Parameter] public List<ItemImageModel> ImageItems { get; set; } = new();
+    [Parameter] public bool IsGoods { get; set; } = false;
+    [Parameter] public EventCallback<ItemVariantModel> CallbackWithModel { get; set; }
+
+    private ItemVariantModel Model = new();
+
+    private DropdownSelect PackingTypeDrowpdownSelect = new();
+    private DropdownSelect ItemSizeDrowpdownSelect = new();
+    private ModalPackingType modalItemPackingType = new();
+    private ModalItemSize modalItemSize = new();
+    private ModalItemColor modalItemColor = new();
+
+    private bool HasDuplicate = false;
+
+    public async Task OpenItemVariantModal(ItemVariantModel? itemModel = null)
+    {
+        HasDuplicate = false;
+        Model = new();
+        if (itemModel is not null)
+            Model = itemModel;
+        await JS.InvokeVoidAsync("ShowModal", "item-variant-modal");
+    }
+    private async Task SaveItemVariant()
+    {
+        if (Model.ItemVariantID > 0 && Model.ItemID is not null)
+        {
+            var result = await API.PostAsync<BaseSuccessResponse, ItemVariantModel>("item/save-item-model", Model);
+            if (result is not null)
+            {
+                await CallbackWithModel.InvokeAsync(Model);
+                await CloseItemVariantModal();
+            }
+        }
+        else
+        {
+            await CallbackWithModel.InvokeAsync(Model);
+            if (!HasDuplicate)
+                await CloseItemVariantModal();
+        }
+    }
+    private async Task ShowItemvariantErrorMessage()
+    {
+        var validationContext = new ValidationContext(Model, serviceProvider: null, items: null);
+        var validationResults = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(Model, validationContext, validationResults, validateAllProperties: true);
+        string? errorMessage = "";
+        foreach (var message in validationResults)
+        {
+            errorMessage += message.ErrorMessage + '\n';
+        }
+        await JS.ErrorMessage(errorMessage);
+    }
+    public void SetItemModelDuplicationNotExist()
+    {
+        HasDuplicate = false;
+    }
+    public async Task SetItemModelDuplicationExist(string errorMessage)
+    {
+        HasDuplicate = true;
+        await JS.ErrorMessage(errorMessage);
+    }
+    private async Task CloseItemVariantModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "item-variant-modal");
+    }
+
+    #region Item PackingType
+
+    private void HandleNewItemPackingTypeAdded(IdnValuePair itempackingType)
+    {
+        Model.PackingTypeID = itempackingType.ID;
+        Model.PackingTypeName = itempackingType.Value;
+    }
+    private void HandleItemPackingTypeSelected(DropdownItemSelectedCallbackModel itemPackingType)
+    {
+        Model.PackingTypeID = itemPackingType.ID;
+        Model.PackingTypeName = itemPackingType.Value;
+    }
+    private async Task HandleNewItemPackingTypeAddButtonClick()
+    {
+        await modalItemPackingType.OpenItemPackingTypeModal();
+    }
+
+    #endregion
+
+    #region Item Size
+
+    private void HandleNewItemSizeAdded(IdnValuePair itemSize)
+    {
+        Model.SizeID = itemSize.ID;
+        Model.Size = itemSize.Value;
+    }
+    private async Task HandleItemSizeAddButtonClick()
+    {
+        await modalItemSize.OpenItemSizeModal();
+    }
+    private void HandleItemSizeSelected(DropdownItemSelectedCallbackModel itemSize)
+    {
+        Model.SizeID = itemSize.ID;
+        Model.Size = itemSize.Value;
+    }
+
+    #endregion
+
+    #region Item Color
+
+    private void HandleNewItemColorAdded(IdnValuePair itemColor)
+    {
+        Model.SizeID = itemColor.ID;
+        Model.Size = itemColor.Value;
+    }
+    private async Task HandleItemColorAddButtonClick()
+    {
+        await modalItemColor.HandleOpenItemColorModal();
+    }
+    private void HandleItemColorSelected(DropdownItemSelectedCallbackModel iemColor)
+    {
+        Model.ColorID = iemColor.ID;
+        Model.ColorName = iemColor.Value;
+    }
+
+    #endregion
+
+    #region Item Variant images
+
+    private void HandelItemModelImageUpdated(List<ItemVariantImageModel> updatedImageModel)
+    {
+        Model.ItemVariantImages = updatedImageModel;
+    }
+
+
+    private async Task HandleToCheckItemImage(ChangeEventArgs e, ItemImageModel model)
+    {
+        bool IsImageChecked = Convert.ToBoolean(e.Value);
+        if (IsImageChecked)
+        {
+            Model.ItemVariantImages.Add(new()
+                {
+                    MediaID = model.MediaID,
+                    FileName = model.FileName,
+                    ItemVariantID = Model.ItemVariantID,
+
+                });
+        }
+        else
+        {
+            Model.ItemVariantImages.Remove(Model.ItemVariantImages.Where(variantImage => variantImage.MediaID == model.MediaID).FirstOrDefault());
+        }
+    }
+
+    #endregion
+
+}

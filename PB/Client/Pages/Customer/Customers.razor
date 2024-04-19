@@ -1,0 +1,188 @@
+﻿@page "/customers"
+@page "/customers/{CustomerEntityID:int}"
+@using PB.CRM.Model.Enum;
+@using PB.Shared.Models;
+@using PB.Model.Models;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.CRM.Customer;
+
+@attribute [Authorize(Roles = "Customer")]
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="CustomerFilterSettings" OnFilterButtonClick="FilterListPageTo" />
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    Name
+                                </th>
+                                <th>
+                                    Mobile
+                                </th>
+                                <th>
+                                    Email
+                                </th>
+                                <th>
+                                    Type
+                                </th>
+                                <th>
+                                    Status
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in CustomerListModel.Data.Select((value, i) => new { i, value }))
+                            {
+                                var entry = item.value;
+                                var index = item.i;
+                                <tr @onclick="@(()=>Nav.NavigateTo($"customers-view/{entry.EntityID}"))" style="cursor:pointer">
+                                    <td>
+                                        @if (CustomerListModel.PageIndex == 1)
+                                        {
+                                            @(index + 1)
+                                        }
+                                        else
+                                        {
+                                            @((CustomerListModel.PageIndex * CustomerListModel.PageSize) + (index + 1 )-10)
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @entry.Name
+                                    </td>
+
+                                    <td>
+                                        @entry.Phone
+                                    </td>
+
+                                    <td>
+                                        @entry.EmailAddress
+                                    </td>
+
+                                    <td>
+                                        @(((CustomerTypes)entry.Type).ToString())
+                                    </td>
+
+                                    <td>
+                                        @(((CustomerStatus)entry.Status).ToString())
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="CustomerListModel.PageSize" TotalCount="CustomerListModel.TotalCount" TotalPages="CustomerListModel.TotalPages" PageIndex="CustomerListModel.PageIndex" LoadPageIndex="PageIndex" />
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+
+    [Parameter] public int? CustomerEntityID { get; set; }
+    private PagedList<CustomerListModel> CustomerListModel = new();
+    private PagedListPostModelWithFilter Stage1SearchModel = new();
+    private int Stage = 1;
+    private string? errorMessage;
+    private string? infoMessage;
+    private ModalCustomer? childCustomerModal;
+    protected override async Task OnInitializedAsync()
+    {
+        CustomerFilterSettings.SortMenuItems = stage1SortMenuItems;
+        CustomerFilterSettings.IdnValueFilters = CustomerEnumFilterList;
+        CustomerFilterSettings.DateFilters = null;
+        CustomerFilterSettings.Heading = "Customers";
+        CustomerFilterSettings.SinglePageURL = "customer";
+        CustomerFilterSettings.AddButtonText = "New Customer";
+        if (CustomerEntityID != null && CustomerEntityID != 0)
+        {
+            Nav.NavigateTo($"customers-view/{CustomerEntityID}");
+        }
+        else
+        {
+            await SwitchToStage1();
+        }
+    }
+
+
+    #region Stage 1
+
+    private List<FilterSortInputModel> stage1SortMenuItems = new()
+    {
+        new()
+        {
+            DisplayName = "Customer Name",
+            FieldName = "E.Name"
+        },
+        new()
+        {
+            DisplayName = "Customer Type",
+            FieldName = "C.Type"
+        },
+        new()
+        {
+            DisplayName = "Email",
+            FieldName = "E.EmailAddress"
+        },
+    };
+    private async Task LoadStage1Data()
+    {
+        CustomerListModel = await API.PostAsync<PagedList<CustomerListModel>, PagedListPostModelWithFilter>("customer/get-customers-paged-list", Stage1SearchModel);
+    }
+
+    private async Task PageIndex(int pageIndex)
+    {
+        Stage1SearchModel.PageIndex = pageIndex;
+        await LoadStage1Data();
+    }
+
+    private async Task SwitchToStage1()
+    {
+        await LoadStage1Data();
+    }
+
+    private async Task AddButtonClicked()
+    {
+        await childCustomerModal.AddNewCustomer(CallbackType.Model);
+    }
+
+    #endregion
+
+    #region Sort, Filter
+
+    HeaderSettingsModel CustomerFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by customer name..",
+            NeedSortOption = true,
+            NeedFilterOption = true,
+        };
+
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        Stage1SearchModel = filterModel == null ? new() : filterModel;
+        await LoadStage1Data();
+    }
+
+    List<FilterIdnValueInputModel> CustomerEnumFilterList = new()
+    {
+        new()
+        {
+            FiledName = "C.Status",
+            DisplayName = "Status",
+            EnumObject = CustomerStatus.Active
+        },
+
+
+    };
+
+    #endregion
+
+}

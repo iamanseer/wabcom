@@ -1,0 +1,82 @@
+﻿@using PB.Shared.Models.Common;
+
+<div class="modal fade" id="item-size-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-md" role="document">
+        <EditForm Model="Model" autocomplete="off" OnValidSubmit="SaveSize">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    @if (Model.SizeID != 0)
+                    {
+                        <h6 class="modal-title">@Model.Size</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New Item Size</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await CloseModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row">
+
+                        <InputTextBox Label="Item Size:"
+                                      DivClass="col-md-12"
+                                      IsRequired="true"
+                                      PlaceHolder="Item size"
+                                      ValidationFor="() => Model.Size"
+                                      @bind-Value="Model.Size"
+                                      id="item-size-text-box" />
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    @if (Model.SizeID == 0)
+                    {
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await CloseModal()">Close</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await CloseModal()">Close</button>
+                    }
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+    private ItemSizeModel Model = new();
+
+    private async Task SaveSize()
+    {
+        var result = await API.PostAsync<ItemSizeAddResultModel, ItemSizeModel>("item/save-item-size", Model);
+        if (result != null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair()
+                {
+                    ID = result.SizeID,
+                    Value = result.Size
+                });
+            Model = new();
+            await CloseModal();
+        }
+    } 
+    public async Task OpenItemSizeModal(int SizeID = 0)
+    {
+        Model = new();
+        if (SizeID != 0)
+            Model = await API.GetAsync<ItemSizeModel>($"item/get-item-size/{SizeID}", true);
+        await JS.InvokeVoidAsync("ShowModal", "item-size-modal");
+    }
+    private async Task CloseModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "item-size-modal");
+    }
+}

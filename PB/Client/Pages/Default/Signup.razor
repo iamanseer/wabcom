@@ -1,0 +1,130 @@
+﻿@page "/signup"
+@using Blazored.LocalStorage
+@inject ILocalStorageService _localStorage
+
+<LoginLayout>
+    <div class="row bg-primary">
+
+        <!-- CONTAINER OPEN -->
+        <div class="col col-login mx-auto">
+            <div class="text-center side-image ">
+                <img src="/assets/images/brand/white.png" alt="" class="my-auto">
+                <h2>"Revolutionizing CRM through WhatsApp Automation"</h2>
+                <img src="/assets/accounting-gif.gif" alt="" class="my-auto w-50">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="side-form bg-primary-transparent">
+                
+              
+                    <EditForm Model="Model" OnValidSubmit="async() => await SaveAsync()" class="login100-form validate-form p-6 w-500 ">
+                        <span class="login100-form-title pb-5">
+                            @Localizer["SignUp"]
+                        </span>
+                        <div class="panel-body tabs-menu-body p-0 pt-5">
+                        <div class="tab-content">
+                            <div class="tab-pane active">
+                                <DataAnnotationsValidator />
+                                <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+                                    <a href="javascript:void(0)" class="input-group-text bg-white text-muted" tabindex="-1">
+                                        <i class="mdi mdi-robot text-muted" aria-hidden="true"></i>
+                                    </a>
+                                    <input class="input100 border-start-0 form-control ms-0" @bind-value="Model.Name" type="text" placeholder="@Localizer["Company Name"]">
+                                    <ValidationMessage For="@(() => Model.Name)" />
+                                </div>
+                                <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+                                    <a href="javascript:void(0)" class="input-group-text bg-white text-muted" tabindex="-1">
+                                        <i class="zmdi zmdi-phone text-muted" aria-hidden="true"></i>
+                                    </a>
+                                    <input class="input100 border-start-0 form-control ms-0" @bind-value="Model.MobileNo" type="text" placeholder="@Localizer["Mobile Number"]">
+                                    <ValidationMessage For="@(() => Model.MobileNo)" />
+                                </div>
+                                <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+                                    <a href="javascript:void(0)" class="input-group-text bg-white text-muted" tabindex="-1">
+                                        <i class="zmdi zmdi-email text-muted" aria-hidden="true"></i>
+                                    </a>
+                                    <input class="input100 border-start-0 form-control ms-0" @bind-value="Model.Email" type="text" placeholder="@Localizer["Email Address"]">
+                                    <ValidationMessage For="@(() => Model.Email)" />
+                                </div>
+                                @*<TextBox Label="@Localizer["Company Name"]" @bind-Value="Model.Name" ValidationFor="()=>Model.Name" FormGroupClass="col-12"></TextBox>
+                                <TextBox Label="@Localizer["Mobile Number"]" @bind-Value="Model.MobileNo" ValidationFor="()=>Model.MobileNo" FormGroupClass="col-12"></TextBox>
+                                <TextBox Label="@Localizer["Email Address"]" @bind-Value="Model.Email" ValidationFor="()=>Model.Email" FormGroupClass="col-12"></TextBox>
+*@
+                                <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+                                    <a href="javascript:void(0)" class="input-group-text bg-white text-muted" tabindex="-1">
+                                        <i class="zmdi zmdi-eye text-muted" aria-hidden="true"></i>
+                                    </a>
+                                    <input class="input100 border-start-0 form-control ms-0" @bind-value="Model.Password" type="password" placeholder="Password">
+                                    <ValidationMessage For="@(() => Model.Password)" />
+                                </div>
+
+                                <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+                                    <a href="javascript:void(0)" class="input-group-text bg-white text-muted" tabindex="-1">
+                                        <i class="zmdi zmdi-eye text-muted" aria-hidden="true"></i>
+                                    </a>
+                                    <input class="input100 border-start-0 form-control ms-0" @bind-value="Model.ConfirmPassword" type="password" placeholder="Confirm Password">
+                                    <ValidationMessage For="@(() => Model.ConfirmPassword)" />
+                                </div>
+
+                                 <button type="submit" class="btn btn-primary w-100 mt-2 col-sm-12">@Localizer["Sign Up"]</button>
+
+                                <div class="col-sm-12 d-flex justify-content-center">
+                                    <a href="login" id="log" class="text-muted">@Localizer["Have an Account"] ? @Localizer["Sign In"]</a>
+                                </div>
+                            </div>
+                            </div>
+                            </div>
+                    </EditForm>
+                
+            </div>
+        </div>
+    </div>
+    @*<div class="Card-body">
+    <h5 class="font-18 text-center">@Localizer["SignUp"]</h5>
+    <div class="form-horizontal my-6">
+    <EditForm Model="Model" OnValidSubmit="async() => await SaveAsync()">
+    <DataAnnotationsValidator />
+    <TextBox Label="@Localizer["Company Name"]" @bind-Value="Model.Name" ValidationFor="()=>Model.Name" FormGroupClass="col-12"></TextBox>
+    <TextBox Label="@Localizer["Mobile Number"]" @bind-Value="Model.MobileNo" ValidationFor="()=>Model.MobileNo" FormGroupClass="col-12"></TextBox>
+    <TextBox Label="@Localizer["Email Address"]" @bind-Value="Model.Email" ValidationFor="()=>Model.Email" FormGroupClass="col-12"></TextBox>
+
+    <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+    <a href="javascript:void(0)" class="input-group-text bg-white text-muted" tabindex="-1">
+    <i class="zmdi zmdi-eye text-muted" aria-hidden="true"></i>
+    </a>
+    <input class="input100 border-start-0 form-control ms-0" @bind-value="Model.Password" type="password" placeholder="Password">
+    <ValidationMessage For="@(() => Model.Password)" />
+    </div>
+
+    <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+    <a href="javascript:void(0)" class="input-group-text bg-white text-muted" tabindex="-1">
+    <i class="zmdi zmdi-eye text-muted" aria-hidden="true"></i>
+    </a>
+    <input class="input100 border-start-0 form-control ms-0" @bind-value="Model.ConfirmPassword" type="password" placeholder="Confirm Password">
+    <ValidationMessage For="@(() => Model.ConfirmPassword)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 mt-2 col-sm-12">@Localizer["Sign Up"]</button>
+
+    <div class="col-sm-12 d-flex justify-content-center">
+    <a href="login" id="log" class="text-muted">@Localizer["Have an Account"] ? @Localizer["Sign In"]</a>
+    </div>
+
+    </EditForm>
+    </div>
+    </div>*@
+</LoginLayout>
+
+@code {
+    private SignupModel Model = new();
+    private async Task SaveAsync()
+    {
+        var result = await API.PostAsync<BaseSuccessResponse, SignupModel>("auth/register", Model);
+        if (result != null)
+        {
+            await _localStorage.SetItemAsync("username", Model.Email);
+            Nav.NavigateTo("verify-mail");
+            await JS.SuccessMessage(result.ResponseMessage, result.ResponseTitle);
+        }
+    }
+}

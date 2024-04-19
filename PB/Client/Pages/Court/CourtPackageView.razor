@@ -1,0 +1,145 @@
+﻿@page "/court-package-view/{PackageID:int}"
+@using PB.Model.Models;
+@using PB.Shared.Models.Court;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row">
+            <ListPageMenuLayout MenuItems="menuItem"
+                                SelectedMenuID="PackageViewModel.CourtPackageID"
+                                OnMenuItemSelect="LoadData"
+                                SinglePageURL="court-package" />
+
+            <div class="itemlist-container">
+
+                <div class="page-header">
+                    <h1 class="page-title">@("Package : " + PackageViewModel.PackageName)</h1>
+
+
+
+                    <div class="btn-toolbar float-right mr-7">
+                        <a class="btn btn-white btn-md me-2" @onclick="NavigateToSinglePage">
+                            <i class="fa fa-pencil" style="color:var(--primary-bg-color)"></i>
+                        </a>
+
+                        <a class="btn btn-white btn-md me-2" @onclick="async () => await Remove(PackageID)">
+                            <i class="fa fa-trash" style="color:red"></i>
+                        </a>
+                        <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"court-packages"))">
+                            <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                        </a>
+                    </div>
+
+
+
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="panel panel-primary">
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <li><a href="#tab5" class="active" data-bs-toggle="tab">Overview</a></li>
+
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="tab5">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">Package Name</label>
+                                                                    <label class="col-7 col-auto">@PackageViewModel.PackageName</label>
+                                                                </div>
+                                                            </div>
+                                                            <div class="group pb-3">
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Amount </label>
+                                                                    <label class="col-md-7 col-auto ">@PackageViewModel.Fee</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Validity Month </label>
+                                                                    <label class="col-md-7 col-auto ">@PackageViewModel.ValidityMonth</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Total Hours </label>
+                                                                    <label class="col-md-7 col-auto ">@PackageViewModel.TotalHours</label>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Tax Category </label>
+                                                                    <label class="col-md-7 col-auto ">@PackageViewModel.TaxCategoryName</label>
+                                                                </div>
+                                                                @if (PackageViewModel.IncTax)
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-5 col-auto items-label text-muted">IncTax </label>
+                                                                        <label class="col-md-7 col-auto ">Yes</label>
+                                                                    </div>
+                                                                }
+
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</PageLayoutNew>
+
+
+@code {
+    [Parameter] public int PackageID { get; set; }
+    private CourtPackageViewModel PackageViewModel = new();
+    private List<ViewPageMenuModel> menuItem = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData(PackageID);
+        await MenuList();
+    }
+
+    async Task LoadData(int? PackageID)
+    {
+        PackageViewModel = await API.GetAsync<CourtPackageViewModel>($"court-package/get-court-package-view/{PackageID}", true);
+    }
+    async Task MenuList()
+    {
+        menuItem = await API.GetAsync<List<ViewPageMenuModel>>("court-package/get-court-package-menu-list");
+    }
+    private void NavigateToSinglePage()
+    {
+        Nav.NavigateTo($"court-package/{PackageID}");
+    }
+
+    async Task Remove(int Id)
+    {
+        if (await API.DeleteAsync("court-package/delete-court-package", Id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            Nav.NavigateTo($"court-packages");
+        }
+    }
+}

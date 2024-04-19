@@ -1,0 +1,82 @@
+﻿@page "/newsletter-subscription-list"
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.eCommerce.SEO;
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                 <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Sl No.
+                                        </th>
+                                        <th>
+                                            Email
+                                        </th>
+                                        <th>
+                                            AddedOn
+                                        </th>
+
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in SubscriptionPagedListModel.Data.Select((value, i) => new { i, value }))
+                                    {
+                                        var entry = item.value;
+                                        var index = item.i;
+                                        <tr>
+
+                                            <td>
+                                                @if (SubscriptionPagedListModel.PageIndex == 1)
+                                                {
+                                                    @(index + 1)
+                                                }
+                                                else
+                                                {
+                                                    @((SubscriptionPagedListModel.PageIndex * SubscriptionPagedListModel.PageSize) + (index + 1) - 10)
+                                                }
+                                            </td>
+
+                                            <td>
+                                                @entry.Email
+                                            </td>
+                                            <td>
+                                                @entry.SubscribedON.Value.ToString("dd/MM/yyyy")
+                                            </td>
+
+
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <PaginationCustom PageSize="SubscriptionPagedListModel.PageSize" TotalCount="SubscriptionPagedListModel.TotalCount" TotalPages="SubscriptionPagedListModel.TotalPages" PageIndex="SubscriptionPagedListModel.PageIndex" LoadPageIndex="PageIndex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+@code {
+    private PagedList<NewsLetterSubscriptionPagedListModel> SubscriptionPagedListModel = new();
+    private PagedListPostModelWithFilter searchmodel = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    async Task LoadData()
+    {
+        SubscriptionPagedListModel = await API.PostAsync<PagedList<NewsLetterSubscriptionPagedListModel>, PagedListPostModelWithFilter>("seo/get-all-subscription-news-letter", searchmodel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        searchmodel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+}

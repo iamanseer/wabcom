@@ -1,0 +1,204 @@
+﻿@page "/membership-features"
+@using PB.Shared.Models
+@using PB.Shared.Models.Common
+
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+
+                    <ListPageHeader Settings="MembershipFeatureSetings" OnFilterButtonClick="SearchByFeature" OnAddButtonClick="ShowFeatureModal" />
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                            <thead>
+                                <tr>
+                                    <th>SlNo</th>
+                                    <th>@Localizer["Feature"]</th>
+                                   @* <th>@Localizer["Language"]</th>
+                                    <th>@Localizer["Account Name"]</th>
+                                    <th>@Localizer["Category"]</th>
+                                    <th>@Localizer["Status"]</th>
+                                    <th>@Localizer["Reason"]</th>*@
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in FeatureListPageModel.Data.Select((data, index) => new { index, data }))
+                                {
+                                    <tr >
+                                        <td>
+                                            @((FeatureListPageModel.PageIndex - 1) * FeatureListPageModel.PageSize + 1 + item.index)
+                                        </td>
+                                        <td>
+                                            @item.data.FeatureName
+                                        </td>
+                                        <td style="width:100px;">
+                                            <div class="d-flex justify-content-center align-items-center">
+                                                <ActionEdit Clicked="async () =>await Edit(item.data.FeatureID)" />
+                                                <ActionDelete Clicked="async () => await Remove(item.data.FeatureID)" />
+                                            </div>
+                                        </td>
+                                        @*<td>
+                                            @item.data.LanguageName
+                                        </td>
+                                        <td>
+                                            @item.data.Name
+                                        </td>
+                                        <td>
+                                            @item.data.CategoryID.ToString()
+                                        </td>
+                                        <td>
+                                            @item.data.WhatsappTemplateStatus
+                                        </td>
+                                        <td>
+                                            @item.data.StatusReason
+                                        </td>*@
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <PaginationCustom PageSize="FeatureListPageModel.PageSize" TotalCount="FeatureListPageModel.TotalCount" TotalPages="FeatureListPageModel.TotalPages" PageIndex="FeatureListPageModel.PageIndex" LoadPageIndex="PageIndex" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<div class="modal fade" id="AddNewFeatureModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Add Feature</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="AddNewFeatureModal" @onclick="(async() =>await HideFeatureModal())"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="Feature" OnValidSubmit="SaveAsync" autocomplete="off">
+                 <DataAnnotationsValidator />
+                <div class="row">
+                    <div class="col-md">
+                        <div class="form-group">
+                            <label class="form-label mt-0 me-1" style="text-align:left">Feature Name :</label>
+                            <input type="text" class="form-control" @bind="Feature.FeatureName" id="FeatureName">
+                            <ValidationMessage For="()=>Feature.FeatureName" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md">
+                        <div class="form-group">
+                            <label class="form-label mt-0 me-1" style="text-align:left">Description :</label>
+                            <textarea class="textarea form-control" id="customer-remarks-text-area" rows="4" @bind="Feature.Description"></textarea>
+                            <ValidationMessage For="()=>Feature.Description" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md">
+                        <div class="form-group">
+                            <button class="btn btn-primary" type="submit">Save</button>
+                            <button class="btn btn-danger" type="button" @onclick="@(async ()=>await Cancel())">Cancel</button>
+                        </div>
+                   </div>
+                </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+
+    private PagedListPostModelWithFilter ListPageSearchModel = new();
+    private PagedList<MembershipFeatureModel> FeatureListPageModel = new();
+    private HeaderSettingsModel? MembershipFeatureSetings;
+
+    private MembershipFeatureModel Feature = new();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        MembershipFeatureSetings = new()
+            {
+                Heading = "Membership Features",
+                SearchPlaceHolder = "Search with name..",
+                NeedAddButton = true,
+                AddButtonText = "Add Feature ",
+                NeedSortOption = false,
+
+        };
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        FeatureListPageModel = await API.PostAsync<PagedList<MembershipFeatureModel>, PagedListPostModelWithFilter>("support/get-all-feature", ListPageSearchModel);
+    }
+
+    #region Search
+
+    private async Task SearchByFeature(PagedListPostModelWithFilter searchModel)
+    {
+        ListPageSearchModel = searchModel;
+        await LoadData();
+    }
+
+    #endregion
+
+
+    async Task Remove(int Id)
+    {
+        if (await API.DeleteAsync("support/delete-feature", Id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadData();
+        }
+    }
+
+
+    private async Task PageIndex(int pageIndex)
+    {
+        ListPageSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    private async Task SaveAsync()
+    {
+
+        var result = await API.PostAsync<BaseSuccessResponse, MembershipFeatureModel>("support/save-feature", Feature);
+        if (result != null)
+        {
+            Feature = new MembershipFeatureModel();
+            await Task.Delay(100);
+            await LoadData();
+            await HideFeatureModal();
+        }
+
+    }
+
+    private async Task Cancel()
+    {
+            await HideFeatureModal();
+    }
+
+    private async Task Edit(int FeatureId)
+    {
+        Feature= await API.GetAsync<MembershipFeatureModel>($"support/get-feature/{FeatureId}", true);
+        //await LoadFeature();
+        await ShowFeatureModal();
+    }
+
+    private async Task ShowFeatureModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "AddNewFeatureModal");
+    }
+
+    private async Task HideFeatureModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "AddNewFeatureModal");
+    }
+ 
+}
+

@@ -1,0 +1,193 @@
+﻿@page "/voucher-types"
+@using PB.Client.Shared.Accounts
+@using PB.Model.Models;
+@using PB.Shared.Models.Accounts.VoucherTypes;
+@using PB.Shared.Models.Common;
+
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    @if (IsHeaderReady)
+                    {
+                        <ListPageHeader Settings="VoucherTypeFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)ApplyFilterTo" OnAddButtonClick="async () => await HandleVoucherTypeModalOpenButtonClick()" />
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table border text-nowrap text-md-nowrap mb-0 mt-2 ">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Sl No.
+                                    </th>
+                                    <th>
+                                        Voucher Name
+                                    </th>
+                                    <th>
+                                        Nature
+                                    </th>
+                                    <th>
+                                        Prefix
+                                    </th>
+                                    <th class="d-flex justify-content-around">
+                                        Action
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in VoucherTypesList.Data.Select((value, i) => new { i, value }))
+                                {
+                                    var entry = item.value;
+                                    var index = item.i;
+                                    <tr>
+                                        <td>
+                                            @if (VoucherTypesList.PageIndex == 1)
+                                            {
+                                                @(index + 1)
+                                            }
+                                            else
+                                            {
+                                                @((VoucherTypesList.PageIndex * VoucherTypesList.PageSize) + (index + 1) - 10)
+                                            }
+                                        </td>
+
+                                        <td>
+                                            @entry.VoucherTypeName
+                                        </td>
+
+                                        <td>
+                                            @entry.VoucherTypeNatureName
+                                        </td>
+
+                                        <td>
+                                            @entry.Prefix
+                                        </td>
+
+                                        <td>
+                                            <div class="d-flex justify-content-center">
+                                                <div>
+                                                    <ActionEdit Clicked="@(async () => await HandleVoucherTypeModalOpenButtonClick(entry.VoucherTypeID))" />
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <PaginationCustom PageSize="VoucherTypesList.PageSize" TotalCount="VoucherTypesList.TotalCount" TotalPages="VoucherTypesList.TotalPages" PageIndex="VoucherTypesList.PageIndex" LoadPageIndex="SetPageIndex" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<!--Voucher Type Modal-->
+<ModalVoucherType @ref="voucherTypeModal" Saved="async (IdnValuePair voucherType) => await HandleNewVoucherTypeAdded(voucherType)" />
+
+@code {
+    private PagedList<VoucherTypeListModel> VoucherTypesList = new();
+    private PagedListPostModelWithFilter ListPageSearchModel = new();
+    private ModalVoucherType voucherTypeModal = new();
+    private HeaderSettingsModel? VoucherTypeFilterSettings;
+    private List<IdnValuePair> NaturesList = new();
+
+    private bool IsHeaderReady = false;
+
+    #region List Page Related Functions
+
+    protected override async Task OnInitializedAsync()
+    {
+        NaturesList = await API.PostAsync<List<IdnValuePair>, CommonSearchModel>("common/get-list-of-voucher-type-natures", new CommonSearchModel());
+
+        List<FilterSortInputModel> SortInputItems = new()
+        {
+            new()
+            {
+                DisplayName = "Vouher Type",
+                FieldName = "V.VoucherTypeName"
+            },
+            new()
+            {
+                DisplayName = "Vouher Type Nature",
+                FieldName = "N.VoucherTypeNatureName"
+            },
+            new()
+            {
+                DisplayName = "Prefix",
+                FieldName = "S.Prefix"
+            }
+        };
+
+        List<FilterIdnValueInputModel> FilterInputItems = new()
+        {
+            new()
+            {
+                DisplayName = "Nature",
+                FiledName = "V.voucherTypeNatureID",
+                CustomOptions = NaturesList
+            },
+            new()
+            {
+                DisplayName = "Numbering Type",
+                FiledName = "S.NumberingTypeID",
+                EnumObject = VoucherNumberingTypes.Automatic
+            },
+            new()
+            {
+                DisplayName = "Numbering Periodicity",
+                FiledName = "S.PeriodicityID",
+                EnumObject = VoucherNumberingPeriodicity.Yearly
+            }
+        };
+
+        VoucherTypeFilterSettings = new()
+            {
+                Heading = "Voucher Types",
+                NeedAddButton = true,
+                AddButtonText = "Voucher Type",
+                SearchPlaceHolder = "Search voucher type..",
+                NeedSortOption = true,
+                SortMenuItems = SortInputItems,
+                NeedFilterOption = true,
+                IdnValueFilters = FilterInputItems
+            };
+
+        IsHeaderReady = true;
+
+        await LoadData();
+
+    }
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        ListPageSearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    private async Task SetPageIndex(int pageIndex)
+    {
+        ListPageSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        VoucherTypesList = await API.PostAsync<PagedList<VoucherTypeListModel>, PagedListPostModelWithFilter>("accounts/get-voucher-type-paged-list", ListPageSearchModel);
+    }
+
+    #endregion
+
+    #region Modal voucher type
+
+    private async Task HandleNewVoucherTypeAdded(IdnValuePair voucherType) { await LoadData(); }
+    private async Task HandleVoucherTypeModalOpenButtonClick(int voucherTypeID = 0)
+    {
+        await voucherTypeModal.OpenVoucherTypeModal(voucherTypeID);
+    }
+
+    #endregion
+}

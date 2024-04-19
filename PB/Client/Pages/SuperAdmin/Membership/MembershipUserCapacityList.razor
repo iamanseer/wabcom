@@ -1,0 +1,208 @@
+﻿@page "/membership-capacity-list"
+@using PB.Shared.Models
+@using PB.Shared.Models.Common
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+
+                    <ListPageHeader Settings="MembershipUserCapacitySettings" OnFilterButtonClick="SearchByCapacity" OnAddButtonClick="ShowCapacitytModal" />
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                            <thead>
+                                <tr>
+                                    <th>SlNo</th>
+                                    <th>@Localizer["Capacity"]</th>
+                                    @* <th>@Localizer["Language"]</th>
+                                    <th>@Localizer["Account Name"]</th>
+                                    <th>@Localizer["Category"]</th>
+                                    <th>@Localizer["Status"]</th>
+                                    <th>@Localizer["Reason"]</th>*@
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in CapacityListPageModel.Data.Select((data, index) => new { index, data }))
+                                {
+                                    <tr>
+                                        <td>
+                                            @((CapacityListPageModel.PageIndex - 1) * CapacityListPageModel.PageSize + 1 + item.index)
+                                        </td>
+                                        <td>
+                                            @item.data.Capacity
+                                        </td>
+                                        <td style="width:100px;">
+                                            <div class="d-flex justify-content-center align-items-center">
+                                                <ActionEdit Clicked="async () =>await Edit(item.data.CapacityID)" />
+                                                <ActionDelete Clicked="async () => await Remove(item.data.CapacityID)" />
+                                            </div>
+                                        </td>
+                                        @*<td>
+                                    @item.data.LanguageName
+                                    </td>
+                                    <td>
+                                    @item.data.Name
+                                    </td>
+                                    <td>
+                                    @item.data.CategoryID.ToString()
+                                    </td>
+                                    <td>
+                                    @item.data.WhatsappTemplateStatus
+                                    </td>
+                                    <td>
+                                    @item.data.StatusReason
+                                    </td>*@
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <PaginationCustom PageSize="CapacityListPageModel.PageSize" TotalCount="CapacityListPageModel.TotalCount" TotalPages="CapacityListPageModel.TotalPages" PageIndex="CapacityListPageModel.PageIndex" LoadPageIndex="PageIndex" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<div class="modal fade" id="AddNewCapacityModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Add Capacity</h6><button aria-label="Close" class="btn-close"  @onclick="(async() =>await HideCapacityModal())"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="Capacity" OnValidSubmit="SaveCapacity" autocomplete="off">
+                <DataAnnotationsValidator />
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">Capacity :</label>
+                                <input type="text" class="form-control" label="Name" @bind="Capacity.Capacity" placeholder="Enter The Capacity">
+                                <ValidationMessage For="()=>Capacity.Capacity" />
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-primary" type="submit">Save</button>
+                                <button class="btn btn-danger" type="button" @onclick="@(async ()=>await Cancel())">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public int CapacityId { get; set; }
+    private PagedListPostModelWithFilter ListPageSearchModel = new();
+    private PagedList<MembershipUserCapacityModel> CapacityListPageModel = new();
+    HeaderSettingsModel? MembershipUserCapacitySettings;
+
+    private MembershipUserCapacityModel Capacity = new();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        MembershipUserCapacitySettings = new()
+            {
+                Heading = "Membership User Capacity",
+                SearchPlaceHolder = "Search with Capacity",
+                NeedAddButton = true,
+                AddButtonText = "Add Capacity ",
+                NeedSortOption=false,
+
+            };
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        CapacityListPageModel = await API.PostAsync<PagedList<MembershipUserCapacityModel>, PagedListPostModelWithFilter>("support/get-all-capacity", ListPageSearchModel);
+    }
+
+    #region Search
+
+    private async Task SearchByCapacity(PagedListPostModelWithFilter searchModel)
+    {
+        ListPageSearchModel = searchModel;
+        await LoadData();
+    }
+
+    #endregion
+    private async Task Edit(int CapacityId)
+    {
+        Capacity = await API.GetAsync<MembershipUserCapacityModel>($"support/get-Capacity/{CapacityId}", true);
+        //await LoadFeature();
+        await ShowCapacitytModal();
+    }
+
+
+    async Task Remove(int Id)
+    {
+        if (await API.DeleteAsync("support/delete-capacity", Id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadData();
+        }
+    }
+
+
+    private async Task PageIndex(int pageIndex)
+    {
+        ListPageSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    private async Task ShowCapacitytModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "AddNewCapacityModal");
+    }
+
+    private async Task HideCapacityModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "AddNewCapacityModal");
+        Capacity = new MembershipUserCapacityModel();
+    }
+
+    #region AddNewCapacity
+
+    private  async Task EditCapacity()
+    {
+        if (CapacityId != 0)
+        {
+
+        }
+    }
+    private async Task SaveCapacity()
+    {
+
+        var result = await API.PostAsync<UserCapacityAddResultModel, MembershipUserCapacityModel>("support/save-capacity", Capacity);
+        if (result != null)
+        {
+            Capacity = new MembershipUserCapacityModel();
+            await Task.Delay(100);
+            await LoadData();
+            await HideCapacityModal();
+        }
+
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            Capacity = new();
+            await HideCapacityModal();
+
+        }
+    }
+    #endregion
+
+    
+}
+

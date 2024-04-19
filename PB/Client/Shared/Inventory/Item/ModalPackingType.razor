@@ -1,0 +1,101 @@
+﻿@using PB.Model.Models;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+
+<div class="modal fade" id="PackTypeModal">
+    <div class="modal-dialog modal-dialog-scrollable modal-md " role="document">
+        <EditForm Model="Model" autocomplete="off" OnValidSubmit="async () => await SavePackType()">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    @if (Model.PackingTypeID != 0)
+                    {
+                        <h6 class="modal-title">@Model.PackingTypeName</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New Item Packing Type</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HidePackingTypeModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row">
+
+                        <InputTextBox Label="Packing Type Name:"
+                                      DivClass="col-md-12"
+                                      IsRequired="true"
+                                      ValidationFor="() => Model.PackingTypeName"
+                                        @bind-Value="Model.PackingTypeName"
+                                      id="item-size-text-box" />
+
+                    </div>
+
+                    <div class="row">
+
+                        <InputTextBox Label="Packing Type Code:"
+                                      DivClass="col-md-12"
+                                      IsRequired="true"
+                                      ValidationFor="() => Model.PackingTypeCode"
+                                        @bind-Value="Model.PackingTypeCode"
+                                      id="item-size-text-box" />
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    @if (Model.PackingTypeID == 0)
+                    {
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HidePackingTypeModal()">Close</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HidePackingTypeModal()">Close</button>
+                    }
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+
+    private ItemPackingTypeModel Model = new();
+
+    public async Task OpenItemPackingTypeModal(int packingTypeID = 0)
+    {
+        Model = new();
+        if (packingTypeID != 0)
+            Model = await API.GetAsync<ItemPackingTypeModel>($"item/get-item-packing-type/{packingTypeID}", true);
+        await OpenPackingTypeModal();
+    }
+
+    private async Task SavePackType()
+    {
+        var result = await API.PostAsync<PackingTypeAddResultModel, ItemPackingTypeModel>("item/save-packing-type", Model);
+        if (result != null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair()
+                {
+                    ID = result.PackingTypeID,
+                    Value = result.PackingTypeName
+                });
+            await HidePackingTypeModal();
+            Model = new();
+        }
+    }
+
+    private async Task OpenPackingTypeModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "PackTypeModal");
+    }
+
+    private async Task HidePackingTypeModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "PackTypeModal");
+    }
+}

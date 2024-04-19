@@ -1,0 +1,483 @@
+﻿@page "/home"
+@using PB.CRM.Model.Enum;
+@using PB.Shared.Models;
+@attribute [Authorize]
+
+<PageLayoutNew>
+
+
+    <div class="main-container container-fluid">
+
+        <!-- PAGE-HEADER -->
+        <div class="page-header">
+            <h1 class="page-title">Dashboard</h1>
+        </div>
+
+        <!-- ROW-1 -->
+
+        <div class="row">
+            <div class="col-12 col-md-6">
+                <div class="card  bg-success img-card box-success-shadow">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <div class="text-white">
+                                <h2 class="mb-0 number-font">@Model.NewEnquiries</h2>
+                                <p class="text-white mb-0">New Enquires</p>
+                            </div>
+                            <div class="ms-auto"> <i class="fa fa-comment-o text-white fs-30 me-2 mt-2"></i> </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <div class="card bg-primary img-card box-primary-shadow">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <div class="text-white">
+                                <h2 class="mb-0 number-font">@Model.TotalEnquiry</h2>
+                                <p class="text-white mb-0">Total Enquires </p>
+                            </div>
+                            <div class="ms-auto"> <i class="fa fa-user-o text-white fs-30 me-2 mt-2"></i> </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!--New Enquiries Card-->
+        <div class="row row-cards">
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
+                <div class="card" @onclick="@(()=>Nav.NavigateTo($"enquiries/new-enquiries"))">
+                    <div class="card-header pb-0 border-bottom-0">
+                        <h3 class="card-title">New Enquires</h3>
+                        <div class="card-options">
+                            <a class="btn btn-sm btn-success" href="javascript:void(0)"><i class="fa fa-comment-o mb-0"></i></a>
+                        </div>
+                    </div>
+                    <div class="card-body pt-0">
+                        <h3 class="d-inline-block mb-2">@Model.NewEnquiries</h3>
+                        <div class="progress h-2 mt-2 mb-2">
+                            <div class="progress-bar bg-success" style="width: @(Model.Total > 0 ? (Model.NewEnquiries * 100) / Model.Total : 0)%;" role="progressbar">
+                            </div>
+                        </div>
+                        <div class="float-start">
+                            <div class="mt-2">
+                                <i class="fa fa-caret-up text-success"></i>
+                                <span>@(Model.Total > 0 ? (Model.NewEnquiries * 100) / Model.Total : 0)%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Pending Followup Card-->
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
+                <div class="card" @onclick="@(()=>Nav.NavigateTo($"follow-ups"))">
+                    <div class="card-header pb-0 border-bottom-0">
+                        <h3 class="card-title">Pending Followup</h3>
+                        <div class="card-options">
+                            <a class="btn btn-sm btn-primary" href="javascript:void(0)"><i class="fa fa-mail-reply mb-0"></i></a>
+                        </div>
+                    </div>
+                    <div class="card-body pt-0">
+                        <h3 class="d-inline-block mb-2">@Model.Followups</h3>
+                        <div class="progress h-2 mt-2 mb-2">
+                            <div class="progress-bar bg-primary" style="width: @(Model.Total>0?(Model.Followups*100)/Model.Total:0)%;" role="progressbar">
+                            </div>
+                        </div>
+                        <div class="float-start">
+                            <div class="mt-2">
+                                <i class="fa fa-caret-down text-primary"></i>
+                                <span>@(Model.Total > 0 ? (Model.Followups * 100) / Model.Total : 0)%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Quotation Sent Card-->
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
+                <div class="card" @onclick="@(()=>Nav.NavigateTo($"enquiries/interested"))">
+                    <div class="card-header pb-0 border-bottom-0">
+                        <h3 class="card-title">Quotation Sent</h3>
+                        <div class="card-options">
+                            <a class="btn btn-sm btn-warning" href="javascript:void(0)"><i class="fa fa-send-o mb-0"></i></a>
+                        </div>
+                    </div>
+                    <div class="card-body pt-0">
+                        <h3 class="d-inline-block mb-2">@Model.Interested</h3>
+                        <div class="progress h-2 mt-2 mb-2">
+                            <div class="progress-bar bg-warning" style="width: @(Model.Total>0?(Model.Interested*100)/Model.Total:0)%;" role="progressbar">
+                            </div>
+                        </div>
+                        <div class="float-start">
+                            <div class="mt-2">
+                                <i class="fa fa-caret-up text-warning"></i>
+                                <span>@(Model.Total > 0 ? (Model.Interested * 100) / Model.Total : 0)%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!--Closed Card-->
+            <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
+                <div class="card" @onclick="@(()=>Nav.NavigateTo($"enquiries/closed"))">
+                    <div class="card-header pb-0 border-bottom-0">
+                        <h3 class="card-title">Closed</h3>
+                        <div class="card-options">
+                            <a class="btn btn-sm btn-danger" href="javascript:void(0)"><i class="fa fa-money mb-0"></i></a>
+                        </div>
+                    </div>
+                    <div class="card-body pt-0">
+                        <h3 class="d-inline-block mb-2">@Model.Closed</h3>
+                        <div class="progress h-2 mt-2 mb-2">
+                            <div class="progress-bar bg-danger" style="width: @(Model.Total>0?(Model.Closed*100)/Model.Total:0)%;" role="progressbar">
+                            </div>
+                        </div>
+                        <div class="float-start">
+                            <div class="mt-2">
+                                <i class="fa fa-caret-down text-danger"></i>
+                                <span>@(Model.Total > 0 ? (Model.Closed * 100) / Model.Total : 0)%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- ROW-1 END -->
+        <!-- ROW-2 -->
+        <div class="row">
+            <div class="col-xl-4 col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Todays Followup</h5>
+                    </div>
+                    <div class="card-body flw-scroll">
+                        @foreach (var item in followUpList)
+                        {
+                            <div class="media mb-5 mt-0">
+                                <div class="d-flex me-3">
+                                    <a href="javascript:void(0)"> <img class="media-object rounded-circle thumb-sm" alt="64x64" src="/assets/images/users/18.jpg"> </a>
+                                </div>
+                                <div class="media-body">
+                                    <a class="text-dark">@item.CustomerName</a>
+                                    @if (item.Type == (int)FollowUpTypes.Enquiry)
+                                    {
+                                        <div class="text-muted small">#E- @item.No</div>
+                                    }
+                                    else if (item.Type == (int)FollowUpTypes.Quotation)
+                                    {
+                                        <div class="text-muted small">#Q- @item.No</div>
+                                    }
+                                </div>
+                                @if (item.Type == (int)FollowUpTypes.Enquiry)
+                                {
+                                    <button type="button" class="btn btn-primary btn-sm d-block" @onclick="@(()=>Nav.NavigateTo($"enquiry-view/{item.EnquiryID}"))"><i class="fa fa-angle-double-right" style="font-size: 17px;"></i></button>
+                                }
+                                else if (item.Type == (int)FollowUpTypes.Quotation)
+                                {
+                                    <button type="button" class="btn btn-primary btn-sm d-block" @onclick="@(()=>Nav.NavigateTo($"quotation-view/{item.QuotationID}"))"><i class="fa fa-angle-double-right" style="font-size: 17px;"></i></button>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- analytics -->
+            <div class="col-md-8 col-12">
+                <div class="card">
+                    <div class="card-header justify-content-between">
+
+                        <h3 class="card-title">Analytics</h3>
+                        <!--Analytics chart sort-->
+                        @* <div class="">
+                        <a class="btn btn-white btn-md btn-outline-dark" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-sort me-2"></i><span style="font-weight: 500;">
+                        Sort
+                        By
+                        </span>
+                        </a>
+                        <ul class="dropdown-menu" role="menu" style="">
+                        <li class="dropdown-plus-title">
+                        Sort By
+                        </li>
+                        <li>
+                        <a>
+                        <i class="fa fa-calendar-o me-1"></i>
+                        last 3 months
+                        </a>
+                        </li>
+                        <li>
+                        <a>
+                        <i class="fa fa-calendar-o me-1"></i>
+                        last 6 months
+                        </a>
+                        </li>
+
+                        <li>
+                        <a>
+                        <i class="fa fa-calendar-o me-1"></i>
+                        last 12 months
+                        </a>
+                        </li>
+                        </ul>
+
+                        </div>*@
+                    </div>
+                    <div class="card-body mt-4">
+                        <div id="chart-bar" class="chartsh c3"></div>
+                        <div class="legend">
+                            <div style="position: absolute; width: 53.4531px; height: 105px; top: 5px; right: 5px; opacity: 0.85;">
+                            </div>
+                            <table style="position:absolute;top:5px;right:5px;;font-size:smaller;color:#545454">
+                                <tbody>
+                                    <tr>
+                                        <td class="legendColorBox">
+                                            <div style="border:1px solid #ccc;padding:1px">
+                                                <div style="width:4px;height:0;border:5px solid #d6cffa;overflow:hidden">
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="legendLabel">Total Enquiry</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="legendColorBox">
+                                            <div style="border:1px solid #ccc;padding:1px">
+                                                <div style="width:4px;height:0;border:5px solid #faae78;overflow:hidden">
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="legendLabel">New Enquiry</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="legendColorBox">
+                                            <div style="border:1px solid #ccc;padding:1px">
+                                                <div style="width:4px;height:0;border:5px solid #6998f0;overflow:hidden">
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="legendLabel">Followup</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="legendColorBox">
+                                            <div style="border:1px solid #ccc;padding:1px">
+                                                <div style="width:4px;height:0;border:5px solid #57c274;overflow:hidden">
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="legendLabel">Interested</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="legendColorBox">
+                                            <div style="border:1px solid #ccc;padding:1px">
+                                                <div style="width:4px;height:0;border:5px solid #ed5f5f;overflow:hidden">
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="legendLabel">Closed</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- COL END -->
+            <!--Donut Chart-->
+            <div class="col-md-6 col-12">
+                <div class="card">
+                    <div class="card-header justify-content-between">
+                        <h3 class="card-title">Donut Chart</h3>
+                        @* <div class="">
+                        <a class="btn btn-white btn-md btn-outline-dark" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-sort me-2"></i><span style="font-weight: 500;">
+                        Sort
+                        By
+                        </span>
+                        </a>
+                        <ul class="dropdown-menu" role="menu" style="">
+                        <li class="dropdown-plus-title">
+                        Sort By
+                        </li>
+                        <li>
+                        <a href="#">
+                        <i class="fa fa-calendar-o me-1"></i>
+                        last week
+                        </a>
+                        </li>
+                        <li>
+                        <a href="#">
+                        <i class="fa fa-calendar-o me-1"></i>
+                        last month
+                        </a>
+                        </li>
+
+                        <li>
+                        <a href="#">
+                        <i class="fa fa-calendar-o me-1"></i>
+                        last 3 months
+                        </a>
+                        </li>
+                        </ul>
+
+                        </div>*@
+                    </div>
+                    <div class="card-body">
+                        <h5>Total Leads : @(DonutList != null ? (DonutList.Where(DL => DL.DataCount != 0).Sum(DL => DL.DataCount)) : 0)</h5>
+                        <div id="chart-donut" class="chartsh c3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!--LeadThrough Chart-->
+            <div class="col-lg-6 col-md-12">
+                <div class="card">
+                    <div class="card-header justify-content-between">
+                        <h3 class="card-title">Lead Through</h3>
+                        @*<div class="">
+                        <a href="javascript:void(0)" class="btn btn-white btn-md btn-outline-dark" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-sort me-2"></i><span style="font-weight: 500;">
+                        Sort
+                        By
+                        </span>
+                        </a>
+                        <ul class="dropdown-menu" role="menu" style="">
+                        <li class="dropdown-plus-title">
+                        Sort By
+                        </li>
+                        <li>
+                        <a href="#">
+                        <i class="fa fa-calendar-o me-1"></i>
+                        last week
+                        </a>
+                        </li>
+                        <li>
+                        <a href="#">
+                        <i class="fa fa-calendar-o me-1"></i>
+                        last month
+                        </a>
+                        </li>
+
+                        <li>
+                        <a href="#">
+                        <i class="fa fa-calendar-o me-1"></i>
+                        last 3 months
+                        </a>
+                        </li>
+                        </ul>
+
+                        </div>*@
+                    </div>
+                    <div class="card-body mt-3 mb-3 d-flex flex-row-reverse">
+                        <div class="legend">
+                            @*<div style="position: absolute; width: 53.4531px; height: 105px; top: 5px; right: 5px; opacity: 0.85;">
+                            </div>*@
+                           @* <table style="position:absolute;top:5px;right:5px;;font-size:smaller;color:#545454">
+                                <tbody>
+                                    @if (CanShowChartLabels == true)
+                                    {
+                                        @foreach (var leads in LeadThroughData)
+                                        {
+                                            <tr>
+                                                <td class="legendColorBox">
+                                                    <div style="border:1px solid #ccc;padding:1px">
+
+                                                        <div style="width:4px;height:0;border:5px solid @leads.Color;overflow:hidden">
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="legendLabel">
+                                                    @leads.FieldName
+
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+
+                                </tbody>
+                            </table>*@
+
+
+                            <ul class="list-group d-flex justify-content-start gap-2 flex-wrap" style="min-width: 200px;">
+                                @if (CanShowChartLabels == true)
+                                {
+                                    @foreach (var leads in LeadThroughData)
+                                    {
+                                        <li class="list-group-item border-0 py-0" style="font-size: 12px;margin-bottom: -5%;">
+                                            <i class="fa fa-square me-2" style="color:@leads.Color;" aria-hidden="true">
+
+                                            </i> @leads.FieldName
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                        <div id="chart-pie2" class="chartsh c3">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- COL END -->
+        </div>
+        <!-- ROW-2 END -->
+    </div>
+
+</PageLayoutNew>
+
+@code
+{
+    private List<DashboardFollowUpListModel> followUpList = new();
+    private DashboardCountModel Model = new();
+    private List<DashboardLeadQualityChartModel> DonutList = new();
+    private List<DashboardLeadThroughChartModel> LeadThroughData = new();
+
+    private bool CanShowPage = false;
+    private bool CanShowChartLabels = false;
+    //private EnquiryLineChartModel EnquiryLineChart = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model = await API.GetAsync<DashboardCountModel>("dashboard/get-dashboard-count");
+
+        followUpList = await API.GetAsync<List<DashboardFollowUpListModel>>("dashboard/get-dashboard-follow-up-list");
+
+        var AnalyticModel = await API.GetAsync<DashboardBarChartDataModel>("dashboard/get-dashboard-bar-chart-data");
+        if (AnalyticModel != null)
+        {
+            await JS.InvokeVoidAsync("barchart", AnalyticModel);
+            StateHasChanged();
+        }
+
+        DonutList = await API.GetAsync<List<DashboardLeadQualityChartModel>>("dashboard/get-dashboard-leadquality-chart-count");
+        if (DonutList != null && DonutList.Count > 0)
+        {
+            await JS.InvokeVoidAsync("chartdonut", DonutList);
+            StateHasChanged();
+        }
+
+        LeadThroughData = await API.GetAsync<List<DashboardLeadThroughChartModel>>("dashboard/get-lead-through-chart-counts");
+        if (LeadThroughData != null && LeadThroughData.Count > 0)
+        {
+            foreach (var item in LeadThroughData)
+            {
+                item.Color = "#" + item.Color;
+            }
+            await JS.InvokeVoidAsync("chartpie", LeadThroughData);
+            StateHasChanged();
+            CanShowChartLabels = true;
+        }
+
+        CanShowPage = true;
+
+
+        //EnquiryLineChart = await API.GetAsync<EnquiryLineChartModel>("crm/get-enquiry-chart-data");
+        //await JS.InvokeVoidAsync("CreateVisitorLineChart", EnquiryLineChart);
+    }
+
+
+}

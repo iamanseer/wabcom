@@ -1,0 +1,76 @@
+﻿@page "/payment-verification/{ClientId:int}"
+
+
+<LoginLayout>
+    <div class="col-lg-6 offset-lg-3">
+        <div class="card">
+            <EditForm Model="Model" OnValidSubmit="SaveDetails">
+                <DataAnnotationsValidator />
+                <div class="card-body">
+                    <div class="row">
+
+                        <div class="col-md-12">
+                            <h3 class="fw-semibold mb-2">Please verify your Payment</h3>
+                            <p class="fs-13 mb-2"> To complete your purchase, please verify your payment details below.</p>
+
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label">Referance Number <span class="text-red">*</span></label>
+                                        <input type="text" class="form-control form-control-lg" placeholder="Referance Number" @bind="Model.PaymentRefNo">
+                                    </div>
+                                    <ValidationMessage For="()=>Model.PaymentRefNo" />
+                                </div>
+
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <FileUpload @ref="FileUpload" Label="Payment Screenshot" MediaID="Model.MediaID" FolderName="payment" />
+                                    </div>
+                                 @*   <ValidationMessage For="()=>Model.MediaID" />*@
+                                </div>
+
+                                <div class="col-md-12">
+                                    <button type="submit" class="btn btn-primary mb-3 float-end ">Verify Now</button>  @*@onclick="SaveDetails"*@
+                                    <a href="/login" class="btn mb-3 ms-auto float-end">Go back to Login</a>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </EditForm>
+
+        </div>
+    </div>
+
+</LoginLayout>
+@code {
+    [Parameter] public int? ClientId { get; set; }
+    FileUpload FileUpload;
+    //Image Media;
+    private PaymentVerificationModel Model = new();
+
+    MediaUpload? HeaderMedia;
+
+
+    private async Task SaveDetails()
+    {
+        Model.ClientID = ClientId;
+        Model.MediaID = await FileUpload.UploadFile();
+
+        if(Model.MediaID==null)
+        {
+            await JS.ErrorMessage("Please upload payment screenshort");
+            return;
+        }
+        var result = await API.PostAsync<BaseSuccessResponse, PaymentVerificationModel>("auth/update-payment-details", Model);
+        if (result != null)
+        {
+            Nav.NavigateTo("/login");
+        }
+    }
+}

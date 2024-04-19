@@ -1,0 +1,135 @@
+﻿@page "/court-package"
+@page "/court-package/{packageId:int}"
+@using PB.CRM.Model.Enum;
+@using PB.Shared.Models.Court;
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="SaveCourtPackage" autocomplete="off">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Meambership Feature Details</h5>
+                        </div>
+                        <div class="card-body">
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Package Name :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="Model.PackageName" placeholder="Package name">
+                                        <ValidationMessage For="()=>Model.PackageName" />
+
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Validity Month :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="Model.ValidityMonth" placeholder="validity month">
+                                        <ValidationMessage For="()=>Model.ValidityMonth" />
+
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Total Hours :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="Model.TotalHours" placeholder="total hrs">
+                                        <ValidationMessage For="()=>Model.TotalHours" />
+
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Fee :</label>
+                                        <input type="number" class="form-control" label="Name" @bind="Model.Fee" placeholder="Fee">
+                                        <ValidationMessage For="()=>Model.Fee" />
+                                    </div>
+                                </div>
+                                <DropdownSelect DropdownID="@TaxDropdownSelect"
+                                                DivClass="col-md-6"
+                                                Label="Tax Category"
+                                                IsRequired="true"
+                                                IsAddOptionNeed="false"
+                                                ReadDataOnSearch="false"
+                                                Mode="(int)DropdownModes.TaxCategory"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.TaxCategoryID, Value=Model.TaxCategoryName})"
+                                                ItemSelected="ItemSelected"
+                                                PlaceHolder="Select TaxCategory" />
+
+                                <div class="col-md-6">
+                                    <label class="custom-control custom-checkbox" style="margin-top: 5%;">
+                                        <input type="checkbox" class="custom-control-input" name="example-checkbox1" value="option1" @bind="Model.IncTax">
+                                        <span class="custom-control-label">IncTax</span>
+                                    </label>
+                                </div>
+
+                            </div>
+
+
+
+                            <div class="modal-footer">
+                                <button class="btn btn-primary" type="submit">Save</button>
+                                <button class="btn btn-danger" type="button" @onclick="@(async ()=>await Cancel())">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+</PageLayoutNew>
+
+
+
+
+@code {
+    [Parameter] public int packageId { get; set; }
+    private CourtPackageModel Model = new();
+    private string TaxDropdownSelect = "tax-drop-down-select";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (packageId!=0)
+        {
+            Model = await API.GetAsync<CourtPackageModel>($"court-package/get-court-package/{packageId}", true);
+        }
+    }
+
+    #region Dropdown
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.TaxCategory:
+                Model.TaxCategoryID = data.ID;
+                Model.TaxCategoryName = data.Value;
+                break;
+
+        }
+    }
+    #endregion
+
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            if (Model.CourtPackageID != 0)
+            {
+                Nav.NavigateTo($"court-package-view/{Model.CourtPackageID}");
+                StateHasChanged();
+            }
+
+            else
+                Nav.NavigateTo("court-packages");
+        }
+    }
+    private async Task SaveCourtPackage()
+    {
+        var result = await API.PostAsync<BaseSuccessResponse, CourtPackageModel>("court-package/save-court-package", Model);
+        Nav.NavigateTo("court-packages");
+    }
+}

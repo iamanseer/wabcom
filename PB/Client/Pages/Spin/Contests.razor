@@ -1,0 +1,167 @@
+﻿@page "/contests"
+@using PB.Shared.Models.Common;
+@using PB.Shared.Tables;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+
+                    <ListPageHeader Settings="ItemFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)ApplyFilterTo" />
+                </div>
+
+                <div class="card-body">
+                    <ServerMessage />
+                                        <div class="table-responsive">
+                                            <Grid DivClass="m-0" TableClass="table-striped" Data="ViewModel.Data" Context="cn" StartingSlNo="@((ViewModel.PageIndex-1)*ViewModel.PageSize+1)">
+                                                <GridHeader >
+                                                    <TH>@Localizer["Sl.No"]</TH>
+                                                    <TH>@Localizer["Contest"]</TH>
+                                                    <TH>@Localizer["StartDate"]</TH>
+                                                     <TH>@Localizer["EndDate"]</TH>
+                                                    <TH>@Localizer["Expected Participants"]</TH>
+                                                    <TH>@Localizer["Modification"]</TH>
+                                                    <TH>@Localizer["Delete"]</TH>
+                                                </GridHeader>
+                                                <GridRow>
+                                                  
+                                                    <td>@cn.ContestName</td>
+                                                    <td>@(cn.StartDate.HasValue?cn.StartDate.Value.ToString("dd/MM/yyyy"):"")</td>
+                                                    <td>@(cn.EndDate.HasValue ? cn.EndDate.Value.ToString("dd/MM/yyyy") : "")</td>
+                                                    <td>@cn.ExpectedParticipants</td>
+                                                        <td>
+                                                            <div class="g-2">
+                                                            <a class="btn text-primary btn-sm" data-bs-toggle="tooltip" @onclick="()=>Edit(cn.ContestID)" data-bs-original-title="Edit">
+                                                                    <span class="fe fe-edit fs-14"></span>
+                                                                </a>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="g-2">
+                                                                <a class="btn text-danger btn-sm" data-bs-toggle="tooltip"  @onclick="() => Delete(cn.ContestID)" data-bs-original-title="Delete">
+                                                                    <span class="fe fe-trash-2 fs-14"></span>
+                                                                </a>
+                                                            </div>
+                                                        </td>
+                                                   
+
+                                                </GridRow>
+                                                </Grid>
+                                                   
+                                            	<Pagination PageSize="ViewModel.PageSize" PageIndex="ViewModel.PageIndex" TotalPages="ViewModel.TotalPages" LoadPageIndex="LoadPageIndex"></Pagination>
+                                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+@code {
+
+    HeaderSettingsModel ItemFilterSettings = new()
+        {
+            Heading = "Contests",
+            SearchPlaceHolder = "Search with name..",
+            NeedAddButton = true,
+            AddButtonText = "Add Contest",
+            SinglePageURL = "contest",
+        };
+
+    private PagedList<Contest> ViewModel = new();
+    private PagedListPostModel SearchModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        ViewModel = await API.PostAsync<PagedList<Contest>, PagedListPostModel>("spin/get-all-contest", SearchModel, true);
+    }
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    async Task Delete(int contestId)
+    {
+        if (await API.DeleteAsync("spin/delete-contest", contestId, true, Localizer["Confirm"], Localizer["Are you sure do you want delete"], Localizer["Confirm"], Localizer["Cancel"]))
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task LoadPageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadData();
+    } 
+    async Task Edit(int ContestId)
+    {
+        Nav.NavigateTo($"contest/{ContestId}");
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+

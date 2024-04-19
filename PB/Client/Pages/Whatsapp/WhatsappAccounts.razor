@@ -1,0 +1,114 @@
+﻿@page "/whatsapp-accounts"
+
+@using PB.Model.Models;
+@using PB.Shared.Tables;
+@using PB.Shared.Tables.Whatsapp;
+    using PB.Shared.Tables.Whatsapp
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <h5 style="margin-bottom: 0 !important;">Whatsapp Accounts</h5>
+                </div>
+
+                <div class="card-body">
+
+                    <ServerMessage />
+                    <div class="row">
+                        <div class="col-12">
+
+                            <Grid DivClass="m-0" TableClass="table-striped" Data="ViewModel.Data" Context=cn>
+                                <GridHeader>
+                                    <TH>@Localizer["Name"]</TH>
+                                        <TH>@Localizer["Phone Number"]</TH>
+                                        <TH>@Localizer["Action"]</TH>
+                                    </GridHeader>
+                                    <GridRow>
+                                        <td>@cn.Name</td>
+                                    <td>@cn.PhoneNo</td>
+                                    <td style="width:110px">
+                                        <button type="button" class="btn btn-dark waves-effect waves-light" @onclick="()=>Edit(cn.WhatsappAccountID)"><i class="fa fa-edit"></i></button>
+                                        @if (cn.IsChatbotEnabled is null)
+                                        {
+                                            <button type="button" class="btn btn-dark waves-effect waves-light ms-2" @onclick="()=>ActiavteDeactivateChatbot(cn.WhatsappAccountID)"><i class="mdi mdi-toggle-switch"></i></button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-dark waves-effect waves-light ms-2" @onclick="()=>ActiavteDeactivateChatbot(cn.WhatsappAccountID, cn.IsChatbotEnabled.Value)"><i class="@(cn.IsChatbotEnabled.Value?"mdi mdi-toggle-switch-off":"mdi mdi-toggle-switch")"></i></button>
+                                        }
+                                        @*<button type="button" align="center" class="btn btn-dark waves-effect waves-light" @onclick="()=>Delete(cn.WhatsappAccountID)"><i class="fa fa-trash"></i></button>*@
+                                    </td>
+                                </GridRow>
+                            </Grid>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+@code {
+
+    PagedList<WhatsappAccount> ViewModel = new();
+    PagedListPostModel SearchModel = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        ViewModel = await API.PostAsync<PagedList<WhatsappAccount>, PagedListPostModel>("whatsapp/get-all-whatsapp-accounts", SearchModel);
+    }
+
+    void Edit(int Id)
+    {
+        Nav.NavigateTo($"whatsapp-account/{Id}");
+    }
+
+    private async Task ActiavteDeactivateChatbot(int whatsappAccountID, bool? isChatbotEnabled = null)
+    {
+
+        string confirmationMessage = "Do you want to deactivate the chatbot..?";
+        string message = "Chatbot deactivated successfully";
+        if (await JS.Confirm("Confirm", confirmationMessage))
+        {
+            if (isChatbotEnabled is not null && !isChatbotEnabled.Value)
+            {
+                confirmationMessage = "Do you want to activate the chatbot..?";
+                message = "Chatbot activated successfully";
+                var result = await API.GetAsync<bool?>($"whatsapp/v2/activate-chatbot/{whatsappAccountID}", true);
+                if (result is not null)
+                {
+                    ViewModel.Data.Where(wa => wa.WhatsappAccountID == whatsappAccountID).First().IsChatbotEnabled = true;
+                    await JS.SuccessMessage(message);
+                }
+            }
+
+            if (isChatbotEnabled is not null && isChatbotEnabled.Value || isChatbotEnabled is null)
+            {
+                confirmationMessage = "Do you want to deactivate the chatbot..?";
+                message = "Chatbot deactivated successfully";
+                var result = await API.GetAsync<bool?>($"whatsapp/v2/deactivate-chatbot/{whatsappAccountID}", true);
+                if (result is not null)
+                {
+                    ViewModel.Data.Where(wa => wa.WhatsappAccountID == whatsappAccountID).First().IsChatbotEnabled = false;
+                    await JS.SuccessMessage(message);
+                }
+            }
+            StateHasChanged();
+        }
+    }
+
+    async Task Delete(int Id)
+    {
+        if (await API.DeleteAsync("whatsappaccount/delete-whatsapp-account", Id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadData();
+        }
+    }
+}

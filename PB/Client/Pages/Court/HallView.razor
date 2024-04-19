@@ -1,0 +1,591 @@
+﻿@page "/hall-view/{HallID:int}"
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Court;
+@attribute [Authorize(Roles = "Hall")]
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row">
+            <ListPageMenuLayout MenuItems="menuItem"
+                                OnMenuItemSelect="LoadViewData"
+                                IsNeedAddNewButton=false
+                                SelectedMenuID="HallData.HallID" />
+
+            <div class="itemlist-container">
+
+                <div class="page-header">
+                    <h1 class="page-title">@HallData.HallName</h1>
+                    <div class="btn-toolbar float-right mr-7">
+
+                        <a class="btn btn-white btn-md me-2" @onclick="EditHall">
+                            <i class="fa fa-pencil" style="color:var(--primary-bg-color)"></i>
+                        </a>
+
+                        <a class="btn btn-white btn-md me-2" @onclick="async () => await DeleteHall()">
+                            <i class="fa fa-trash" style="color:red"></i>
+                        </a>
+                        <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"halls"))">
+                            <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="panel panel-primary">
+                                    <!--Tab Headings-->
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                @*<li><a href="#hallOverView" class="active" data-bs-toggle="tab">Details</a></li>*@
+
+                                                <li><a href="#hallSection" class="active" data-bs-toggle="tab">Hall Sections</a></li>
+
+                                                <li><a href="#hallTiming" data-bs-toggle="tab">Hall Timings</a></li>
+
+
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="hallSection">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <table class="table border text-wrap text-nowrap table-bordered table-responsive mb-0 ">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Sl No</th>
+                                                                    <th>Section Name</th>
+                                                                    <th>Action</th>
+
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @if (HallData.Sections.Count > 0)
+                                                                {
+                                                                    @foreach (var item in HallData.Sections)
+                                                                    {
+                                                                        <tr>
+                                                                            <td>
+                                                                                @item.RowIndex
+                                                                            </td>
+                                                                            <td>
+                                                                                @item.SectionName
+                                                                            </td>
+                                                                            <td>
+                                                                                <ActionDelete Clicked="async () =>await RemoveHallSection(item.SectionID)" />
+                                                                            </td>
+                                                                        </tr>
+                                                                    }
+                                                                }
+
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+
+                                            <!--Hall Timing-->
+                                            <div class="tab-pane" id="hallTiming">
+                                                <div class="item-details-page">
+                                                    <div class="card">
+
+                                                        <div class="card-body">
+                                                            <div class="row mb-2">
+                                                                <div class="">
+                                                                    <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+                                                                        <thead>
+                                                                            <tr>
+
+                                                                                <th>
+                                                                                    Day
+                                                                                </th>
+
+                                                                                <th>
+                                                                                    StartTime
+                                                                                </th>
+
+                                                                                <th>
+                                                                                    EndTime
+                                                                                </th>
+
+                                                                                <th>
+                                                                                    Action
+                                                                                </th>
+
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @if (HallData.HallTimings != null && HallData.HallTimings.Count > 0)
+                                                                            {
+                                                                                @foreach (var item in HallData.HallTimings)
+                                                                                {
+                                                                                    <tr>
+                                                                                        @if (!item.IsEditMode)
+                                                                                        {
+                                                                                            <td>
+                                                                                                @((DayOfWeek)item.DayID)
+                                                                                            </td>
+
+                                                                                            <td>
+                                                                                                @item.StartHourName
+                                                                                            </td>
+
+                                                                                            <td>
+                                                                                                @item.EndHourName
+                                                                                            </td>
+
+                                                                                            <td style="width:100px;">
+                                                                                                <div class="d-flex justify-content-center align-items-center">
+                                                                                                    <ActionEdit Clicked="async () => await SwitchToRowEditMode(item)" />
+                                                                                                    <ActionDelete Clicked="async () => await RemoveRow(item)" />
+                                                                                                </div>
+                                                                                            </td>
+                                                                                        }
+                                                                                        else
+                                                                                        {
+
+                                                                                            <td class="px-1" style="max-width:300px">
+                                                                                                <div class="col-md-12">
+                                                                                                    <div class="form-group">
+
+                                                                                                        <select id="lead-quality-select" class="form-control form-select" @bind="item.DayID">
+                                                                                                            <option value="-1" selected> Choose </option>
+                                                                                                            @foreach (var day in Enum.GetValues(typeof(DayOfWeek)))
+                                                                                                            {
+                                                                                                                <option value="@((int)day)">@day</option>
+                                                                                                            }
+
+                                                                                                        </select>
+                                                                                                        <ValidationMessage For="() => item.DayID" />
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </td>
+
+                                                                                            <td class="px-1" style="max-width:300px">
+                                                                                                <DropdownSelect DropdownID="@(RowStartHourDropdownID+item.RowIndex)" @ref="@RowStartHourDropdownSelect"
+                                                                                                    DivClass="col-md-12 px-0"
+                                                                                                    FormGroupClass="form-group mb-0"
+                                                                                                    IsAddOptionNeed="false"
+                                                                                                    ReadDataOnSearch="true"
+                                                                                                    Mode="(int)DropdownModes.HourMaster"
+                                                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = item.StartHourID, Value = item.StartHourName})"
+                                                                                                    ItemSelected="EditStartHour" />
+                                                                                            </td>
+
+                                                                                            <td class="px-1" style="max-width:300px">
+                                                                                                <DropdownSelect DropdownID="@(RowEndHourDropdownID+item.RowIndex)" @ref="@RowEndHourDropdownSelect"
+                                                                                                    DivClass="col-md-12 px-0"
+                                                                                                    FormGroupClass="form-group mb-0"
+                                                                                                    IsAddOptionNeed="false"
+                                                                                                    ReadDataOnSearch="true"
+                                                                                                    Mode="(int)DropdownModes.HourMaster"
+                                                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = item.EndHourID, Value = item.EndHourName})"
+                                                                                                    ItemSelected="EditEndHour" />
+                                                                                            </td>
+
+                                                                                            <td style="width:100px;" class="px-1">
+                                                                                                <div class="d-flex justify-content-center align-items-center">
+                                                                                                    <ActionDone ButtonID="@("row-action-done-"+item.RowIndex)" Clicked="async () => await SwitchToRowDefaultMode(item)" />
+                                                                                                </div>
+                                                                                            </td>
+                                                                                        }
+                                                                                    </tr>
+                                                                                }
+
+                                                                            }
+                                                                        </tbody>
+                                                                        <tfoot>
+                                                                            <tr>
+
+                                                                                <td class="px-1" style="max-width:300px">
+                                                                                    <div class="col-md-12">
+                                                                                        <div class="form-group">
+
+                                                                                            <select id="lead-quality-select" class="form-control form-select" @bind="Footer.DayID">
+                                                                                                <option value="-1" selected> Choose Day </option>
+                                                                                                @foreach (var day in Enum.GetValues(typeof(DayOfWeek)))
+                                                                                                {
+                                                                                                    <option value="@((int)day)">@day</option>
+                                                                                                }
+
+                                                                                            </select>
+                                                                                            <ValidationMessage For="() => Footer.DayID" />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </td>
+
+                                                                                <td class="px-1" style="max-width:300px">
+                                                                                    <DropdownSelect DropdownID="@(FooterStartHourDropdownID)" @ref="@FooterStartHourDropdownSelect"
+                                                                                                    DivClass="col-md-12 px-0"
+                                                                                                    FormGroupClass="form-group mb-0"
+                                                                                                    IsAddOptionNeed="false"
+                                                                                                    ReadDataOnSearch="true"
+                                                                                                    Mode="(int)DropdownModes.HourMaster"
+                                                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Footer.StartHourID, Value = Footer.StartHourName})"
+                                                                                                    ItemSelected="StartHourSelected" />
+                                                                                </td>
+
+                                                                                <td class="px-1" style="max-width:300px">
+                                                                                    <DropdownSelect DropdownID="@(FooterEndHourDropdownID)" @ref="@FooterEndHourDropdownSelect"
+                                                                                                    DivClass="col-md-12 px-0"
+                                                                                                    FormGroupClass="form-group mb-0"
+                                                                                                    IsAddOptionNeed="false"
+                                                                                                    ReadDataOnSearch="true"
+                                                                                                    Mode="(int)DropdownModes.HourMaster"
+                                                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Footer.EndHourID, Value = Footer.EndHourName})"
+                                                                                                    ItemSelected="EndHourSelected" />
+                                                                                </td>
+
+                                                                                <td style="width:100px;" class="px-1">
+                                                                                    <div class="d-flex justify-content-evenly">
+                                                                                        <ActionAdd ButtonID="footer-add-button" Clicked="async () => await AddFooterToModel()" />
+                                                                                    </div>
+                                                                                </td>
+
+                                                                            </tr>
+                                                                        </tfoot>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="card-footer page-footer-action d-flex justify-content-end">
+                                                            <button type="submit" class="btn btn-primary me-2" @onclick="async () => await SaveHallTiming()">Save</button>
+
+                                                            <button type="button" class="btn btn-danger me-2" @onclick="CancelHallTiming">Cancel</button>
+
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<!--Add Hall-->
+<div class="modal fade" id="HallModal">
+    <EditForm Model="Hall" OnValidSubmit="SaveHall" autocomplete="off">
+        <DataAnnotationsValidator />
+        <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Hall</h6><button type="button" aria-label="Close" class="btn-close" @onclick="(async() =>await HideModal())"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">Hall Name :</label>
+                                <input type="text" class="form-control" label="Name" @bind="Hall.HallName" placeholder="Hall Name">
+                                <ValidationMessage For="()=>Hall.HallName" />
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div class="form-check form-check-inline bx-border">
+                                <input class="form-check-input" type="checkbox" id="IsActive" @bind-value="Hall.IsActive" checked="@(Hall.IsActive?"checked":null)">
+                                <label class="form-check-label ms-2" for="IsActive">
+                                    Is Active
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    @if (Hall.HallID == 0)
+                    {
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideModal()">Close</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideModal()">Close</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public int? HallID { get; set; }
+    private HallTimingModel Footer = new() { RowIndex = 1, IsEditMode = true };
+    private int currentRowIndex = -1;
+    private bool isAnyRowInEditMode = false;
+    private bool hasUnsavedChanges = false;
+
+    private DropdownSelect? FooterStartHourDropdownSelect;
+    private DropdownSelect? RowStartHourDropdownSelect;
+    private DropdownSelect? FooterEndHourDropdownSelect;
+    private DropdownSelect? RowEndHourDropdownSelect;
+
+    private string RowEndHourDropdownID = "row-end-hour-select-drop-down-";
+    private string FooterStartHourDropdownID = "footer-start-hour-select-drop-down";
+    private string RowStartHourDropdownID = "row-start-hour-select-drop-down-";
+    private string FooterEndHourDropdownID = "footer-end-hour-select-drop-down";
+
+    #region Hall View
+
+    private HallViewModel HallData = new();
+    private HallModel Hall = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await SwitchToView(HallID.Value);
+    }
+
+    private async Task SwitchToView(int hallID)
+    {
+        await LoadViewMenuList();
+        await LoadViewData(hallID);
+    }
+
+    private List<ViewPageMenuModel> menuItem = new();
+
+
+    private async Task LoadViewMenuList()
+    {
+        menuItem = await API.GetAsync<List<ViewPageMenuModel>>("court/get-hall-menu-list", true);
+    }
+    private async Task LoadViewData(int? hallID)
+    {
+        HallData = await API.GetAsync<HallViewModel>($"court/get-hall-view/{hallID}", true);
+        OrderTiming();
+    }
+
+    private async Task EditHall()
+    {
+        Hall = await API.GetAsync<HallModel>($"court/get-hall/{HallID}", true);
+        StateHasChanged();
+        await ShowAddHallModal();
+    }
+
+    private async Task DeleteHall()
+    {
+        if (await JS.Confirm("Please confirm", "Are you sure you want to delete '" + HallData.HallName + "' Hall?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            if (await API.DeleteAsync("court/delete-hall", HallData.HallID, true))
+            {
+                await JS.SuccessMessage("Deleted Successfully");
+                Nav.NavigateTo("halls");
+
+            }
+        }
+    }
+
+    //private void NewCustomerAdded(CustomerModel customer)
+    //{
+    //    CustomerStage2Data = customer;
+    //}
+    private async Task RemoveHallSection(int Id)
+    {
+        if (await API.DeleteAsync("court/delete-hall-section", Id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadViewData(HallID);
+            StateHasChanged();
+
+        }
+    }
+
+
+
+    private async Task ShowAddHallModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "HallModal");
+    }
+    private async Task HideModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "HallModal");
+    }
+    private async Task SaveHall()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, HallModel>("court/save-hall", Hall);
+        if (res != null)
+        {
+            await JS.SuccessMessage("Saved Successfully");
+            await LoadViewData(HallID);
+            Hall ??= new();
+            await HideModal();
+        }
+    }
+    #endregion
+
+    #region HallTiming
+    private async Task AddFooterToModel()
+    {
+        if (!Footer.DayID.HasValue || Footer.DayID==-1)
+        {
+            await JS.ErrorMessage("Please choose a day");
+            return;
+        }
+        if (!Footer.StartHourID.HasValue)
+        {
+            await JS.ErrorMessage("Choose start time");
+            return;
+        }
+        if (!Footer.EndHourID.HasValue)
+        {
+            await JS.ErrorMessage("Choose end time");
+            return;
+        }
+
+        currentRowIndex = -1;
+        Footer.IsEditMode = false;
+        Footer.RowIndex = HallData.HallTimings.Count + 1;
+        HallData.HallTimings.Add(Footer);
+
+        OrderTiming();
+
+        Footer = new()
+        {
+            IsEditMode = true
+        };
+
+    }
+
+    private async Task SwitchToRowDefaultMode(HallTimingModel row)
+    {
+        HallData.HallTimings[currentRowIndex].IsEditMode = false;
+        isAnyRowInEditMode = false;
+        currentRowIndex = -1;
+        hasUnsavedChanges = true;
+    }
+
+    private async Task SwitchToRowEditMode(HallTimingModel row)
+    {
+        if (!isAnyRowInEditMode)
+        {
+            currentRowIndex = HallData.HallTimings.IndexOf(row);
+            HallData.HallTimings[currentRowIndex].IsEditMode = true;
+            isAnyRowInEditMode = true;
+            await Task.Delay(50);
+
+        }
+        else
+        {
+            await JS.ErrorMessage("There is already a row in edit mode, please complete it first");
+
+            return;
+        }
+    }
+    private async Task RemoveRow(HallTimingModel row)
+    {
+        if (await JS.Confirm("Cofirm", "Are you sure you want to remove the enquiry item", SweetAlertMessageType.question, "Yes, Remove", "No, Don't Remove"))
+        {
+            var index = HallData.HallTimings.IndexOf(row);
+            if (index == HallData.HallTimings.Count - 1)
+                HallData.HallTimings.Remove(row);
+            else
+            {
+                for (int i = index; i < HallData.HallTimings.Count; i++)
+                {
+                    HallData.HallTimings[i].RowIndex -= 1;
+                }
+                HallData.HallTimings.Remove(row);
+            }
+
+            hasUnsavedChanges = true;
+
+            // await FocusDropdown(FooterItemDropdownID);
+            Footer.RowIndex = HallData.HallTimings.Count + 1;
+            // SetDataUpdatedMode();
+        }
+
+
+    }
+    private async Task StartHourSelected(DropdownItemSelectedCallbackModel data)
+    {
+        Footer.StartHourID = data.ID;
+        Footer.StartHourName = data.Value;
+    }
+    private async Task EndHourSelected(DropdownItemSelectedCallbackModel data)
+    {
+
+        Footer.EndHourID = data.ID;
+        Footer.EndHourName = data.Value;
+    }
+
+    private async Task EditStartHour(DropdownItemSelectedCallbackModel item)
+    {
+        var currentData = HallData.HallTimings[currentRowIndex];
+
+        HallTimingModel? existingItem = HallData.HallTimings
+            .Where(i => i.StartHourID == item.ID && i.DayID == currentData.DayID)
+            .FirstOrDefault();
+
+        if (existingItem != null)
+        {
+            await JS.ErrorMessage("Timing already added");
+            return;
+        }
+
+        currentData.StartHourID = item.ID;
+        currentData.StartHourName = item.Value;
+
+        OrderTiming();
+    }
+    private async Task EditEndHour(DropdownItemSelectedCallbackModel item)
+    {
+        var currentData = HallData.HallTimings[currentRowIndex];
+
+        HallTimingModel? existingItem = HallData.HallTimings
+            .Where(i => i.EndHourID == item.ID && i.DayID == currentData.DayID)
+            .FirstOrDefault();
+
+        if (existingItem != null)
+        {
+            await JS.ErrorMessage("Item alredy added to the list, please choose a different one");
+            return;
+        }
+
+        currentData.EndHourID = item.ID;
+        currentData.EndHourName = item.Value;
+
+        OrderTiming();
+    }
+
+    private void OrderTiming()
+    {
+        HallData.HallTimings = HallData.HallTimings.OrderBy(s => s.DayID).ThenBy(s => s.StartHourID).ToList();
+    }
+
+    private async Task CancelHallTiming()
+    {
+        await LoadViewData(HallID);
+    }
+    private async Task SaveHallTiming()
+    {
+
+        var res = await API.PostAsync<BaseSuccessResponse, HallViewModel>("court/save-hall-timing", HallData);
+        if (res != null)
+        {
+            await JS.SuccessMessage("Saved Successfully");
+            await LoadViewData(HallID);
+
+        }
+    }
+    #endregion
+}

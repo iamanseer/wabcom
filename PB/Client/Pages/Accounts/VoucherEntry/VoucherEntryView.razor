@@ -1,0 +1,263 @@
+﻿@page "/voucher-view"
+@page "/voucher-view/{JournalMasterID:int}"
+
+@using PB.Model.Models;
+@using PB.Shared.Enum.Accounts;
+@using PB.Shared.Models.Accounts.VoucherEntry;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+
+        <div class="row">
+            <ListPageMenuLayout MenuItems="MenuList" OnMenuItemSelect="LoadViewData" SinglePageURL="voucher-entry" SelectedMenuID="Model.JournalMasterID" />
+
+            <!-- Right Bar (Content) -->
+            <div class="itemlist-container" id="items-details-div">
+                <div class="page-header">
+                    <h1 class="page-title">
+                        @if (!string.IsNullOrEmpty(Model.EntityName))
+                        {
+                            if (Model.EntityName.Length <= 17)
+                            {
+                                @("Voucher : " + Model.EntityName + " (" + Model.JournalNoPrefix + '/' + Model.JournalNo + ')')
+                            }
+                            else
+                            {
+                                @("Voucher : " + Model.EntityName.Substring(0, 17) + ".." + " (" + Model.JournalNoPrefix + '/' + Model.JournalNo + ')')
+                            }
+                        }
+                    </h1>
+
+                        <div class="btn-toolbar float-right mr-7">
+                            
+                    @if (!Model.IsVerified && (CurrentUserTypeID == (int)UserTypes.Client))
+                        {
+                            <a class="btn btn-white btn-md me-2" @onclick="async () => await VerifyVoucher()">
+                                <i class="fe fe-check"></i>
+                            </a>
+                        }
+                        <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo("vouchers"))">
+                            <i class="ion-close-round"></i>
+                        </a>
+
+
+                        </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="panel panel-primary">
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <li><a href="#tab5" class="active" data-bs-toggle="tab">Overview</a></li>
+                                                @if (Model.JournalEntries.Count > 0)
+                                                {
+                                                    <li><a href="#tab6" data-bs-toggle="tab">Journal Items</a></li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="tab5">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+
+                                                                <div class="row">
+                                                                    <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">Item Details </label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-4 col-auto items-label text-muted">Date</label>
+                                                                    <label class="col-6 col-auto">@(Model.Date is not null ? Model.Date.Value.ToString("dd/MM/yyyy") : "")</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-4 col-auto items-label text-muted">Voucher Type</label>
+                                                                    <label class="col-6 col-auto">@Model.VoucherTypeName</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-md-4 col-auto items-label text-muted">Prefix and Journal Number</label>
+                                                                    <label class="col-md-6 col-auto">@(Model.JournalNoPrefix + '/' + Model.JournalNo)</label>
+                                                                </div>
+
+                                                                @if (Model.EntityID is not null)
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-4 col-auto items-label text-muted">Entry against  </label>
+                                                                        <label class="col-md-6 col-auto ">@Model.EntityName</label>
+                                                                    </div>
+                                                                }
+
+                                                                @if (Model.NarrationType == (int)VoucherNarrationType.Single)
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-4 col-auto items-label text-muted">Particulars </label>
+                                                                        <label class="col-md-6 col-auto ">@Model.Particular</label>
+                                                                    </div>
+                                                                }
+
+                                                                @if (Model.IsSuccess)
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-4 col-auto items-label text-muted">Status </label>
+                                                                        <label class="col-md-6 col-auto " style="color:green">Success</label>
+                                                                    </div>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-4 col-auto items-label text-muted">Status </label>
+                                                                        <label class="col-md-6 col-auto " style="color:red">Failed</label>
+                                                                    </div>
+                                                                }
+
+                                                                @if (Model.IsVerified)
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-4 col-auto items-label text-muted">Verification status </label>
+                                                                        <label class="col-md-6 col-auto " style="color:green">verified</label>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <label class="col-md-4 col-auto items-label text-muted">Verified By </label>
+                                                                        <label class="col-md-6 col-auto ">@Model.VerifiedByName</label>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <label class="col-md-4 col-auto items-label text-muted">Verified On </label>
+                                                                        <label class="col-md-6 col-auto ">@(Model.VerifiedOn is not null ? Model.VerifiedOn.Value.ToString("dd/MM/yyyy") : "")</label>
+                                                                    </div>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-4 col-auto items-label text-muted">Verification status  </label>
+                                                                        <label class="col-md-6 col-auto " style="color:red">Not verified</label>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane" id="tab6">
+                                                <div class="row">
+                                                    <table class="table border table-responsive text-wrap text-nowrap table-bordered mb-1 ">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Ledger Name</th>
+                                                                @if (Model.NarrationType == (int)VoucherNarrationType.Multiple)
+                                                                {
+                                                                    <th>Narration</th>
+                                                                }
+                                                                <th>Debit</th>
+                                                                <th>Credit</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @if (Model.JournalEntries.Count > 0)
+                                                            {
+                                                                @foreach (var journalEntry in Model.JournalEntries)
+                                                                {
+                                                                    <tr>
+
+                                                                        <td style="min-width:200px">
+                                                                            @journalEntry.LedgerName
+                                                                        </td>
+
+                                                                        @if (Model.NarrationType == (int)VoucherNarrationType.Multiple)
+                                                                        {
+                                                                            @journalEntry.Particular
+                                                                        }
+
+                                                                        <td style="min-width:120px">
+                                                                            @journalEntry.Debit
+                                                                        </td>
+
+                                                                        <td style="min-width:120px">
+                                                                            @journalEntry.Credit
+                                                                        </td>
+
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+
+@code {
+
+    [Parameter] public int JournalMasterID { get; set; }
+    [Inject] public AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
+
+    private VoucherEntryModel Model = new();
+    private List<ViewPageMenuModel> MenuList = new();
+    private int CurrentUserTypeID;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateProvider is not null)
+        {
+            var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+            var authState = await localStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            bool IsAuthenticated = user.Identity is not null ? user.Identity.IsAuthenticated : false;
+            if (IsAuthenticated)
+            {
+                CurrentUserTypeID = Convert.ToInt32(user.Claims.First(c => c.Type == "UserTypeID").Value);
+            }
+        }
+
+        await LoadItemViewMenuList();
+        await LoadViewData(JournalMasterID);
+    }
+
+    private async Task LoadItemViewMenuList()
+    {
+        MenuList = await API.GetAsync<List<ViewPageMenuModel>>("accounts/get-voucher-entry-menu-list", true);
+    }
+
+    private async Task LoadViewData(int? itemID)
+    {
+        Model = await API.GetAsync<VoucherEntryModel>($"accounts/get-voucher-entry/{JournalMasterID}", true);
+
+    }
+
+    private async Task VerifyVoucher()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to verify the voucher " + Model.JournalNoPrefix + '/' + Model.JournalNo + "..?", SweetAlertMessageType.question, "Yes, Verify", "No, Cancel"))
+        {
+            var result = await API.GetAsync<VoucheVerificationResultModel>($"accounts/verify-voucher-entry/{JournalMasterID}", true);
+            if(result is not null)
+            {
+                Model.IsVerified = true;
+                Model.VerifiedBy = result.VerifiedBy;
+                Model.VerifiedByName = result.VerifiedByName;
+                Model.VerifiedOn = result.VerifiedOn;
+            }
+        }
+    }
+}

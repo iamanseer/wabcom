@@ -1,0 +1,285 @@
+﻿@using PB.Model.Models;
+@using PB.Shared.Enum.Accounts
+@using PB.Shared.Models.Accounts.Ledgers;
+
+@page "/ledger-view"
+@page "/ledger-view/{LedgerID:int}"
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row">
+            <ListPageMenuLayout MenuItems="menuItem"
+                                SinglePageURL="ledger"
+                                SelectedMenuID="LedgerViewData.LedgerID"
+                                OnMenuItemSelect="LoadViewData" />
+
+
+            <div class="itemlist-container">
+                <div class="page-header">
+                    <h1 class="page-title">@("Ledger : " + LedgerViewData.LedgerName)</h1>
+                    <div class="btn-toolbar float-right mr-7">
+
+                        @if (LedgerViewData.LedgerID > 0)
+                        {
+                            <a class="btn btn-white btn-md me-2" @onclick="NavigateToSinglePage">
+                                Ledger<i class="fa fa-pencil mb-0 ms-2" style="color:var(--primary-bg-color)"></i>
+                            </a>
+
+                            <a class="btn btn-white btn-md me-2" @onclick="(async()=>await DeleteLedger(LedgerID))">
+                                <i class="fa fa-trash" style="color:red"></i>
+                            </a>
+                        }
+
+                        <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"ledgers"))">
+                            <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                        </a>
+
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="panel panel-primary">
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <li><a href="#tab5" class="active" data-bs-toggle="tab">Overview</a></li>
+                                                @if (LedgerViewData.BillToBillItems.Count > 0)
+                                                {
+                                                    <li><a href="#tab6" data-bs-toggle="tab">BillToBill Items</a></li>
+                                                }
+                                            </ul>
+
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="tab5">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+
+                                                                <div class="row">
+                                                                    <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">Ledger Details </label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">Account Name</label>
+                                                                    <label class="col-7 col-auto">@LedgerViewData.LedgerName</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">Account Group</label>
+                                                                    <label class="col-7 col-auto">@LedgerViewData.AccountGroupName</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">Account Code</label>
+                                                                    <label class="col-7 col-auto">@LedgerViewData.LedgerCode</label>
+                                                                </div>
+
+                                                                @if (!string.IsNullOrEmpty(LedgerViewData.LedgerName2))
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-5 col-auto items-label text-muted">Second Name</label>
+                                                                        <label class="col-7 col-auto">@LedgerViewData.LedgerName2</label>
+                                                                    </div>
+                                                                }
+
+                                                                @if (!string.IsNullOrEmpty(LedgerViewData.Alias))
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-5 col-auto items-label text-muted">Alias</label>
+                                                                        <label class="col-7 col-auto">@LedgerViewData.Alias</label>
+                                                                    </div>
+                                                                }
+
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">Account Type</label>
+                                                                    <label class="col-7 col-auto">@LedgerViewData.AccountTypeName</label>
+                                                                </div>
+
+                                                                @if (LedgerViewData.GroupTypeID == (int)AccountGroupTypes.SundryCreditors || LedgerViewData.GroupTypeID == (int)AccountGroupTypes.SundryDebtors)
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-5 col-auto items-label text-muted">Phone</label>
+                                                                        <label class="col-7 col-auto">@LedgerViewData.Phone</label>
+                                                                    </div>
+
+                                                                    @if (!string.IsNullOrEmpty(LedgerViewData.EmailAddress))
+                                                                    {
+                                                                        <div class="row">
+                                                                            <label class="col-5 col-auto items-label text-muted">Email address</label>
+                                                                            <label class="col-7 col-auto">@LedgerViewData.EmailAddress</label>
+                                                                        </div>
+                                                                    }
+
+                                                                    <div class="row">
+                                                                        <label class="col-5 col-auto items-label text-muted">Address Line 1</label>
+                                                                        <label class="col-7 col-auto">@LedgerViewData.AddressLine1</label>
+                                                                    </div>
+
+                                                                    @if (LedgerViewData.AddressLine2 is not null)
+                                                                    {
+                                                                        <div class="row">
+                                                                            <label class="col-5 col-auto items-label text-muted">Address Line 2 </label>
+                                                                            <label class="col-7 col-auto">@LedgerViewData.AddressLine2</label>
+                                                                        </div>
+                                                                    }
+
+                                                                    @if (LedgerViewData.AddressLine3 is not null)
+                                                                    {
+                                                                        <div class="row">
+                                                                            <label class="col-5 col-auto items-label text-muted">Address Line 3 </label>
+                                                                            <label class="col-7 col-auto">@LedgerViewData.AddressLine3</label>
+                                                                        </div>
+                                                                    }
+
+                                                                    <div class="row">
+                                                                        <label class="col-5 col-auto items-label text-muted">Country </label>
+                                                                        <label class="col-7 col-auto">@LedgerViewData.CountryName</label>
+                                                                    </div>
+
+                                                                    <div class="row">
+                                                                        <label class="col-5 col-auto items-label text-muted">State </label>
+                                                                        <label class="col-7 col-auto">@LedgerViewData.StateName</label>
+                                                                    </div>
+
+                                                                    @if (LedgerViewData.CityID is not null)
+                                                                    {
+                                                                        <div class="row">
+                                                                            <label class="col-5 col-auto items-label text-muted">City </label>
+                                                                            <label class="col-7 col-auto">@LedgerViewData.CityName</label>
+                                                                        </div>
+                                                                    }
+
+                                                                    @if (LedgerViewData.OpeningBalance > 0)
+                                                                    {
+                                                                        <div class="row">
+                                                                            <label class="col-5 col-auto items-label text-muted">Opening Balance </label>
+                                                                            <label class="col-7 col-auto">@(LedgerViewData.OpeningBalance + LedgerViewData.DrorCr == (int)DebitOrCredit.Debit ? " Dr." : " Cr.")</label>
+                                                                        </div>
+                                                                    }
+                                                                }
+
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            @if (LedgerViewData.BillToBillItems.Count > 0)
+                                            {
+                                                <div class="tab-pane" id="tab6">
+                                                    <div class="row">
+                                                        <table class="table border table-responsive text-wrap text-nowrap table-bordered mb-1 ">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>
+                                                                        Ref No
+                                                                    </th>
+                                                                    <th>
+                                                                        Date
+                                                                    </th>
+                                                                    <th>
+                                                                        Days
+                                                                    </th>
+                                                                    <th>
+                                                                        Debit
+                                                                    </th>
+                                                                    <th>
+                                                                        Credit
+                                                                    </th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach (var bill in LedgerViewData.BillToBillItems)
+                                                                {
+                                                                    <tr>
+                                                                        <td>
+                                                                            @bill.ReferenceNo
+                                                                        </td>
+                                                                        <td>
+                                                                            @bill.Date
+                                                                        </td>
+                                                                        <td>
+                                                                            @bill.Days
+                                                                        </td>
+                                                                        <td>
+                                                                            @bill.Debit
+                                                                        </td>
+                                                                        <td>
+                                                                            @bill.Credit
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+
+@code {
+
+    [Parameter] public int LedgerID { get; set; }
+    private AccLedgerModel LedgerViewData = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (LedgerID > 0)
+        {
+            await LoadViewMenuList();
+            await LoadViewData(LedgerID);
+        }
+    }
+
+    private List<ViewPageMenuModel> menuItem = new();
+
+    private async Task LoadViewMenuList()
+    {
+        menuItem = await API.GetAsync<List<ViewPageMenuModel>>("accounts/get-ledger-menu-list", true);
+    }
+
+    private async Task LoadViewData(int? id)
+    {
+        LedgerViewData = await API.GetAsync<AccLedgerModel>($"accounts/get-ledger/{id}", true);
+    }
+
+    private void NavigateToSinglePage()
+    {
+        Nav.NavigateTo($"ledger/{LedgerViewData.LedgerID}");
+    }
+
+    private async Task DeleteLedger(int Id)
+    {
+        if (await JS.Confirm())
+        {
+            if (await API.GetAsync<bool>($"accounts/delete-ledger/{Id}", true))
+            {
+                await JS.SuccessMessage("Deleted Successfully");
+                await Task.Delay(500);
+                Nav.NavigateTo("ledgers");
+            }
+        }
+
+    }
+}

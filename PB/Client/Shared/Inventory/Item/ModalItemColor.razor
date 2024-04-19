@@ -1,0 +1,100 @@
+﻿@using PB.Shared.Models.Common
+@using PB.Shared.Models.Inventory.Items
+
+<div class="modal fade" id="item-color-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-md" role="document">
+        <EditForm Model="Model" OnValidSubmit="async () => await HandleSaveItemColor()">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    <h6 class="modal-title">@(Model.ColorID != 0 ? Model.ColorName : "New Item Color")</h6>
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HandleHideItemColorModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <InputTextBox Label="Item Color:"
+                                      DivClass="col-md-12"
+                                      IsRequired="true"
+                                      PlaceHolder="color"
+                                      ValidationFor="() => Model.ColorName"
+                                      @bind-Value="Model.ColorName"
+                                      id="item-color-text-box" />
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 col-md-6">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Color : 
+                                    <span class="ms-2" style="color:red">*</span>
+                                </label>
+                                
+                                <div class="input-group">
+                                    <input type="color" class="clr-picker-input" id="colorpicker" name="color" pattern="^#+([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$" value="@Model.ColorCode" @onchange="(ChangeEventArgs e) => HandleColorPickerInput(e)">
+                                    <input type="text" class="form-control clr-picker-input" pattern="^#+([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$" value="@Model.ColorCode" id="hexcolor" @onchange="async (ChangeEventArgs e) => await HandleColorTextInput(e)">
+                                </div>
+                                <ValidationMessage For="() => Model.ColorCode" />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.ColorID > 0 ? "Update" : "Save")</button>
+                    <button type="button" class="btn btn-danger" @onclick="async() => await HandleHideItemColorModal()">Close</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+    private ItemColorModel Model = new();
+
+    public async Task HandleOpenItemColorModal(int colorID = 0)
+    {
+        Model = new();
+        if (colorID != 0)
+        {
+            Model = await API.GetAsync<ItemColorModel>($"item/get-item-color/{colorID}", true);
+            await JS.InvokeVoidAsync("setElementValue", "colorpicker", Model.ColorCode);
+        }
+        await JS.InvokeVoidAsync("ShowModal", "item-color-modal");
+    }
+
+    private async Task HandleSaveItemColor()
+    {
+        var result = await API.PostAsync<ItemColorSuccessModel, ItemColorModel>("item/save-item-color", Model);
+        if (result is not null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair() { ID = result.ColorID, Value = result.ColorName });
+            await HandleHideItemColorModal();
+        }
+    }
+
+    private void HandleColorPickerInput(ChangeEventArgs e)
+    {
+        Model.ColorCode = Convert.ToString(e.Value);
+    }
+
+    private async Task HandleColorTextInput(ChangeEventArgs e)
+    {
+        string? value = Convert.ToString(e.Value);
+        if (value is not null && !value.StartsWith('#'))
+            value = '#' + value;
+
+        if (!string.IsNullOrEmpty(value))
+        {
+            Model.ColorCode = value;
+            await JS.InvokeVoidAsync("setElementValue", "colorpicker", value);
+        }
+    }
+
+    private async Task HandleHideItemColorModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "item-color-modal");
+    }
+}

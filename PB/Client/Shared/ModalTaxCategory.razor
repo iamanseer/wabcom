@@ -1,0 +1,346 @@
+﻿@using PB.CRM.Model.Enum;
+@using PB.Client.Shared.Accounts
+@using PB.Model.Models;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+
+<div class="modal fade" id="tax-category-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document" style="overflow-y: scroll;">
+        <EditForm Model="Model" OnValidSubmit="async () => await SaveTaxCategory()">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    <h6 class="modal-title">@(Model.TaxCategoryID == 0 ? "New Tax category" : Model.TaxCategoryName)</h6>
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HideModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row">
+
+                        <InputTextBox Label="Tax Category Name:" @bind-Value="Model.TaxCategoryName"
+                                      DivClass="col-md-12" id="tax-category-text-box"
+                                      IsRequired="true"
+                                      ValidationFor="() => Model.TaxCategoryName" />
+
+                    </div>
+                    <!--Tax Category Items-->
+                    <div class="row">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-bordered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Name
+                                        </th>
+                                        <th>
+                                            Percentage
+                                        </th>
+                                        @if (Model.TaxCategoryID != 0)
+                                        {
+                                            <th>
+                                                Ledger
+                                            </th>
+                                        }
+                                        <th>
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    @if (Model.TaxCategoryItems.Count > 0)
+                                    {
+                                        @foreach (var taxCategoryItem in Model.TaxCategoryItems)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @taxCategoryItem.TaxCategoryItemName
+                                                </td>
+                                                <td>
+                                                    @taxCategoryItem.Percentage
+                                                </td>
+                                                @if (Model.TaxCategoryID != 0)
+                                                {
+                                                    <td>
+                                                        @taxCategoryItem.LedgerName
+                                                    </td>
+                                                }
+                                                <td style="width:80px;">
+                                                    <div class="d-flex justify-content-evenly">
+                                                        <ActionEdit Clicked="async () => await EditTaxCategoryItem(taxCategoryItem)" />
+                                                        @*<ActionDelete Clicked="async () => await RemoveTaxCategoryItem(taxCategoryItem)" />*@
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        @if (Model.TaxCategoryID != 0)
+                                        {
+                                            <td colspan="3">
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td colspan="2">
+                                            </td>
+                                        }
+                                        <td style="width:80px;">
+                                            <div class="d-flex justify-content-evenly">
+                                                <ActionAdd Clicked="async () => await AddNewTaxCategoryItem()" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.TaxCategoryID == 0 ? "Save" : "Update")</button>
+                    <button type="button" class="btn btn-danger" @onclick="async() => await HideModal()">Close</button>
+                </div>
+
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="tax-category-item-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-md" role="document">
+        <EditForm Model="TaxCategoryItem" OnValidSubmit="async () => await SaveTaxCategoryItem()">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    @if (Model.TaxCategoryID != 0)
+                    {
+                        <h6 class="modal-title">@Model.TaxCategoryName</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New Tax category item</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HideTaxCategoryItemModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body" style="overflow-y: scroll;">
+
+                    <div class="row">
+                        <InputTextBox Label="Tax Category Item Name:" @bind-Value="TaxCategoryItem.TaxCategoryItemName"
+                                      DivClass="col-md-12" id="tax-category-item-text-box"
+                                      IsRequired="true"
+                                      ValidationFor="() => TaxCategoryItem.TaxCategoryItemName" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Tax Percentage :
+                                    <span class="ms-1" style="color:red">*</span>
+                                </label>
+                                <input class="form-control " @bind="TaxCategoryItem.Percentage" id="item-um-unit-box">
+                                <ValidationMessage For="() => TaxCategoryItem.Percentage" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <DropdownSelect DivClass="col-md-12" @ref="@TaxCategoryItemLedgerDrowpdownSelect"
+                                        DropdownID="@TaxCategoryLedgerDropdownID"
+                                        Label="Ledger :"
+                                        Mode="(int)DropdownModes.TaxCategoryLedger"
+                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                        ItemSelected="HandleLedgerSelected"
+                                        IsAddOptionNeed="true"
+                                        NewButtonText="New Ledger" 
+                                        NewButtonClicked="AddNewLedger"
+                                        ReadDataOnSearch="true"
+                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = TaxCategoryItem.LedgerID,Value=TaxCategoryItem.LedgerName})">
+                            <ValidationMessage For="() => TaxCategoryItem.LedgerID" />
+                        </DropdownSelect>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(TaxCategoryItem.TaxCategoryItemID == 0 ? "Save" : "Update")</button>
+                    @if(TaxCategoryItem.TaxCategoryItemID > 0)
+                    {
+                        <button type="button" class="btn btn-danger" @onclick="async() => await DeleteTaxCategory()">Delete</button>
+                    }
+                    <button type="button" class="btn btn-light" @onclick="async() => await HideTaxCategoryItemModal()">Close</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+<ModalLedger @ref="@modalLedger" Saved="ItemAdded" />
+
+@code {
+
+    [Parameter] public EventCallback<IdnValuePair?> CallbackWithIdnValue { get; set; }
+
+    private TaxCategoryModel Model = new();
+
+    public async Task OpenTaxCategoryModal(int taxCategoryID = 0)
+    {
+        Model = new();
+        if (taxCategoryID != 0)
+        {
+            Model = await API.GetAsync<TaxCategoryModel>($"settings/get-tax-category/{taxCategoryID}", true);
+        }
+        await OpenModal();
+    }
+
+    private async Task SaveTaxCategory()
+    {
+        if (Model.TaxCategoryItems.Count == 0)
+        {
+            await JS.ErrorMessage("Please add Tax category Item");
+            return;
+        }
+
+        var result = await API.PostAsync<TaxCategoryAddResultModel, TaxCategoryModel>("settings/save-tax-category", Model);
+        if (result != null)
+        {
+            await CallbackWithIdnValue.InvokeAsync(new IdnValuePair()
+                {
+                    ID = result.TaxCategoryID,
+                    Value = result.TaxCategoryName
+                });
+            await HideModal();
+        }
+    }
+
+    private async Task DeleteTaxCategory()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete this Tax Category..?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            if (await API.DeleteAsync("settings/delete-tax-category", Model.TaxCategoryID))
+            {
+                await CallbackWithIdnValue.InvokeAsync(null);
+                await HideModal();
+            }
+        }
+    }
+
+    #region Tax Category Item
+
+    private DropdownSelect? TaxCategoryItemLedgerDrowpdownSelect;
+    private string TaxCategoryLedgerDropdownID = "tax-category-ledger-drop-down-select";
+
+    private TaxCategoryItemModel TaxCategoryItem = new();
+    private async Task AddNewTaxCategoryItem()
+    {
+        currentRowIndex = -1;
+        TaxCategoryItem = new();
+        await OpenTaxCategoryItemModal();
+    }
+
+    private async Task RemoveTaxCategoryItem(TaxCategoryItemModel item)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete this Tax Category Item..?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            Model.TaxCategoryItems.Remove(Model.TaxCategoryItems.Where(taxCategoryItem => taxCategoryItem.TaxCategoryID == item.TaxCategoryID).First());
+            await HideTaxCategoryItemModal();
+            StateHasChanged();
+        }
+    }
+
+    private int currentRowIndex = -1;
+    private async Task EditTaxCategoryItem(TaxCategoryItemModel item)
+    {
+        currentRowIndex = Model.TaxCategoryItems.IndexOf(item);
+
+        TaxCategoryItem = new()
+            {
+                TaxCategoryItemID = item.TaxCategoryItemID,
+                TaxCategoryID = item.TaxCategoryID,
+                TaxCategoryItemName = item.TaxCategoryItemName,
+                Percentage = item.Percentage,
+                LedgerID = item.LedgerID,
+                LedgerName = item.LedgerName,
+                IsDeleted = item.IsDeleted
+            };
+
+        await OpenTaxCategoryItemModal();
+    }
+
+    private async Task SaveTaxCategoryItem()
+    {
+        if (currentRowIndex == -1)
+        {
+            Model.TaxCategoryItems.Add(TaxCategoryItem);
+        }
+        else
+        {
+            Model.TaxCategoryItems[currentRowIndex] = TaxCategoryItem;
+        }
+        await HideTaxCategoryItemModal();
+        StateHasChanged();
+    }
+
+    private void HandleLedgerSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.TaxCategoryLedger:
+                TaxCategoryItem.LedgerID = data.ID;
+                TaxCategoryItem.LedgerName = data.Value;
+                break;
+        }
+    }
+
+    #endregion
+
+    private async Task OpenModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "tax-category-modal");
+    }
+
+    private async Task HideModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "tax-category-modal");
+    }
+
+    private async Task OpenTaxCategoryItemModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "tax-category-item-modal");
+    }
+
+    private async Task HideTaxCategoryItemModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "tax-category-item-modal");
+    }
+
+    #region Ledger Added
+
+    private ModalLedger modalLedger = new();
+
+    private async Task AddNewLedger(int mode)
+    {
+        switch (mode)
+        {
+            case (int)DropdownModes.TaxCategoryLedger:
+                await modalLedger.OpenLedgerModal();
+                break;
+        }
+    }
+
+    private async Task ItemAdded(IdnValuePair item)
+    {
+        TaxCategoryItem.LedgerID = item.ID;
+        TaxCategoryItem.LedgerName = item.Value;
+        TaxCategoryItemLedgerDrowpdownSelect.AddToData(item);
+    }
+
+    #endregion
+}

@@ -1,0 +1,617 @@
+﻿@page "/bulk-booking"
+@attribute [Authorize(Roles = "CourtBooking")]
+
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Enum.Court;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Court;
+
+<PageLayoutNew>
+
+    <div class="main-container container-fluid">
+        <div class="row justify-content-center mt-5">
+            <div class="col-12">
+
+
+                <div class="card" style="margin-top:60px;">
+                    <div class="card-header">
+                        <h3 class="card-title">Bulk Booking</h3>
+
+                    </div>
+                    <div class="card-body">
+                        @if (Stage == 1)
+                        {
+                            <EditForm Model="SearchData" OnValidSubmit="CheckAvailability">
+                                <div class="row">
+                                    <div class="col-md-2 col-6">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">From Date: </label>
+                                            <input type="date" class="form-control" @bind="SearchData.FromDate">
+                                            <ValidationMessage For="()=>SearchData.FromDate" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 col-6">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">To Date: </label>
+                                            <input type="date" class="form-control" @bind="SearchData.ToDate">
+                                            <ValidationMessage For="()=>SearchData.ToDate" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 col-6">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1" style="text-align:left">Start Hour :</label>
+                                            <select class="form-control" @bind="@SearchData.FromHourID">
+                                                <option value="">Choose start hour</option>
+                                                @foreach (var fromHourList in HourList)
+                                                {
+                                                    <option value="@fromHourList.ID">@fromHourList.Value</option>
+                                                }
+                                            </select>
+                                            <ValidationMessage For="()=>SearchData.FromHourID" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-2 col-6">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1" style="text-align:left">End Hour :</label>
+                                            <select class="form-control" @bind="@SearchData.ToHourID">
+                                                <option value="">Choose end hour</option>
+                                                @foreach (var fromHourList in HourList)
+                                                {
+                                                    <option value="@fromHourList.ID">@fromHourList.Value</option>
+                                                }
+                                            </select>
+                                            <ValidationMessage For="()=>SearchData.ToHourID" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="form-label mt-3 p-xl-0">Day</div>
+                                        <div class="custom-controls-stacked d-flex">
+                                            <label class="custom-control me-4 custom-checkbox  mb-0">
+                                                @if (SearchData.DayList.Where(DL => DL.IsChecked.Value == true).Count() == SearchData.DayList.Count)
+                                                {
+                                                    <input type="checkbox" class="custom-control-input" name="court-checkbox1" @onchange="(ChangeEventArgs e)=> HandleSelectAll(e,1)" checked />
+                                                }
+                                                else
+                                                {
+                                                    <input type="checkbox" class="custom-control-input" name="court-checkbox1" @onchange="(ChangeEventArgs e)=>HandleSelectAll(e,1)" />
+                                                }
+
+                                                <span class="custom-control-label">All</span>
+                                            </label>
+                                            @foreach (var dayList in SearchData.DayList)
+                                            {
+                                                <label class="custom-control me-4 custom-checkbox  mb-0">
+
+                                                    <input type="checkbox" class="custom-control-input" name="court-checkbox1" value="court1"
+                                                           id="@("day-"+dayList.DayID)" @onchange=" (ChangeEventArgs e)=> CheckboxForDayClicked(e,dayList)" checked="@((dayList.IsChecked ==true)?"checked":null)">
+                                                    <span class="custom-control-label">@dayList.DayName</span>
+                                                </label>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-2 col-6 mt-3">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1" style="text-align:left">No of courts :</label>
+                                            <select class="form-control" @bind="@SearchData.CourtCount">
+                                                <option value="0">0</option>
+                                                @for (int i = 1; i <= SearchData.CourtList.Count; i++)
+                                                {
+                                                    <option value="@i">@i</option>
+                                                }
+                                            </select>
+                                            <ValidationMessage For="()=>SearchData.CourtCount" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-12 quotation-item-table">
+                                        @if (SearchData.CourtList.Count > 0)
+                                        {
+                                            <div class="form-label mt-3 p-xl-0">Choose Prefered Court (If any)</div>
+                                            <div class="custom-controls-stacked d-flex mb-2">
+                                                <label class="custom-control me-4 custom-checkbox  mb-0">
+                                                    @if (SearchData.CourtList.Where(DL => DL.IsChecked.Value == true).Count() == SearchData.CourtList.Count)
+                                                    {
+                                                        <input type="checkbox" class="custom-control-input" name="court-checkbox1" @onchange="(ChangeEventArgs e)=> HandleSelectAll(e,2)" checked />
+                                                    }
+                                                    else
+                                                    {
+                                                        <input type="checkbox" class="custom-control-input" name="court-checkbox1" @onchange="(ChangeEventArgs e)=> HandleSelectAll(e,2)" />
+                                                    }
+                                                    <span class="custom-control-label">All</span>
+                                                </label>
+
+                                                @foreach (var courtList in SearchData.CourtList)
+                                                {
+                                                    <label class="custom-control me-4 custom-checkbox  mb-0">
+                                                        <input type="checkbox" class="custom-control-input" name="court-checkbox1"
+                                                               id="@("court-"+courtList.CourtID)" @onchange=" (ChangeEventArgs e)=> CheckboxForCourtClicked(e,courtList)" checked="@(courtList.IsChecked.Value?"checked":null)">
+                                                        <span class="custom-control-label">@courtList.CourtName</span>
+                                                    </label>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="form-label mt-3 p-xl-0">
+                                                Court are unavailable for this game please add new court for the Game &nbsp;
+                                                <a href="/court"> AddCourt</a>
+                                            </div>
+                                        }
+                                    </div>
+                                    <DataAnnotationsValidator />
+                                </div>
+
+
+                                <div class="card-footer d-flex justify-content-start ps-0">
+                                    <button type="button" class="btn btn-outline-danger me-3" @onclick="(async()=>await Reset())">Reset</button>
+                                    <button type="submit" class="btn btn-primary btn-md btn-outline-dark ms-2">Check availability</button>
+                                </div>
+                            </EditForm>
+                        }
+                        else if (Stage == 2)
+                        {
+                            <div class="col-md-8 col-12">
+                                <div class="row">
+                                    <div class="d-flex p-4" style="justify-content: space-around; background-color: #f9f9f9;">
+                                        <p class="m-0">
+                                            Total slots <br>
+                                            <span>@(SearchResult.AvailableSlots.Count() + SearchResult.UnavailableSlots.Sum(s => s.UnavailableCount))</span>
+                                        </p>
+                                        <p class="m-0">
+                                            Available slots <br>
+                                            <span>@SearchResult.AvailableSlots.Count()</span>
+                                        </p>
+                                        <p class="m-0">
+                                            Unavailable slots <br>
+                                            <span>@SearchResult.UnavailableSlots.Sum(s=>s.UnavailableCount)</span>
+                                        </p>
+                                    </div>
+                                    @if (SearchResult.UnavailableSlots.Count > 0)
+                                    {
+                                        <div class="table-responsive mt-5">
+                                            <table class="table border text-nowrap text-md-nowrap mb-0" style="color:red">
+                                                <thead>
+                                                    <tr>
+                                                        <th style="color:red">Date</th>
+                                                        <th style="color:red">Time</th>
+                                                        <th style="color:red">Unavailable Slot</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                    @foreach (var slots in SearchResult.UnavailableSlots)
+                                                    {
+                                                        <tr>
+                                                            <td>@slots.Date.ToString("dd MMM yyyy, dddd")</td>
+                                                            <td>@slots.Time</td>
+                                                            <td>@slots.UnavailableCount</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+
+                                    @if (SearchResult.AvailableSlots.Count > 0)
+                                    {
+                                        <div class="table-responsive mt-5">
+                                            <table class="table border text-nowrap text-md-nowrap mb-0">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Time</th>
+                                                        <th>Court Name</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+
+                                                    @foreach (var slots in SearchResult.AvailableSlots)
+                                                    {
+                                                        <tr>
+                                                            <td>@slots.Date.ToString("dd MMM yyyy, dddd")</td>
+                                                            <td>
+                                                                @(
+                                                                    slots.FromHourName + " - " + slots.ToHourName
+                                                                    )
+                                                            </td>
+                                                            <td>@slots.CourtName</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="card-footer d-flex justify-content-start ps-0">
+                                    <button type="button" class="btn btn-outline-danger me-3" @onclick="@(()=>Stage=1)">Go Back</button>
+                                    <button type="button" class="btn btn-primary btn-md btn-outline-dark ms-2" @onclick="AddToCart">Add to cart</button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <EditForm Model="ConfirmBooking" OnValidSubmit="Book">
+                                <div class="col-12">
+                                    <div class="row">
+                                        <div class="d-flex">
+
+                                            <label class="custom-control custom-radio">
+                                                <input type="radio" class="custom-control-input" @onchange="@(() =>IsLocked = false)" name="example-radios" value="option1" checked="@(!IsLocked)">
+                                                <span class="custom-control-label">For Customer</span>
+                                            </label>
+                                            <label class="ms-3 custom-control custom-radio">
+                                                <input type="radio" class="custom-control-input" @onchange="@(() => IsLocked =true)" name="example-radios" value="option1" checked="@(IsLocked)">
+                                                <span class="custom-control-label">For Locking</span>
+                                            </label>
+                                        </div>
+
+
+                                        @if (IsLocked)
+                                        {
+                                            <div class="col-7">
+                                                <div class="table-responsive mt-5">
+                                                    <table class="table border text-nowrap text-md-nowrap mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Date</th>
+                                                                <th>Court Name</th>
+                                                                <th>Time</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @if (CartResult.BookedCourts.Count > 0)
+                                                            {
+                                                                @foreach (var slots in CartResult.BookedCourts)
+                                                                {
+                                                                    <tr>
+                                                                        <td>@slots.Date.ToString("dd MMM yyyy")</td>
+                                                                        <td>@slots.CourtName</td>
+                                                                        <td>@slots.Time</td>
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="col-7">
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <div class="combined-input mt-2">
+                                                            <select name="country-code" @onchange="CountryChanged" style="width:100px">
+                                                                @foreach (var item in Countries)
+                                                                {
+                                                                    if (item.ID == ConfirmBooking.CountryID)
+                                                                    {
+                                                                        <option value="@item.ID" selected>@item.Value</option>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <option value="@item.ID">@item.Value</option>
+                                                                    }
+                                                                }
+                                                            </select>
+                                                            <input type="text" @onchange="PhoneChanged" placeholder="Enter phone number">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <div class="form-group">
+                                                            <label class="form-label">Name</label> <input type="text" @bind-value="ConfirmBooking.Name"
+                                                                                                          class="form-control" placeholder="Name">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-12">
+                                                        <div class="form-group">
+                                                            <label class="form-label">Email </label> <input type="email" @bind-value="ConfirmBooking.EmailAddress"
+                                                                                                            class="form-control" placeholder="Email">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="table-responsive mt-5">
+                                                    <table class="table border text-nowrap text-md-nowrap mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Date</th>
+                                                                <th>Court Name</th>
+                                                                <th>Time</th>
+                                                                <th>Rate</th>
+                                                                <th>Price</th>
+                                                                <th>Discount</th>
+                                                                <th>Net Price</th>
+                                                                <th>Tax</th>
+                                                                <th>Total</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @if (CartResult.BookedCourts.Count > 0)
+                                                            {
+                                                                @foreach (var slots in CartResult.BookedCourts)
+                                                                {
+                                                                    <tr>
+                                                                        <td>@slots.Date.ToString("dd MMM yyyy")</td>
+                                                                        <td>@slots.CourtName</td>
+                                                                        <td>@slots.Time</td>
+                                                                        <td>@slots.Rate</td>
+                                                                        <td>@slots.Price</td>
+                                                                        <td>@slots.Discount</td>
+                                                                        <td>@slots.NetPrice</td>
+                                                                        <td>@slots.Tax</td>
+                                                                        <td>@slots.TotalPrice</td>
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-5">
+
+                                                <div class="col-md-12">
+                                                    <div class="d-flex justify-content-between">
+                                                        <p>Price <span style="color:#b1b1b1"></span></p>
+                                                        <p>@PaymentSummary.Price</p>
+                                                    </div>
+
+                                                    <div class="d-flex justify-content-between" style="border-bottom:1px solid #dfdfdf;">
+                                                        <p>Tax <span style="color:#b1b1b1"></span></p>
+                                                        <p>@PaymentSummary.Tax</p>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mt-3" style="border-bottom:1px solid #dfdfdf;">
+                                                        <p style="font-weight: 600;">Total Price <span style="color:#b1b1b1"></span></p>
+                                                        <p style="font-weight: 600;">@PaymentSummary.CurrencyName @(PaymentSummary.TotalPrice + PaymentSummary.Discount)</p>
+                                                    </div>
+                                                    <div class="mt-3 row">
+                                                        <div class="d-flex justify-content-between">
+                                                            <p class="mt-2">Discount <span style="color:#b1b1b1"></span></p>
+                                                            <div class="form-group">
+                                                                <select @bind="Discount.DiscountType" class="form-control form-select select2" data-bs-placeholder="Discount">
+                                                                    <option value="@(CourtDiscountType.Amount)" selected>By Amount</option>
+                                                                    <option value="@(CourtDiscountType.Percentage)">By Percentage</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                <input type="text" @bind-value="Discount.Value" class="form-control" placeholder="@Discount.DiscountType.ToString()">
+                                                            </div>
+                                                            <div><button type="button" @onclick="ApplyDiscount" class="btn btn-secondary text-right" style="display: block; margin: 0 auto;">Apply</button></div>
+                                                            <p class="mt-2">@PaymentSummary.Discount</p>
+                                                        </div>
+                                                    </div>
+
+                                                    @if (ConfirmBooking.Balance != 0)
+                                                    {
+                                                        <div class="d-flex justify-content-between mt-3" style="border-bottom:1px solid #dfdfdf;">
+                                                            <p style="font-weight: 600;">Previous Balance <span style="color:#b1b1b1"></span></p>
+                                                            <p style="font-weight: 600;">@ConfirmBooking.Balance</p>
+                                                        </div>
+                                                    }
+
+                                                    <div class="d-flex justify-content-between mt-3" style="border-bottom:1px solid #dfdfdf;">
+                                                        <p>Amount Payable</p>
+                                                        <p style="font-weight: 600;">@PaymentSummary.CurrencyName @(PaymentSummary.TotalPrice + ConfirmBooking.Balance)</p>
+                                                    </div>
+                                                    <div class="row mt-5">
+                                                        <div class="col-12">
+                                                            <p style="font-weight: 600;">Collect Payment</p>
+                                                        </div>
+                                                        <div class="d-flex justify-content-between">
+                                                            <p class="mt-2">Cash <span style="color:#b1b1b1"></span></p>
+                                                            <div class="form-group">
+                                                                <input type="text" class="form-control text-end" placeholder="" @bind-value="ConfirmBooking.Cash">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex justify-content-between mt-3" style="border-bottom:1px solid #dfdfdf;">
+                                                        <p style="font-weight: 600;">Balance</p>
+                                                        <p style="font-weight: 600;">@PaymentSummary.CurrencyName @(PaymentSummary.TotalPrice - ConfirmBooking.Cash + ConfirmBooking.Balance)</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="card-footer d-flex justify-content-start ps-0">
+                                        <button type="button" class="btn btn-outline-danger me-3" @onclick="@(()=>Stage=2)">Go Back</button>
+                                        <button type="button" class="btn btn-primary btn-md btn-outline-dark ms-2" @onclick="Book">Book Now</button>
+                                    </div>
+                                </div>
+                            </EditForm>
+                        }
+                    </div>
+                </div>
+
+
+
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+    private List<IdnValuePair> HourList = new();
+    private BulkBookingSearchModel SearchData = new();
+    private BulkbookingSearchResultModel SearchResult = new();
+    private BulkBookingResultModel CartResult = new();
+    List<IdnValuePair> Countries = new();
+    CourtPaymentSummaryModel PaymentSummary = new();
+    ApplyDiscountPostModel Discount = new();
+    ConfirmBookingModel ConfirmBooking = new();
+    List<AvailableSlotModel> AvailableSlots = new();
+    bool IsLocked;
+
+    int Stage = 1;
+
+    private DropdownSelect? CustomerDropdown;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Countries = await API.GetAsync<List<IdnValuePair>>("common/get-list-of-countries-with-code");
+        HourList = await API.GetAsync<List<IdnValuePair>>($"court/get-hour-list");
+        SearchData.CourtList = await API.GetAsync<List<CourtListModel>>($"court/get-court-list");
+
+        foreach (var dayName in Enum.GetNames(typeof(DayOfWeek)))
+        {
+            DayOfWeek dayEnum = Enum.Parse<DayOfWeek>(dayName);
+            int dayID = (int)dayEnum;
+
+            DayListModel dayListModel = new DayListModel
+                {
+                    DayID = dayID,
+                    DayName = dayName,
+                    IsChecked = false
+                };
+
+            SearchData.DayList.Add(dayListModel);
+        }
+    }
+
+    private async Task Reset()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to reset.?", SweetAlertMessageType.question, "Yes, Reset", "Don't Reset"))
+        {
+            SearchData.ToHourID=null;
+            SearchData.FromHourID=null;
+            SearchData.FromDate=null;
+            SearchData.ToDate=null;
+            SearchData.CourtCount = 0;
+            SearchData.DayList.ForEach(s => s.IsChecked = false);
+            SearchData.CourtList.ForEach(s => s.IsChecked = false);
+        }
+    }
+
+    #region Checkbox
+
+    private void HandleSelectAll(ChangeEventArgs e, int type)
+    {
+        if (type == 1)//"DayList"
+        {
+            foreach (var item in SearchData.DayList)
+            {
+                item.IsChecked = Convert.ToBoolean(e.Value);
+            }
+
+        }
+        else if (type == 2)//"CourtList"
+        {
+            foreach (var item in SearchData.CourtList)
+            {
+                item.IsChecked = Convert.ToBoolean(e.Value);
+            }
+        }
+    }
+
+    private async Task CheckboxForDayClicked(ChangeEventArgs e, DayListModel list)
+    {
+        list.IsChecked = Convert.ToBoolean(e.Value);
+    }
+
+    private async Task CheckboxForCourtClicked(ChangeEventArgs e, CourtListModel list)
+    {
+        list.IsChecked = Convert.ToBoolean(e.Value);
+    }
+
+    #endregion
+
+    private async Task CheckAvailability()
+    {
+        if (SearchData.DayList.Where(s => s.IsChecked == true).Count() == 0)
+        {
+            await JS.ErrorMessage("Please choose day");
+            return;
+        }
+        SearchResult = await API.PostAsync<BulkbookingSearchResultModel, BulkBookingSearchModel>($"court/bulk-booking-search", SearchData);
+        if (SearchResult != null)
+        {
+            Stage = 2;
+        }
+    }
+
+
+    async Task PhoneChanged(ChangeEventArgs e)
+    {
+        ConfirmBooking.Phone = e.Value.ToString();
+        await SearchCustomer();
+    }
+
+    async Task CountryChanged(ChangeEventArgs e)
+    {
+        ConfirmBooking.CountryID = Convert.ToInt32(e.Value);
+        await SearchCustomer();
+    }
+
+    async Task SearchCustomer()
+    {
+        if (ConfirmBooking.CountryID != null && !string.IsNullOrEmpty(ConfirmBooking.Phone))
+        {
+            var res = await API.PostAsync<SearchCustomerWithPhoneResultModel, SearchCustomerWithPhoneModel>("court/search-customer", new SearchCustomerWithPhoneModel() { CountryID = ConfirmBooking.CountryID, Phone = ConfirmBooking.Phone });
+            if (res != null)
+            {
+                ConfirmBooking.Name = res.Name;
+                ConfirmBooking.EmailAddress = res.EmailAddress;
+                ConfirmBooking.EntityID = res.EntityID;
+                ConfirmBooking.Balance = res.Balance;
+            }
+        }
+    }
+
+
+
+    async Task ApplyDiscount()
+    {
+        Discount.BookingID = CartResult.BookingID;
+        PaymentSummary = await API.PostAsync<CourtPaymentSummaryModel, ApplyDiscountPostModel>("court/apply-discount", Discount);
+    }
+
+    private async Task AddToCart()
+    {
+        CartResult = await API.PostAsync<BulkBookingResultModel, List<AvailableSlotModel>>($"court/bulk-booking", SearchResult.AvailableSlots);
+        if (CartResult != null)
+        {
+            PaymentSummary = await API.GetAsync<CourtPaymentSummaryModel>($"court/get-payment-summary/{CartResult.BookingID}");
+            Stage = 3;
+        }
+    }
+
+    async Task Book()
+    {
+        if (!IsLocked && string.IsNullOrEmpty(ConfirmBooking.Phone))
+        {
+            await JS.ErrorMessage("Please choose a customer");
+            return;
+        }
+        AvailableSlots = SearchResult.AvailableSlots;
+
+        if (IsLocked)
+        {
+            var res = await API.GetAsync<ConfirmBookingResultModel>($"court/lock-court/{CartResult.BookingID}");
+            if (res != null)
+            {
+                Nav.NavigateTo($"booking-details/{CartResult.BookingID}");
+            }
+        }
+        else
+        {
+            await Confirm();
+        }
+    }
+
+    async Task Confirm()
+    {
+        ConfirmBooking.BookingID = CartResult.BookingID;
+        ConfirmBooking.DiscountValue = Discount.Value;
+        ConfirmBooking.DiscountType = (int)Discount.DiscountType;
+        var res = await API.PostAsync<ConfirmBookingResultModel, ConfirmBookingModel>("court/confirm-booking", ConfirmBooking);
+        if (res != null)
+        {
+            Nav.NavigateTo($"booking-details/{res.BookingID}");
+        }
+    }
+}

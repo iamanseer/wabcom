@@ -1,0 +1,469 @@
+﻿@page "/court-price-group"
+@page "/court-price-group/{PriceGroupID:int}"
+
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Models.Court;
+@using PB.Shared.Tables.Court;
+@using PB.Shared.Tables.CourtClient;
+@using PB.Shared.Enum;
+@using PB.Shared.Models.Common;
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="async()=>await SaveCourtPrice()">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Court Price Group Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="col-sm-7">
+                                <div class="row">
+                                    <InputTextBox Label="Price Group Name : "
+                                                  IsRequired="true"
+                                                  ValidationFor="() => Model.PriceGroupName"
+                                                  DivClass="col-6"
+                                    @bind-Value="Model.PriceGroupName"
+                                                  id="prc-name-box" />
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Tax Category :<span class="ms-1" style="color:red">*</span></label>
+                                            <select class="form-control" @bind="@Model.TaxCategoryID">
+                                                <option value="">--NA--</option>
+                                                @foreach (var category in TaxCategories)
+                                                {
+                                                    <option value="@category.ID">@category.Value</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+
+
+                                    <DropdownSelect @ref="@CurrencyDropdown"
+                                                    DropdownID="@CurrecyDropdownID"
+                                                    DivClass="col-6"
+                                                    IsRequired="true"
+                                                    Label="Currency :"
+                                                    ReadDataOnSearch="true"
+                                                    Mode="(int)DropdownModes.Currency"
+                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.CurrencyID, Value=Model.CurrencyName})"
+                                                    ItemSelected="ItemSelected" />
+                                    <ValidationMessage For="()=>Model.CurrencyID" />
+
+                                    
+
+                                    <div class="col-md-3 pt-4">
+                                        <div class="my-4">
+                                            <div class=" form-check form-check-inline font-large">
+                                                <input id="item-model" class="ember-checkbox ember-view form-check-input" type="checkbox" @bind="Model.IncTax">
+                                                <label class="form-check-label fs-16 fw-bold" for="item-model">Inc of all Tax</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="item-details-page">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Price Group Items</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-2">
+                                <div class="">
+                                    <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+                                        <thead>
+                                            <tr>
+
+                                                <th>
+                                                    Day
+                                                </th>
+
+                                                <th>
+                                                    StartTime
+                                                </th>
+
+                                                <th>
+                                                    EndTime
+                                                </th>
+                                                <th>
+                                                    Rate
+                                                </th>
+                                                <th>
+                                                    Action
+                                                </th>
+
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (Model.Items != null && Model.Items.Count > 0)
+                                            {
+                                                @foreach (var item in Model.Items)
+                                                {
+                                                    <tr>
+                                                        @if (!item.IsEditMode)
+                                                        {
+                                                            <td>
+                                                                @((DayOfWeek)item.DayID)
+                                                            </td>
+
+                                                            <td>
+                                                                @item.StartHourName
+                                                            </td>
+
+                                                            <td>
+                                                                @item.EndHourName
+                                                            </td>
+                                                            <td>
+                                                                @item.Rate
+                                                            </td>
+                                                            <td style="width:100px;">
+                                                                <div class="d-flex justify-content-center align-items-center">
+                                                                    <ActionEdit Clicked="async () => await SwitchToRowEditMode(item)" />
+                                                                    <ActionDelete Clicked="async () => await RemoveRow(item)" />
+                                                                </div>
+                                                            </td>
+                                                        }
+                                                        else
+                                                        {
+
+                                                            <td class="px-1" style="max-width:300px">
+                                                                <div class="col-md-12">
+                                                                    <div class="form-group">
+
+                                                                        <select id="lead-quality-select" class="form-control form-select" @bind="item.DayID">
+                                                                            <option value="-1" selected> Choose </option>
+                                                                            @foreach (var day in Enum.GetValues(typeof(DayOfWeek)))
+                                                                            {
+                                                                                <option value="@((int)day)">@day</option>
+                                                                            }
+
+                                                                        </select>
+                                                                        <ValidationMessage For="() => item.DayID" />
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+
+                                                            <td class="px-1" style="max-width:300px">
+                                                                <DropdownSelect DropdownID="@(RowStartHourDropdownID+item.RowIndex)" @ref="@RowStartHourDropdownSelect"
+                                                                                DivClass="col-md-12 px-0"
+                                                                                FormGroupClass="form-group mb-0"
+                                                                                IsAddOptionNeed="false"
+                                                                                ReadDataOnSearch="true"
+                                                                                Mode="(int)DropdownModes.HourMaster"
+                                                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = item.StartHourID, Value = item.StartHourName})"
+                                                                                ItemSelected="EditStartHour" />
+                                                            </td>
+
+                                                            <td class="px-1" style="max-width:300px">
+                                                                <DropdownSelect DropdownID="@(RowEndHourDropdownID+item.RowIndex)" @ref="@RowEndHourDropdownSelect"
+                                                                                DivClass="col-md-12 px-0"
+                                                                                FormGroupClass="form-group mb-0"
+                                                                                IsAddOptionNeed="false"
+                                                                                ReadDataOnSearch="true"
+                                                                                Mode="(int)DropdownModes.HourMaster"
+                                                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = item.EndHourID, Value = item.EndHourName})"
+                                                                                ItemSelected="EditEndHour" />
+                                                            </td>
+                                                            <td class="px-1" style="max-width:300px">
+                                                                <div class="col-md-12 px-0">
+                                                                    <div class="form-group mb-0">
+                                                                        <InputNumber class="form-control " placeholder="" id="crt-rate-box" @bind-Value="item.Rate"/>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td style="width:100px;" class="px-1">
+                                                                <div class="d-flex justify-content-center align-items-center">
+                                                                    <ActionDone ButtonID="@("row-action-done-"+item.RowIndex)" Clicked="async () => await SwitchToRowDefaultMode(item)" />
+                                                                </div>
+                                                            </td>
+                                                        }
+                                                    </tr>
+                                                }
+
+                                            }
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+
+                                                <td class="px-1" style="max-width:300px">
+                                                    <div class="col-md-12">
+                                                        <div class="form-group">
+
+                                                            <select id="lead-quality-select" class="form-control form-select" @bind="Footer.DayID">
+                                                                <option value="-1" selected> Choose Day </option>
+                                                                @foreach (var day in Enum.GetValues(typeof(DayOfWeek)))
+                                                                {
+                                                                    <option value="@((int)day)">@day</option>
+                                                                }
+
+                                                            </select>
+                                                            <ValidationMessage For="() => Footer.DayID" />
+                                                        </div>
+                                                    </div>
+                                                </td>
+
+                                                <td class="px-1" style="max-width:300px">
+                                                    <DropdownSelect DropdownID="@(FooterStartHourDropdownID)" @ref="@FooterStartHourDropdownSelect"
+                                                                    DivClass="col-md-12 px-0"
+                                                                    FormGroupClass="form-group mb-0"
+                                                                    IsAddOptionNeed="false"
+                                                                    ReadDataOnSearch="true"
+                                                                    Mode="(int)DropdownModes.HourMaster"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Footer.StartHourID, Value = Footer.StartHourName})"
+                                                                    ItemSelected="StartHourSelected" />
+                                                </td>
+
+                                                <td class="px-1" style="max-width:300px">
+                                                    <DropdownSelect DropdownID="@(FooterEndHourDropdownID)" @ref="@FooterEndHourDropdownSelect"
+                                                                    DivClass="col-md-12 px-0"
+                                                                    FormGroupClass="form-group mb-0"
+                                                                    IsAddOptionNeed="false"
+                                                                    ReadDataOnSearch="true"
+                                                                    Mode="(int)DropdownModes.HourMaster"
+                                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Footer.EndHourID, Value = Footer.EndHourName})"
+                                                                    ItemSelected="EndHourSelected" />
+                                                </td>
+                                                <td class="px-1" style="max-width:300px">
+                                                    <div class="col-md-12 px-0">
+                                                        <div class="form-group mb-0">
+                                                            <InputNumber class="form-control " placeholder="" id="crt--footer-rate-box" @bind-Value="Footer.Rate" />
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td style="width:100px;" class="px-1">
+                                                    <div class="d-flex justify-content-evenly">
+                                                        <ActionAdd ButtonID="footer-add-button" Clicked="async () => await AddFooterToModel()" />
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer-action d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+            <button type="button" class="btn btn-danger me-2" @onclick="Cancel">Cancel</button>
+        </div>
+
+    </EditForm>
+</PageLayoutNew>
+
+@code {
+    [Parameter] public int PriceGroupID { get; set; }
+
+    private CourtPriceGroupModel Model = new();
+    private CourtPriceGroupItemModel Footer = new() { RowIndex = 1, IsEditMode = true };
+    List<IdnValuePair> TaxCategories = new();
+
+    private DropdownSelect? CurrencyDropdown;
+
+    private string CurrecyDropdownID = "currency-dropdown";
+    private int currentRowIndex = -1;
+    private bool isAnyRowInEditMode = false;
+    private bool hasUnsavedChanges = false;
+
+    private DropdownSelect? FooterStartHourDropdownSelect;
+    private DropdownSelect? RowStartHourDropdownSelect;
+    private DropdownSelect? FooterEndHourDropdownSelect;
+    private DropdownSelect? RowEndHourDropdownSelect;
+
+    private string RowEndHourDropdownID = "row-end-hour-select-drop-down-";
+    private string FooterStartHourDropdownID = "footer-start-hour-select-drop-down";
+    private string RowStartHourDropdownID = "row-start-hour-select-drop-down-";
+    private string FooterEndHourDropdownID = "footer-end-hour-select-drop-down";
+
+    protected override async Task OnInitializedAsync()
+    {
+        TaxCategories = await API.GetAsync<List<IdnValuePair>>($"accounts/get-tax-categories");
+        if (PriceGroupID != 0)
+        {
+            Model = await API.GetAsync<CourtPriceGroupModel>($"court/get-court-price-group-details/{PriceGroupID}", true);
+        }
+    }
+
+    private async Task AddFooterToModel()
+    {
+        if (Footer.DayID==-1 || !Footer.DayID.HasValue)
+        {
+            await JS.ErrorMessage("Please choose a day");
+            return;
+        }
+        if (!Footer.StartHourID.HasValue)
+        {
+            await JS.ErrorMessage("Choose start time");
+            return;
+        }
+        if (!Footer.EndHourID.HasValue)
+        {
+            await JS.ErrorMessage("Choose end time");
+            return;
+        }
+
+        currentRowIndex = -1;
+        Footer.IsEditMode = false;
+        Footer.RowIndex = Model.Items.Count + 1;
+        Model.Items.Add(Footer);
+
+        Footer = new()
+            {
+                IsEditMode = true
+            };
+
+    }
+
+    private async Task SwitchToRowDefaultMode(CourtPriceGroupItemModel row)
+    {
+        Model.Items[currentRowIndex].IsEditMode = false;
+        isAnyRowInEditMode = false;
+        currentRowIndex = -1;
+        hasUnsavedChanges = true;
+    }
+
+    private async Task SwitchToRowEditMode(CourtPriceGroupItemModel row)
+    {
+        if (!isAnyRowInEditMode)
+        {
+            currentRowIndex = Model.Items.IndexOf(row);
+            Model.Items[currentRowIndex].IsEditMode = true;
+            isAnyRowInEditMode = true;
+            await Task.Delay(50);
+
+        }
+        else
+        {
+            await JS.ErrorMessage("There is already a row in edit mode, please complete it first");
+
+            return;
+        }
+    }
+
+    private async Task RemoveRow(CourtPriceGroupItemModel row)
+    {
+        if (await JS.Confirm("Cofirm", "Are you sure you want to remove the enquiry item", SweetAlertMessageType.question, "Yes, Remove", "No, Don't Remove"))
+        {
+            var index = Model.Items.IndexOf(row);
+            if (index == Model.Items.Count - 1)
+                Model.Items.Remove(row);
+            else
+            {
+                for (int i = index; i < Model.Items.Count; i++)
+                {
+                    Model.Items[i].RowIndex -= 1;
+                }
+                Model.Items.Remove(row);
+            }
+
+            hasUnsavedChanges = true;
+
+            // await FocusDropdown(FooterItemDropdownID);
+            Footer.RowIndex = Model.Items.Count + 1;
+            // SetDataUpdatedMode();
+        }
+
+
+    }
+
+    private async Task StartHourSelected(DropdownItemSelectedCallbackModel data)
+    {
+        Footer.StartHourID = data.ID;
+        Footer.StartHourName = data.Value;
+    }
+
+    private async Task EndHourSelected(DropdownItemSelectedCallbackModel data)
+    {
+
+        Footer.EndHourID = data.ID;
+        Footer.EndHourName = data.Value;
+    }
+
+    private async Task EditStartHour(DropdownItemSelectedCallbackModel item)
+    {
+        var currentData = Model.Items[currentRowIndex];
+
+        CourtPriceGroupItemModel? existingItem = Model.Items
+        .Where(i => i.StartHourID == item.ID && i.DayID == currentData.DayID)
+            .FirstOrDefault();
+
+        if (existingItem != null)
+        {
+            await JS.ErrorMessage("Timing already added");
+            return;
+        }
+
+        currentData.StartHourID = item.ID;
+        currentData.StartHourName = item.Value;
+
+    }
+
+    private async Task EditEndHour(DropdownItemSelectedCallbackModel item)
+    {
+        var currentData = Model.Items[currentRowIndex];
+
+        CourtPriceGroupItemModel? existingItem = Model.Items
+            .Where(i => i.EndHourID == item.ID && i.DayID == currentData.DayID)
+            .FirstOrDefault();
+
+        if (existingItem != null)
+        {
+            await JS.ErrorMessage("Item already added to the list, please choose a different one");
+            return;
+        }
+
+        currentData.EndHourID = item.ID;
+        currentData.EndHourName = item.Value;
+
+    }
+
+
+    private async Task SaveCourtPrice()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, CourtPriceGroupModel>("court/save-court-price-group", Model);
+        if (res != null)
+        {
+            await JS.SuccessMessage("Saved Successfully");
+            Nav.NavigateTo($"court-price-groups");
+
+        }
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to leave this page..?", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            Nav.NavigateTo("court-price-groups");
+        }
+    }
+
+
+    #region Dropdown Related functions
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        Model.CurrencyID = data.ID;
+        Model.CurrencyName = data.Value;
+    }
+
+    #endregion
+}

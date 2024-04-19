@@ -1,0 +1,88 @@
+﻿@page "/whatsapp-account"
+@page "/whatsapp-account/{Id:int}"
+@using PB.Shared.Tables.Whatsapp;
+@using PB.Shared.Tables;
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="async() => await SaveAsync()">
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Whatsapp Account Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <TextBox Label="@Localizer["Account Name"]" @bind-Value="Model.Name" />
+                            <TextBox Label="@Localizer["Phone Number"]" @bind-Value="Model.PhoneNo" />
+                            <TextBox Label="@Localizer["App ID"]" @bind-Value="Model.AppID" />
+                            <TextBox Label="@Localizer["Phone Number ID"]" @bind-Value="Model.PhoneNoID" />
+                            <TextBox Label="@Localizer["Business Account ID"]" @bind-Value="Model.BusinessAccountID" />
+                            <TextBox Label="@Localizer["Token"]" @bind-Value="Model.Token" />
+                            <TextBox Label="@Localizer["Version"]" @bind-Value="Model.Version" />
+                            <div class="col-12">
+                                <label class="mt-1">
+                                    <input type="checkbox" @bind="Model.NeedReminder" id="NeedReminder" />
+                                    <span class="form-check-sign" for="NeedReminder">@Localizer["Send Reminder for Reinitiate Chatbot"]</span>
+                                </label>
+                            </div>
+                            @if (Model.NeedReminder)
+                            {
+                                <NumberBox Label="@Localizer["Send Reminder after Hour"]" @bind-Value="Model.ReminderHour" />
+                            }
+                            <NumberBox Label="@Localizer["Reinitiate Chatbot after Hour"]" @bind-Value="Model.ReinitiationHour" />
+                            <TextBox Label="@Localizer["Confirm Button Text"]" @bind-Value="Model.ConfirmButtonLabel" />
+                            <TextBox Label="@Localizer["Edit Button Text"]" @bind-Value="Model.EditButtonLabel" />
+                            <TextBox Label="@Localizer["Back Button Text"]" @bind-Value="Model.BackButtonLabel" />
+                            <TextBox Label="@Localizer["Choose Valid Option Text"]" @bind-Value="Model.ChooseValidOptionLabel" />
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">@("Welcome message between 24 Hour (@Name will replace with their whatsapp profile name)")</label>
+                                    <textarea name="" class="textarea form-control" id="enquiry-description-text-area" rows="5" @bind="Model.WelcomeMessage"></textarea>
+                                </div>
+                            </div>
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-footer-action d-flex">
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+            <button type="button" class="btn btn-danger me-2" @onclick="Cancel">Cancel</button>
+        </div>
+
+    </EditForm>
+</PageLayoutNew>
+
+@code {
+    [Parameter] public int Id { get; set; }
+    private WhatsappAccount Model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != 0)
+        {
+            Model = await API.GetAsync<WhatsappAccount>($"whatsapp/get-whatsapp-account/{Id}");
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, WhatsappAccount>("whatsapp/save-whatsapp-account", Model);
+        if (res != null)
+        {
+            await JS.SuccessMessage();
+            Nav.NavigateTo("whatsapp-accounts");
+        }
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            Nav.NavigateTo("whatsapp-accounts");
+        }
+    }
+}

@@ -1,0 +1,78 @@
+﻿@using PB.Model.Models;
+@using PB.Shared.Models.Common
+
+<div class="modal fade" id="lead-through-modal">
+    <EditForm Model="Model" OnValidSubmit="SaveLeadThrough" autocomplete="off">
+        <DataAnnotationsValidator />
+        <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Lead Through</h6><button type="button" aria-label="Close" class="btn-close" @onclick="(async() =>await HideLeadThroughModal())"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">Lead Name :</label>
+                                <input type="text" class="form-control" label="Name" @bind="Model.Name" placeholder="Lead Name">
+                                <ValidationMessage For="()=>Model.Name" />
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+                <div class="modal-footer">
+                    @if (Model.LeadThroughID == 0)
+                    {
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideLeadThroughModal()">Close</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideLeadThroughModal()">Close</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; } 
+
+    private LeadThroughModel Model = new();
+
+    private async Task SaveLeadThrough()
+    {
+        var res = await API.PostAsync<LeadThroughAddResultModel, LeadThroughModel>("settings/save-lead-through", Model);
+        if (res != null)
+        {
+            await JS.SuccessMessage("Saved Successfully");
+            await Saved.InvokeAsync(new IdnValuePair() { ID = res.LeadThroughID, Value = res.LeadThroughName });
+            await HideLeadThroughModal();
+        }
+    } 
+    public async Task OpenThroughModal(int leadThroughID = 0)
+    {
+        Model = new();
+        if (leadThroughID > 0)
+            Model = await API.GetAsync<LeadThroughModel>($"settings/get-lead-through/{leadThroughID}", true);
+        await JS.InvokeVoidAsync("ShowModal", "lead-through-modal");
+    }
+    private async Task HideLeadThroughModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "lead-through-modal");
+    }
+    public async Task RemoveLeadThrough(int leadThroughID)
+    {
+        if (await API.DeleteAsync("settings/delete-lead-through", leadThroughID, true,"Confirm","Are you sure you want to remove the lead through", "Yes, Remove", "No, Cancel"))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await HideLeadThroughModal();
+        }
+    }
+}
+

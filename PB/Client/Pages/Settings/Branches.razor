@@ -1,0 +1,134 @@
+﻿@page "/branches"
+@page "/branches/{BranchId:int}"
+
+@using PB.CRM.Model;
+@using PB.Shared.Models
+@using PB.Shared.Models.Common;
+
+ <PageLayoutNew>
+            <div class="main-container container-fluid">
+                <div class="page-header">
+                    <div class="card">
+                <div class="card-header py-2">
+
+                    <ListPageHeader Settings="BranchFilterSettings" OnFilterButtonClick="ApplyFilterToItemList" />
+                </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                @*<a href="#"><i class="fa fa-plus-square me-1"></i>Customize Table</a>*@
+                                <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                Sl No.
+                                            </th>
+                                            <th>
+                                                Branch Name
+                                            </th>
+                                            <th>
+                                                Mobile Number
+                                            </th>
+                                            <th>
+                                                Email
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in BranchStage1Model.Data.Select((value, i) => new { i, value }))
+                                        {
+                                            var entry = item.value;
+                                            var index = item.i;
+                                            <tr @onclick="@(()=>Nav.NavigateTo($"branch-view/{entry.BranchID}"))" style="cursor:pointer">
+                                                <td>
+                                                    @if (BranchStage1Model.PageIndex == 1)
+                                                    {
+                                                        @(index + 1)
+                                                    }
+                                                    else
+                                                    {
+                                                        @((BranchStage1Model.PageIndex * BranchStage1Model.PageSize) + (index + 1))
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @entry.BranchName
+                                                </td>
+
+                                                <td>
+                                                    @entry.Phone
+                                                </td>
+
+                                                <td>
+                                                    @entry.EmailAddress
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+</PageLayoutNew>
+}
+@code {
+    [Parameter] public int BranchId { get; set; }
+
+    private int Stage = 1;
+    private string? errorMessage;
+    private string? infoMessage;
+
+    private PagedListPostModelWithFilter Stage1SearchModel = new();
+    private PagedList<BranchListModel> BranchStage1Model = new();
+    HeaderSettingsModel BranchFilterSettings = new()
+        {
+            SearchPlaceHolder = "search",
+        };
+    protected override async Task OnInitializedAsync()
+    {
+        
+        BranchFilterSettings.Heading = "Branches";
+        BranchFilterSettings.SinglePageURL = "branch";
+        BranchFilterSettings.AddButtonText = "New Branch";
+        await LoadStage1Data();
+    }
+
+    private async Task SwitchToStage1(string? message = null, bool? isErrorMessage = null)
+    {
+        Stage = 1;
+        await LoadStage1Data();
+    }
+
+    private async Task LoadStage1Data()
+    {
+        BranchStage1Model = await API.PostAsync<PagedList<BranchListModel>, PagedListPostModelWithFilter>("branch/get-all-branches", Stage1SearchModel);
+    }
+
+    private List<string> stage1SortMenuItems = new()
+    {
+        "BranchName",
+        "Contact Person",
+    };
+
+    private async Task SortEventCallbackRecieved(IdnValuePair sort)
+    {
+        switch (sort.ID)
+        {
+            case 0:
+                Stage1SearchModel.OrderByFieldName = "BranchName " + sort.Value;
+                break;
+
+            case 1:
+                Stage1SearchModel.OrderByFieldName = "Phone " + sort.Value;
+                break;
+        }
+        await LoadStage1Data();
+    }
+
+    private async Task ApplyFilterToItemList(PagedListPostModelWithFilter searchModel)
+    {
+        Stage1SearchModel = searchModel;
+        await LoadStage1Data();
+    }
+}

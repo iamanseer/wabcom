@@ -1,0 +1,273 @@
+﻿
+
+USE [_Whatsapp]
+GO
+/****** Object:  Table [dbo].[EC_Cart]    Script Date: 4/2/2024 2:05:45 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EC_Cart](
+	[CartID] [int] IDENTITY(1,1) NOT NULL,
+	[CustomerEntityID] [int] NULL,
+	[ItemVariantID] [int] NULL,
+	[AddedOn] [datetime] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_Cart] PRIMARY KEY CLUSTERED 
+(
+	[CartID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[EC_Customer]    Script Date: 4/2/2024 2:05:46 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EC_Customer](
+	[CustomerID] [int] IDENTITY(1,1) NOT NULL,
+	[EntityID] [int] NULL,
+	[HasLogin] [bit] NULL,
+	[OTP] [nvarchar](50) NULL,
+	[AddedOn] [datetime] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_Customer] PRIMARY KEY CLUSTERED 
+(
+	[CustomerID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[EC_Entity]    Script Date: 4/2/2024 2:05:46 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EC_Entity](
+	[EntityID] [int] IDENTITY(1,1) NOT NULL,
+	[EntityTypeID] [int] NULL,
+	[EmailAddress] [nvarchar](50) NULL,
+	[Phone] [nvarchar](15) NULL,
+	[Phone2] [nvarchar](15) NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_Entity] PRIMARY KEY CLUSTERED 
+(
+	[EntityID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[EC_EntityAddress]    Script Date: 4/2/2024 2:05:46 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EC_EntityAddress](
+	[AddressID] [int] IDENTITY(1,1) NOT NULL,
+	[EntityID] [int] NULL,
+	[AddressTypeID] [int] NULL,
+	[PinCode] [nvarchar](50) NULL,
+	[FirstName] [nvarchar](100) NULL,
+	[LastName] [nvarchar](100) NULL,
+	[AddressLine1] [nvarchar](max) NULL,
+	[AddressLine2] [nvarchar](max) NULL,
+	[City] [nvarchar](max) NULL,
+	[State] [nvarchar](max) NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_EntityAddress] PRIMARY KEY CLUSTERED 
+(
+	[AddressID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[EC_EntityPersonalInfo]    Script Date: 4/2/2024 2:05:46 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EC_EntityPersonalInfo](
+	[EntityPersonalInfoID] [int] IDENTITY(1,1) NOT NULL,
+	[EntityID] [int] NULL,
+	[Honorific] [nvarchar](10) NULL,
+	[FirstName] [nvarchar](100) NULL,
+	[MiddleName] [nvarchar](100) NULL,
+	[LastName] [nvarchar](100) NULL,
+	[NickName] [nvarchar](50) NULL,
+	[GenderID] [int] NULL,
+	[DOB] [date] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_EntityPersonalInfo] PRIMARY KEY CLUSTERED 
+(
+	[EntityPersonalInfoID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[EC_ItemRating]    Script Date: 4/2/2024 2:05:46 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EC_ItemRating](
+	[RatingID] [int] IDENTITY(1,1) NOT NULL,
+	[Rating] [decimal](18, 2) NULL,
+	[ItemID] [int] NULL,
+	[CustomerEntityID] [int] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_ItemRating] PRIMARY KEY CLUSTERED 
+(
+	[RatingID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[EC_ItemReview]    Script Date: 4/2/2024 2:05:46 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EC_ItemReview](
+	[ReviewID] [int] IDENTITY(1,1) NOT NULL,
+	[Review] [nvarchar](max) NULL,
+	[CustomerEntityID] [int] NULL,
+	[ItemID] [int] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_ItemReview] PRIMARY KEY CLUSTERED 
+(
+	[ReviewID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[EC_ReviewImages]    Script Date: 4/2/2024 2:05:46 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EC_ReviewImages](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
+	[ReviewID] [int] NULL,
+	[MediaID] [int] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_ReviewImages] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[EC_Users]    Script Date: 4/2/2024 2:05:46 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EC_Users](
+	[UserID] [int] IDENTITY(1,1) NOT NULL,
+	[UserName] [nvarchar](50) NOT NULL,
+	[Password] [nvarchar](100) NOT NULL,
+	[PasswordHash] [nvarchar](100) NULL,
+	[EntityID] [int] NULL,
+	[UserTypeID] [int] NULL,
+	[BranchID] [int] NULL,
+	[LoginStatus] [bit] NULL,
+	[OTP] [nvarchar](10) NULL,
+	[OTPGeneratedAt] [datetime] NULL,
+	[IsVerified] [bit] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_Users] PRIMARY KEY CLUSTERED 
+(
+	[UserID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [dbo].[EC_WishList]    Script Date: 4/2/2024 2:05:46 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[EC_WishList](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
+	[CustomerEntityID] [int] NULL,
+	[ItemVariantID] [int] NULL,
+	[AddedOn] [datetime] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_WishList] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+ALTER TABLE [dbo].[EC_Cart]  WITH CHECK ADD  CONSTRAINT [FK_EC_Cart_EC_Entity] FOREIGN KEY([CustomerEntityID])
+REFERENCES [dbo].[EC_Entity] ([EntityID])
+GO
+ALTER TABLE [dbo].[EC_Cart] CHECK CONSTRAINT [FK_EC_Cart_EC_Entity]
+GO
+ALTER TABLE [dbo].[EC_Cart]  WITH CHECK ADD  CONSTRAINT [FK_EC_Cart_ItemVariant] FOREIGN KEY([ItemVariantID])
+REFERENCES [dbo].[ItemVariant] ([ItemVariantID])
+GO
+ALTER TABLE [dbo].[EC_Cart] CHECK CONSTRAINT [FK_EC_Cart_ItemVariant]
+GO
+ALTER TABLE [dbo].[EC_Customer]  WITH CHECK ADD  CONSTRAINT [FK_EC_Customer_EC_Entity] FOREIGN KEY([EntityID])
+REFERENCES [dbo].[EC_Entity] ([EntityID])
+GO
+ALTER TABLE [dbo].[EC_Customer] CHECK CONSTRAINT [FK_EC_Customer_EC_Entity]
+GO
+ALTER TABLE [dbo].[EC_EntityAddress]  WITH CHECK ADD  CONSTRAINT [FK_EC_EntityAddress_EC_Entity] FOREIGN KEY([EntityID])
+REFERENCES [dbo].[EC_Entity] ([EntityID])
+GO
+ALTER TABLE [dbo].[EC_EntityAddress] CHECK CONSTRAINT [FK_EC_EntityAddress_EC_Entity]
+GO
+ALTER TABLE [dbo].[EC_EntityPersonalInfo]  WITH CHECK ADD  CONSTRAINT [FK_EC_EntityPersonalInfo_EC_Entity] FOREIGN KEY([EntityID])
+REFERENCES [dbo].[EC_Entity] ([EntityID])
+GO
+ALTER TABLE [dbo].[EC_EntityPersonalInfo] CHECK CONSTRAINT [FK_EC_EntityPersonalInfo_EC_Entity]
+GO
+ALTER TABLE [dbo].[EC_ItemRating]  WITH CHECK ADD  CONSTRAINT [FK_EC_ItemRating_EC_Entity] FOREIGN KEY([CustomerEntityID])
+REFERENCES [dbo].[EC_Entity] ([EntityID])
+GO
+ALTER TABLE [dbo].[EC_ItemRating] CHECK CONSTRAINT [FK_EC_ItemRating_EC_Entity]
+GO
+ALTER TABLE [dbo].[EC_ItemRating]  WITH CHECK ADD  CONSTRAINT [FK_EC_ItemRating_Item] FOREIGN KEY([ItemID])
+REFERENCES [dbo].[Item] ([ItemID])
+GO
+ALTER TABLE [dbo].[EC_ItemRating] CHECK CONSTRAINT [FK_EC_ItemRating_Item]
+GO
+ALTER TABLE [dbo].[EC_ItemReview]  WITH CHECK ADD  CONSTRAINT [FK_EC_ItemReview_EC_Entity] FOREIGN KEY([CustomerEntityID])
+REFERENCES [dbo].[EC_Entity] ([EntityID])
+GO
+ALTER TABLE [dbo].[EC_ItemReview] CHECK CONSTRAINT [FK_EC_ItemReview_EC_Entity]
+GO
+ALTER TABLE [dbo].[EC_ItemReview]  WITH CHECK ADD  CONSTRAINT [FK_EC_ItemReview_Item] FOREIGN KEY([ItemID])
+REFERENCES [dbo].[Item] ([ItemID])
+GO
+ALTER TABLE [dbo].[EC_ItemReview] CHECK CONSTRAINT [FK_EC_ItemReview_Item]
+GO
+ALTER TABLE [dbo].[EC_ReviewImages]  WITH CHECK ADD  CONSTRAINT [FK_EC_ReviewImages_EC_ItemReview] FOREIGN KEY([ReviewID])
+REFERENCES [dbo].[EC_ItemReview] ([ReviewID])
+GO
+ALTER TABLE [dbo].[EC_ReviewImages] CHECK CONSTRAINT [FK_EC_ReviewImages_EC_ItemReview]
+GO
+ALTER TABLE [dbo].[EC_ReviewImages]  WITH CHECK ADD  CONSTRAINT [FK_EC_ReviewImages_Media] FOREIGN KEY([MediaID])
+REFERENCES [dbo].[Media] ([MediaID])
+GO
+ALTER TABLE [dbo].[EC_ReviewImages] CHECK CONSTRAINT [FK_EC_ReviewImages_Media]
+GO
+ALTER TABLE [dbo].[EC_Users]  WITH CHECK ADD  CONSTRAINT [FK_EC_Users_Branch] FOREIGN KEY([BranchID])
+REFERENCES [dbo].[Branch] ([BranchID])
+GO
+ALTER TABLE [dbo].[EC_Users] CHECK CONSTRAINT [FK_EC_Users_Branch]
+GO
+ALTER TABLE [dbo].[EC_Users]  WITH CHECK ADD  CONSTRAINT [FK_EC_Users_EC_Entity] FOREIGN KEY([EntityID])
+REFERENCES [dbo].[EC_Entity] ([EntityID])
+GO
+ALTER TABLE [dbo].[EC_Users] CHECK CONSTRAINT [FK_EC_Users_EC_Entity]
+GO
+ALTER TABLE [dbo].[EC_Users]  WITH CHECK ADD  CONSTRAINT [FK_EC_Users_UserType] FOREIGN KEY([UserTypeID])
+REFERENCES [dbo].[UserType] ([UserTypeID])
+GO
+ALTER TABLE [dbo].[EC_Users] CHECK CONSTRAINT [FK_EC_Users_UserType]
+GO
+ALTER TABLE [dbo].[EC_WishList]  WITH CHECK ADD  CONSTRAINT [FK_EC_WishList_EC_Entity] FOREIGN KEY([CustomerEntityID])
+REFERENCES [dbo].[EC_Entity] ([EntityID])
+GO
+ALTER TABLE [dbo].[EC_WishList] CHECK CONSTRAINT [FK_EC_WishList_EC_Entity]
+GO
+ALTER TABLE [dbo].[EC_WishList]  WITH CHECK ADD  CONSTRAINT [FK_EC_WishList_ItemVariant] FOREIGN KEY([ItemVariantID])
+REFERENCES [dbo].[ItemVariant] ([ItemVariantID])
+GO
+ALTER TABLE [dbo].[EC_WishList] CHECK CONSTRAINT [FK_EC_WishList_ItemVariant]
+GO

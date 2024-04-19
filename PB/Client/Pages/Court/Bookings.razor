@@ -1,0 +1,147 @@
+﻿@page "/bookings"
+@attribute [Authorize(Roles = "CourtBooking")]
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Court;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="CourtFilterSettings" OnFilterButtonClick="FilterListPageTo" />
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    BookingNo
+                                </th>
+                                <th>
+                                    CustomerName
+                                </th>
+                                <th class="d-flex gap-2">
+                                    CustomerPhone
+                                    <span style="border: 1px solid #ced4da;background-color: #f8f9fa; border-radius: 5px; padding: 0px 2px;" @onclick="()=>IsPhoneFilterVisible=!IsPhoneFilterVisible"><i class="fa fa-search" style="color: #00a2b8;"></i></span>
+                                    <div class="popup" id="popup3560h6" style="display: @(IsPhoneFilterVisible?"block":"none");top: 60px;right: 292px;" >
+                                        <div style="max-width:380px;min-width:300px" @onmouseout="()=>IsPhoneFilterVisible=false">
+                                            <EditForm class="input-group" Model="@PhoneFilterModel" OnValidSubmit="async()=>await LoadCourtBookingData()">
+                                                <InputText class="form-control" placeholder="Enter phone number to search" @bind-Value="PhoneFilterModel.Value" />
+                                            </EditForm>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th>
+                                    Booked On
+                                </th>
+                                <th>
+                                    Booked By
+                                </th>
+                                <th>
+                                    Status
+                                </th>
+                                <th>
+                                    Remarks
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in BookingListModel.Data.Select((data, index) => new { index, data }))
+                            {
+                                <tr @onclick="@(()=>Nav.NavigateTo($"booking-details/{item.data.BookingID}"))" style="cursor:pointer">
+                                    <td>
+                                        @((BookingListModel.PageIndex - 1) * BookingListModel.PageSize + 1 + item.index)
+                                    </td>
+                                    <td>
+                                        @item.data.BookingNo
+                                    </td>
+                                    <td>
+                                        @item.data.CustomerName
+                                    </td>
+                                    <td>
+                                        @item.data.CustomerPhone
+                                    </td>
+                                    <td>@item.data.BookedOn.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @item.data.BookedBy
+                                    </td>
+                                    <td>
+                                        @(item.data.Status.ToString())
+                                    </td>
+                                    <td>
+                                        @item.data.Remarks
+                                    </td>
+                                </tr>
+
+                            }
+
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="BookingListModel.PageSize" TotalCount="BookingListModel.TotalCount" TotalPages="BookingListModel.TotalPages" PageIndex="BookingListModel.PageIndex" LoadPageIndex="PageIndex" />
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+
+@code {
+    [Parameter] public int? HallID { get; set; }
+    private PagedList<BookingViewModel> BookingListModel = new();
+    private PagedListPostModelWithFilter SearchModel = new();
+    bool IsPhoneFilterVisible = false;
+    StringModel PhoneFilterModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourtBookingData();
+    }
+    #region Sort, Filter
+
+    HeaderSettingsModel CourtFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by Booking No,Name",
+            NeedSortOption = false,
+            NeedFilterOption = false,
+            // SortMenuItems = stage1SortMenuItems,
+
+            DateFilters = null,
+            Heading = "CourtBooking",
+            SinglePageURL = "court-booking",
+            AddButtonText = "New Booking",
+        };
+
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadCourtBookingData();
+    }
+
+    private async Task PageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadCourtBookingData();
+    }
+
+    #endregion
+    private async Task LoadCourtBookingData()
+    {
+        BookingPagedListPostModelWithFilter TempFilterModel = new()
+        {
+                CustomerPhone=PhoneFilterModel.Value,
+                PageSize=SearchModel.PageSize,
+                PageIndex=SearchModel.PageIndex,
+                SearchString=SearchModel.SearchString
+        };
+        BookingListModel = await API.PostAsync<PagedList<BookingViewModel>, BookingPagedListPostModelWithFilter>("court/get-court-booking-list", TempFilterModel);
+
+    }
+    
+    
+}

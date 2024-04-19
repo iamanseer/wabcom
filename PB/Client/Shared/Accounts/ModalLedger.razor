@@ -1,0 +1,525 @@
+﻿@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Enum.Accounts
+@using PB.Shared.Models.Accounts.Ledgers;
+@using PB.Shared.Models.Accounts;
+@using PB.Shared.Models.Common;
+
+@if (AccountEditContext is not null)
+{
+    <div class="modal fade" id="ledger-modal">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" role="document" style="overflow-y: scroll;">
+            <div class="modal-content modal-content-demo">
+                <EditForm EditContext="AccountEditContext" OnValidSubmit="SaveLedger">
+                    <div class="modal-header">
+                        <h6 class="modal-title">@(Model.LedgerID == 0 ? "Ledger" : Model.LedgerName)</h6><button aria-label="Close" class="btn-close" @onclick="async() => await CloaseModal()"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <DataAnnotationsValidator />
+                        <div class="row">
+                            <InputTextBox DivClass="col-md-12" @bind-Value="Model.LedgerName"
+                                          IsRequired="true" Label="Account Name :"
+                                          ValidationFor="() => Model.LedgerName" id="ledger-name-text-box" />
+                        </div>
+                        <div class="row">
+                            <InputTextBox DivClass="col-md-12" @bind-Value="Model.LedgerCode"
+                                          Label="Account Code :" IsRequired="true" PlaceHolder="Account code"
+                                          ValidationFor="() => Model.LedgerCode" id="ledger-code-text-box" />
+                        </div>
+                        <div class="row">
+                            <InputTextBox DivClass="col-md-12" Label="Alias :"
+                                          ValidationFor="() => Model.Alias" @bind-Value="Model.Alias" />
+                        </div>
+                        <div class="row position-relative pb-3">
+                            <DropdownSelect DivClass="col-md-7" @ref="@accountGroupSelect"
+                                            DropdownID="@AccountGroupDropdownID"
+                                            IsRequired="true"
+                                            Label="Account Group"
+                                            Mode="(int)DropdownModes.AccountGroups"
+                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                            ReadDataOnSearch="true"
+                                            ItemSelected="HandleAccountGroupSelected"
+                                            SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.AccountGroupID, Value = Model.AccountGroupName})"
+                                            IsAddOptionNeed="true"
+                                            NewButtonText="Account group"
+                                            NewButtonClicked="async () => await HandleAccountGroupAddButoonClick()" />
+                            <div class="validation-for-dropdown">
+                                <ValidationMessage For="()=>Model.AccountGroupID" />
+                            </div>
+                        </div>
+                        @if (Model.GroupTypeID == (int)AccountGroupTypes.SundryCreditors || Model.GroupTypeID == (int)AccountGroupTypes.SundryDebtors)
+                        {
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align:left;">
+                                            Mobile Number :
+                                            <span style="color:red">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                @CountryModel.ISDCode
+                                            </span>
+                                            <input type="text" class="form-control" @bind="Model.Phone" />
+                                        </div>
+                                    </div>
+                                    <ValidationMessage For="()=>Model.Phone" />
+                                </div>
+                            </div>
+                            <div class="row">
+                                <InputTextBox DivClass="col-md-12" @bind-Value="Model.EmailAddress"
+                                              Label="Email Address :" IsRequired="false"
+                                              ValidationFor="() => Model.EmailAddress"
+                                              PlaceHolder="example@test.com" id="ledger-email-input-box" />
+                            </div>
+                            <div class="row">
+                                <InputTextBox DivClass="col-md-12" @bind-Value="Model.AddressLine1"
+                                              Label="Address Line 1 :" IsRequired="true"
+                                              ValidationFor="() => Model.AddressLine1" id="ledger-address-line-input-box" />
+
+                            </div>
+                            <div class="row">
+                                <InputTextBox DivClass="col-md-12" @bind-Value="Model.AddressLine2"
+                                              Label="Address Line 2 :" IsRequired="false"
+                                              ValidationFor="() => Model.AddressLine2" />
+                            </div>
+                            <div class="row">
+                                <InputTextBox DivClass="col-md-12" @bind-Value="Model.AddressLine3"
+                                              Label="Address Line 3 :" IsRequired="false"
+                                              ValidationFor="() => Model.AddressLine3" />
+
+                            </div>
+                            <div class="row position-relative pb-3">
+                                <!--COUNTRY-->
+                                <DropdownSelect DivClass="col-md-12" @ref="countrySelect"
+                                                DropdownID="country-drop-down"
+                                                Label="Country :"
+                                                Mode="(int)DropdownModes.Country"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                ItemSelected="async (country) => await HandleCountrySelected(country)"
+                                                IsRequired="true"
+                                                ReadDataOnSearch="true"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})" />
+                                <div class="validation-for-dropdown">
+                                    <ValidationMessage For="()=>Model.CountryID" />
+                                </div>
+                            </div>
+                            <div class="row position-relative pb-3" style="@StatePointerEvent">
+                                <!--STATE-->
+                                <DropdownSelect DivClass="col-md-12" @ref="@stateSelect"
+                                                DropdownID="state-drop-down-select"
+                                                Label="State : "
+                                                IsRequired="true"
+                                                ReadDataOnSearch="true"
+                                                Mode="(int)DropdownModes.State"
+                                                ModeGroup="(int)DropdownModes.CommonSearchWithID"
+                                                ItemSelected="async (state) => await HandleStateSelected(state)"
+                                                CommonSearch="@(new CommonSearchModel(){ID=Convert.ToInt32(Model.CountryID)})"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.StateID,Value=Model.StateName})"
+                                                IsAddOptionNeed="false" />
+                                <div class="validation-for-dropdown">
+                                    <ValidationMessage For="()=>Model.StateID" />
+                                </div>
+                            </div>
+                            <div class="row position-relative pb-3" style="@CityPointerEvent">
+                                <!--CITY-->
+                                <DropdownSelect DivClass="col-md-12" @ref="@citySelect"
+                                                DropdownID="city-drop-down-select"
+                                                Label="City : "
+                                                ReadDataOnSearch="true"
+                                                Mode="(int)DropdownModes.City"
+                                                ModeGroup="(int)DropdownModes.CommonSearchWithID"
+                                                ItemSelected=" (city) => HandleCitySelected(city)"
+                                                CommonSearch="@(new CommonSearchModel(){ID=Convert.ToInt32(Model.StateID)})"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CityID,Value=Model.CityName})"
+                                                IsAddOptionNeed="false" />
+                                <div class="validation-for-dropdown">
+                                    <ValidationMessage For="()=>Model.StateID" />
+                                </div>
+                            </div>
+
+                            @*  <div class="row">
+                    <div class="col-md-7">
+                    <div class="col-12">
+                    <div class=" form-check form-check-inline font-large">
+                    <input class="ember-checkbox ember-view form-check-input" id="is-bill-to-bill" type="checkbox" @onchange="(ChangeEventArgs e) => HandelIsBillToBillCheck(e)" checked="@(Model.IsBillToBill?"checked":null)">
+                    <label class="form-check-label fs-16 fw-bold" for="is-bill-to-bill">Is Bill to Bill</label>
+                    </div>
+                    </div>
+                    </div>
+                    </div> *@
+                        }
+                        @if (Model.IsBillToBill)
+                        {
+                            <div class="row">
+                                <div class="table-responsive">
+                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                                        <thead>
+                                            <tr>
+                                                <th>
+                                                    Ref No
+                                                </th>
+                                                <th>
+                                                    Date
+                                                </th>
+                                                <th>
+                                                    Bill Amount
+                                                </th>
+                                                <th>
+                                                    Debit
+                                                </th>
+                                                <th>
+                                                    Credit
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (Model.BillToBillItems != null && Model.BillToBillItems.Count > 0)
+                                            {
+                                                @foreach (var bill in Model.BillToBillItems)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @bill.ReferenceNo
+                                                        </td>
+                                                        <td>
+                                                            @bill.Date
+                                                        </td>
+                                                        <td>
+                                                            @bill.Debit
+                                                        </td>
+                                                        <td>
+                                                            @bill.Credit
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="5" class="py-1 bg-light">
+                                                            <ul class="d-flex gap-2">
+                                                                <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                                    <span @onclick="async () => await HandleAddBillItemToLedgerButtonClick(bill)">
+                                                                        <i class="fe fe-edit me-1" style="color:var(--primary-bg-color)" aria-hidden="true"></i> Edit item
+                                                                    </span>
+                                                                </li>
+                                                                <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                                    <span @onclick="async () => await HandleRemoveBillItemClick(bill)">
+                                                                        <i class="fa fa-trash me-1" style="color:red" aria-hidden="true"></i> Remove item
+                                                                    </span>
+                                                                </li>
+                                                            </ul>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="5">
+                                                    <div class="row mt-2">
+                                                        <div class="col-10 d-flex justify-content-end">
+                                                            <div class="col-7 card">
+                                                                <div class="card-body">
+                                                                    @if (Model.BillToBillItems != null && Model.BillToBillItems.Count > 0)
+                                                                    {
+                                                                        <div class="row">
+                                                                            <div class="col-6">
+                                                                                <p style="margin-bottom: 0 !important;">
+                                                                                    @("Summary : ")
+                                                                                </p>
+                                                                            </div>
+                                                                            <div class="col-3">
+                                                                                <p style="margin-bottom: 0 !important; text-align: right;">
+                                                                                    @("Debit : ")@(Model.BillToBillItems.Where(bl => bl.Debit != 0).Sum(bs => bs.Debit))
+                                                                                </p>
+                                                                            </div>
+                                                                            <div class="col-3">
+                                                                                <p style="margin-bottom: 0 !important; text-align: right;">
+                                                                                    @("Credit : ")@(Model.BillToBillItems.Where(bl => bl.Credit != 0).Sum(bs => bs.Credit))
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        @if (Model.OpeningBalance != 0)
+                                                                        {
+                                                                            <div class="row mt-4">
+                                                                                <div class="col-6">
+                                                                                    <p style="font-size: 18px;font-weight:900;margin-bottom: 0 !important;">
+                                                                                        @("Opening Balance (₹) ")
+                                                                                    </p>
+                                                                                </div>
+                                                                                <div class="col-6">
+                                                                                    <p style="font-size: 18px; font-weight: 900; text-align: right; margin-bottom: 0 !important">
+                                                                                        @Model.OpeningBalance
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        }
+
+                                                                        @if (Model.DrorCr == (int)DebitOrCredit.Debit)
+                                                                        {
+                                                                            <div class="row mt-4">
+                                                                                <div class="col-6">
+                                                                                    <p style="margin-bottom: 0 !important; color: red;">@("Difference b/w Dr and Cr : ")</p>
+                                                                                </div>
+                                                                                <div class="col-6">
+                                                                                    <p style="margin-bottom: 0 !important; text-align: right; color: red; text-align: right;">
+                                                                                        @(Model.BillToBillItems.Where(bl => bl.Debit != 0).Sum(bl => bl.Debit) - Model.BillToBillItems.Where(bl => bl.Credit != 0).Sum(bl => bl.Credit))
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        }
+
+                                                                        @if (Model.DrorCr == (int)DebitOrCredit.Credit)
+                                                                        {
+                                                                            <div class="row mt-4">
+                                                                                <div class="col-6">
+                                                                                    <p style="margin-bottom: 0 !important; color: red;"> @("Difference b/w Cr and Dr : ")</p>
+                                                                                </div>
+                                                                                <div class="col-6">
+                                                                                    <p style="margin-bottom: 0 !important; text-align: right; color: red; text-align: right;">
+                                                                                        @(Model.BillToBillItems.Where(bl => bl.Credit != 0).Sum(bl => bl.Credit) - Model.BillToBillItems.Where(bl => bl.Debit != 0).Sum(bl => bl.Debit))
+                                                                                    </p>
+                                                                                </div>
+                                                                            </div>
+                                                                        }
+                                                                    }
+                                                                </div>
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="col-2 d-flex justify-content-end">
+                                                            <div><button class="btn btn-secondary px-2" type="button" @onclick="async () => await HandleAddBillItemToLedgerButtonClick()">New Bill Item</button></div>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary me-2">@(Model.LedgerID == 0 ? "Save" : "Update")</button>
+                        @if (Model.LedgerID > 0)
+                        {
+                            <button type="button" class="btn btn-danger me-2" @onclick="async () => await DeleteLedger()">Cancel</button>
+                        }
+                        <button type="button" class="btn btn-light" @onclick="async () => await CloaseModal()">Cancel</button>
+                    </div>
+
+                </EditForm>
+            </div>
+        </div>
+    </div>
+}
+
+<!--Modal Account Group-->
+<ModalAccountGroup @ref="modalAccountGroup" Refresh="(IdnValuePair? accountGroup) => HandleAccountGroupAdded(accountGroup)" />
+@if (Model.IsBillToBill)
+{
+    <ModalLedegrBillItems @ref="modalLedegrBillItems" Saved="HandleBillItemEventCallback" />
+}
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+
+    private EditContext AccountEditContext;
+    private AccLedgerModel Model = new() { DrorCr = (int)DebitOrCredit.Debit };
+    private ModalAccountGroup modalAccountGroup = new();
+    private List<IdnValuePair> LedgerTypesList = new();
+    private CommonSearchModel SearchModel = new() { ReadDataOnSearch = false };
+
+    private bool CanShowPage = false;
+
+    private string? AccountGroupDropdownID = "account-group-drop-down";
+    private string? StatePointerEvent = "pointer-events:none;";
+    private string? CityPointerEvent = "pointer-events:none;";
+
+    private string LedgerTypePointerEvents = "";
+
+    private DropdownSelect accountGroupSelect = new();
+    private DropdownSelect countrySelect = new();
+    private DropdownSelect stateSelect = new();
+    private DropdownSelect citySelect = new();
+    private DropdownSelect ParentGroupDropdown = new();
+
+    #region Account Group
+
+    private void HandleAccountGroupSelected(DropdownItemSelectedCallbackModel accountGroup)
+    {
+        Model.AccountGroupID = accountGroup.ID;
+        Model.AccountGroupName = accountGroup.Value;
+        AccountEditContext.NotifyFieldChanged(AccountEditContext.Field(nameof(Model.AccountGroupID)));
+    }
+    private async Task HandleAccountGroupAddButoonClick()
+    {
+        await modalAccountGroup.OpenAccountGroupModal();
+    }
+    private async Task HandleAccountGroupAdded(IdnValuePair? accountGroup = null)
+    {
+        if (accountGroup is not null)
+        {
+            Model.AccountGroupID = accountGroup.ID;
+            Model.AccountGroupName = accountGroup.Value;
+            AccountEditContext.NotifyFieldChanged(AccountEditContext.Field(nameof(Model.AccountGroupID)));
+            if (Model.AccountGroupID is not null)
+                Model.GroupTypeID = await API.GetAsync<int>($"accounts/get-account-group-type/{Model.AccountGroupID.Value}", true);
+        }
+    }
+
+    #endregion
+
+    #region Default Data
+
+    private Country CountryModel = new();
+    private async Task GetCountryDetails()
+    {
+        CountryModel = await API.GetAsync<Country>($"common/get-default-country-details", true);
+        if (CountryModel is not null)
+        {
+            Model.CountryID = CountryModel.CountryID;
+            Model.CountryName = CountryModel.CountryName;
+            await stateSelect.RefreshList(CountryModel.CountryID);
+            StatePointerEvent = "";
+        }
+    }
+
+    #endregion
+
+    #region Country, State and City
+
+    private async Task HandleCountrySelected(DropdownItemSelectedCallbackModel country)
+    {
+        Model.CountryID = country.ID;
+        Model.CountryName = country.Value;
+        AccountEditContext.NotifyFieldChanged(AccountEditContext.Field(nameof(Model.CountryID)));
+        if (Model.CountryID is not null)
+        {
+            await stateSelect.RefreshList(Model.CountryID);
+            StatePointerEvent = "";
+        }
+        else
+        {
+            Model.StateID = Model.CityID = null;
+            Model.StateName = Model.CityName = null;
+            StatePointerEvent = "pointer-events:none;";
+        }
+    }
+    private async Task HandleStateSelected(DropdownItemSelectedCallbackModel state)
+    {
+        Model.StateID = state.ID;
+        Model.StateName = state.Value;
+        AccountEditContext.NotifyFieldChanged(AccountEditContext.Field(nameof(Model.StateID)));
+        if (Model.StateID is not null)
+        {
+            await citySelect.RefreshList(Model.StateID);
+            CityPointerEvent = "";
+        }
+        else
+        {
+            Model.CityID = null;
+            Model.CityName = null;
+            CityPointerEvent = "pointer-events:none;";
+        }
+    }
+    private void HandleCitySelected(DropdownItemSelectedCallbackModel city)
+    {
+        Model.CityID = city.ID;
+        Model.CityName = city.Value;
+        AccountEditContext.NotifyFieldChanged(AccountEditContext.Field(nameof(Model.CityID)));
+    }
+
+    #endregion
+
+    #region Bill To Bill Items
+
+    private ModalLedegrBillItems modalLedegrBillItems = new();
+    private int currentRowIndex = -1;
+    private bool hasAnyRowInEditMode = false;
+    private void HandelIsBillToBillCheck(ChangeEventArgs e)
+    {
+        Model.IsBillToBill = Convert.ToBoolean(e.Value);
+        if (!Model.IsBillToBill)
+            Model.IsBillToBill = new();
+    }
+    private async Task HandleAddBillItemToLedgerButtonClick(BillToBillModel? billItem = null)
+    {
+        if (billItem is not null)
+            currentRowIndex = Model.BillToBillItems.IndexOf(billItem);
+        else
+            currentRowIndex = -1;
+        await modalLedegrBillItems.OpenBillModelModal(billItem);
+    }
+    private void HandleBillItemEventCallback(BillToBillModel billItem)
+    {
+        if (currentRowIndex == -1)
+            Model.BillToBillItems.Add(billItem);
+        else
+            Model.BillToBillItems[currentRowIndex] = billItem;
+    }
+    private async Task HandleRemoveBillItemClick(BillToBillModel billItem)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete " + billItem.ReferenceNo + "bill item?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel"))
+        {
+            Model.BillToBillItems.Remove(billItem);
+        }
+    }
+
+    #endregion
+
+    #region Main Functions
+
+    private async Task SaveLedger()
+    {
+        var result = await API.PostAsync<LedgerAddResultModel, AccLedgerModel>("accounts/save-ledger", Model);
+        if (result is not null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair() { ID = result.LedgerID, Value = result.LedgerName });
+            await CloaseModal();
+        }
+    }
+    private async Task DeleteLedger()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete " + Model.LedgerName + ".?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel")
+        && await API.GetAsync<bool>($"accounts/delete-ledger/{Model.LedgerID}", true))
+        {
+            await CloaseModal();
+        }
+    }
+    public async Task OpenLedgerModal(int ledgerID = 0)
+    {
+        //LedgerTypesList = await API.PostAsync<List<IdnValuePair>, CommonSearchModel>("common/get-list-of-account-types", SearchModel);
+        if (ledgerID > 0)
+            Model = await API.GetAsync<AccLedgerModel>($"accounts/get-ledger/{ledgerID}", true);
+
+        AccountEditContext = new(Model);
+        StateHasChanged();
+        if (Model.CountryID is not null)
+        {
+            await stateSelect.RefreshList(Model.CountryID);
+            StatePointerEvent = "";
+        }
+        if (Model.StateID is not null)
+        {
+            await citySelect.RefreshList(Model.StateID);
+            CityPointerEvent = "";
+        }
+        await JS.InvokeVoidAsync("ShowModal", "ledger-modal");
+    }
+    private async Task CloaseModal()
+    {
+        Model = new();
+        LedgerTypesList = new();
+        await JS.InvokeVoidAsync("HideModal", "ledger-modal");
+    }
+    private void HadleBillToBillChecked(ChangeEventArgs e)
+    {
+        Model.IsBillToBill = Convert.ToBoolean(e.Value);
+        if (!Model.IsBillToBill)
+            Model.BillToBillItems = new();
+    }
+
+    #endregion
+
+}

@@ -1,0 +1,186 @@
+﻿@page "/ledgers"
+
+@using PB.Shared.Models;
+@using PB.Shared.Models.Accounts.Ledgers;
+@using PB.Shared.Models.Common;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="@LedgersFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)ApplyFilterTo" />
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap table-hover text-md-nowrap mb-0 mt-2 ">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Sl No.
+                                        </th>
+                                        <th>
+                                            Ledger Name
+                                        </th>
+                                        <th>
+                                            Alias
+                                        </th>
+                                        <th>
+                                            Ledger Code
+                                        </th>
+                                        <th>
+                                            Account Group
+                                        </th>
+                                        <th>
+                                            Account Type
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (LedgersList.Data != null && LedgersList.Data.Count > 0)
+                                    {
+                                        @foreach (var item in LedgersList.Data.Select((value, i) => new { i, value }))
+                                        {
+                                            var entry = item.value;
+                                            var index = item.i;
+                                            <tr style="cursor:pointer;" @onclick="() => NavigateToSinglePage(entry.LedgerID)">
+                                                <td>
+                                                    @if (LedgersList.PageIndex == 1)
+                                                    {
+                                                        @(index + 1)
+                                                    }
+                                                    else
+                                                    {
+                                                        @((LedgersList.PageIndex * LedgersList.PageSize) + (index + 1) - 10)
+                                                    }
+                                                </td>
+
+                                                <td>
+                                                    @entry.LedgerName
+                                                </td>
+
+                                                <td>
+                                                    @entry.Alias
+                                                </td>
+
+                                                <td>
+                                                    @entry.LedgerCode
+                                                </td>
+
+                                                <td>
+                                                    @entry.AccountGroupName
+                                                </td>
+
+                                                <td>
+                                                    @entry.AccountGroupTypeName
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                            <PaginationCustom PageSize="LedgersList.PageSize" TotalCount="LedgersList.TotalCount" TotalPages="LedgersList.TotalPages" PageIndex="LedgersList.PageIndex" LoadPageIndex="SetPageIndex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+
+    private PagedList<LedgerListModel> LedgersList = new();
+    private PagedListPostModelWithFilter ListPageSearchModel = new();
+
+    private HeaderSettingsModel? LedgersFilterSettings;
+
+    protected override async Task OnInitializedAsync()
+    {
+        List<FilterSortInputModel> SortInputItems = new()
+        {
+            new()
+            {
+                DisplayName = "Ledger",
+                FieldName = "L.LedgerName"
+            },
+            new()
+            {
+                DisplayName = "Alias",
+                FieldName = "L.Alias"
+            },
+            new()
+            {
+                DisplayName = "Ledger Code",
+                FieldName = "L.LedgerCode"
+            },
+            new()
+            {
+                DisplayName = "Account Group",
+                FieldName = "A.AccountGroupName"
+            },
+            new()
+            {
+                DisplayName = "Account Type",
+                FieldName = "LT.LedgerTypeName"
+            }
+        };
+
+        List<FilterIdnValueInputModel> FilterInputItems = new()
+        {
+            new()
+            {
+                DisplayName = "Group Type",
+                FiledName = "A.GroupTypeID",
+                CustomOptionApiPath = "common/get-list-of-account-group-types"
+            },
+            new()
+            {
+                DisplayName = "Account Group",
+                FiledName = "L.AccountGroupID",
+                CustomOptionApiPath = "accounts/get-all-account-groups",
+                IsGet = true
+            }
+        };
+
+        LedgersFilterSettings = new()
+            {
+                Heading = "Ledgers",
+                NeedAddButton = true,
+                AddButtonText = "Ledger",
+                SinglePageURL = "ledger",
+                SearchPlaceHolder = "Search ledger..",
+                NeedSortOption = true,
+                SortMenuItems = SortInputItems,
+                NeedFilterOption = true,
+                IdnValueFilters = FilterInputItems
+            };
+
+
+        await LoadData();
+    }
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        ListPageSearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    private async Task SetPageIndex(int pageIndex)
+    {
+        ListPageSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        LedgersList = await API.PostAsync<PagedList<LedgerListModel>, PagedListPostModelWithFilter>("accounts/get-ledgers-paged-list", ListPageSearchModel);
+    }
+
+    private void NavigateToSinglePage(int LedgerID)
+    {
+        Nav.NavigateTo($"ledger-view/{LedgerID}");
+    }
+
+}

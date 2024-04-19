@@ -1,0 +1,334 @@
+﻿@page "/follow-ups"
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Enum.CRM;
+@using PB.Shared.Models.Common;
+@attribute [Authorize(Roles = "FollowUp")]
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    @if (CanShowHeader)
+                    {
+                        <ListPageHeader Settings="FollowupFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterFollowupListPageTo" />
+                    }
+                </div>
+                <div class="card-body">
+                    @if (FollowupList != null)
+                    {
+                        <table class="table border text-nowrap text-md-nowrap table-hover ">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Sl No.
+                                    </th>
+                                    <th>
+                                        Customer Name
+                                    </th>
+
+                                    <th>
+                                        Type
+                                    </th>
+
+                                    <th>
+                                        Follow-up By
+                                    </th>
+
+                                    <th>
+                                        Last Follow-up Date
+                                    </th>
+
+                                    <th>
+                                        Next Follow-up Date
+                                    </th>
+                                    @if (FollowupList.UserTypeID == (int)UserTypes.Client)
+                                    {
+                                        <th>
+                                            Assignee
+                                        </th>
+                                    }
+                                    <th>
+                                        Status
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in FollowupList.FollowupList.Data.Select((value, i) => new { i, value }))
+                                {
+                                    var followUpItem = item.value;
+                                    var index = item.i;
+
+                                    <tr style="cursor:pointer" class="@followUpItem.RowBgClass" @onclick="() => HandleFollowupRowItemSelect(followUpItem)">
+
+                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                            @if (FollowupList.FollowupList.PageIndex == 1)
+                                            {
+                                                @(index + 1)
+                                            }
+                                            else
+                                            {
+                                                @(((FollowupList.FollowupList.PageIndex * FollowupList.FollowupList.PageSize) + (index + 1)) - 10)
+                                            }
+                                        </td>
+
+                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                            @followUpItem.CustomerName
+                                        </td>
+
+                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                            @(((FollowUpTypes)followUpItem.Type).ToString())
+                                        </td>
+
+                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                            @followUpItem.FollowupBy
+                                        </td>
+
+                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                            @(followUpItem.FollowupDate.HasValue ? followUpItem.FollowupDate.Value.ToString("dd/MM/yyyy") : "--:--:----")
+                                        </td>
+
+                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                            @(followUpItem.NextFollowupDate.HasValue ? followUpItem.NextFollowupDate.Value.ToString("dd/MM/yyyy") : "--:--:----")
+                                        </td>
+
+                                        @if (FollowupList.UserTypeID == (int)UserTypes.Client)
+                                        {
+                                            <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                                @followUpItem.AssigneeName
+                                            </td>
+                                        }
+
+                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                            <span class="@followUpItem.NatureBadgeClass">
+                                                @if (followUpItem.CurrentFollowupNature == (int)FollowUpNatures.New)
+                                                {
+                                                    @(followUpItem.Type == 1 ? "New Enquiry" : "New Quotation")
+                                                    ;
+                                                }
+                                                else
+                                                {
+                                                    @(((FollowUpNatures)followUpItem.CurrentFollowupNature).ToString())
+                                                }
+                                            </span>
+                                        </td>
+
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <PaginationCustom PageSize="FollowupList.FollowupList.PageSize" TotalCount="FollowupList.FollowupList.TotalCount" TotalPages="FollowupList.FollowupList.TotalPages" PageIndex="FollowupList.FollowupList.PageIndex" LoadPageIndex="SetPageIndex" />
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+@code {
+
+    [Inject] public AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
+
+    private FollowupPagedListModel? FollowupList = null;
+    private PagedListPostModelWithFilter? FollowupSearchModel = new();
+    HeaderSettingsModel? FollowupFilterSettings = null;
+
+    private bool CanShowHeader = false;
+    private bool IsAdmin = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateProvider != null)
+        {
+            var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+            var authState = await localStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            bool IsAuthenticated = user.Identity.IsAuthenticated;
+            if (IsAuthenticated)
+            {
+                if (user.Claims.First(c => c.Type == "UserTypeID").Value == ((int)UserTypes.Client).ToString())
+                    IsAdmin = true;
+            }
+        }
+
+        FollowupFilterSettings = new()
+            {
+                SearchPlaceHolder = "Search by customer name..",
+                NeedSortOption = true,
+                NeedFilterOption = true,
+                OrderByFieldName = "Days Asc"
+            };
+
+        FollowupFilterSettings.SortMenuItems = FollowupSortMenuItems;
+
+        FollowupFilterSettings.Heading = "Follow-ups";
+        FollowupFilterSettings.NeedAddButton = false;
+        FollowupFilterSettings.HasDefaultSettings = true;
+
+        if (IsAdmin)
+        {
+            FollowupFilterSettings.IdnValueFilters = new()
+            {
+                new()
+                {
+                    FiledName = "CurrentFollowupNature",
+                    DisplayName = "Status",
+                    EnumObject = FollowUpNatures.New,
+                    AvoidEnumValues = new List<int>()
+                    {
+                        (int)FollowUpNatures.Converted,
+                        (int)FollowUpNatures.Cancelled
+                    }
+                },
+
+                new()
+                {
+                    FiledName = "Type",
+                    DisplayName = "Type",
+                    EnumObject = FollowUpTypes.Enquiry,
+                }
+            };
+
+            FollowupFilterSettings.DateFilters = new()
+            {
+                new()
+                {
+                    FieldName = "FollowupDate",
+                    DisplayName = "Last Follow-up Date"
+                },
+
+                new()
+                {
+                    FieldName = "NextFollowupDate",
+                    DisplayName = "Next Follow-up Date"
+                }
+            };
+        }
+        else
+        {
+            FollowupFilterSettings.IdnValueFilters = new()
+            {
+                new()
+                {
+                    FiledName = "CurrentFollowupNature",
+                    DisplayName = "Status",
+                    EnumObject = FollowUpNatures.New,
+                    SelectedEnumValues = new List<int>()
+                    {
+                        (int)FollowUpNatures.New,
+                        (int)FollowUpNatures.Followup
+                    },
+                    AvoidEnumValues = new List<int>()
+                    {
+                        (int)FollowUpNatures.Converted,
+                        (int)FollowUpNatures.Cancelled
+                    }
+                },
+
+                new()
+                {
+                    FiledName = "Type",
+                    DisplayName = "Type",
+                    EnumObject = FollowUpTypes.Enquiry,
+                }
+            };
+
+            FollowupFilterSettings.DateFilters = new()
+            {
+                new()
+                {
+                    FieldName = "FollowupDate",
+                    DisplayName = "Last Follow-up Date"
+                },
+
+                new()
+                {
+                    FieldName = "NextFollowupDate",
+                    DisplayName = "Next Follow-up Date",
+                    SetTodayDate = true
+                }
+            };
+        }
+
+        var followupNotifications = await API.GetAsync<List<HeaderNotifyCountModel>>("crm/get-follow-up-notifications", true);
+        if (followupNotifications != null && followupNotifications.Count > 0)
+        {
+            FollowupFilterSettings.Notifications = followupNotifications;
+        }
+
+        CanShowHeader = true;
+    }
+
+    private void HandleFollowupRowItemSelect(FollowupListModel item)
+    {
+        if (item.Type == (int)FollowUpTypes.Enquiry && item.EnquiryID.HasValue)
+        {
+            Nav.NavigateTo($"enquiry-view/{item.EnquiryID}/1");
+        }
+
+        if (item.Type == (int)FollowUpTypes.Quotation && item.QuotationID.HasValue)
+        {
+            Nav.NavigateTo($"quotation-view/{item.QuotationID}/1");
+        }
+    }
+
+    private async Task FilterFollowupListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        FollowupSearchModel = filterModel == null ? new() : filterModel;
+        await LoadFollowupList();
+    }
+
+    #region Followup List Sort
+
+    private List<FilterSortInputModel> FollowupSortMenuItems = new()
+    {
+        new()
+        {
+            DisplayName="Type",
+            FieldName="Type"
+        },
+        new()
+        {
+            DisplayName="Followup Date",
+            FieldName="FollowUpDate"
+        },
+        new()
+        {
+            DisplayName="Next Followup Date",
+            FieldName="NextFollowUpDate"
+        },
+        new()
+        {
+            DisplayName="Status",
+            FieldName="CurrentFollowupNature"
+        }
+    };
+
+    #endregion
+
+    private async Task FilterFollowupListPageTo()
+    {
+        FollowupSearchModel = FollowupSearchModel != null ? FollowupSearchModel : new();
+        await LoadFollowupList();
+    }
+
+    private async Task LoadFollowupList()
+    {
+        FollowupList = await API.PostAsync<FollowupPagedListModel, PagedListPostModelWithFilter>("crm/get-follow-up-paged-list", FollowupSearchModel != null ? FollowupSearchModel : new());
+        
+    }
+
+    private async Task SetPageIndex(int pageIndex)
+    {
+        if (FollowupSearchModel != null)
+        {
+            FollowupSearchModel.PageIndex = pageIndex;
+            await LoadFollowupList();
+        }
+    }
+
+
+}

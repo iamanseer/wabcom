@@ -1,0 +1,115 @@
+﻿@page "/reports"
+@using PB.Shared.Enum.Reports
+
+<PageLayoutNew>
+	<div class="main-container container-fluid">
+		<div class="page-header">
+			<h1 class="page-title">Reports</h1>
+		</div>
+		<div class="row">
+			<div class="col-12">
+				<div class="card">
+					<div class="card-body">
+						<div class="row">
+
+							<div class="col-md-4 col-12 mt-2">
+								<h4 class="fw-600"><i class="fa fa-briefcase me-1"></i> Business Overview</h4>
+								<div class="">
+									<ul class="side-menu p-0">
+										<AuthorizeView Roles="BalanceSheet">
+											<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => NavigateToProfitAndLossReport()"><i class="side-menu__icon fe fe-file"></i><span class="report-menu-label">Profit & Loss</span></a></li>
+										</AuthorizeView>
+										<AuthorizeView Roles="GeneralLedger">
+											<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => NavigateToBalanacesheet()"><i class="side-menu__icon fe fe-file"></i><span class="report-menu-label">Balance Sheet</span></a></li>
+										</AuthorizeView>
+										<AuthorizeView Roles="JournalReport">
+											<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => NavigateToGeneralLedgerReport()"><i class="side-menu__icon fe fe-file"></i><span class="report-menu-label">General Ledger</span></a></li>
+										</AuthorizeView>
+										<AuthorizeView Roles="ProfitAndLoss">
+											<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => NavigateToJournalReport()"><i class="side-menu__icon fe fe-file"></i><span class="report-menu-label">Journal Report</span></a></li>
+										</AuthorizeView>
+										<AuthorizeView Roles="TrialBalance">
+											<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => NavigateToTrialBalance()"><i class="side-menu__icon fe fe-file"></i><span class="report-menu-label">Trial Balance</span></a></li>
+										</AuthorizeView>
+										<AuthorizeView Roles="RAndD">
+											<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => NavigateToRAndDReport()"><i class="side-menu__icon fe fe-file"></i><span class="report-menu-label">Trial Balance</span></a></li>
+										</AuthorizeView>
+									</ul>
+								</div>
+							</div>
+
+							<div class="col-md-4 col-12 mt-2">
+								<h4 class="fw-600"><i class="mdi mdi-basket me-1"></i> Sales</h4>
+								<div class="">
+									<ul class="side-menu p-0">
+										<AuthorizeView Roles="SalesByItemReport">
+											<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => NavigateToSalesByItemReport()"><i class="side-menu__icon fe fe-file"></i><span class="report-menu-label">Sales by Item</span></a></li>
+										</AuthorizeView>
+										<AuthorizeView Roles="SalesByCustomerReport">
+											<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => NavigateToSalesByCustomerReport()"><i class="side-menu__icon fe fe-file"></i><span class="report-menu-label">Sales by Customer</span></a></li>
+										</AuthorizeView>
+										<AuthorizeView Roles="SalesByStaffReport">
+											<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => NavigateToSalesByStaffReport()"><i class="side-menu__icon fe fe-file"></i><span class="report-menu-label">Sales by Staff</span></a></li>
+										</AuthorizeView>
+									</ul>
+								</div>
+							</div>
+
+							<div class="col-md-4 col-12 mt-2">
+								@*
+								<h4 class="fw-600"><i class="zmdi zmdi-mall me-2"></i>Inventory</h4>
+								 <div class="">
+									<ul class="side-menu p-0">
+										<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => HandleReportSelected((int)ReportTypes.Inventory, (int)PB.Shared.Enum.Reports.Reports.InventorySummary)"><i class="side-menu__icon fe fe-file"></i><span class="side-menu__label">Inventory Summary</span></a></li>
+										<li class="mb-3 slide"><a class="side-menu__item p-0" @onclick="() => HandleReportSelected((int)ReportTypes.Inventory, (int)PB.Shared.Enum.Reports.Reports.CommittedStockDetails)"><i class="side-menu__icon fe fe-file"></i><span class="side-menu__label">Committed Stock Details</span></a></li>
+									</ul>
+								</div> *@
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+    </div>
+</PageLayoutNew>
+
+@code {
+
+	private void NavigateToProfitAndLossReport()
+	{
+		Nav.NavigateTo("profit-and-loss-report");
+	}
+	private void NavigateToBalanacesheet()
+	{
+		Nav.NavigateTo("balancesheet-report");
+	}
+	private void NavigateToGeneralLedgerReport()
+	{
+		Nav.NavigateTo("general-ledger-report");
+	}
+	private void NavigateToJournalReport()
+	{
+		Nav.NavigateTo("journal-report");
+	}
+	private void NavigateToTrialBalance()
+	{
+		Nav.NavigateTo("trial-balance-report");
+	}
+	private void NavigateToRAndDReport()
+	{
+		Nav.NavigateTo("reciept-and-disbursement-report");
+	}
+	private void NavigateToSalesByItemReport()
+	{
+		Nav.NavigateTo("sales-by-item-report");
+	}
+	private void NavigateToSalesByCustomerReport()
+	{
+		Nav.NavigateTo("sales-by-customer-report");
+	}
+	private void NavigateToSalesByStaffReport()
+	{
+		Nav.NavigateTo("sales-by-staff-report");
+	}
+}

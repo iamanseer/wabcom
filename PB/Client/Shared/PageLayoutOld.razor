@@ -1,0 +1,575 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@using Blazored.LocalStorage
+@inject ILocalStorageService _localStorage
+<AuthorizeView>
+    <div class="page">
+        <div class="page-main">
+            <div class="app-header header sticky">
+                <div class="container-fluid main-container">
+                    <div class="d-flex">
+                        <a aria-label="Hide Sidebar" class="app-sidebar__toggle" data-bs-toggle="sidebar" href="javascript:void(0)"></a>
+                        <!-- sidebar-toggle-->
+                        <a class="logo-horizontal " href="index.html">
+                            <img src="/assets/images/brand/logo.png" class="header-brand-img desktop-logo" alt="logo">
+                            <img src="/assets/images/brand/logo-3.png" class="header-brand-img light-logo1" alt="logo">
+                        </a>
+                        <!-- LOGO -->
+                        <div class="main-header-center ms-3 d-none d-lg-block">
+                            <input class="form-control" placeholder="Search for results..." type="search">
+                            <button class="btn px-0 pt-2"><i class="fe fe-search" aria-hidden="true"></i></button>
+                        </div>
+                        <div class="d-flex order-lg-2 ms-auto header-right-icons">
+                            <div class="dropdown d-none">
+                                <a href="javascript:void(0)" class="nav-link icon" data-bs-toggle="dropdown">
+                                    <i class="fe fe-search"></i>
+                                </a>
+                                <div class="dropdown-menu header-search dropdown-menu-start">
+                                    <div class="input-group w-100 p-2">
+                                        <input type="text" class="form-control" placeholder="Search....">
+                                        <div class="input-group-text btn btn-primary">
+                                            <i class="fe fe-search" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- SEARCH -->
+                            <button class="navbar-toggler navresponsive-toggler d-lg-none ms-auto" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent-4"
+                                    aria-controls="navbarSupportedContent-4" aria-expanded="false"
+                                    aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon fe fe-more-vertical"></span>
+                            </button>
+                            <div class="navbar navbar-collapse responsive-navbar p-0">
+                                <div class="collapse navbar-collapse" id="navbarSupportedContent-4">
+                                    <div class="d-flex order-lg-2">
+                                        <div class="dropdown d-lg-none d-flex">
+                                            <a href="javascript:void(0)" class="nav-link icon"
+                                               data-bs-toggle="dropdown">
+                                                <i class="fe fe-search"></i>
+                                            </a>
+                                            <div class="dropdown-menu header-search dropdown-menu-start">
+                                                <div class="input-group w-100 p-2">
+                                                    <input type="text" class="form-control" placeholder="Search....">
+                                                    <div class="input-group-text btn btn-primary">
+                                                        <i class="fa fa-search" aria-hidden="true"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>@*
+                                        <div class="d-flex country">
+                                        <a class="nav-link icon text-center" data-bs-target="#quick-selector"
+                                        data-bs-toggle="modal">
+                                        <i class="fe fe-plus-circle"></i><span class="fs-16 ms-2 d-none d-xl-block">Quick Action</span>
+                                        </a>
+                                        </div>
+                                        <div class="dropdown d-flex profile-1">
+                                        <a href="javascript:void(0)" data-bs-toggle="dropdown"
+                                        class="nav-link nav-linkleading-none d-flex">
+                                        <i class="fe fe-globe fs-20"></i><span class="fs-16 ms-2 d-none d-xl-block" id="lang-name">English</span>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                        <div class="dropdown-divider m-0"></div>
+
+                                        <a class="dropdown-item" @onclick="@(e=>ChangeLanguage(PDV.Language2Code,PDV.Language2Direction))">
+                                        <img src="assets/images/flags/ae.svg" alt=""
+                                        height="16" /><span> @PDV.Language2 </span>
+                                        </a>
+                                        <a class="dropdown-item" @onclick="@(e=>ChangeLanguage("en"))">
+                                        <img src="assets/images/flags/us.svg" alt=""
+                                        height="16" /><span> English </span>
+                                        </a>
+                                        </div>
+                                        </div>*@
+                                        <!-- COUNTRY -->
+                                        <div class="d-flex country">
+                                            <a class="nav-link icon theme-layout nav-link-bg layout-setting">
+                                                <span class="dark-layout"><i class="fe fe-moon"></i></span>
+                                                <span class="light-layout"><i class="fe fe-sun"></i></span>
+                                            </a>
+                                        </div>
+                                        <div class="dropdown d-flex">
+                                            <a class="nav-link icon full-screen-link nav-link-bg">
+                                                <i class="fe fe-minimize fullscreen-button"></i>
+                                            </a>
+                                        </div>
+                                        <div class="dropdown  d-flex notifications">
+                                            <a class="nav-link icon" data-bs-toggle="dropdown" @onclick="GetNotifications">
+                                                <i class="fas fa-bell"></i><span class=" pulse"></span>
+                                            </a>
+                                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                                <div class="drop-heading border-bottom">
+                                                    <div class="d-flex">
+                                                        <h6 class="mt-1 mb-0 fs-16 fw-semibold text-dark">
+                                                            Notifications
+                                                        </h6>
+                                                    </div>
+                                                </div>
+                                                <div class="notifications-menu">
+                                                    <NotificationComponent Data="Notifications" />
+                                                </div>
+                                                <div class="dropdown-divider m-0"></div>
+                                                <a @onclick="@(()=>Nav.NavigateTo("notifications"))"
+                                                   class="dropdown-item text-center p-3 text-muted">
+                                                    View all
+                                                    Notification
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <!-- NOTIFICATIONS -->
+                                        <div class="dropdown  d-flex message">
+                                            <a class="nav-link icon text-center" data-bs-toggle="dropdown">
+                                                <i class="fe fe-message-square"></i><span class="pulse-danger"></span>
+                                            </a>
+                                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                                <div class="drop-heading border-bottom">
+                                                    <div class="d-flex">
+                                                        <h6 class="mt-1 mb-0 fs-16 fw-semibold text-dark">
+                                                            You have 5
+                                                            Messages
+                                                        </h6>
+                                                        <div class="ms-auto">
+                                                            <a href="javascript:void(0)"
+                                                               class="text-muted p-0 fs-12">make all unread</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="message-menu message-menu-scroll">
+                                                    <a class="dropdown-item d-flex" href="chat.html">
+                                                        <span class="avatar avatar-md brround me-3 align-self-center cover-image">
+                                                            <img src="/assets/images/users/10.jpg" alt="">
+                                                        </span>
+                                                        <div class="wd-90p">
+                                                            <div class="d-flex">
+                                                                <h5 class="mb-1">Peter Theil</h5>
+                                                                <small class="text-muted ms-auto text-end">
+                                                                    6:45 am
+                                                                </small>
+                                                            </div>
+                                                            <span>Commented on file Guest list....</span>
+                                                        </div>
+                                                    </a>
+                                                    <a class="dropdown-item d-flex" href="chat.html">
+                                                        <span class="avatar avatar-md brround me-3 align-self-center cover-image"
+                                                              data-bs-image-src="/assets/images/users/15.jpg"></span>
+                                                        <div class="wd-90p">
+                                                            <div class="d-flex">
+                                                                <h5 class="mb-1">Abagael Luth</h5>
+                                                                <small class="text-muted ms-auto text-end">
+                                                                    10:35 am
+                                                                </small>
+                                                            </div>
+                                                            <span>New Meetup Started......</span>
+                                                        </div>
+                                                    </a>
+                                                    <a class="dropdown-item d-flex" href="chat.html">
+                                                        <span class="avatar avatar-md brround me-3 align-self-center cover-image"
+                                                              data-bs-image-src="/assets/images/users/12.jpg"></span>
+                                                        <div class="wd-90p">
+                                                            <div class="d-flex">
+                                                                <h5 class="mb-1">Brizid Dawson</h5>
+                                                                <small class="text-muted ms-auto text-end">
+                                                                    2:17 pm
+                                                                </small>
+                                                            </div>
+                                                            <span>Brizid is in the Warehouse...</span>
+                                                        </div>
+                                                    </a>
+                                                    <a class="dropdown-item d-flex" href="chat.html">
+                                                        <span class="avatar avatar-md brround me-3 align-self-center cover-image"
+                                                              data-bs-image-src="/assets/images/users/4.jpg"></span>
+                                                        <div class="wd-90p">
+                                                            <div class="d-flex">
+                                                                <h5 class="mb-1">Shannon Shaw</h5>
+                                                                <small class="text-muted ms-auto text-end">
+                                                                    7:55 pm
+                                                                </small>
+                                                            </div>
+                                                            <span>New Product Realease......</span>
+                                                        </div>
+                                                    </a>
+                                                    <a class="dropdown-item d-flex" href="chat.html">
+                                                        <span class="avatar avatar-md brround me-3 align-self-center cover-image"
+                                                              data-bs-image-src="/assets/images/users/3.jpg"></span>
+                                                        <div class="wd-90p">
+                                                            <div class="d-flex">
+                                                                <h5 class="mb-1">Cherry Blossom</h5>
+                                                                <small class="text-muted ms-auto text-end">
+                                                                    7:55 pm
+                                                                </small>
+                                                            </div>
+                                                            <span>You have appointment on......</span>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                                <div class="dropdown-divider m-0"></div>
+                                                <a href="javascript:void(0)"
+                                                   class="dropdown-item text-center p-3 text-muted">
+                                                    See all
+                                                    Messages
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <!-- MESSAGE-BOX -->
+                                        <!-- SIDE-MENU -->
+                                        <div class="dropdown d-flex profile-1">
+                                            <a href="javascript:void(0)" data-bs-toggle="dropdown"
+                                               class="nav-link leading-none d-flex">
+                                                <img src="@ProfileURL" alt="profile-user"
+                                                     class="avatar  profile-user brround cover-image">
+                                            </a>
+                                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                                <div class="drop-heading">
+                                                    <div class="account-dropdown">
+                                                        <img src="@ProfileURL" alt="profile-user"
+                                                             class="avatar avatar-xl brround cover-image">
+                                                        <h5 class="text-dark mb-0 fs-14 fw-semibold mt-2">@context.User.Identity.Name</h5>
+                                                        <small class="text-muted fs-13">@context.User.Claims.FirstOrDefault(c => c.Type == "UserTypeName").Value</small>
+                                                        <span class="text-muted fs-13 mb-3">@context.User.Claims.FirstOrDefault(c => c.Type == "EmailAddress").Value</span>
+                                                        <div class="d-flex justify-content-center gap-2">
+                                                            <button type="button" class="btn btn-primary btn-sm mb-1">Account</button>
+                                                            <button type="button" class="btn btn-danger btn-sm mb-1" @onclick="Logout">Sign out</button>
+                                                        </div>
+
+
+                                                    </div>
+                                                </div>
+                                                <div class="dropdown-divider m-0"></div>
+                                                <div class="p-3 bg-light d-flex justify-content-between">
+                                                    <h3 class="fs-14 mb-0">Organizations</h3> <i class="fa fa-gear fs-16"></i>
+                                                </div>
+                                                @*<a class="dropdown-item d-flex" href="">
+                                                <div class="org-names">
+                                                <p class="fs-13 fw-semibold mb-0">@context.User.Claims.FirstOrDefault(c => c.Type == "BranchName").Value</p>
+                                                <p class="fs-12 text-muted">
+                                                Organization ID: 60018902344 <span class=" badge rounded-pill bg-gray">
+                                                Free
+                                                </span>
+                                                </p>
+                                                </div>
+                                                <i class="fa fa-check-circle og-active"></i>
+                                                </a>*@
+                                                <a class="dropdown-item d-flex" href="">
+                                                    <div class="org-names">
+                                                        <p class="fs-13 fw-semibold mb-0">@context.User.Claims.FirstOrDefault(c => c.Type == "BranchName").Value</p>
+                                                        <p class="fs-12 text-muted">
+                                                            Organization ID: 60018902344 <span class=" badge rounded-pill bg-yellow">
+                                                                Pro
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                    <i class="fa fa-check-circle og-active"></i>
+                                                </a>
+
+                                            </div>
+                                        </div>
+                                        <div class="dropdown d-flex header-settings">
+                                            <a href="javascript:void(0);" class="nav-link icon"
+                                               data-bs-toggle="sidebar-right" data-target=".sidebar-right">
+                                                <i class="fe fe-align-right"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <NavMenu />
+
+            <!--Page Header-->
+            <div class="main-content app-content mt-0">
+                <div class="side-app">
+                    <div class="main-container container-fluid">
+                        @if (NeedPageHeader)
+                        {
+                            <div class="page-header">
+                                @if (!string.IsNullOrEmpty(PageName))
+                                {
+                                    <h1 class="page-title">@Localizer[PageName]</h1>
+
+                                }
+                                <div class="btn-toolbar float-right">
+                                    @if (NeedAddButton)
+                                    {
+                                        @if (!string.IsNullOrEmpty(SinglePageURL))
+                                        {
+                                            <div>
+                                                <button type="button" class="modal-effect btn btn-primary btn-md" @onclick="@(() => Nav.NavigateTo(SinglePageURL))">
+                                                    <i class="fa fa-plus me-2"></i>@Localizer[AddButtonText]
+                                                </button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div>
+                                                <button type="button" class="modal-effect btn btn-primary btn-md" @onclick="@(async () => await OnMainButtonClick.InvokeAsync())">
+                                                    <i class="fa fa-plus me-2"></i>@Localizer[AddButtonText]
+                                                </button>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <div class="row">
+                            @ChildContent
+                        </div>
+                    </div>
+
+                    <!--Footer Extra section-->
+                    @if (NeedPageFooterSection)
+                    {
+                        <div class="page-footer-action">
+
+                            @if (!string.IsNullOrEmpty(PrimaryButtonText))
+                            {
+                                <a class="btn btn-primary me-2" @onclick="async () => await OnPrimaryButtonClick.InvokeAsync()">@PrimaryButtonText</a>
+                            }
+
+                            @if (!string.IsNullOrEmpty(SecondaryButtonText))
+                            {
+                                <a class="btn btn-secondary me-2" @onclick="async () => await OnSecondaryButtonClick.InvokeAsync()">@SecondaryButtonText</a>
+                            }
+
+                            @if (NeedDeleteButton)
+                            {
+                                <a class="btn btn-danger me-2" @onclick="async () => await OnDeleteButtonClick.InvokeAsync()">@DeleteButtonText</a>
+                            }
+
+                            @if (!string.IsNullOrEmpty(CancelButtonText))
+                            {
+                                <a class="btn btn-gray" @onclick="async () => await OnCancelButtonClick.InvokeAsync()">@CancelButtonText</a>
+                            }
+
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+
+        <Sidebar />
+        <!-- quick options modal-->
+        <div class="modal fade" id="quick-selector">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content country-select-modal">
+                    <div class="modal-header">
+                        <h6 class="modal-title">Quick Options</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="modal" type="button"><span aria-hidden="true">×</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="row p-3">
+                            <li class="col-lg-6 mb-2">
+                                <a href="javascript:void(0)" class="btn btn-country btn-lg btn-block active">
+                                    <span class="shortcut-selector"></span> Menu-1
+                                </a>
+                            </li>
+                            <li class="col-lg-6 mb-2">
+                                <a href="javascript:void(0)" class="btn btn-country btn-lg btn-block">
+                                    <span class="shortcut-selector"></span> Menu-1
+                                </a>
+                            </li>
+                            <li class="col-lg-6 mb-2">
+                                <a href="javascript:void(0)" class="btn btn-country btn-lg btn-block">
+                                    <span class="shortcut-selector"></span> Menu-2
+                                </a>
+                            </li>
+                            <li class="col-lg-6 mb-2">
+                                <a href="javascript:void(0)" class="btn btn-country btn-lg btn-block">
+                                    <span class="shortcut-selector"></span> Menu-3
+                                </a>
+                            </li>
+                            <li class="col-lg-6 mb-2">
+                                <a href="javascript:void(0)" class="btn btn-country btn-lg btn-block">
+                                    <span class="shortcut-selector"></span> Menu-4
+                                </a>
+                            </li>
+
+                            <li class="col-lg-12">
+                                <a href="javascript:void(0)" class="btn btn-country btn-lg btn-block text-center">
+                                    <span class="shortcut-selector">
+                                        <i class="fa fa-plus me-3 l"> </i>
+                                    </span>Add Shortcut
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Country-selector modal-->
+        <!-- FOOTER -->
+        @if (NeedFooterBanner)
+        {
+            <footer class="footer">
+                <div class="container">
+                    <div class="row align-items-center flex-row-reverse">
+                        <div class="col-md-12 col-sm-12 text-center">
+                            <span id="year"></span>
+                            <a href="javascript:void(0)"></a> Designed with <span class="fa fa-heart text-danger"></span> by <a href="javascript:void(0)"> Progbiz </a> All rights reserved.
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        }
+
+        <!-- FOOTER END -->
+
+    </div>
+
+</AuthorizeView>
+
+@code {
+
+    [Parameter] public bool SeperateSignalR { get; set; }
+    [Parameter] public int ChatCount { get; set; }
+    [Parameter] public EventCallback NewMessageInInbox { get; set; }
+
+    [Parameter] public string? Menu { get; set; }
+    [Parameter] public string? PageName { get; set; }
+    [Parameter] public string? ProfileURL { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    //Main Button
+    [Parameter] public bool NeedPageHeader { get; set; } = true;
+    [Parameter] public bool NeedAddButton { get; set; } = false;
+    [Parameter] public string? AddButtonText { get; set; } = "New";
+    [Parameter] public string? SinglePageURL { get; set; }
+    [Parameter] public EventCallback OnMainButtonClick { get; set; }
+
+    //Footer Custom
+    [Parameter] public bool NeedPageFooterSection { get; set; } = false;
+    [Parameter] public bool NeedDeleteButton { get; set; } = false;
+    [Parameter] public EventCallback OnPrimaryButtonClick { get; set; }
+    [Parameter] public EventCallback OnSecondaryButtonClick { get; set; }
+    [Parameter] public EventCallback OnCancelButtonClick { get; set; }
+    [Parameter] public EventCallback OnDeleteButtonClick { get; set; }
+    [Parameter] public string? PrimaryButtonText { get; set; }
+    [Parameter] public string? SecondaryButtonText { get; set; }
+    [Parameter] public string? CancelButtonText { get; set; }
+    [Parameter] public string? DeleteButtonText { get; set; }
+
+    //Footer Banner
+    [Parameter] public bool NeedFooterBanner { get; set; } = false;
+
+    [Inject] public AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        ProfileURL = await _localStorage.GetItemAsync<string>("profile-image");
+    }
+
+    async Task ChangeLanguage(string lang = "en", string dir = "ltr")
+    {
+        await JS.InvokeVoidAsync("blazorCulture.set", lang);
+        await JS.InvokeVoidAsync("blazorDirection.set", dir);
+
+        Nav.NavigateTo(Nav.Uri, forceLoad: true);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("hovermenu");
+            await JS.InvokeVoidAsync("setProjectDirection");
+            await JS.InvokeVoidAsync("ActivePScroll");
+            @if (!SeperateSignalR)
+            {
+                LoadUnreadMessageCount();
+                LoadNotificationCount();
+                await CreateHubConnection();
+            }
+        }
+    }
+
+    async Task Logout()
+    {
+        var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+        await localStateProvider.LogoutAsync();
+        await _localStorage.RemoveItemAsync("username");
+        await _localStorage.RemoveItemAsync("profile-image");
+        Nav.NavigateTo("/login");
+    }
+
+
+    async Task LockScreen()
+    {
+        var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+
+        var authState = await localStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        await _localStorage.SetItemAsync("username", user.Claims.FirstOrDefault(c => c.Type == "UserName").Value);
+        await _localStorage.SetItemAsync("profile-image", user.Claims.FirstOrDefault(c => c.Type == "ProfileURL").Value);
+
+        await localStateProvider.LogoutAsync();
+        Nav.NavigateTo("/lock-screen");
+    }
+
+    #region Notification
+
+    HubConnection _hubConnection;
+    int NotificationCount;
+    List<ViNotificationCustom> Notifications;
+
+
+    private async Task CreateHubConnection()
+    {
+        _hubConnection = new HubConnectionBuilder().WithUrl(Nav.BaseUri + "notificationhub").WithAutomaticReconnect().Build();
+
+        await _hubConnection.StartAsync();
+
+        await API.GetAsync<BaseSuccessResponse>($"notification/add-signalR-id?connectionId={_hubConnection.ConnectionId}");
+
+        _hubConnection.On<string>("notification", m =>
+        {
+            LoadNotificationCount();
+            //JS.InvokeVoidAsync("ShowNotification", m);
+        });
+        _hubConnection.On<string>("chat", m =>
+        {
+            LoadUnreadMessageCount();
+        });
+    }
+
+    private void LoadNotificationCount()
+    {
+        Task.Run(async () =>
+        {
+            NotificationCount = await API.GetAsync<int>("notification/get-notification-count");
+            StateHasChanged();
+        });
+    }
+
+    private void LoadUnreadMessageCount()
+    {
+        Task.Run(async () =>
+        {
+            ChatCount = await API.GetAsync<int>("notification/get-unread-message-count");
+            await NewMessageInInbox.InvokeAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task GetNotifications()
+    {
+        var res = await API.PostAsync<PagedList<ViNotificationCustom>, NotificationSearchModel>("notification/get-notifications", new NotificationSearchModel(), false);
+        if (res != null)
+        {
+            Notifications = res.Data;
+        }
+    }
+
+    #endregion
+
+    #region Filter
+
+
+
+    #endregion
+}

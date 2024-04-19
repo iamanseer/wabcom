@@ -1,0 +1,2313 @@
+﻿@using PB.CRM.Model.Enum
+@using PB.Client.Shared.Inventory.Item
+@using PB.Client.Shared.Common
+@using PB.Model.Models
+@using PB.Shared.Enum.Common
+@using PB.Shared.Models.CRM.Followup
+@using PB.Shared.Models.Common
+@using PB.Shared.Models.Inventory.Items
+@using PB.Shared.Models.SuperAdmin.Client
+@using PB.Shared.Tables
+
+@page "/general-settings"
+@page "/general-settings/{SelectedMenuType:int}"
+l
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <!--Page Header-->
+        <div class="page-header">
+            <h1 class="page-title">Client Setting</h1>
+            <div>
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item active"><a href="javascript:void(0)"></a>Client Settings</li>
+                    <li class="breadcrumb-item active" aria-current="page">@ListPagesHeaderSetting.Heading</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="row ">
+            <!--Settings Menu-->
+            <div class="col-lg-6 col-xl-3 basic-setting-menu-card">
+                <div class="card">
+                    <div class="card-body">
+
+                        <!--CRM Settings-->
+                        <div class="list-group list-group-transparent mb-0 file-manager file-manager-border">
+                            <h6 class="my-2">CRM Settings</h6>
+
+                            <!--Enquiry Followup Status-->
+                            <div class="mb-2 " @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.EnquiryFollowupStatus)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.EnquiryFollowupStatus)" class="menu list-group-item active d-flex align-items-center px-0 border-top">
+                                    <i class="ti-headphone-alt fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Enquiry Followup Status </span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Quotation Followup Status-->
+                            <div class="mb-2 menu" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.QuotationFollowStatus)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.QuotationFollowStatus)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-clipboard fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Quotation Followup Status</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Quotation Preferences-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.QuotationPreference)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.QuotationPreference)" class="menu list-group-item d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-clipboard fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Quotation Preference </span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Invoice Preferences-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.InvoicePreference)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.InvoicePreference)" class="menu list-group-item d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-file-text-o fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Invoice Preference </span>
+                                    </div>
+                                </a>
+                            </div>
+
+                        </div>
+
+                        <!--Item Settings-->
+                        <div class="list-group list-group-transparent mb-0 file-manager file-manager-border">
+                            <h6 class="my-2">Item Settings</h6>
+
+                            <!--Item Packing Type-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.ItemPackingType)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.ItemPackingType)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Item Packing Type</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Item Size-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.ItemSize)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.ItemSize)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Item Size</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Item Color-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.ItemColor)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.ItemColor)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Item Color</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Item Brand-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.ItemBrand)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.ItemBrand)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Item Brand</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Item Category-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.ItemCategory)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.ItemCategory)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Item Category</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Item Group-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.ItemGroup)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.ItemGroup)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Item Group</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                        </div>
+
+                        <!--General Settings-->
+                        <div class="list-group list-group-transparent mb-0 file-manager file-manager-border">
+                            <h6 class="my-2">General Settings</h6>
+
+                            <!--Client Setting-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.ClientSetting)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.ClientSetting)" class="menu list-group-item d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-file-text-o fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Client Setting </span>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Lead Through-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.LeadThrough)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.LeadThrough)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="mdi mdi-account-network fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Lead Through</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Mail Settings-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.MailSetting)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.MailSetting)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-envelope fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Mail Settings</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Tax Categories-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.TaxCategory)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.TaxCategory)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Tax Categories</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Payment Term-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.PaymentTerm)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.PaymentTerm)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Payment Terms</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Promotion-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.Promotion)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.Promotion)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Promotions</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+
+
+                            <!--Payment Gateway Settings-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.PayamentGateway)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.PayamentGateway)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-money fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Gateway Credentials</span>
+
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (IsPageReady)
+            {
+                <!--Tab pane-->
+                <div class="col-lg-6 col-xl-9 basic-setting-card">
+                    <div class="row row-sm">
+                        <div class="col-xl-12">
+                            @switch (SelectedMenuType)
+                            {
+                                case (int)GeneralSettingsMenus.EnquiryFollowupStatus:
+                                case (int)GeneralSettingsMenus.QuotationFollowStatus:
+                                    @if (IsFollowupStatusReady && FollowupStatusPagedList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleFollowupStatusListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenFollowupStatusModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>
+                                                                    Sl No
+                                                                </th>
+                                                                <th>
+                                                                    Status
+                                                                </th>
+                                                                <th>
+                                                                    Actions
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in FollowupStatusPagedList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((FollowupStatusPagedList.PageIndex - 1) * FollowupStatusPagedList.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.StatusName
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        @if (item.data.ClientID > 0)
+                                                                        {
+                                                                            <div class="d-flex justify-content-center align-items-center">
+                                                                                <ActionEdit Clicked="async () =>await OpenFollowupStatusModal(item.data.FollowUpStatusID)" />
+                                                                                <ActionDelete Clicked="async () =>await HandleFollowupStatusRemoveButtonClick(item.data.FollowUpStatusID)" />
+                                                                            </div>
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <PaginationCustom PageSize="FollowupStatusPagedList.PageSize" TotalCount="FollowupStatusPagedList.TotalCount" TotalPages="FollowupStatusPagedList.TotalPages" PageIndex="FollowupStatusPagedList.PageIndex" LoadPageIndex="HandleFollowupStatusPageIndexEventCallback" />
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.QuotationPreference:
+                                    @if (IsClientSettingReady && ClientSetting is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <h3 class="card-title">@ListPagesHeaderSetting.Heading</h3>
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+
+                                                <EditForm Model="ClientSetting" OnValidSubmit="async () => await SaveClientSetting()" autocomplete="off">
+                                                    <DataAnnotationsValidator />
+
+                                                    <div class="row">
+                                                        <InputTextBox Label="Quotation Subject :" @bind-Value="ClientSetting.QuotationSubject" DivClass="col-md-12" />
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group">
+                                                                <label class="form-label mt-0 me-1">Quotation Customer Note :</label>
+                                                                <textarea name="" class="textarea form-control" cols="2" rows="6" @bind="ClientSetting.QuotationCustomerNote" placeholder="Let your customer know what this quotation for.."></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group">
+                                                                <label class="form-label mt-0 me-1">Quotation Terms And Condition :</label>
+                                                                <textarea name="" class="textarea form-control" cols="2" rows="6" @bind="ClientSetting.QuotationTermsAndCondition" placeholder="Let your customer know what this quotation for.."></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <div class="my-4">
+                                                                <div class=" form-check form-check-inline font-large">
+                                                                    <input id="quotation-shipping-address-check" class="ember-checkbox ember-view form-check-input" type="checkbox" @onchange="(ChangeEventArgs e) => ClientSetting.QuotationNeedShippingAddress = Convert.ToBoolean(e.Value)" checked="@(ClientSetting.QuotationNeedShippingAddress?"checked":null)">
+                                                                    <label class="form-check-label fs-16 fw-bold" for="quotation-shipping-address-check">Need Quotation shipping address</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <button type="submit" class="btn btn-primary">
+                                                                Save Quotation Preferences
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                </EditForm>
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.InvoicePreference:
+                                    @if (IsClientSettingReady && ClientSetting is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <h3 class="card-title">@ListPagesHeaderSetting.Heading</h3>
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+
+                                                <EditForm Model="ClientSetting" OnValidSubmit="async () => await SaveClientSetting()" autocomplete="off">
+                                                    <DataAnnotationsValidator />
+
+                                                    <div class="row">
+                                                        <InputTextBox Label="Invoice Subject :" @bind-Value="ClientSetting.InvoiceSubject" DivClass="col-md-12" />
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group">
+                                                                <label class="form-label mt-0 me-1">Invoice Customer Note :</label>
+                                                                <textarea name="" class="textarea form-control" cols="2" rows="6" @bind="ClientSetting.InvoiceCustomerNote" placeholder="Let your customer know what this invoice for.."></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <div class="form-group">
+                                                                <label class="form-label mt-0 me-1">Invoice Terms And Condition :</label>
+                                                                <textarea name="" class="textarea form-control" cols="2" rows="6" @bind="ClientSetting.InvoiceTermsAndCondition" placeholder="Let your customer know what this invoice for.."></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <div class="my-4">
+                                                                <div class=" form-check form-check-inline font-large">
+                                                                    <input id="invoice-shipping-address-check" class="ember-checkbox ember-view form-check-input" type="checkbox" @onchange="(ChangeEventArgs e) => ClientSetting.InvoiceNeedShippingAddress = Convert.ToBoolean(e.Value)" checked="@(ClientSetting.InvoiceNeedShippingAddress?"checked":null)">
+                                                                    <label class="form-check-label fs-16 fw-bold" for="invoice-shipping-address-check">Need Invoice shipping address</label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <button type="submit" class="btn btn-primary">
+                                                                Save Invoice Preferences
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                </EditForm>
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.ClientSetting:
+                                    @if (IsClientSettingReady && ClientSetting is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <h3 class="card-title">@ListPagesHeaderSetting.Heading</h3>
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+
+                                                <EditForm Model="ClientSetting" OnValidSubmit="async () => await SaveClientSetting()" autocomplete="off">
+                                                    <DataAnnotationsValidator />
+
+                                                    <div class="row">
+                                                        <div class="col-md-7">
+
+                                                            <div class="row">
+                                                                <div class="col-md-12">
+                                                                    <div class="my-4">
+                                                                        <div class=" form-check form-check-inline font-large">
+                                                                            <input id="item-qr-code-state-check" class="ember-checkbox ember-view form-check-input" type="checkbox" @onchange="(ChangeEventArgs e) => ClientSetting.ItemQrCodeState = Convert.ToBoolean(e.Value)" checked="@(ClientSetting.ItemQrCodeState?"checked":null)">
+                                                                            <label class="form-check-label fs-16 fw-bold" for="item-qr-code-state-check">Need to generate item qr codes</label>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="row">
+                                                                <div class="col-md-12">
+                                                                    <div class="form-group">
+                                                                        <label class="form-label mt-0 me-1">Tax Name :</label>
+                                                                        <input type="text" id="quotation-ship-address" @bind-value="ClientSetting.TaxCategoryName" class="form-control" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="row">
+                                                                <InputNumberBox Label="Tax Items Count :" DivClass="col-md-12" @bind-Value="ClientSetting.TaxCategoryItemCount" />
+                                                            </div>
+
+                                                        </div>
+                                                        <div class="col-md-5" style="min-height:300px">
+                                                            @if (!string.IsNullOrEmpty(ClientSetting.TaxCategoryName) && ClientSetting.TaxCategoryItemCount > 0)
+                                                            {
+                                                                <div class="table-responsive">
+                                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                                        <thead>
+                                                                            <tr>
+                                                                                <th>
+                                                                                    Sl No
+                                                                                </th>
+                                                                                <th>
+                                                                                    Tax Category Item Name
+                                                                                </th>
+                                                                                <th>
+                                                                                    Action
+                                                                                </th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            @foreach (var taxCategoryItem in ClientSetting.TaxCategoyItems.Select((data, index) => new { index, data }))
+                                                                            {
+                                                                                var item = taxCategoryItem.data;
+                                                                                int index = taxCategoryItem.index;
+                                                                                @if (!item.IsRowEditMode)
+                                                                                {
+                                                                                    <tr>
+                                                                                        <td>
+                                                                                            @(index + 1)
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            @item.TaxCategoyItemName
+                                                                                        </td>
+                                                                                        <td style="width:100px;">
+                                                                                            <div class="d-flex justify-content-center align-items-center">
+                                                                                                <ActionEdit Clicked="async () => await HandelEditTaxCategoryItemClick(index)" />
+                                                                                            </div>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <tr>
+                                                                                        <td>
+                                                                                            @(index + 1)
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            <input type="text" @bind="@item.TaxCategoyItemName" class="form-control form-control-custom" />
+                                                                                        </td>
+                                                                                        <td style="width:100px;">
+                                                                                            <div class="d-flex justify-content-center align-items-center">
+                                                                                                <ActionDone Clicked="async () => await handleTaxCategoryItemNameDoneButtonClick(item)" />
+                                                                                            </div>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                }
+                                                                            }
+                                                                        </tbody>
+                                                                        @if (ClientSetting.TaxCategoryItemCount != ClientSetting.TaxCategoyItems.Count)
+                                                                        {
+                                                                            <tfoot>
+                                                                                <tr>
+                                                                                    <td>
+                                                                                        @(ClientSetting.TaxCategoyItems.Count + 1)
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        <input type="text" @bind="@TaxCategoryItem.TaxCategoyItemName" class="form-control form-control-custom" />
+                                                                                    </td>
+                                                                                    <td style="width:100px;">
+                                                                                        <div class="d-flex justify-content-center align-items-center">
+                                                                                            <ActionAdd Clicked="() => HandleAddTaxCategoryItemClick()" />
+                                                                                        </div>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            </tfoot>
+                                                                        }
+                                                                    </table>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            <button type="submit" class="btn btn-primary">
+                                                                Save Client Settings
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </EditForm>
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.ItemCategory:
+                                    @if (IsItemCategorySettingsReady && ItemCategoryPagedList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleItemCategoryListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenItemCategoryModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Sl No</th>
+                                                                <th>
+                                                                    Category Name
+                                                                </th>
+                                                                <th>
+                                                                    Parent name
+                                                                </th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in ItemCategoryPagedList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((ItemCategoryPagedList.PageIndex - 1) * ItemCategoryPagedList.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.CategoryName
+                                                                    </td>
+                                                                    <td>
+                                                                        @(item.data.ParentCategoryName is null ? "" : item.data.ParentCategoryName)
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        <ActionEdit Clicked="async () =>await OpenItemCategoryModal(item.data.CategoryID)" />
+                                                                        <ActionDelete Clicked="async () =>await HandleItemColorRemoveButtonClick(item.data.CategoryID)" />
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <PaginationCustom PageSize="ItemCategoryPagedList.PageSize" TotalCount="ItemCategoryPagedList.TotalCount" TotalPages="ItemCategoryPagedList.TotalPages" PageIndex="ItemCategoryPagedList.PageIndex" LoadPageIndex="HandleItemCategoryPageIndexEventCallback" />
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.ItemGroup:
+                                    @if (IsItemGroupSettingsReady && ItemGroupPagedList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleItemGroupListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenItemGroupModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Sl No</th>
+                                                                <th>
+                                                                    Group Name
+                                                                </th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in ItemGroupPagedList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((ItemGroupPagedList.PageIndex - 1) * ItemGroupPagedList.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.GroupName
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        <ActionEdit Clicked="async () =>await OpenItemGroupModal(item.data.GroupID)" />
+                                                                        <ActionDelete Clicked="async () =>await HandleItemGroupRemoveButtonClick(item.data.GroupID)" />
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <PaginationCustom PageSize="ItemGroupPagedList.PageSize" TotalCount="ItemGroupPagedList.TotalCount" TotalPages="ItemGroupPagedList.TotalPages" PageIndex="ItemGroupPagedList.PageIndex" LoadPageIndex="HandleItemGroupPageIndexEventCallback" />
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.ItemBrand:
+                                    @if (IsItemBrandSettingsReady && ItemBrandPagedList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleItemBrandListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenItemBrandModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Sl No</th>
+                                                                <th>
+                                                                    Brand Name
+                                                                </th>
+                                                                <th>
+                                                                    Brand Image
+                                                                </th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in ItemBrandPagedList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((ItemBrandPagedList.PageIndex - 1) * ItemBrandPagedList.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.BrandName
+                                                                    </td>
+                                                                    <td>
+                                                                        <img style="height: 50px;" src="@item.data.FileName" alt="@(item.data.BrandName + "-image")" />
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        <ActionEdit Clicked="async () =>await OpenItemBrandModal(item.data.BrandID)" />
+                                                                        <ActionDelete Clicked="async () =>await HandleItemBrandRemoveButtonClick(item.data.BrandID)" />
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <PaginationCustom PageSize="ItemBrandPagedList.PageSize" TotalCount="ItemBrandPagedList.TotalCount" TotalPages="ItemBrandPagedList.TotalPages" PageIndex="ItemBrandPagedList.PageIndex" LoadPageIndex="HandleItemBrandPageIndexEventCallback" />
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.ItemSize:
+                                    @if (IsItemSizeSettingsReady && ItemSizePagedList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleItemSizeListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenItemSizeModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Sl No</th>
+                                                                <th>
+                                                                    Item Size
+                                                                </th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in ItemSizePagedList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((ItemSizePagedList.PageIndex - 1) * ItemSizePagedList.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.Size
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        <div class="d-flex justify-content-center align-items-center">
+                                                                            <ActionEdit Clicked="async () => await OpenItemSizeModal(item.data.SizeID)" />
+                                                                            <ActionDelete Clicked="async () =>await HandleItemSizeRemoveButtonClick(item.data.SizeID)" />
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+
+                                                </div>
+                                                <PaginationCustom PageSize="ItemSizePagedList.PageSize" TotalCount="ItemSizePagedList.TotalCount" TotalPages="ItemSizePagedList.TotalPages" PageIndex="ItemSizePagedList.PageIndex" LoadPageIndex="HandleItemSizePageIndexEventCallback" />
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.ItemColor:
+                                    @if (IsItemColorSettingsReady && ItemColorPagedList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleItemColorListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenItemColorModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Sl No</th>
+                                                                <th>
+                                                                    Name
+                                                                </th>
+                                                                <th>
+                                                                    Color
+                                                                </th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in ItemColorPagedList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((ItemColorPagedList.PageIndex - 1) * ItemColorPagedList.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.ColorName
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="d-flex flex-row">
+                                                                            <div class="me-2" style="width:20px;height:20px;background-color:@item.data.ColorCode;"></div>
+                                                                            <span>@item.data.ColorCode</span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        <div class="d-flex justify-content-center align-items-center">
+                                                                            @if (item.data.ClientID is not null)
+                                                                            {
+                                                                                <ActionEdit Clicked="async () =>await OpenItemColorModal(item.data.ColorID)" />
+                                                                                <ActionDelete Clicked="async () =>await HandleItemColorRemoveButtonClick(item.data.ColorID)" />
+                                                                            }
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <PaginationCustom PageSize="ItemColorPagedList.PageSize" TotalCount="ItemColorPagedList.TotalCount" TotalPages="ItemColorPagedList.TotalPages" PageIndex="ItemColorPagedList.PageIndex" LoadPageIndex="HandleItemColorPageIndexEventCallback" />
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.ItemPackingType:
+                                    @if (IsItemPackingTypeSettingsReady && ItemPackingTypePagedList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleItemPackingTypeListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenItemItemPackingTypeModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Sl No</th>
+                                                                <th>
+                                                                    Packing Type Name
+                                                                </th>
+                                                                <th>
+                                                                    Packing Type Code
+                                                                </th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+
+
+                                                            @foreach (var item in ItemPackingTypePagedList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((ItemPackingTypePagedList.PageIndex - 1) * ItemPackingTypePagedList.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.PackingTypeName
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.PackingTypeCode
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        @if (item.data.ClientID is not null)
+                                                                        {
+                                                                            <div class="d-flex justify-content-center align-items-center">
+                                                                                <ActionEdit Clicked="async () =>await OpenItemItemPackingTypeModal(item.data.PackingTypeID)" />
+                                                                                <ActionDelete Clicked="async () =>await HandleItemPackingTypeRemoveButtonClick(item.data.PackingTypeID)" />
+                                                                            </div>
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            }
+
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <PaginationCustom PageSize="ItemPackingTypePagedList.PageSize" TotalCount="ItemPackingTypePagedList.TotalCount" TotalPages="ItemPackingTypePagedList.TotalPages" PageIndex="ItemPackingTypePagedList.PageIndex" LoadPageIndex="HandleItemPackingTypePageIndexEventCallback" />
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.TaxCategory:
+                                    @if (IsTaxCategoryReady && TaxCategoryList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleTaxCategoriesListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenTaxCategoryModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>
+                                                                    Sl No
+                                                                </th>
+                                                                <th>
+                                                                    Tax Category
+                                                                </th>
+                                                                <th>
+                                                                    Actions
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+
+
+                                                            @foreach (var taxCategory in TaxCategoryList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((TaxCategoryList.PageIndex - 1) * TaxCategoryList.PageSize + 1 + taxCategory.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @taxCategory.data.TaxCategoryName
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        <div class="d-flex justify-content-center align-items-center">
+                                                                            <ActionEdit Clicked="async () =>await OpenTaxCategoryModal(taxCategory.data.TaxCategoryID)" />
+                                                                            <ActionDelete Clicked="async () =>await HandleRemovTaxCategoryButtonClick(taxCategory.data.TaxCategoryID)" />
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+
+                                                            }
+
+                                                        </tbody>
+                                                    </table>
+
+                                                </div>
+
+                                                <PaginationCustom PageSize="TaxCategoryList.PageSize" TotalCount="TaxCategoryList.TotalCount" TotalPages="TaxCategoryList.TotalPages" PageIndex="TaxCategoryList.PageIndex" LoadPageIndex="HandleTaxCategoryPageIndexEventCallback" />
+
+                                            </div>
+                                        </div>
+                                    }
+
+                                    break;
+
+
+                                case (int)GeneralSettingsMenus.PaymentTerm:
+                                    @if (IsPaymentTermReady && PaymentTermList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandlepaymentTermListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenPaymentTermModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>
+                                                                    Sl No
+                                                                </th>
+                                                                <th>
+                                                                    Payment Term Name
+                                                                </th>
+                                                                <th>
+                                                                    Actions
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+
+
+                                                            @foreach (var paymentTerm in PaymentTermList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((PaymentTermList.PageIndex - 1) * PaymentTermList.PageSize + 1 + paymentTerm.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @paymentTerm.data.PaymentTermName
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        <div class="d-flex justify-content-center align-items-center">
+                                                                            <ActionEdit Clicked="async () =>await OpenPaymentTermModal(paymentTerm.data.PaymentTermID)" />
+                                                                            <ActionDelete Clicked="async () =>await HandleRemovePaymentTermButtonClick(paymentTerm.data.PaymentTermID)" />
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+
+                                                            }
+
+                                                        </tbody>
+                                                    </table>
+
+                                                </div>
+
+                                                <PaginationCustom PageSize="PaymentTermList.PageSize" TotalCount="PaymentTermList.TotalCount" TotalPages="PaymentTermList.TotalPages" PageIndex="PaymentTermList.PageIndex" LoadPageIndex="HandlePaymentTermPageIndexEventCallback" />
+
+                                            </div>
+                                        </div>
+                                    }
+
+                                    break;
+
+
+                                
+                                case (int)GeneralSettingsMenus.Promotion:
+                                    @if (IsPromotionReady && PromotionList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandlePromotionListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenPromotionModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>
+                                                                    Sl No
+                                                                </th>
+                                                                <th>
+                                                                    Promotion Name
+                                                                </th>
+                                                                <th>
+                                                                    Actions
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+
+
+                                                            @foreach (var promotion in PromotionList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((PromotionList.PageIndex - 1) * PromotionList.PageSize + 1 + promotion.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @promotion.data.PromotionName
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        <div class="d-flex justify-content-center align-items-center">
+                                                                            <ActionEdit Clicked="async () =>await OpenPromotionModal(promotion.data.PromotionID)" />
+                                                                            <ActionDelete Clicked="async () =>await HandleRemovePromotionButtonClick(promotion.data.PromotionID)" />
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+
+                                                            }
+
+                                                        </tbody>
+                                                    </table>
+
+                                                </div>
+
+                                                <PaginationCustom PageSize="PromotionList.PageSize" TotalCount="PromotionList.TotalCount" TotalPages="PromotionList.TotalPages" PageIndex="PromotionList.PageIndex" LoadPageIndex="HandlePromotionPageIndexEventCallback" />
+
+                                            </div>
+                                        </div>
+                                    }
+
+                                    break;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                case (int)GeneralSettingsMenus.PayamentGateway:
+                                    @if (IsPaymentGatewayReady && GatewayCredentialDetail is not null && PaymentGateways is not null && ChosenPaymentGatewaySettings is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <h3 class="card-title">@ListPagesHeaderSetting.Heading</h3>
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div style="">
+
+                                                    <EditForm Model="GatewayCredentialDetail" OnValidSubmit="SaveGatewayCredentials">
+                                                        <DataAnnotationsValidator />
+                                                        <div class="row">
+                                                            <div class="form-group col-md-12">
+                                                                <label class="form-label" style="text-align: left; margin-top: 0 !important;">
+                                                                    @Localizer["Payment Gateway"] :
+                                                                    <span style="color:red">*</span>
+                                                                </label>
+                                                                <select class="form-control form-select" id="address-type-select" @onchange="OnPaymentGatewayChange">
+                                                                    <option value="0">Choose</option>
+                                                                    @foreach (var item in PaymentGateways)
+                                                                    {
+                                                                        @if (item.GatewayID == GatewayCredentialDetail.GatewayID)
+                                                                        {
+                                                                            <option value="@item.GatewayID" selected>@item.GatewayName</option>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="@item.GatewayID">@item.GatewayName</option>
+                                                                        }
+                                                                    }
+                                                                </select>
+                                                                <ValidationMessage For="() => GatewayCredentialDetail.GatewayID" />
+                                                            </div>
+                                                        </div>
+                                                        @if (ChosenPaymentGatewaySettings.ShowMerchantID)
+                                                        {
+                                                            <div class="row">
+                                                                <div class="col-md">
+                                                                    <div class="form-group">
+                                                                        <label class="form-label mt-0 me-1" style="text-align:left">Merchant ID :</label>
+                                                                        <input type="text" class="form-control" label="Name" @bind="GatewayCredentialDetail.MerchantID" placeholder="Merchant ID">
+                                                                        <ValidationMessage For="()=>GatewayCredentialDetail.MerchantID" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        @if (ChosenPaymentGatewaySettings.ShowAccessCode)
+                                                        {
+                                                            <div class="row">
+                                                                <div class="col-md">
+                                                                    <div class="form-group">
+                                                                        <label class="form-label mt-0 me-1" style="text-align:left">Access Code :</label>
+                                                                        <input type="text" class="form-control" label="Name" @bind="GatewayCredentialDetail.AccessCode" placeholder="Access code">
+                                                                        <ValidationMessage For="()=>GatewayCredentialDetail.AccessCode" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        @if (ChosenPaymentGatewaySettings.ShowWorkingKey)
+                                                        {
+                                                            <div class="row">
+                                                                <div class="col-md">
+                                                                    <div class="form-group">
+                                                                        <label class="form-label mt-0 me-1" style="text-align:left">Working Key :</label>
+                                                                        <input type="text" class="form-control" label="Name" @bind="GatewayCredentialDetail.WorkingKey" placeholder="Working key">
+                                                                        <ValidationMessage For="()=>GatewayCredentialDetail.WorkingKey" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        @if (ChosenPaymentGatewaySettings.ShowSalt)
+                                                        {
+                                                            <div class="row">
+                                                                <div class="col-md">
+                                                                    <div class="form-group">
+                                                                        <label class="form-label mt-0 me-1" style="text-align:left">Salt :</label>
+                                                                        <input type="text" class="form-control" label="Name" @bind="GatewayCredentialDetail.Salt" placeholder="Salt">
+                                                                        <ValidationMessage For="()=>GatewayCredentialDetail.Salt" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                        <div class="row">
+                                                            <div class="col-md">
+                                                                <div class="form-group">
+                                                                    <button class="btn btn-primary" type="submit">Save</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </EditForm>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+
+                                    break;
+                                case (int)GeneralSettingsMenus.MailSetting:
+                                    @if (IsMailSettingReady && MailSettingModel is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <h3 class="card-title">@ListPagesHeaderSetting.Heading</h3>
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="row">
+                                                    <div class="col-md">
+                                                        <div class="form-group">
+
+                                                            <label class="mt-1">
+                                                                <input type="checkbox" id="mailSetting" @onchange="(ChangeEventArgs e) => HandleNeedMailSettingCheck(e)" checked="@(MailSettingModel.ChangeMail?"checked":null)" />
+                                                                <span class="form-check-sign" for="mailSetting">@Localizer["Need your own settings..?"]</span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div style="@MailSettingPointerEvent">
+
+                                                    <EditForm Model="MailSettingModel" OnValidSubmit="SaveMailSetting">
+                                                        <DataAnnotationsValidator />
+
+                                                        <div class="row">
+                                                            <div class="col-md">
+                                                                <div class="form-group">
+                                                                    <label class="form-label mt-0 me-1" style="text-align:left">SMTP Host :</label>
+                                                                    <input type="text" class="form-control" label="Name" @bind="MailSettingModel.SMTPHost" placeholder="SMTP Host">
+                                                                    <ValidationMessage For="()=>MailSettingModel.SMTPHost" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md">
+                                                                <div class="form-group">
+                                                                    <label class="form-label mt-0 me-1" style="text-align:left">Port :</label>
+                                                                    <input type="text" class="form-control" label="Name" @bind="MailSettingModel.Port" placeholder="Port">
+                                                                    <ValidationMessage For="()=>MailSettingModel.Port" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md">
+                                                                <div class="form-group">
+                                                                    <label class="form-label mt-0 me-1" style="text-align:left">Name :</label>
+                                                                    <input type="text" class="form-control" label="Name" @bind="MailSettingModel.Name" placeholder="Name">
+                                                                    <ValidationMessage For="()=>MailSettingModel.Name" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md">
+                                                                <div class="form-group">
+                                                                    <label class="form-label mt-0 me-1" style="text-align:left">Email Address :</label>
+                                                                    <input type="text" class="form-control" label="Name" @bind="MailSettingModel.EmailAddress" placeholder="EmailAddress">
+                                                                    <ValidationMessage For="()=>MailSettingModel.EmailAddress" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        @*<div class="row">
+                                        <div class="col-md">
+                                        <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align:left">User  Name :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="NewMail.UserName" placeholder="UserName">
+
+                                        </div>
+                                        </div>
+                                        </div>*@
+                                                        <div class="row">
+                                                            <div class="col-md">
+                                                                <div class="form-group">
+                                                                    <label class="form-label mt-0 me-1" style="text-align:left">Password :</label>
+                                                                    <input type="password" class="form-control" label="Name" @bind="MailSettingModel.Password" placeholder="Password">
+                                                                    <ValidationMessage For="()=>MailSettingModel.Password" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="row">
+                                                            <label class="mt-1">
+                                                                <input type="checkbox" @bind="MailSettingModel.EnableSSL" id="EnableSSL" />
+                                                                <span class="form-check-sign" for="EnableSSL">@Localizer["Is EnableSSL"]</span>
+                                                            </label>
+                                                        </div>
+
+                                                        <div class="row">
+                                                            <div class="col-md">
+                                                                <div class="form-group">
+                                                                    <button class="btn btn-primary" type="submit">Save</button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </EditForm>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.LeadThrough:
+                                    @if (IsLeadThroughSettingIsReady && LeadThroughListPageModel is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnAddButtonClick="async () => await OpenLeadThroughModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Sl No</th>
+                                                                <th>
+                                                                    Lead
+                                                                </th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+
+
+                                                            @foreach (var item in LeadThroughListPageModel.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((LeadThroughListPageModel.PageIndex - 1) * LeadThroughListPageModel.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.Name
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        @if (item.data.ClientID != null)
+                                                                        {
+                                                                            <div class="d-flex justify-content-center align-items-center">
+                                                                                <ActionEdit Clicked="async () =>await OpenLeadThroughModal(item.data.LeadThroughID)" />
+                                                                                <ActionDelete Clicked="async () =>await HandleRemoveLeadThroughButtonClick(item.data.LeadThroughID)" />
+                                                                            </div>
+                                                                        }
+
+                                                                    </td>
+                                                                </tr>
+
+                                                            }
+
+                                                        </tbody>
+                                                    </table>
+
+                                                </div>
+
+                                                <PaginationCustom PageSize="LeadThroughListPageModel.PageSize" TotalCount="LeadThroughListPageModel.TotalCount" TotalPages="LeadThroughListPageModel.TotalPages" PageIndex="LeadThroughListPageModel.PageIndex" LoadPageIndex="HandleLeadThroughPageIndexEventCallback" />
+
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+        </div>
+    </div>
+</PageLayoutNew>
+
+@switch (SelectedMenuType)
+{
+    case (int)GeneralSettingsMenus.EnquiryFollowupStatus:
+    case (int)GeneralSettingsMenus.QuotationFollowStatus:
+        @if (modalFollowUpStatus is not null && IsFollowupStatusReady)
+        {
+            <ModalFollowUpStatus @ref="@modalFollowUpStatus" Save="async () => await HandleFollowupStatusAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.ItemCategory:
+        @if (modalItemCategory is not null && IsItemCategorySettingsReady)
+        {
+            <ModalItemCategory @ref="@modalItemCategory" Saved="async () => await HandleItemCategoryAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.ItemGroup:
+        @if (modalItemGroup is not null && IsItemGroupSettingsReady)
+        {
+            <ModalItemGroup @ref="@modalItemGroup" Saved="async () => await HandleItemGroupAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.ItemBrand:
+        @if (modalItemBrand is not null && IsItemBrandSettingsReady)
+        {
+            <ModalItemBrand @ref="@modalItemBrand" Saved="async () => await HandleItemBrandAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.ItemSize:
+        @if (modalItemSize is not null && IsItemSizeSettingsReady)
+        {
+            <ModalItemSize @ref="@modalItemSize" Saved="async () => await HandleItemSizeAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.ItemColor:
+        @if (modalItemColor is not null && IsItemColorSettingsReady)
+        {
+            <ModalItemColor @ref="@modalItemColor" Saved="async () => await HandleItemColorAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.ItemPackingType:
+        @if (modalPackingType is not null && IsItemPackingTypeSettingsReady)
+        {
+            <ModalPackingType @ref="@modalPackingType" Saved="async () => await HandleItemPackingTypeAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.TaxCategory:
+        @if (taxCategoryChildModal is not null && IsTaxCategoryReady)
+        {
+            <ModalTaxCategory @ref="@taxCategoryChildModal" CallbackWithIdnValue="async () => await HandleTaxCategoryAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.PaymentTerm:
+        @if (paymentTermChildModal is not null && IsPaymentTermReady)
+        {
+            <ModalPaymentTerm @ref="@paymentTermChildModal" CallbackWithIdnValue="async () => await HandlePaymentTermAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.Promotion:
+        @if (promotionChildModal is not null && IsPromotionReady)
+        {
+            <ModalPromotion @ref="@promotionChildModal" CallbackWithIdnValue="async () => await HandlePromotionAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.LeadThrough:
+        @if (modalLeadThrough is not null && IsLeadThroughSettingIsReady)
+        {
+            <ModalLeadThrough @ref="@modalLeadThrough" Saved="async () => await HandleLeadThroughAdded()" />
+        }
+        break;
+
+}
+
+
+@code {
+    [Parameter] public int SelectedMenuType { get; set; } = 0;
+
+    private HeaderSettingsModel ListPagesHeaderSetting = new();
+
+    #region General Functions
+
+    private bool IsPageReady = false;
+    string selectedMenuDivID = "";
+    protected override async Task OnInitializedAsync()
+    {
+        IsPageReady = false;
+        if (SelectedMenuType == 0)
+            SelectedMenuType = (int)GeneralSettingsMenus.EnquiryFollowupStatus;
+        await HandleMenuSelected(SelectedMenuType);
+    }
+    private async Task HandleMenuSelected(int selectedMenuType)
+    {
+        switch (selectedMenuType)
+        {
+            case (int)GeneralSettingsMenus.EnquiryFollowupStatus:
+            case (int)GeneralSettingsMenus.QuotationFollowStatus:
+                await HandleFollowupStatusMenuSelected();
+                break;
+
+            case (int)GeneralSettingsMenus.QuotationPreference:
+                if (selectedMenuType != (int)GeneralSettingsMenus.InvoicePreference || selectedMenuType != (int)GeneralSettingsMenus.ClientSetting)
+                {
+                    await HandleQuotationOrInvoicePrefereencesOrClientSettingSelected();
+                }
+                break;
+            case (int)GeneralSettingsMenus.InvoicePreference:
+                if (selectedMenuType != (int)GeneralSettingsMenus.QuotationPreference || selectedMenuType != (int)GeneralSettingsMenus.ClientSetting)
+                {
+                    await HandleQuotationOrInvoicePrefereencesOrClientSettingSelected();
+                }
+                break;
+            case (int)GeneralSettingsMenus.ClientSetting:
+                if (selectedMenuType != (int)GeneralSettingsMenus.InvoicePreference || selectedMenuType != (int)GeneralSettingsMenus.QuotationPreference)
+                {
+                    await HandleQuotationOrInvoicePrefereencesOrClientSettingSelected();
+                }
+                break;
+
+            case (int)GeneralSettingsMenus.TaxCategory:
+                await HandleTaxCategoryMenuSelected();
+                break;
+
+            case (int)GeneralSettingsMenus.PaymentTerm:
+                await HandlePaymentTermMenuSelected();
+                break;
+                
+            case (int)GeneralSettingsMenus.Promotion:
+                await HandlePromotionMenuSelected();
+                break;
+            case (int)GeneralSettingsMenus.MailSetting:
+                await HandleMailSettingMenuSelected();
+                break;
+
+            case (int)GeneralSettingsMenus.LeadThrough:
+                await HandleLeadThroughMenuSelected();
+                break;
+
+            case (int)GeneralSettingsMenus.PayamentGateway:
+                await HandlePaymentGatewayMenuSelected();
+                break;
+
+            case (int)GeneralSettingsMenus.ItemColor:
+                await HandleItemColorMenuSelected();
+                break;
+
+            case (int)GeneralSettingsMenus.ItemSize:
+                await HandleItemSizeMenuSelected();
+                break;
+
+            case (int)GeneralSettingsMenus.ItemCategory:
+                await HandleItemCategoryMenuSelected();
+                break;
+
+            case (int)GeneralSettingsMenus.ItemGroup:
+                await HandleItemGroupMenuSelected();
+                break;
+
+            case (int)GeneralSettingsMenus.ItemBrand:
+                await HandleItemBrandMenuSelected();
+                break;
+
+            case (int)GeneralSettingsMenus.ItemPackingType:
+                await HandleItemPackingTypeMenuSelected();
+                break;
+        }
+        SelectedMenuType = selectedMenuType;
+        selectedMenuDivID = "menu-item-" + selectedMenuType;
+        await JS.InvokeVoidAsync("SelectMenu", selectedMenuDivID);
+        StateHasChanged();
+        IsPageReady = true;
+    }
+
+    #endregion
+
+    #region Followup Status
+
+    private PagedList<FollowupStatusListViewModel>? FollowupStatusPagedList;
+    private FollowupStatusPostModel? FollowupStatusPostModel;
+    private ModalFollowUpStatus? modalFollowUpStatus;
+    private bool IsFollowupStatusReady = false;
+
+    private async Task HandleFollowupStatusMenuSelected()
+    {
+        modalFollowUpStatus = new();
+        if (SelectedMenuType == (int)GeneralSettingsMenus.EnquiryFollowupStatus)
+        {
+            FollowupStatusPostModel = new() { StatusTypeID = (int)FollowUpTypes.Enquiry };
+            ListPagesHeaderSetting = new()
+                {
+                    Heading = "Enquiry Followup Statuses"
+                };
+        }
+        if (SelectedMenuType == (int)GeneralSettingsMenus.QuotationFollowStatus)
+        {
+            FollowupStatusPostModel = new() { StatusTypeID = (int)FollowUpTypes.Quotation };
+            ListPagesHeaderSetting = new()
+                {
+                    Heading = "Quotation Followup Statuses"
+                };
+        }
+        await LoadFollowupStatus();
+        IsFollowupStatusReady = true;
+    }
+    private async Task LoadFollowupStatus()
+    {
+        FollowupStatusPagedList = FollowupStatusPagedList ?? new();
+        FollowupStatusPagedList = await API.PostAsync<PagedList<FollowupStatusListViewModel>, FollowupStatusPostModel>("crm/get-followup-status-paged-list", FollowupStatusPostModel ?? new());
+    }
+    private async Task OpenFollowupStatusModal(int followupStatusID = 0)
+    {
+        modalFollowUpStatus = modalFollowUpStatus ?? new();
+        await modalFollowUpStatus.OpenFollowUpStatusModal(followupStatusID);
+    }
+    private async Task HandleFollowupStatusAdded()
+    {
+        await LoadFollowupStatus();
+    }
+    private async Task HandleFollowupStatusRemoveButtonClick(int followUpStatusID)
+    {
+        if (await API.DeleteAsync("settings/delete-followup-status", followUpStatusID, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadFollowupStatus();
+        }
+    }
+    private async Task HandleFollowupStatusPageIndexEventCallback(int pageIndex)
+    {
+        FollowupStatusPostModel = FollowupStatusPostModel ?? new();
+        FollowupStatusPostModel.PageIndex = pageIndex;
+        await LoadFollowupStatus();
+    }
+    private async Task HandleFollowupStatusListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        FollowupStatusPostModel ??= new();
+        FollowupStatusPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadFollowupStatus();
+    }
+
+    #endregion
+
+    #region Tax Categories
+
+    private PagedList<TaxCategoryListModel>? TaxCategoryList;
+    private PagedListPostModel? TaxCategoryPostModel;
+    private ModalTaxCategory? taxCategoryChildModal;
+    private bool IsTaxCategoryReady = false;
+
+    private async Task HandleTaxCategoryMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Tax Categories"
+            };
+        TaxCategoryList = new();
+        TaxCategoryPostModel = new();
+        taxCategoryChildModal = new();
+        await LoadTaxCategoriesData();
+        IsTaxCategoryReady = true;
+    }
+    private async Task LoadTaxCategoriesData()
+    {
+        TaxCategoryList = new();
+        TaxCategoryList = await API.PostAsync<PagedList<TaxCategoryListModel>, PagedListPostModel>("settings/get-tax-category-paged-list", TaxCategoryPostModel ?? new());
+    }
+    private async Task OpenTaxCategoryModal(int taxCategoryID = 0)
+    {
+        taxCategoryChildModal = taxCategoryChildModal ?? new();
+        await taxCategoryChildModal.OpenTaxCategoryModal(taxCategoryID);
+    }
+    private async Task HandleTaxCategoryAdded()
+    {
+        await LoadTaxCategoriesData();
+    }
+    private async Task HandleTaxCategoryPageIndexEventCallback(int pageIndex)
+    {
+        TaxCategoryPostModel = TaxCategoryPostModel ?? new();
+        TaxCategoryPostModel.PageIndex = pageIndex;
+        await LoadTaxCategoriesData();
+    }
+    private async Task HandleRemovTaxCategoryButtonClick(int taxCategoryID)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the tax category..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel")
+        && await API.GetAsync<bool>($"item/delete-tax-category/{taxCategoryID}", true))
+        {
+            await JS.SuccessMessage("Group deleted successfully");
+            await LoadTaxCategoriesData();
+        }
+    }
+    private async Task HandleTaxCategoriesListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        TaxCategoryPostModel ??= new();
+        TaxCategoryPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadTaxCategoriesData();
+    }
+
+    #endregion
+
+    #region Mail Setting
+
+    private MailSettingsPostModel? MailSettingModel;
+    private bool IsMailSettingReady = false;
+    private string MailSettingPointerEvent = "pointer-events:none";
+
+    private async Task HandleMailSettingMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Mail Setting"
+            };
+        MailSettingModel = new();
+        await LoadMailSettingData();
+        IsMailSettingReady = true;
+    }
+    private void HandleNeedMailSettingCheck(ChangeEventArgs e)
+    {
+        MailSettingModel = MailSettingModel ?? new();
+        MailSettingModel.ChangeMail = Convert.ToBoolean(e.Value);
+        if (MailSettingModel.ChangeMail)
+            MailSettingPointerEvent = "";
+        else
+            MailSettingPointerEvent = "pointer-events:none";
+        StateHasChanged();
+    }
+    private async Task LoadMailSettingData()
+    {
+        MailSettingModel = await API.GetAsync<MailSettingsPostModel>("email/get-client-mail-setting", true);
+        if (MailSettingModel != null)
+        {
+            MailSettingModel.ChangeMail = true;
+            MailSettingPointerEvent = "";
+        }
+        else
+        {
+            MailSettingModel = new() { ChangeMail = false };
+            MailSettingPointerEvent = "pointer-events:none";
+        }
+    }
+    private async Task SaveMailSetting()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, MailSettingsPostModel>("email/save-mail-settings", MailSettingModel ?? new());
+        if (res != null)
+        {
+            await JS.SuccessMessage("Saved Successfully");
+            StateHasChanged();
+        }
+    }
+
+    #endregion
+
+    #region LeadThrough
+
+    private PagedList<LeadThroughModel>? LeadThroughListPageModel;
+    private LeadThroughModel? LeadThroughModel;
+    private PagedListPostModel? LeadThroughPostModel;
+    private ModalLeadThrough? modalLeadThrough;
+    private bool IsLeadThroughSettingIsReady = false;
+
+    private async Task HandleLeadThroughMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Lead Throughs"
+            };
+        modalLeadThrough = new();
+        LeadThroughModel = new();
+        LeadThroughPostModel = new();
+        await LoadLeadThroughData();
+        IsLeadThroughSettingIsReady = true;
+    }
+    private async Task LoadLeadThroughData()
+    {
+        LeadThroughPostModel = LeadThroughPostModel ?? new();
+        LeadThroughListPageModel = await API.PostAsync<PagedList<LeadThroughModel>, PagedListPostModel>("settings/get-lead-through-paged-list", LeadThroughPostModel);
+    }
+    private async Task OpenLeadThroughModal(int leadThroughID = 0)
+    {
+        modalLeadThrough = modalLeadThrough ?? new();
+        await modalLeadThrough.OpenThroughModal(leadThroughID);
+    }
+    private async Task HandleRemoveLeadThroughButtonClick(int leadThroughID)
+    {
+        modalLeadThrough = modalLeadThrough ?? new();
+        await modalLeadThrough.RemoveLeadThrough(leadThroughID);
+    }
+    private async Task HandleLeadThroughAdded()
+    {
+        await LoadLeadThroughData();
+    }
+    private async Task HandleLeadThroughPageIndexEventCallback(int pageIndex)
+    {
+        LeadThroughPostModel = LeadThroughPostModel ?? new();
+        LeadThroughPostModel.PageIndex = pageIndex;
+        await LoadLeadThroughData();
+    }
+
+    #endregion
+
+    #region Payment Gateway Settings
+
+    private PaymentGateway? ChosenPaymentGatewaySettings;
+    private PaymentGatewayClientCredential? GatewayCredentialDetail;
+    private List<PaymentGateway>? PaymentGateways;
+    private bool IsPaymentGatewayReady = false;
+
+    private async Task HandlePaymentGatewayMenuSelected()
+    {
+        ChosenPaymentGatewaySettings = new();
+        GatewayCredentialDetail = new();
+        PaymentGateways = new();
+        IsPaymentGatewayReady = true;
+        await LoadGatewayCredentials();
+    }
+    private async Task LoadGatewayCredentials()
+    {
+        GatewayCredentialDetail = await API.GetAsync<PaymentGatewayClientCredential>($"gateway/get-client-gateway-credentials", true);
+        SetPaymentGatewayFields();
+        IsPaymentGatewayReady = true;
+    }
+    private async Task SaveGatewayCredentials()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, PaymentGatewayClientCredential>("gateway/save-gateway-credentials", GatewayCredentialDetail ?? new());
+        if (res != null)
+        {
+            await JS.SuccessMessage("Saved Successfully");
+            await LoadGatewayCredentials();
+            StateHasChanged();
+        }
+    }
+    private void OnPaymentGatewayChange(ChangeEventArgs e)
+    {
+        GatewayCredentialDetail = GatewayCredentialDetail ?? new();
+        GatewayCredentialDetail.GatewayID = Convert.ToInt32(e.Value);
+        SetPaymentGatewayFields();
+    }
+    private void SetPaymentGatewayFields()
+    {
+        GatewayCredentialDetail = GatewayCredentialDetail ?? new();
+        if (GatewayCredentialDetail.GatewayID > 0)
+            ChosenPaymentGatewaySettings = PaymentGateways.FirstOrDefault(s => s.GatewayID == GatewayCredentialDetail.GatewayID);
+        else
+            ChosenPaymentGatewaySettings = new();
+    }
+
+    #endregion
+
+    #region Item Settings
+
+    #region Item Color
+
+    private PagedList<ItemColorModel>? ItemColorPagedList;
+    private PagedListPostModel? ItemColorPostModel;
+    private ModalItemColor? modalItemColor;
+    private bool IsItemColorSettingsReady = false;
+
+    private async Task HandleItemColorMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Item Colors"
+            };
+        modalItemColor = new();
+        ItemColorPostModel = new();
+        await LoadItemColorData();
+        IsItemColorSettingsReady = true;
+    }
+    private async Task LoadItemColorData()
+    {
+        ItemColorPagedList = await API.PostAsync<PagedList<ItemColorModel>, PagedListPostModel>("item/get-item-color-paged-list", ItemColorPostModel ?? new());
+    }
+    private async Task OpenItemColorModal(int colorID = 0)
+    {
+        modalItemColor = modalItemColor ?? new();
+        await modalItemColor.HandleOpenItemColorModal(colorID);
+    }
+    private async Task HandleItemColorAdded()
+    {
+        await LoadItemColorData();
+    }
+    private async Task HandleItemColorPageIndexEventCallback(int pageIndex)
+    {
+        ItemColorPostModel = ItemColorPostModel ?? new();
+        ItemColorPostModel.PageIndex = pageIndex;
+        await LoadItemColorData();
+    }
+    private async Task HandleItemColorRemoveButtonClick(int colorID)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the color..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel")
+        && await API.GetAsync<bool>($"item/delete-item-color/{colorID}", true))
+        {
+            await JS.SuccessMessage("Color deleted successfully");
+            await LoadItemColorData();
+        }
+    }
+    private async Task HandleItemColorListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        ItemColorPostModel ??= new();
+        ItemColorPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadItemColorData();
+    }
+
+    #endregion
+
+    #region Item Size
+
+    private PagedList<ItemSizeModel>? ItemSizePagedList;
+    private PagedListPostModel? ItemSizePostModel;
+    private ModalItemSize? modalItemSize;
+    private bool IsItemSizeSettingsReady = false;
+
+    private async Task HandleItemSizeMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Item Sizes"
+            };
+        modalItemColor = new();
+        ItemSizePostModel = new();
+        await LoadItemSizeData();
+        IsItemSizeSettingsReady = true;
+    }
+    private async Task LoadItemSizeData()
+    {
+        ItemSizePagedList = await API.PostAsync<PagedList<ItemSizeModel>, PagedListPostModel>("item/get-item-size-paged-list", ItemSizePostModel ?? new());
+    }
+    private async Task OpenItemSizeModal(int sizeID = 0)
+    {
+        modalItemSize = modalItemSize ?? new();
+        await modalItemSize.OpenItemSizeModal(sizeID);
+    }
+    private async Task HandleItemSizeAdded()
+    {
+        await LoadItemSizeData();
+    }
+    private async Task HandleItemSizePageIndexEventCallback(int pageIndex)
+    {
+        ItemSizePostModel = ItemSizePostModel ?? new();
+        ItemSizePostModel.PageIndex = pageIndex;
+        await LoadItemSizeData();
+    }
+    private async Task HandleItemSizeRemoveButtonClick(int sizeID)
+    {
+        if (await API.DeleteAsync("item/delete-item-size", sizeID, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadItemSizeData();
+        }
+    }
+    private async Task HandleItemSizeListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        ItemSizePostModel ??= new();
+        ItemSizePostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadItemSizeData();
+    }
+
+    #endregion
+
+    #region Item Category
+
+    private PagedList<ItemCategoryModel>? ItemCategoryPagedList;
+    private PagedListPostModel? ItemCategoryPostModel;
+    private ModalItemCategory? modalItemCategory;
+    private bool IsItemCategorySettingsReady = false;
+
+    private async Task HandleItemCategoryMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Item Categories"
+            };
+        modalItemCategory = new();
+        ItemCategoryPostModel = new();
+        await LoadItemCategoryData();
+        IsItemCategorySettingsReady = true;
+    }
+    private async Task LoadItemCategoryData()
+    {
+        ItemCategoryPagedList = await API.PostAsync<PagedList<ItemCategoryModel>, PagedListPostModel>("item/get-item-category-paged-list", ItemCategoryPostModel ?? new());
+    }
+    private async Task OpenItemCategoryModal(int categoryID = 0)
+    {
+        modalItemCategory = modalItemCategory ?? new();
+        await modalItemCategory.OpenItemCategoryModal(categoryID);
+    }
+    private async Task HandleItemCategoryAdded()
+    {
+        await LoadItemCategoryData();
+    }
+    private async Task HandleItemCategoryPageIndexEventCallback(int pageIndex)
+    {
+        ItemCategoryPostModel = ItemCategoryPostModel ?? new();
+        ItemCategoryPostModel.PageIndex = pageIndex;
+        await LoadItemSizeData();
+    }
+    private async Task HandleRemoveCategoryButtonClick(int itemCategoryID)
+    {
+        if (await API.DeleteAsync("item/delete-item-category", itemCategoryID, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadItemCategoryData();
+        }
+    }
+    private async Task HandleItemCategoryListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        ItemCategoryPostModel ??= new();
+        ItemCategoryPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadItemCategoryData();
+    }
+
+    #endregion
+
+    #region Item Group
+
+    private PagedList<ItemGroupModel>? ItemGroupPagedList;
+    private PagedListPostModel? ItemGroupPostModel;
+    private ModalItemGroup? modalItemGroup;
+    private bool IsItemGroupSettingsReady = false;
+
+    private async Task HandleItemGroupMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Item Groups"
+            };
+        modalItemGroup = new();
+        ItemGroupPostModel = new();
+        await LoadItemGroupData();
+        IsItemGroupSettingsReady = true;
+    }
+    private async Task LoadItemGroupData()
+    {
+        ItemGroupPagedList = await API.PostAsync<PagedList<ItemGroupModel>, PagedListPostModel>("item/get-item-group-paged-list", ItemGroupPostModel ?? new());
+    }
+    private async Task OpenItemGroupModal(int groupID = 0)
+    {
+        modalItemGroup = modalItemGroup ?? new();
+        await modalItemGroup.OpenItemGroupModal(groupID);
+    }
+    private async Task HandleItemGroupAdded()
+    {
+        await LoadItemGroupData();
+    }
+    private async Task HandleItemGroupPageIndexEventCallback(int pageIndex)
+    {
+        ItemCategoryPostModel = ItemCategoryPostModel ?? new();
+        ItemCategoryPostModel.PageIndex = pageIndex;
+        await LoadItemGroupData();
+    }
+    private async Task HandleItemGroupRemoveButtonClick(int groupID)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the group..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel")
+        && await API.GetAsync<bool>($"item/delete-item-color/{groupID}", true))
+        {
+            await JS.SuccessMessage("Group deleted successfully");
+            await LoadItemGroupData();
+        }
+    }
+    private async Task HandleItemGroupListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        ItemGroupPostModel ??= new();
+        ItemGroupPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadItemGroupData();
+    }
+
+    #endregion
+
+    #region Item Brand
+
+    private PagedList<ItemBrandModel>? ItemBrandPagedList;
+    private PagedListPostModel? ItemBrandPostModel;
+    private ModalItemBrand? modalItemBrand;
+    private bool IsItemBrandSettingsReady = false;
+
+    private async Task HandleItemBrandMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Item Brands"
+            };
+        modalItemBrand = new();
+        ItemBrandPostModel = new();
+        await LoadItemBrandData();
+        IsItemBrandSettingsReady = true;
+    }
+    private async Task LoadItemBrandData()
+    {
+        ItemBrandPagedList = await API.PostAsync<PagedList<ItemBrandModel>, PagedListPostModel>("item/get-item-brand-paged-list", ItemGroupPostModel ?? new());
+    }
+    private async Task OpenItemBrandModal(int brandID = 0)
+    {
+        modalItemBrand = modalItemBrand ?? new();
+        await modalItemBrand.OpenItemBrandModal(brandID);
+    }
+    private async Task HandleItemBrandAdded()
+    {
+        await LoadItemBrandData();
+    }
+    private async Task HandleItemBrandPageIndexEventCallback(int pageIndex)
+    {
+        ItemBrandPostModel = ItemBrandPostModel ?? new();
+        ItemBrandPostModel.PageIndex = pageIndex;
+        await LoadItemBrandData();
+    }
+    private async Task HandleItemBrandRemoveButtonClick(int brandID)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the brand..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel")
+        && await API.GetAsync<bool>($"item/delete-item-brand/{brandID}", true))
+        {
+            await JS.SuccessMessage("Group deleted successfully");
+            await LoadItemBrandData();
+        }
+    }
+    private async Task HandleItemBrandListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        ItemBrandPostModel ??= new();
+        ItemBrandPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadItemBrandData();
+    }
+
+    #endregion
+
+    #region Item Packig Type
+
+    private PagedList<ItemPackingTypeModel>? ItemPackingTypePagedList;
+    private PagedListPostModel? ItemPackingTypePostModel;
+    private ModalPackingType? modalPackingType;
+    private bool IsItemPackingTypeSettingsReady = false;
+
+    private async Task HandleItemPackingTypeMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Item Packing Types"
+            };
+        modalPackingType = new();
+        ItemPackingTypePostModel = new();
+        await LoadItemPackingTypeData();
+        IsItemPackingTypeSettingsReady = true;
+    }
+    private async Task LoadItemPackingTypeData()
+    {
+        ItemPackingTypePagedList = await API.PostAsync<PagedList<ItemPackingTypeModel>, PagedListPostModel>("item/get-item-packing-type-paged-list", ItemPackingTypePostModel ?? new());
+    }
+    private async Task OpenItemItemPackingTypeModal(int packingTypeID = 0)
+    {
+        modalPackingType = modalPackingType ?? new();
+        await modalPackingType.OpenItemPackingTypeModal(packingTypeID);
+    }
+    private async Task HandleItemPackingTypeAdded()
+    {
+        await LoadItemPackingTypeData();
+    }
+    private async Task HandleItemPackingTypePageIndexEventCallback(int pageIndex)
+    {
+        ItemPackingTypePostModel = ItemPackingTypePostModel ?? new();
+        ItemPackingTypePostModel.PageIndex = pageIndex;
+        await LoadItemPackingTypeData();
+    }
+    private async Task HandleItemPackingTypeRemoveButtonClick(int packingTypeID)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the packing type..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel")
+        && await API.GetAsync<bool>($"item/delete-packing-type/{packingTypeID}", true))
+        {
+            await JS.SuccessMessage("Packing Type deleted successfully");
+            await LoadItemPackingTypeData();
+        }
+    }
+    private async Task HandleItemPackingTypeListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        ItemPackingTypePostModel ??= new();
+        ItemPackingTypePostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadItemPackingTypeData();
+    }
+
+    #endregion
+
+    #endregion
+
+    #region Client Setting
+
+    private ClientSettingModel? ClientSetting;
+    private bool IsClientSettingReady = false;
+
+    private async Task HandleQuotationOrInvoicePrefereencesOrClientSettingSelected()
+    {
+        ClientSetting ??= new();
+        await GetClientSetting();
+        IsClientSettingReady = true;
+
+    }
+    private async Task GetClientSetting()
+    {
+        ClientSetting = await API.GetAsync<ClientSettingModel>("settings/get-client-setting", true);
+        IsClientSettingReady = true;
+    }
+    private async Task SaveClientSetting()
+    {
+        ClientSetting = ClientSetting ?? new();
+        if (SelectedMenuType == (int)GeneralSettingsMenus.ClientSetting)
+        {
+            if (ClientSetting.TaxCategoryItemCount > 0 && ClientSetting.TaxCategoyItems.Count == 0)
+            {
+                await JS.ErrorMessage("Please provide the tax category item names");
+                return;
+            }
+            // if (ClientSetting.TaxCategoyItems.Count != ClientSetting.TaxCategoryItemCount)
+            // {
+            //     await JS.ErrorMessage("The tax category item count and category items number miss match occured, please clear it");
+            //     return;
+            // }
+        }
+
+        var result = await API.PostAsync<BaseSuccessResponse, ClientSettingModel>("settings/save-client-setting", ClientSetting);
+        if (result is not null && result.ResponseMessage is not null)
+            await JS.SuccessMessage(result.ResponseMessage);
+    }
+    private ClientSettingTaxCategoryItemModel TaxCategoryItem = new();
+    private async Task HandleAddTaxCategoryItemClick()
+    {
+        ClientSetting = ClientSetting ?? new();
+        if (await ValidateTaxCategoryItemName(TaxCategoryItem))
+        {
+            if (currentItemIndex == -1)
+                ClientSetting.TaxCategoyItems.Add(TaxCategoryItem);
+            else
+                ClientSetting.TaxCategoyItems[currentItemIndex] = TaxCategoryItem;
+
+            TaxCategoryItem = new();
+            currentItemIndex = -1;
+        }
+    }
+    private async Task HandleRemoveTaxCategoryItemClick(int index)
+    {
+        ClientSetting = ClientSetting ?? new();
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove tax category item : " + ClientSetting.TaxCategoyItems[index] + "..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel"))
+        {
+            ClientSetting.TaxCategoyItems.Remove(ClientSetting.TaxCategoyItems[index]);
+        }
+    }
+    private int currentItemIndex = -1;
+    private bool IsAnyRowIsInEditMode = false;
+    private async Task HandelEditTaxCategoryItemClick(int index)
+    {
+        if (IsAnyRowIsInEditMode)
+        {
+            await JS.ErrorMessage("There is already is in edit mode, please update it then try");
+            return;
+        }
+        ClientSetting = ClientSetting ?? new();
+        if (index != -1)
+        {
+            ClientSetting.TaxCategoyItems[index].IsRowEditMode = true;
+            currentItemIndex = index;
+            IsAnyRowIsInEditMode = true;
+        }
+    }
+    private async Task handleTaxCategoryItemNameDoneButtonClick(ClientSettingTaxCategoryItemModel taxCategoryNameModel)
+    {
+        ClientSetting ??= new();
+        if (await ValidateTaxCategoryItemName(taxCategoryNameModel))
+        {
+            taxCategoryNameModel.IsRowEditMode = false;
+            ClientSetting.TaxCategoyItems[currentItemIndex] = taxCategoryNameModel;
+            IsAnyRowIsInEditMode = false;
+            currentItemIndex = -1;
+        }
+    }
+    private async Task<bool> ValidateTaxCategoryItemName(ClientSettingTaxCategoryItemModel taxCategoryNameModel)
+    {
+        ClientSetting ??= new();
+        if (string.IsNullOrEmpty(taxCategoryNameModel.TaxCategoyItemName))
+        {
+            await JS.ErrorMessage("Please provide tax category item name");
+            return false;
+        }
+
+        if (ClientSetting.TaxCategoyItems.Count > 0)
+        {
+            var existingIem = ClientSetting.TaxCategoyItems
+                .Where(taxCategory => taxCategory.TaxCategoyItemName == TaxCategoryItem.TaxCategoyItemName).FirstOrDefault();
+            if (existingIem is not null)
+            {
+                await JS.ErrorMessage("The provided tax category name is exist");
+                return false;
+            }
+        }
+
+        if (ClientSetting.TaxCategoryItemCount > 0 && ClientSetting.TaxCategoryItemCount == ClientSetting.TaxCategoyItems.Count)
+        {
+            await JS.ErrorMessage($"You trying to add more than the actual tax category items count({ClientSetting.TaxCategoryItemCount})");
+            return false;
+        }
+        return true;
+    }
+
+    #endregion
+
+    #region Payment Terms
+
+    private PagedList<PaymentTermListModel>? PaymentTermList;
+    private PagedListPostModel? PaymentTermPostModel;
+    private ModalPaymentTerm? paymentTermChildModal;
+    private bool IsPaymentTermReady = false;
+
+    private async Task HandlePaymentTermMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Payment Term"
+            };
+        PaymentTermList = new();
+        PaymentTermPostModel = new();
+        paymentTermChildModal = new();
+        await LoadPaymentTermData();
+        IsPaymentTermReady = true;
+    }
+    private async Task LoadPaymentTermData()
+    {
+        PaymentTermList = new();
+        PaymentTermList = await API.PostAsync<PagedList<PaymentTermListModel>, PagedListPostModel>("settings/get-payment-term-paged-list", PaymentTermPostModel ?? new());
+    }
+    private async Task OpenPaymentTermModal(int paymentTermID = 0)
+    {
+        paymentTermChildModal = paymentTermChildModal ?? new();
+        await paymentTermChildModal.OpenPaymentTermModal(paymentTermID);
+    }
+    private async Task HandlePaymentTermAdded()
+    {
+        await LoadPaymentTermData();
+    }
+    private async Task HandlePaymentTermPageIndexEventCallback(int pageIndex)
+    {
+        PaymentTermPostModel = PaymentTermPostModel ?? new();
+        PaymentTermPostModel.PageIndex = pageIndex;
+        await LoadPaymentTermData();
+    }
+    private async Task HandleRemovePaymentTermButtonClick(int paymentTermID)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the payment term..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel")
+        && await API.GetAsync<bool>($"settings/remove-payment-term/{paymentTermID}", true))
+        {
+            await JS.SuccessMessage("payment term deleted successfully");
+            await LoadPaymentTermData();
+        }
+    }
+    private async Task HandlepaymentTermListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        PaymentTermPostModel ??= new();
+        PaymentTermPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadPaymentTermData();
+    }
+
+    #endregion
+
+    #region Promotion
+
+    private PagedList<PromotionListModel>? PromotionList;
+    private PagedListPostModel? PromotionPostModel;
+    private ModalPromotion? promotionChildModal;
+    private bool IsPromotionReady = false;
+
+    private async Task HandlePromotionMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Promotions"
+            };
+        PromotionList = new();
+        PromotionPostModel = new();
+        promotionChildModal = new();
+        await LoadPromotionData();
+        IsPromotionReady = true;
+    }
+    private async Task LoadPromotionData()
+    {
+        PromotionList = new();
+        PromotionList = await API.PostAsync<PagedList<PromotionListModel>, PagedListPostModel>("settings/get-promotion-paged-list", PromotionPostModel ?? new());
+    }
+    private async Task OpenPromotionModal(int promotionID = 0)
+    {
+        promotionChildModal = promotionChildModal ?? new();
+        await promotionChildModal.OpenPromotionModal(promotionID);
+    }
+    private async Task HandlePromotionAdded()
+    {
+        await LoadPromotionData();
+    }
+    private async Task HandlePromotionPageIndexEventCallback(int pageIndex)
+    {
+        PromotionPostModel = PromotionPostModel ?? new();
+        PromotionPostModel.PageIndex = pageIndex;
+        await LoadPromotionData();
+    }
+    private async Task HandleRemovePromotionButtonClick(int promotionID)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the promotion..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel")
+        && await API.GetAsync<bool>($"settings/remove-promotion/{promotionID}", true))
+        {
+            await JS.SuccessMessage("Promotion deleted successfully");
+            await LoadPromotionData();
+        }
+    }
+    private async Task HandlePromotionListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        PromotionPostModel ??= new();
+        PromotionPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadPromotionData();
+    }
+
+
+
+
+    #endregion
+}

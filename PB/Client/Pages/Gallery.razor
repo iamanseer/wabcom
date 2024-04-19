@@ -1,0 +1,63 @@
+﻿@page "/gallery"
+<PageLayoutOld PageName="@Localizer["Gallery"]" SinglePageURL="gallery-single">
+    <Grid DivClass="m-0" TableClass="table-striped" Data="ViewModel.Data" Context=cn>
+        <GridHeader>
+            <th>@Localizer["Image"]</th>
+            <th>@Localizer["File Name"]</th>
+            <th>@Localizer["URL"]</th>
+            <th>@Localizer["Copy"]</th>
+            <th>@Localizer["Delete"]</th>
+        </GridHeader>
+        <GridRow>
+            <td><img src="@cn.FileName" width="50" height="50" /></td>
+            <td>@cn.Title</td>
+            <td>@cn.URL</td>
+            <td>
+                <button type="button" align="center" id="borderremoved" class="btn btn-dark waves-effect waves-light" @onclick="()=>CopyToClipboard(cn.URL)"><i class="faS fa-copy"></i></button>
+            </td>
+           <td style="width:110px">
+                <button type="button" align="center" class="btn btn-dark waves-effect waves-light" @onclick="()=>Delete(cn.MediaID.Value)"><i class="fa fa-trash"></i></button>
+            </td>
+        </GridRow>
+    </Grid>
+    <Pagination PageSize="ViewModel.PageSize" PageIndex="ViewModel.PageIndex" TotalPages="ViewModel.TotalPages" LoadPageIndex="LoadPageIndex"></Pagination>
+
+</PageLayoutOld>
+
+
+
+@code {
+    PagedList<GalleryModel> ViewModel = new();
+    PagedListPostModel SearchModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        ViewModel = await API.PostAsync<PagedList<GalleryModel>, PagedListPostModel>("media/get-all-images", SearchModel);
+    }
+
+    private async Task LoadPageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    async Task Delete(int Id)
+    {
+        if (await API.DeleteAsync("media/delete-image", Id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadData();
+        }
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        await JS.InvokeVoidAsync("ToastMessage", "Link copied");
+    }
+}

@@ -1,0 +1,101 @@
+﻿@using PB.CRM.Model.Enum;
+@using PB.Shared.Models.Accounts;
+@using System.ComponentModel.DataAnnotations
+
+<!--Modal Bill To Bill-->
+<div class="modal fade" id="bill-to-bill-modal">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document" style="overflow-y: scroll;">
+        <div class="modal-content modal-content-demo">
+            <EditForm EditContext="billModelEditContext" OnValidSubmit="SaveBillToLedger">
+                <DataAnnotationsValidator/>
+                <div class="modal-header">
+                    <h6 class="modal-title">New Bill To Bill Item</h6><button aria-label="Close" class="btn-close" @onclick="async() => await CloseBillToBillModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <InputTextBox Label="Reference Number :"
+                                      DivClass="col-md-7" IsRequired="true"
+                                      ValidationFor="() => BillItem.ReferenceNo" @bind-Value="BillItem.ReferenceNo" />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Date
+                                    <span class="ms-2" style="color:red">*</span>
+                                </label>
+                                <input class="form-control" type="date" @bind="BillItem.Date">
+                                <ValidationMessage For="() => BillItem.Date" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <InputNumberBox Label="Days :"
+                                        DivClass="col-md-7"
+                                        ValidationFor="() => BillItem.Days" @bind-Value="BillItem.Days" />
+                    </div>
+                    <div class="row">
+                        <InputNumberBox Label="Debit :"
+                                        DivClass="col-md-7"
+                                        ValidationFor="() => BillItem.Debit" @bind-Value="BillItem.Debit" />
+                    </div>
+                    <div class="row">
+                        <InputNumberBox Label="Credit :"
+                                        DivClass="col-md-7"
+                                        ValidationFor="() => BillItem.Credit" @bind-Value="BillItem.Credit" />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Proceed</button>
+                    <button type="button" class="btn btn-light" @onclick="async() => await CloseBillToBillModal()">Close</button>
+                </div>
+
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<BillToBillModel> Saved { get; set; }
+    BillToBillModel BillItem = new();
+    EditContext billModelEditContext;
+
+    public async Task OpenBillModelModal(BillToBillModel? billToBillModel = null)
+    {
+        if (billToBillModel is not null)
+        {
+            BillToBillModel billToBill = new()
+                {
+                    BillID = billToBillModel.BillID,
+                    LedgerID = billToBillModel.LedgerID,
+                    ReferenceNo = billToBillModel.ReferenceNo,
+                    Date = billToBillModel.Date,
+                    Days = billToBillModel.Days,
+                    Debit = billToBillModel.Debit,
+                    Credit = billToBillModel.Debit,
+                    ParentBillID = billToBillModel.ParentBillID,
+                    JournalEntryID = billToBillModel.JournalEntryID,
+                    ReferenceTypeID = billToBillModel.ReferenceTypeID,
+                    LedgerName = billToBillModel.LedgerName,
+                };
+            BillItem = billToBill;
+        }
+        else
+        {
+            BillItem = new();
+        }
+        billModelEditContext = new(BillItem);
+        await JS.InvokeVoidAsync("ShowModal", "bill-to-bill-modal");
+    }
+    private async Task SaveBillToLedger()
+    {
+        await Saved.InvokeAsync(BillItem);
+        await CloseBillToBillModal();
+    }
+    private async Task CloseBillToBillModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "bill-to-bill-modal");
+    }
+
+}

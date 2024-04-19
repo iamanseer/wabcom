@@ -1,0 +1,215 @@
+﻿@page "/invoices"
+
+@using PB.Model.Models;
+@using PB.Shared.Enum.CRM;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common
+@using PB.Shared.Models.Inventory.Invoices;
+
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+
+            <div class="card">
+                <div class="card-header py-2">
+                    @if (IsHeaderReady)
+                    {
+                        <ListPageHeader Settings="InvoiceFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" />
+                    }
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+
+                                <th>
+                                    Invoice No
+                                </th>
+
+                                <th>
+                                    Customer Name
+                                </th>
+
+                                <th>
+                                    Invoice Date
+                                </th>
+
+                                <th>
+                                    Added By
+                                </th>
+
+                                <th>
+                                    Accounted on
+                                </th>
+
+                                <th>
+                                    Type
+                                </th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+
+                            @foreach (var item in InvoicePagedList.Data.Select((value, i) => new { i, value }))
+                            {
+                                var entry = item.value;
+                                var index = item.i;
+                                <tr @onclick="@(()=>Nav.NavigateTo($"invoice-view/{entry.InvoiceID}"))" style="cursor:pointer">
+                                    <td>
+                                        @if (InvoicePagedList.PageIndex == 1)
+                                        {
+                                            @(index + 1)
+                                        }
+                                        else
+                                        {
+                                            @(((InvoicePagedList.PageIndex * InvoicePagedList.PageSize) + (index + 1)) - 10)
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @entry.InvoiceNumber
+                                    </td>
+
+                                    <td>
+                                        @entry.Name
+                                    </td>
+
+                                    <td>
+                                        @(entry.InvoiceDate.HasValue ? entry.InvoiceDate.Value.ToString("dd/MM/yyy") : "--:--:----")
+                                    </td>
+
+                                    <td>
+                                        @entry.Username
+                                    </td>
+
+                                    <td>
+                                        @(entry.AccountsDate.HasValue ? entry.AccountsDate.Value.ToString("dd/MM/yyy") : "--:--:----")
+                                    </td>
+
+                                    <td>
+                                        @entry.InvoiceTypeName
+                                    </td>
+
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="InvoicePagedList.PageSize" TotalCount="InvoicePagedList.TotalCount" TotalPages="InvoicePagedList.TotalPages" PageIndex="InvoicePagedList.PageIndex" LoadPageIndex="SetPageIndex" />
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+@code {
+
+    [Parameter] public int QuotationID { get; set; }
+    [Inject] public AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
+    private bool IsHeaderReady = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateProvider is not null)
+        {
+            var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+            var authState = await localStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            bool IsAuthenticated = user.Identity is not null ? user.Identity.IsAuthenticated : false;
+            if (IsAuthenticated)
+            {
+                if (user.Claims.First(c => c.Type == "UserTypeID").Value == ((int)UserTypes.Client).ToString())
+                {
+                    FilterIdnValueInputModel branchFilter = new()
+                        {
+                            FiledName = "I.BranchID",
+                            DisplayName = "Branch",
+                            CustomOptionApiPath = "common/get-branch-list",
+                            IsGet = true
+                        };
+                    InvoiceIdnValueFilterList.Add(branchFilter);
+                }
+            }
+        }
+
+        InvoiceFilterSettings.IdnValueFilters = InvoiceIdnValueFilterList;
+        InvoiceFilterSettings.DateFilters = InvoiceDateFilterList;
+        InvoiceFilterSettings.SortMenuItems = InvoiceSortMenuItems;
+        InvoiceFilterSettings.Heading = "Invoices";
+        InvoiceFilterSettings.SinglePageURL = "invoice";
+        InvoiceFilterSettings.AddButtonText = "New Invoice";
+        await LoadData();
+        IsHeaderReady = true;
+    }
+
+    private async Task LoadData()
+    {
+        InvoicePagedList = await API.PostAsync<PagedList<InvoiceListModel>, PagedListPostModelWithFilter>("inventory/get-invoice-paged-list", InvoicePagedListSearchModel);
+    }
+    private async Task SetPageIndex(int pageIndex)
+    {
+        InvoicePagedListSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    private PagedListPostModelWithFilter InvoicePagedListSearchModel = new();
+    private PagedList<InvoiceListModel> InvoicePagedList = new();
+
+    #region Sort
+
+    private List<FilterSortInputModel> InvoiceSortMenuItems = new()
+    {
+        new()
+        {
+            DisplayName = "Invoice Number",
+            FieldName = "I.InvoiceNumber"
+        },
+        new()
+        {
+            DisplayName = "Invoice Date",
+            FieldName = "I.InvoiceDate"
+        },
+        new()
+        {
+            DisplayName = "Accounts Date",
+            FieldName = "I.AccountsDate"
+        },
+    };
+
+    #endregion
+
+    #region Filter
+
+    HeaderSettingsModel InvoiceFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by customer name..",
+            NeedSortOption = true,
+            NeedFilterOption = true,
+        };
+    List<FilterIdnValueInputModel> InvoiceIdnValueFilterList = new();
+    List<FilterDateInputModel> InvoiceDateFilterList = new()
+    {
+        new()
+        {
+            FieldName = "I.InvoiceDate",
+            DisplayName = "Invoice Date"
+        },
+
+        new()
+        {
+            FieldName = "I.AccountsDate",
+            DisplayName = "Accounts Date"
+        }
+    };
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        InvoicePagedListSearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    #endregion
+}

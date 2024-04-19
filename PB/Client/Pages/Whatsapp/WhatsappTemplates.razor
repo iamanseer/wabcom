@@ -1,0 +1,199 @@
+﻿@page "/whatsapp-templates"
+@using PB.Shared.Enum.WhatsApp;
+@using PB.Shared.Models
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.WhatsaApp;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="TemplatesListHeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)SearchByItem" />
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12 d-flex justify-content-end">
+                            <div>
+                                <button class="btn btn-secondary" type="button" @onclick="async () => await SyncFBTemplates()">
+                                    Sync with FB
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                                <thead>
+                                    <tr>
+                                        <th>SlNo</th>
+                                        <th>@Localizer["Template Name"]</th>
+                                        <th>@Localizer["Language"]</th>
+                                        <th>@Localizer["Account Name"]</th>
+                                        <th>@Localizer["Category"]</th>
+                                        <th>@Localizer["Status"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Data.Select((data, index) => new { index, data }))
+                                    {
+                                        <tr @onclick="()=>Edit(item.data.TemplateID)" style="cursor:pointer">
+                                            <td>
+                                                @((Model.PageIndex - 1) * Model.PageSize + 1 + item.index)
+                                            </td>
+                                            <td>
+                                                @item.data.TemplateName
+                                            </td>
+                                            <td>
+                                                @item.data.LanguageName
+                                            </td>
+                                            <td>
+                                                @item.data.Name
+                                            </td>
+                                            <td>
+                                                @item.data.CategoryID.ToString()
+                                            </td>
+                                            <td>
+                                                <span class="@item.data.StatusBadgeClass">
+                                                    @if (item.data.StatusID!=null)
+                                                    {
+                                                        @(((WhatsappTemplateStatus)item.data.StatusID).ToString())
+                                                        @if (item.data.StatusID == (int)WhatsappTemplateStatus.REJECTED)
+                                                        {
+                                                            <!--Rejected Tool tip here-->
+                                                        }
+                                                    }
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+                    <PaginationCustom PageSize="Model.PageSize" TotalCount="Model.TotalCount" TotalPages="Model.TotalPages" PageIndex="Model.PageIndex" LoadPageIndex="LoadPageIndex" />
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+
+    private PagedList<WhatsappTemplateListModel> Model = new();
+    private PagedListPostModelWithFilter SearchModel = new();
+    HeaderSettingsModel? TemplatesListHeaderSettings;
+    protected override async Task OnInitializedAsync()
+    {
+        TemplatesListHeaderSettings = new()
+            {
+                Heading = "Templates",
+                SearchPlaceHolder = "Search with name..",
+                NeedAddButton = true,
+                AddButtonText = "Add Template",
+                SinglePageURL = "whatsapp-template",
+                NeedSortOption = true,
+                NeedFilterOption = true,
+                IdnValueFilters = IdFilterList,
+                SortMenuItems = sortInupuItems,
+            };
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        Model = await API.PostAsync<PagedList<WhatsappTemplateListModel>, PagedListPostModelWithFilter>("whatsapp/get-whatsapp-template-paged-list", SearchModel);
+    }
+
+    void Edit(int Id)
+    {
+        Nav.NavigateTo($"whatsapp-template/{Id}");
+    }
+
+    async Task Delete(int Id)
+    {
+        if (await API.DeleteAsync("whatsapp/delete-whatsapp-template", Id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadData();
+        }
+    }
+
+    private async Task SearchByItem(PagedListPostModelWithFilter searchModel)
+    {
+        SearchModel = searchModel == null ? new() : searchModel;
+        await LoadData();
+    }
+
+    private async Task LoadPageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    #region Filter
+
+    List<FilterIdnValueInputModel> IdFilterList = new()
+    {
+        new()
+        {
+            FiledName = "CategoryID",
+            DisplayName = "Category",
+            EnumObject = WhatsappTemplateCategory.MARKETING
+        },
+        new()
+        {
+            FiledName = "W.WhatsappAccountID",
+            DisplayName = "Accounts",
+            CustomOptionApiPath = "common/get-list-of-whatsapp-accounts"
+        },
+        new()
+        {
+            FiledName = "StatusID",
+            DisplayName = "Status",
+            EnumObject = WhatsappTemplateStatus.APPROVED
+        }
+    };
+
+    List<FilterSortInputModel> sortInupuItems = new()
+    {
+        new ()
+        {
+            DisplayName = "Template Name",
+            FieldName = "TemplateName"
+        },
+        new ()
+        {
+            DisplayName = "AccountName",
+            FieldName = "W.WhatsappAccountID"
+        },
+        new()
+        {
+            DisplayName = "Category",
+            FieldName = "CategoryID"
+        },
+        new()
+        {
+            DisplayName = "Status",
+            FieldName = "StatusID"
+        },
+    };
+
+    #endregion
+
+    #region Sync fb template
+
+    private async Task SyncFBTemplates()
+    {
+        var result = await API.GetAsync<BaseSuccessResponse>("whatsapp/v2/import-facebook-templates", true);
+        if (result is not null)
+        {
+            await JS.SuccessMessage(result.ResponseMessage);
+        }
+    }
+
+    #endregion
+
+}
+

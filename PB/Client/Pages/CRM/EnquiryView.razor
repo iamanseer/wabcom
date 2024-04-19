@@ -1,0 +1,397 @@
+﻿
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Enum.CRM;
+@using PB.Shared.Models.CRM.Enquiry;
+
+@attribute [Authorize(Roles = "Enquiry")]
+
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row">
+            <ListPageMenuLayout MenuItems="menuItem"
+                                SinglePageURL="enquiry"
+                                SelectedMenuID="EnquiryViewData.EnquiryID"
+                                OnMenuItemSelect="LoadViewData" />
+
+
+            <div class="itemlist-container">
+                <div class="page-header">
+                    <h1 class="page-title">@(EnquiryViewData.EnquiryNo + " - " + EnquiryViewData.CustomerName)</h1>
+                    <div class="btn-toolbar float-right mr-7">
+
+                        @if (EnquiryViewData.CurrentFollowupNature != (int)FollowUpNatures.Cancelled)
+                        {
+                            @if (EnquiryViewData.QuotationID == null)
+                            {
+                                <a class="btn btn-white btn-md me-2" @onclick="ConvertToQuotation">
+                                    Quotation<i class="fe fe-file-plus mb-0 ms-2" style="font-size: 15px;color:var(--primary-bg-color)"></i>
+                                </a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-white btn-md me-2" @onclick="NavigateToQuotation">
+                                    Quotation<i class="fa fa-mail-reply mb-0 ms-2" style="font-size: 15px;color:var(--primary-bg-color)"></i>
+                                </a>
+                            }
+                        }
+
+                        @if (EnquiryViewData.CurrentFollowupNature == (int)FollowUpNatures.Followup || EnquiryViewData.CurrentFollowupNature == (int)FollowUpNatures.New)
+                        {
+                            <a class="btn btn-white btn-md me-2" @onclick="NavigateToEnquiryFollowups">
+                                Follow-up<i class="fa fa-plus mb-0 ms-2" style="color:var(--primary-bg-color)"></i>
+                            </a>
+
+                            <a class="btn btn-white btn-md me-2" @onclick="NavigateToSinglePage">
+                                Enquiry<i class="fa fa-pencil mb-0 ms-2" style="color:var(--primary-bg-color)"></i>
+                            </a>
+                        }
+                        
+                        @if (EnquiryViewData.CurrentFollowupNature == (int)FollowUpNatures.New || EnquiryViewData.CurrentFollowupNature == (int)FollowUpNatures.Cancelled)
+                        {
+                            <a class="btn btn-white btn-md me-2" @onclick="(async()=>await DeleteEnquiry(EnquiryId))">
+                                <i class="fa fa-trash" style="color:red"></i>
+                            </a>
+                        }
+
+                        <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"enquiries"))">
+                            <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                        </a>
+
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="panel panel-primary">
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <li><a href="#tab5" class="active" data-bs-toggle="tab">Overview</a></li>
+                                                @if (EnquiryViewData.EnquiryItem.Count > 0)
+                                                {
+                                                    <li><a href="#tab6" data-bs-toggle="tab">Items</a></li>
+                                                }
+                                                @if (HasFollowupHistory)
+                                                {
+                                                    <!--History Tab-->
+                                                    <li><a href="#historyTab" data-bs-toggle="tab">Follow-up History</a></li>
+                                                }
+                                            </ul>
+
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="tab5">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+
+                                                                <div class="row">
+                                                                    <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">Enquiry Details </label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">Customer Name</label>
+                                                                    <label class="col-7 col-auto">@EnquiryViewData.CustomerName</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">Mobile No</label>
+                                                                    <label class="col-7 col-auto">@EnquiryViewData.Phone</label>
+                                                                </div>
+                                                                @if(EnquiryViewData.EmailAddress!=null)
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-5 col-auto items-label text-muted">Email</label>
+                                                                        <label class="col-7 col-auto">@EnquiryViewData.EmailAddress</label>
+                                                                    </div>
+                                                                }
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Enquiry No </label>
+                                                                    <label class="col-md-7 col-auto ">@EnquiryViewData.EnquiryNo</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class=" text-muted items-label col-md-5 col-auto">Date</label>
+                                                                    <label class="col-md-7 col-auto">@(EnquiryViewData.Date.HasValue ? EnquiryViewData.Date.Value.ToString("dd/MM/yyyy") : "")</label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class=" text-muted items-label col-md-5 col-auto">Status</label>
+                                                                    <label class="col-md-7 col-auto">
+
+                                                                        @if (EnquiryViewData.CurrentFollowupNature == 0)
+                                                                        {
+                                                                            <span>@("Enquiry created")</span>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="@EnquiryViewData.NatureCSSClass">
+                                                                                @(((FollowUpNatures)EnquiryViewData.CurrentFollowupNature).ToString())
+                                                                            </span>
+                                                                        }
+
+                                                                    </label>
+                                                                </div>
+
+                                                                @if (EnquiryViewData.LeadQuality != null)
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-5 col-auto items-label text-muted">Lead Quality</label>
+                                                                        <label class="col-md-7 col-auto">
+                                                                            <span class="@EnquiryViewData.LeadQualityCssClass">
+                                                                                @(((LeadQualities)EnquiryViewData.LeadQuality).ToString())
+                                                                            </span>
+                                                                        </label>
+                                                                    </div>
+                                                                }
+
+                                                                @if (EnquiryViewData.LeadThroughID != null)
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-5 col-auto items-label text-muted">Lead Through</label>
+                                                                        <label class="col-md-7 col-auto">
+                                                                            <i class="@EnquiryViewData.LeadMediaIconClass"></i>
+                                                                            <span class="ms-1">
+                                                                                @(((LeadThroughs)EnquiryViewData.LeadThroughID).ToString())
+                                                                            </span>
+                                                                        </label>
+                                                                    </div>
+                                                                }
+
+                                                                @if (!string.IsNullOrEmpty(EnquiryViewData.Description))
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-5 col-auto items-label text-muted">Description</label>
+                                                                        <label class="col-md-7 col-auto with-breaks">
+                                                                            @((MarkupString)EnquiryViewData.Description)
+                                                                        </label>
+                                                                    </div>
+                                                                }
+
+                                                                @if (!string.IsNullOrEmpty(EnquiryViewData.Username))
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-md-5 col-auto items-label text-muted">Added By</label>
+                                                                        <label class="col-md-7 col-auto">
+                                                                            @EnquiryViewData.Username
+                                                                        </label>
+                                                                    </div>
+                                                                }
+
+                                                            </div>
+
+                                                            @if (EnquiryViewData.FollowupAssignees.Count > 0)
+                                                            {
+                                                                <div class="group pb-3">
+
+                                                                    <div class="row">
+                                                                        <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">Enquiry Assignees </label>
+                                                                    </div>
+
+                                                                    @foreach (var assignees in EnquiryViewData.FollowupAssignees)
+                                                                    {
+                                                                        <div class="row">
+                                                                            <label class="col-12 col-auto items-label text-muted">@assignees.Name</label>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            }
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            @if (EnquiryViewData.EnquiryItem.Count > 0)
+                                            {
+                                                <div class="tab-pane" id="tab6">
+                                                    <div class="row">
+                                                        <table class="table border table-responsive text-wrap text-nowrap table-bordered mb-1 ">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Sl No</th>
+                                                                    <th>Item Name</th>
+                                                                    <th>Description</th>
+                                                                    <th>Quantity</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @if (EnquiryViewData.EnquiryItem.Count > 0)
+                                                                {
+                                                                    @foreach (var enquiry in EnquiryViewData.EnquiryItem)
+                                                                    {
+                                                                        <tr>
+
+                                                                            <td>
+                                                                                @enquiry.RowIndex
+                                                                            </td>
+
+                                                                            <td style="min-width:200px">
+                                                                                @enquiry.ItemName
+                                                                            </td>
+
+                                                                            <td style="min-width:200px">
+                                                                                @enquiry.Description
+                                                                            </td>
+
+                                                                            <td style="min-width:80px">
+                                                                                @enquiry.Quantity
+                                                                            </td>
+
+                                                                        </tr>
+                                                                    }
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                </div>
+                                            }
+
+                                            @if (HasFollowupHistory)
+                                            {
+                                                <!--History Tab-->
+                                                <div class="tab-pane" id="historyTab">
+                                                    <table class="table details-page-table text-wrap text-nowrap">
+                                                        <thead>
+                                                            <tr class="text-muted">
+                                                                <th width="25%">Date</th>
+                                                                <th width="25%"> Next Followup Date</th>
+                                                                <th>Details</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @for (int i = 0; i < EnquiryViewData.Histories.Count; i++)
+                                                            {
+                                                                var historyItem = EnquiryViewData.Histories[i];
+                                                                <tr>
+
+                                                                    <td class="text-muted" style="font-size: 12px;">
+                                                                        @(historyItem.FollowUpDate == null ? "" : historyItem.FollowUpDate.Value.ToString("dd/MM/yyy"))
+                                                                    </td>
+
+                                                                    <td class="text-muted" style="font-size: 12px;">
+                                                                        @(historyItem.NextFollowUpDate == null ? "" : historyItem.NextFollowUpDate.Value.ToString("dd/MM/yyy"))
+                                                                    </td>
+
+                                                                    <td>
+                                                                        <div class="position-relative pb-2">
+                                                                            <span style="font-size: 12px;">@historyItem.Status</span>
+                                                                            <div class="follow-up-history-user">
+                                                                                <span>
+
+                                                                                    @("followup by")
+
+                                                                                    <i class="text-muted">
+                                                                                        @(" - " + historyItem.Username)
+                                                                                    </i>
+
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                    </td>
+
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            }
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+@code {
+     
+    [Parameter] public int EnquiryId { get; set; }
+    private EnquiryModel EnquiryViewData = new();
+
+    private FollowUpModel LatestFollowup = new();
+
+    private bool HasFollowupHistory = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (EnquiryId > 0)
+        {
+            await LoadViewMenuList();
+            await LoadViewData(EnquiryId);
+        }
+
+    }
+
+    private List<ViewPageMenuModel> menuItem = new();
+
+    private async Task LoadViewMenuList()
+    {
+        menuItem = await API.GetAsync<List<ViewPageMenuModel>>("crm/get-enquiry-menu-list", true);
+    }
+
+    private async Task LoadViewData(int? id)
+    {
+        EnquiryViewData = await API.GetAsync<EnquiryModel>($"crm/get-enquiry/{id}", true);
+        if (EnquiryViewData.Histories.Count > 0)
+        {
+            HasFollowupHistory = true;
+            LatestFollowup = EnquiryViewData.Histories[0];
+        }
+        else
+        {
+            HasFollowupHistory = false;
+            LatestFollowup.NextFollowUpDate = EnquiryViewData.FirstFollowUpDate;
+        }
+        StateHasChanged();
+    }
+
+    private void NavigateToSinglePage()
+    {
+        Nav.NavigateTo($"enquiry/{EnquiryViewData.EnquiryID}");
+    }
+
+    private void NavigateToEnquiryFollowups()
+    {
+        Nav.NavigateTo($"enquiry-follow-ups-view/{EnquiryViewData.EnquiryID}/{1}");
+    }
+
+    private void ConvertToQuotation()
+    {
+        Nav.NavigateTo($"quotation/{0}/{EnquiryViewData.EnquiryID}");
+    }
+
+    private void NavigateToQuotation()
+    {
+        Nav.NavigateTo($"quotation-view/{EnquiryViewData.QuotationID}");
+    }
+
+    private async Task DeleteEnquiry(int Id)
+    {
+        if (await API.DeleteAsync("crm/delete-enquiry", Id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await Task.Delay(500);
+            Nav.NavigateTo("enquiries");
+        }
+    }
+
+}

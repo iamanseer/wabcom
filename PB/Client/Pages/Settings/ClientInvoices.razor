@@ -1,0 +1,171 @@
+﻿@page "/client-invoices"
+@using PB.Shared.Models
+@using PB.Shared.Models.Common;
+
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="ClientFilterSettings" OnFilterButtonClick="ApplyFilterTo" />
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    InvoiceNo
+                                </th>
+                                <th>
+                                    Invoice Date
+                                </th>
+                                <th>
+                                    Package
+                                </th>
+                                <th>
+                                    Amount
+                                </th>
+                                
+                                <th>
+                                    Disconnection Date
+                                </th>
+                                <th>
+                                    Payment Status
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if(ViewModel.Data.Count>0)
+                            {
+                                @foreach (var item in ViewModel.Data.Select((value, i) => new { i, value }))
+                                {
+                                    var entry = item.value;
+                                    var index = item.i;
+                                    <tr style="cursor:pointer">
+                                        <td>
+                                            @if (ViewModel.PageIndex == 1)
+                                            {
+                                                @(index + 1)
+                                            }
+                                            else
+                                            {
+                                                @((ViewModel.PageIndex * ViewModel.PageSize) + (index + 1) - 10)
+                                            }
+                                        </td>
+
+                                        <td>
+                                            @entry.InvoiceNo
+                                        </td>
+
+                                        <td>
+                                            @if (entry.InvoiceDate != null)
+                                            {
+                                                @entry.InvoiceDate.Value.ToString("dd/MM/yyyy")
+                                                ;
+                                            }
+                                        </td>
+                                        <td>
+                                            @entry.PackageName
+                                        </td>
+
+                                        <td>
+                                            @entry.Fee
+                                        </td>
+
+
+                                        <td>
+                                            @if (entry.DisconnectionDate != null)
+                                            {
+                                                @entry.DisconnectionDate.Value.ToString("dd/MM/yyyy")
+                                                ;
+                                            }
+
+                                        </td>
+                                        @if (entry.PaidStatus == (int)PaymentStatus.Pending)
+                                        {
+                                            <td><span class="badge bg-info">Pending</span></td>
+                                        }
+                                        else if (entry.PaidStatus == (int)PaymentStatus.Paid)
+                                        {
+                                            <td><span class="badge bg-secondary">Verify</span></td>
+                                        }
+                                        else if (entry.PaidStatus == (int)PaymentStatus.Verified)
+                                        {
+                                            <td><span class="badge bg-success">Complete</span></td>
+                                        }
+                                        else if (entry.PaidStatus == (int)PaymentStatus.Rejected)
+                                        {
+                                            <td><span class="badge bg-danger">Reject</span></td>
+                                        }
+
+                                    </tr>
+                                }
+                            }
+                            
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="ViewModel.PageSize" TotalCount="ViewModel.TotalCount" TotalPages="ViewModel.TotalPages" PageIndex="ViewModel.PageIndex" LoadPageIndex="PageIndex" />
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+    private PagedList<ClientInvoiceListModel> ViewModel = new();
+    private PagedListPostModelWithFilter SearchModel = new();
+    protected override async Task OnInitializedAsync()
+    {
+        ClientFilterSettings.Heading = "Invoices";
+        ClientFilterSettings.NeedAddButton = false;
+        ClientFilterSettings.NeedSortOption = false;
+        ClientFilterSettings.NeedFilterOption = true;
+        ClientFilterSettings.IdnValueFilters = StatusEnumFilterList;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        ViewModel = await API.PostAsync<PagedList<ClientInvoiceListModel>, PagedListPostModelWithFilter>("settings/get-client-payment-details", SearchModel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    #region Sort, Filter
+    List<FilterIdnValueInputModel> StatusEnumFilterList = new()
+    {
+        new()
+        {
+            FiledName = "PaidStatus",
+            DisplayName = "Payment Status",
+            EnumObject =PaymentStatus.Pending,
+            AvoidEnumValues=new(){(int)PaymentStatus.CheckoutNotComplete},
+        },
+
+    };
+
+    HeaderSettingsModel ClientFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by client name..",
+            NeedSortOption = false,
+            NeedFilterOption = true,
+        };
+
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    #endregion
+}

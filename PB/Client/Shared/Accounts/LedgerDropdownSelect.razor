@@ -1,0 +1,314 @@
+﻿@using PB.Shared.Models.Accounts.Ledgers
+
+<div class="@DivClass">
+    <div class="@FormGroupClass">
+
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="form-label mt-0 me-1" style="text-align:left;">
+                @Label
+                @if (IsRequired)
+                {
+                    <span class="ms-1" style="color:red">*</span>
+                }
+            </label>
+        }
+
+        <!--Selected Item-->
+        <div class="@FormControlClass" tabindex="0" data-bs-toggle="dropdown" id="@DropdownID" @onclick="async () => await HandleOnClick()">
+
+            <div class="pb-selected">
+                @if (SelectedItem == null || SelectedItem.ID == null)
+                {
+                    @(PlaceHolder != null ? PlaceHolder : "Choose")
+                }
+                else
+                {
+                    @(SelectedItem.Value)
+                }
+            </div>
+
+            @if (SelectedItem == null || (SelectedItem != null && Convert.ToInt32(SelectedItem.ID) != 0))
+            {
+                <a class="remove-selected fa fa-close ms-auto text-muted" aria-hidden="true" @onclick="async () => await HandleRemoveItemClicked()"> </a>
+            }
+            <div class="dropdown-toggle"></div>
+        </div>
+
+        <ul class="dropdown-menu pb-select-container" role="menu" style="z-index:999; min-width:350px !important;" id="@("items-list-"+DropdownID)">
+
+            <!--Search option-->
+            @if (ReadDataOnSearch != false)
+            {
+                <li class="dropdown-plus-title">
+                    <input type="text" name="name" class="drop-down-search-input" value="@SearchString" @onkeyup="async (KeyboardEventArgs k) => await SearchItem(k)" placeholder="Search here.." id="@searchBoxID" />
+                </li>
+            }
+
+            <!--Item List-->
+            <ul class="list-data" style="min-height:100px;" id="@(DropdownID +"-ul")">
+                @if (Temp != null && Temp.Count > 0)
+                {
+                    foreach (var item in Temp)
+                    {
+                        if (SelectedItem != null && SelectedItem.ID == item.ID)
+                        {
+                            <li tabindex="0" class="active" id="@("list-item-"+item.ID)"><a>@item.Value</a></li>
+                        }
+                        else
+                        {
+                            <li tabindex="0" id="@("list-item-"+item.ID)"><a @onclick="async () => await HandleItemSelected(item)">@item.Value</a></li>
+                        }
+                    }
+                }
+            </ul>
+
+            <!--Add Button-->
+            @if (string.IsNullOrEmpty(RoleName))
+            {
+                @if (IsAddOptionNeed)
+                {
+                    <li class="divider my-1"></li>
+                    <li class="dropdown-footer p-0">
+                        <a @onclick="async () => await HandleNewButtonClicked()">
+                            <i class="fa fa-cogs me-1 "></i>
+                            @if (!string.IsNullOrEmpty(NewButtonText))
+                            {
+                                @NewButtonText
+                            }
+                            else
+                            {
+                                @("New Item")
+                            }
+
+                        </a>
+                    </li>
+                }
+            }
+            else
+            {
+                <AuthorizeView Roles="@RoleName">
+                    @if (IsAddOptionNeed)
+                    {
+                        <li class="divider my-1"></li>
+                        <li class="dropdown-footer p-0">
+                            <a @onclick="async () => await HandleNewButtonClicked()">
+                                <i class="fa fa-cogs me-1 "></i>
+                                @if (!string.IsNullOrEmpty(NewButtonText))
+                                {
+                                    @NewButtonText
+                                }
+                                else
+                                {
+                                    @("New Item")
+                                }
+
+                            </a>
+                        </li>
+                    }
+                </AuthorizeView>
+            }
+        </ul>
+
+        @if (ChildContent != null)
+        {
+            @ChildContent
+        }
+
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public EventCallback<DropdownItemSelectedCallbackModel> LedgerSelected { get; set; }
+    [Parameter] public EventCallback<int> AddButtonClick { get; set; }
+    [Parameter] public string? DivClass { get; set; } = "col-md-4";
+    [Parameter] public string? FormControlClass { get; set; } = "pb-select form-control";
+    [Parameter] public string? FormGroupClass { get; set; } = "form-group";
+    [Parameter] public string? DropdownID { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public bool IsAddOptionNeed { get; set; } = false;
+    [Parameter] public bool IsRequired { get; set; } = false;
+    [Parameter] public bool? ReadDataOnSearch { get; set; } = null;
+    [Parameter] public DropdownSelectedItemModel? SelectedItem { get; set; } = null;
+    [Parameter] public SearchLedgerModel LedgerSearch { get; set; } = new();
+    [Parameter] public string? NewButtonText { get; set; } = null;
+    [Parameter] public string? PlaceHolder { get; set; } = null;
+    [Parameter] public string? RoleName { get; set; } = null;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private string? searchBoxID = null;
+    private string? SearchString;
+    private List<IdnValuePair>? Data = new();
+    private List<IdnValuePair>? Temp = new();
+
+    #region OnInitializedAsync
+
+    protected override async Task OnInitializedAsync()
+    {
+        searchBoxID = "dropdown-search-box-" + DropdownID;
+        LedgerSearch.ReadDataOnSearch = Convert.ToBoolean(ReadDataOnSearch);
+        await HandleDropdownSearch();
+    }
+
+    #endregion
+
+    #region Search Data
+
+    private async Task HandleDropdownSearch()
+    {
+        Data = Temp = await API.PostAsync<List<IdnValuePair>?, SearchLedgerModel>($"common/get-list-of-ledgers", LedgerSearch);
+    }
+
+    #endregion
+
+    #region Other functions
+
+    private async Task HandleOnClick()
+    {
+        await SetFocus();
+        if (ReadDataOnSearch == true)
+            await JS.InvokeVoidAsync("focusElement", searchBoxID);
+    }
+    public void AddToData(IdnValuePair data)
+    {
+        if (Data != null && Temp != null && Data.Count > 0 && Temp.Count > 0)
+        {
+            Data.Add(data);
+            Temp.Add(data);
+        }
+    }
+    public async Task RefreshList(int? id = null)
+    {
+        await HandleDropdownSearch();
+        StateHasChanged();
+    }
+    private async Task SetFocus()
+    {
+        if (DropdownID != null)
+            await JS.InvokeVoidAsync("setDropdownFocus", DropdownID, "drop-down-focused");
+    }
+    private async Task RemoveFocus()
+    {
+        if (DropdownID != null)
+            await JS.InvokeVoidAsync("removeDropdownFocus", DropdownID, "drop-down-focused");
+    }
+
+    #endregion
+
+    #region Search Item
+
+    private async Task SearchItem(KeyboardEventArgs k)
+    {
+        SearchString = await JS.InvokeAsync<string>("getElementValue", searchBoxID);
+
+        if (ReadDataOnSearch == true)
+        {
+            LedgerSearch.ReadDataOnSearch = true;
+            switch (SearchString.Length)
+            {
+                case 0:
+                    LedgerSearch.SearchString = "";
+                    await HandleDropdownSearch();
+                    break;
+
+                case 1:
+                    LedgerSearch.SearchString = SearchString;
+                    await HandleDropdownSearch();
+                    break;
+
+                case > 1:
+                    if (Data != null && Data.Count > 0)
+                    {
+                        Temp = Data
+                        .Where(i => !string.IsNullOrEmpty(i.Value) &&
+                        i.Value.ToLower()
+                        .Contains(SearchString.ToLower()))
+                        .ToList();
+                        StateHasChanged();
+                    }
+                    break;
+            }
+        }
+    }
+
+    #endregion
+
+    #region Item Selected
+
+    private async Task HandleItemSelected(IdnValuePair item)
+    {
+        DropdownSelectedItemModel selectedItem = new()
+            {
+                ID = item.ID,
+                Value = item.Value
+            };
+        SelectedItem = selectedItem;
+        DropdownItemSelectedCallbackModel SelectedItemReturnModel = new()
+            {
+                ID = item.ID,
+                Value = item.Value
+            };
+
+        SearchString = "";
+        //await HandleDropdownSearch();
+        await RemoveFocus();
+        StateHasChanged();
+        await LedgerSelected.InvokeAsync(SelectedItemReturnModel);
+    }
+
+    #endregion
+
+    #region Add New Item
+
+    private async Task HandleNewButtonClicked()
+    {
+        SelectedItem = null;
+        LedgerSearch.SearchString = "";
+        SearchString = "";
+        await RemoveFocus();
+        await JS.InvokeVoidAsync("setElementValue", searchBoxID, "");
+        await AddButtonClick.InvokeAsync();
+    }
+
+    #endregion
+
+    #region Remove Selected Item
+
+    private async Task HandleRemoveItemClicked()
+    {
+        SelectedItem = null;
+        LedgerSearch.SearchString = "";
+        SearchString = "";
+        await RemoveFocus();
+        DropdownItemSelectedCallbackModel RemovedItemReturnModel = new()
+            {
+                ID = null,
+                Value = null,
+            };
+        await LedgerSelected.InvokeAsync(RemovedItemReturnModel);
+    }
+
+    #endregion
+
+    #region Ledger SearchModel
+
+    public void SetLedgerSearchModel(SearchLedgerModel ledgerSearchModel)
+    {
+        LedgerSearch = ledgerSearchModel;
+    }
+
+    #endregion
+
+    #region Set a value
+
+    public void SetDropdownSelectedValue(IdnValuePair selectedValue)
+    {
+        SelectedItem = SelectedItem ?? new();
+        SelectedItem.ID = selectedValue.ID;
+        SelectedItem.Value = selectedValue.Value;
+    }
+
+    #endregion
+
+}

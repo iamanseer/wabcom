@@ -1,0 +1,26 @@
+﻿@if (!string.IsNullOrEmpty(RoleName))
+{
+    <AuthorizeView Roles="@(RoleName+"Edit")" Context="C">
+        <button type="button" class="btn" id="@ButtonID" @onclick="async()=>await Clicked.InvokeAsync()">
+            <i class="fe fe-edit">
+
+            </i>
+        </button>
+    </AuthorizeView>
+}
+else
+{
+    <button type="button" class="btn" id="@ButtonID" @onclick="async()=>await Clicked.InvokeAsync()">
+        <i class="fe fe-check" style="color:green">
+
+        </i>
+    </button>
+}
+
+
+@code {
+    [Parameter] public EventCallback Clicked { get; set; }
+    [Parameter] public string? ButtonID { get; set; }
+    [Parameter] public string? RoleName { get; set; }
+
+}

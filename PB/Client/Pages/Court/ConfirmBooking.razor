@@ -1,0 +1,230 @@
+﻿@page "/confirm-booking/{bookingId:int}"
+@attribute [Authorize(Roles = "CourtBooking")]
+@using Blazored.LocalStorage
+@using PB.Shared.Enum.Court;
+@using PB.Shared.Models.Court;
+@inject ILocalStorageService _localStorage
+
+<PageLayoutNew>
+    <div class="side-app">
+        <div class="main-container container-fluid">
+
+
+            <div class="page-header">
+                <h1 class="page-title">Confirm Booking</h1>
+                <!-- <div>
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="javascript:void(0)">E-Commerce</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Checkout</li>
+                    </ol>
+                </div> -->
+            </div>
+            <EditForm OnValidSubmit="Confirm" Model="Model" class="">
+                <DataAnnotationsValidator />
+                <div class="row">
+                    <div class="col-md-6 col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Customer Details</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="combined-input mt-2">
+                                            <select name="country-code" @onchange="CountryChanged" style="width:100px">
+                                                @foreach (var item in Countries)
+                                                {
+                                                    if (item.ID == Model.CountryID)
+                                                    {
+                                                        <option value="@item.ID" selected>@item.Value</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@item.ID">@item.Value</option>
+                                                    }
+                                                }   
+                                            </select>
+                                            <input type="text" @onchange="PhoneChanged" placeholder="Enter phone number">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label class="form-label">Name</label> <input type="text" @bind-value="Model.Name"
+                                                                                          class="form-control" placeholder="Name">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="form-group">
+                                            <label class="form-label">Email </label> <input type="email" @bind-value="Model.EmailAddress"
+                                                                                            class="form-control" placeholder="Email">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <div class="form-group"> <label class="form-label">Booking Remarks </label> <textarea @bind="Model.Remarks" class="form-control mb-4" placeholder="Remarks" rows="4"></textarea> </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <!-- <div class="card-footer d-flex justify-content-end"> <button type="button" class="btn btn-primary">Done</button> </div> -->
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Payment Information</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <p>Price <span style="color:#b1b1b1"></span></p>
+                                    <p>@PaymentSummary.Price</p>
+                                </div>
+
+                                <div class="d-flex justify-content-between" style="border-bottom:1px solid #dfdfdf;">
+                                    <p>Tax <span style="color:#b1b1b1"></span></p>
+                                    <p>@PaymentSummary.Tax</p>
+                                </div>
+                                <div class="d-flex justify-content-between mt-3" style="border-bottom:1px solid #dfdfdf;">
+                                    <p style="font-weight: 600;">Total Price <span style="color:#b1b1b1"></span></p>
+                                    <p style="font-weight: 600;">@PaymentSummary.CurrencyName @(PaymentSummary.TotalPrice + PaymentSummary.Discount)</p>
+                                </div>
+                                <div class="mt-3 row">
+                                    <div class="d-flex justify-content-between">
+                                        <p class="mt-2">Discount <span style="color:#b1b1b1"></span></p>
+                                        <div class="form-group">
+                                            <select @bind="Discount.DiscountType" class="form-control form-select select2" data-bs-placeholder="Discount">
+                                                <option value="@(CourtDiscountType.Amount)" selected>By Amount</option>
+                                                <option value="@(CourtDiscountType.Percentage)">By Percentage</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <input type="text" @bind-value="Discount.Value" class="form-control" placeholder="@Discount.DiscountType.ToString()">
+                                        </div>
+                                        <div><button type="button" @onclick="ApplyDiscount" class="btn btn-secondary text-right" style="display: block; margin: 0 auto;">Apply</button></div>
+                                        <p class="mt-2">@PaymentSummary.Discount</p>
+                                    </div>
+                                </div>
+
+                                @if(Model.Balance!=0)
+                                {
+                                    <div class="d-flex justify-content-between mt-3" style="border-bottom:1px solid #dfdfdf;">
+                                        <p style="font-weight: 600;">Previous Balance <span style="color:#b1b1b1"></span></p>
+                                        <p style="font-weight: 600;">@Model.Balance</p>
+                                    </div>
+                                }
+
+                                <div class="d-flex justify-content-between mt-3" style="border-bottom:1px solid #dfdfdf;">
+                                    <p>Amount Payable</p>
+                                    <p style="font-weight: 600;">@PaymentSummary.CurrencyName @(PaymentSummary.TotalPrice+Model.Balance)</p>
+                                </div>
+                                <div class="row mt-5">
+                                    <div class="col-12">
+                                        <p style="font-weight: 600;">Collect Payment</p>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <p class="mt-2">Cash <span style="color:#b1b1b1"></span></p>
+                                        <div class="form-group">
+                                            <input type="text" class="form-control text-end" placeholder="" @bind-value="Model.Cash">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-3" style="border-bottom:1px solid #dfdfdf;">
+                                    <p style="font-weight: 600;">Balance</p>
+                                    <p style="font-weight: 600;">@PaymentSummary.CurrencyName @(PaymentSummary.TotalPrice - Model.Cash+Model.Balance)</p>
+                                </div>
+                                @*<div class="row mt-5">
+                                <div class="col-12">
+                                <div class="form-group">
+                                <label class="custom-control custom-checkbox mb-0">
+                                <input type="checkbox" class="custom-control-input" name="example-checkbox1" value="option1">
+                                <span class="custom-control-label">Send payment link</span>
+                                </label>
+                                </div>
+                                </div>
+                                <div class="col-12">
+                                <div class="form-group">
+                                <label class="custom-control custom-checkbox mb-0">
+                                <input type="checkbox" class="custom-control-input" name="example-checkbox1" value="option1">
+                                <span class="custom-control-label">Send confirmation SMS/Email</span>
+                                </label>
+                                </div>
+                                </div>
+                                </div>*@
+                                <div class="card-footer p-0"> <button type="submit" class="btn btn-primary mt-5">Confirm Booking</button> </div>
+                                <ValidationSummary />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                
+            </EditForm>
+        </div>
+    </div>
+</PageLayoutNew>
+@code {
+    [Parameter] public int BookingID { get; set; }
+
+    ConfirmBookingModel Model = new();
+    List<IdnValuePair> Countries = new();
+    CourtPaymentSummaryModel PaymentSummary = new();
+    ApplyDiscountPostModel Discount = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Countries = await API.GetAsync<List<IdnValuePair>>("common/get-list-of-countries-with-code");
+        PaymentSummary = await API.GetAsync<CourtPaymentSummaryModel>($"court/get-payment-summary/{BookingID}");
+        if (PaymentSummary == null)
+        {
+            await JS.ErrorMessage("Your cart is empty");
+            Nav.NavigateTo("court-booking");
+        }
+    }
+
+    async Task PhoneChanged(ChangeEventArgs e)
+    {
+        Model.Phone = e.Value.ToString();
+        await SearchCustomer();
+    }
+
+    async Task CountryChanged(ChangeEventArgs e)
+    {
+        Model.CountryID = Convert.ToInt32(e.Value);
+        await SearchCustomer();
+    }
+
+    async Task SearchCustomer()
+    {
+        if (Model.CountryID != null && !string.IsNullOrEmpty(Model.Phone))
+        {
+            var res = await API.PostAsync<SearchCustomerWithPhoneResultModel, SearchCustomerWithPhoneModel>("court/search-customer", new SearchCustomerWithPhoneModel() { CountryID = Model.CountryID, Phone = Model.Phone });
+            if (res != null)
+            {
+                Model.Name = res.Name;
+                Model.EmailAddress = res.EmailAddress;
+                Model.EntityID = res.EntityID;
+                Model.Balance = res.Balance;
+            }
+        }
+    }
+
+    async Task ApplyDiscount()
+    {
+        Discount.BookingID = BookingID;
+        PaymentSummary = await API.PostAsync<CourtPaymentSummaryModel, ApplyDiscountPostModel>("court/apply-discount", Discount);
+    }
+
+    async Task Confirm()
+    {
+        Model.BookingID = BookingID;
+        Model.DiscountValue = Discount.Value;
+        Model.DiscountType = (int)Discount.DiscountType;
+        var res = await API.PostAsync<ConfirmBookingResultModel, ConfirmBookingModel>("court/confirm-booking", Model);
+        if (res != null)
+        {
+            await _localStorage.RemoveItemAsync("CartedItem");
+            Nav.NavigateTo($"booking-details/{res.BookingID}");
+        }
+    }
+}

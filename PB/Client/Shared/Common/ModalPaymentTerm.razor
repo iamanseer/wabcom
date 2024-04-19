@@ -1,0 +1,317 @@
+﻿@using PB.Shared.Models.Common
+@using PB.Shared.Tables.Common
+
+
+<div class="modal fade" id="payment-term-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document" style="overflow-y: scroll;">
+        <EditForm Model="Model" OnValidSubmit="async () => await SavePaymentTerm()">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    <h6 class="modal-title">@(Model.PaymentTermID == 0 ? "New Payment Term" : Model.PaymentTermName)</h6>
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HideModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row">
+
+                        <InputTextBox Label="Payment Term Name:" @bind-Value="Model.PaymentTermName"
+                                      DivClass="col-md-12" id="tax-category-text-box"
+                                      IsRequired="true"
+                                      ValidationFor="() => Model.PaymentTermName" />
+
+                    </div>
+
+                    <div class="row">
+
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1">Description :</label>
+                                <textarea class="form-control" placeholder="" rows="3" @bind="Model.Description"></textarea> <br>
+                            </div>
+
+                    </div>
+                    <!--Payment term slab-->
+
+
+                    <div class="row">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-bordered mb-0">
+                                <thead>
+                                    <tr>
+
+                                        <th>
+                                            Name
+                                        </th>
+                                        <th>
+                                            Day
+                                        </th>
+                                        <th>
+                                            Percentage
+                                        </th>
+                                        <th>
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    @if (Model.PaymentTermSlabs.Count > 0)
+                                    {
+                                        @foreach (var paymentTermSlab in Model.PaymentTermSlabs)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @paymentTermSlab.SlabName
+                                                </td>
+                                                <td>
+                                                    @paymentTermSlab.Day
+                                                </td>
+                                                <td>
+                                                    @paymentTermSlab.Percentage
+                                                </td>
+                                                <td style="width:80px;">
+                                                    <div class="d-flex justify-content-evenly">
+                                                        <ActionEdit Clicked="async () => await EditPaymentTermSlab(paymentTermSlab)" />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        @if (Model.PaymentTermID != 0)
+                                        {
+                                            <td colspan="3">
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td colspan="3">
+                                            </td>
+                                        }
+                                        <td style="width:80px;">
+                                            <div class="d-flex justify-content-evenly">
+                                                <ActionAdd Clicked="async () => await AddNewPaymentTermSlab()" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.PaymentTermID == 0 ? "Save" : "Update")</button>
+                    <button type="button" class="btn btn-danger" @onclick="async() => await HideModal()">Close</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="payment-term-slab-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-md" role="document">
+        <EditForm Model="paymentTermSlab" OnValidSubmit="async () => await SavePaymentTermSlab()">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    @if (Model.PaymentTermID != 0)
+                    {
+                        <h6 class="modal-title">@Model.PaymentTermName</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New Payment Term slab</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HidePaymentTermSlabModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body" style="overflow-y: scroll;">
+
+                    <div class="row">
+                        <div class="col-md-12">
+
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Slab Name :
+                                    <span class="ms-1" style="color:red">*</span>
+                                </label>
+                                <input type="text" class="form-control " @bind="paymentTermSlab.SlabName" id="item-um-unit-box">
+                                <ValidationMessage For="() => paymentTermSlab.SlabName" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Day :
+                                    <span class="ms-1" style="color:red">*</span>
+                                </label>
+                                <input type="number" class="form-control " @bind="paymentTermSlab.Day" id="item-um-unit-box">
+                                <ValidationMessage For="() => paymentTermSlab.Day" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Tax Percentage :
+                                    <span class="ms-1" style="color:red">*</span>
+                                </label>
+                                <input class="form-control " @bind="paymentTermSlab.Percentage" id="item-um-unit-box">
+                                <ValidationMessage For="() => paymentTermSlab.Percentage" />
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(paymentTermSlab.SlabID == 0 ? "Save" : "Update")</button>
+                    @if (paymentTermSlab.SlabID > 0)
+                    {
+                        <button type="button" class="btn btn-danger" @onclick="async() => await RemovePaymentTermSlab(paymentTermSlab)">Delete</button>
+                    }
+                    <button type="button" class="btn btn-light" @onclick="async() => await HidePaymentTermSlabModal()">Close</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair?> CallbackWithIdnValue { get; set; }
+
+    private PaymentTermModel Model = new();
+
+    private async Task OpenModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "payment-term-modal");
+    }
+
+    private async Task HideModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "payment-term-modal");
+    }
+
+    public async Task OpenPaymentTermModal(int paymentTermID = 0)
+    {
+        Model = new();
+        if (paymentTermID != 0)
+        {
+            Model = await API.GetAsync<PaymentTermModel>($"settings/get-payment-term/{paymentTermID}", true);
+        }
+        await OpenModal();
+    }
+
+    private async Task SavePaymentTerm()
+    {
+        if (Model.PaymentTermSlabs.Count == 0)
+        {
+            await JS.ErrorMessage("Please add payment term slab");
+            return;
+        }
+
+        var result = await API.PostAsync<PaymentTermAddResultModel, PaymentTermModel>("settings/save-payment-term", Model);
+        if (result != null)
+        {
+            await CallbackWithIdnValue.InvokeAsync(new IdnValuePair()
+                {
+                    ID = result.PaymentTermID,
+                    Value = result.PaymentTermName
+                });
+            await HideModal();
+        }
+    }
+
+    private async Task DeletePaymentTerm()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete this payment term..?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            if (await API.DeleteAsync("settings/delete-payment-term", Model.PaymentTermID))
+            {
+                await CallbackWithIdnValue.InvokeAsync(null);
+                await HideModal();
+            }
+        }
+    }
+
+
+    #region Payment term slab
+
+
+    private PaymentTermSlabModel paymentTermSlab = new();
+
+
+    private async Task OpenPaymentTermSlabModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "payment-term-slab-modal");
+    }
+
+    private async Task HidePaymentTermSlabModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "payment-term-slab-modal");
+    }
+
+
+    private async Task AddNewPaymentTermSlab()
+    {
+        currentRowIndex = -1;
+        paymentTermSlab = new();
+        await OpenPaymentTermSlabModal();
+    }
+
+    private async Task RemovePaymentTermSlab(PaymentTermSlabModel item)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete this payment-term-item..?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            Model.PaymentTermSlabs.Remove(Model.PaymentTermSlabs.Where(paymentTermItem => paymentTermItem.PaymentTermID == item.PaymentTermID).First());
+            await HidePaymentTermSlabModal();
+            StateHasChanged();
+        }
+    }
+
+    private int currentRowIndex = -1;
+    private async Task EditPaymentTermSlab(PaymentTermSlabModel item)
+    {
+        currentRowIndex = Model.PaymentTermSlabs.IndexOf(item);
+
+        paymentTermSlab = new()
+            {
+                SlabID = item.SlabID,
+                PaymentTermID=item.PaymentTermID,
+                Day=item.Day,
+                Percentage=item.Percentage,
+            };
+
+        await OpenPaymentTermSlabModal();
+    }
+
+    private async Task SavePaymentTermSlab()
+    {
+        if (currentRowIndex == -1)
+        {
+            Model.PaymentTermSlabs.Add(paymentTermSlab);
+        }
+        else
+        {
+            Model.PaymentTermSlabs[currentRowIndex] = paymentTermSlab;
+        }
+        await HidePaymentTermSlabModal();
+        StateHasChanged();
+    }
+
+
+    #endregion
+}

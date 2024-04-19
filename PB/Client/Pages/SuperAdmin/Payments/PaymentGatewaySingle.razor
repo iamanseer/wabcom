@@ -1,0 +1,156 @@
+﻿@page "/payment-gateway-single"
+@page "/payment-gateway-single/{gatewayId:int}"
+@using PB.Shared.Tables;
+
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="SavePackage" autocomplete="off">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Payment Gateway Details</h5>
+                        </div>
+                        <div class="card-body">
+
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Gateway Name :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="Model.GatewayName" placeholder="Gateway name">
+                                        <ValidationMessage For="()=>Model.GatewayName" />
+
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Payment Initiation Test Link :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="Model.PaymentInitiationTestLink" placeholder="Payment Initiation Test Link">
+                                        <ValidationMessage For="()=>Model.PaymentInitiationTestLink" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Payment Initiation Live Link :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="Model.PaymentInitiationLiveLink" placeholder="Payment Initiation Live Link">
+                                        <ValidationMessage For="()=>Model.PaymentInitiationLiveLink" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Payment Verification Test Link :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="Model.PaymentVerificationTestLink" placeholder="Payment Verification Test Link link">
+                                        <ValidationMessage For="()=>Model.PaymentVerificationTestLink" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Payment Verification Live Link :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="Model.PaymentVerificationLiveLink" placeholder="Payment Verification Live link">
+                                        <ValidationMessage For="()=>Model.PaymentVerificationLiveLink" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" style="text-align: left; margin-top: 0 !important;">
+                                        @Localizer["Gateway Type"] :
+                                        <span style="color:red">*</span>
+                                    </label>
+                                    <select class="form-control form-select" id="address-type-select" @bind="Model.GatewayType">
+                                        <option value="0">Choose</option>
+                                        @foreach (var item in Enum.GetValues(typeof(PaymentGatewayTypes)))
+                                        {
+                                            @if ((int)item==Model.GatewayType)
+                                            {
+                                                <option value="@((int)item)" selected>@item.ToString()</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@((int)item)">@item.ToString()</option>
+                                            }
+                                        }
+                                    </select>
+                                    <ValidationMessage For="() => Model.GatewayType" />
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="form-group mb-0 row">
+                                    <label style="margin-top: 5px; margin-right: 13px; font: bold">@Localizer["Fields to be displayed"]</label>
+                                    <div class="form-group">
+                                        <div class="form-check-inline my-2">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" checked="@(Model.ShowMerchantID?"checked":null)" @bind-value="Model.ShowMerchantID" class="custom-control-input" id="field_MerchantID">
+                                                <label class="custom-control-label ps-1" for="field_MerchantID"> Show MerchantID</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-check-inline my-2">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" checked="@(Model.ShowAccessCode?"checked":null)" @bind-value="Model.ShowAccessCode" class="custom-control-input" id="field_ShowAccessCode">
+                                                <label class="custom-control-label ps-1" for="field_ShowAccessCode"> Show AccessCode</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-check-inline my-2">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" checked="@(Model.ShowWorkingKey?"checked":null)" @bind-value="Model.ShowWorkingKey" class="custom-control-input" id="field_ShowWorkingKey">
+                                                <label class="custom-control-label ps-1" for="field_ShowWorkingKey"> Show WorkingKey</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-check-inline my-2">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" checked="@(Model.ShowSalt?"checked":null)" @bind-value="Model.ShowSalt" class="custom-control-input" id="field_ShowSalt">
+                                                <label class="custom-control-label ps-1" for="field_ShowSalt"> Show Salt</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-primary" type="submit">Save</button>
+                                <button class="btn btn-danger" type="button" @onclick="@(async ()=>await Cancel())">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+</PageLayoutNew>
+
+@code {
+    [Parameter] public int gatewayId { get; set; }
+    private PaymentGateway Model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (gatewayId != 0)
+        {
+            Model = await API.GetAsync<PaymentGateway>($"gateway/get-payment-gateway/{gatewayId}", true);
+        }
+    }
+
+    private async Task SavePackage()
+    {
+        var result = await API.PostAsync<BaseSuccessResponse, PaymentGateway>("gateway/save-payment-gateway", Model);
+        if (result != null)
+        {
+            Model = new PaymentGateway();
+            await Task.Delay(100);
+            Nav.NavigateTo("payment-gateways");
+        }
+
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            Model = new();
+        }
+    }
+}

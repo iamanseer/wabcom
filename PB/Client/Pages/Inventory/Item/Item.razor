@@ -1,0 +1,1136 @@
+﻿@page "/item"
+@page "/item/{ItemID:int}"
+
+@using PB.Client.Shared.Inventory.Item
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Inventory.Item;
+@using PB.Shared.Models.Inventory.Items;
+@using PB.Shared.Tables;
+@using PB.Shared.Tables.Inventory.Items;
+@using System.ComponentModel.DataAnnotations
+
+<PageLayoutNew>
+    <EditForm EditContext="@itemModelEditContext" OnValidSubmit="async () => await SaveItem()">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+
+                <div class="col-12">
+                    <div class="card" style="min-height:500px;">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Item Details</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (itemModelEditContext != null)
+                            {
+                                <div class="row">
+                                    <div class="col-md-7">
+                                        <div class="my-4 d-flex gap-3">
+                                            <label class="custom-control custom-radio">
+                                                <input type="radio" class="custom-control-input" @onchange="@(() => Model.IsGoods = true)" name="example-radios" value="option1" checked="@(Model.IsGoods)">
+                                                <span class="custom-control-label">Goods</span>
+                                            </label>
+                                            <label class="custom-control custom-radio">
+                                                <input type="radio" class="custom-control-input" @onchange="@(() => Model.IsGoods = false)" name="example-radios" value="option1" checked="@(!Model.IsGoods)">
+                                                <span class="custom-control-label">Service</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <InputTextBox Label="Item Name:" @bind-Value="Model.ItemName"
+                                                  DivClass="col-md-5"
+                                                  IsRequired="true"
+                                                  PlaceHolder="Name for the item"
+                                                  ValidationFor="() => Model.ItemName" id="item-name-text-box" />
+
+                                    <InputTextBox Label="Item Code:" @bind-Value="Model.ItemCode"
+                                                  DivClass="col-md-5"
+                                                  IsRequired="false"
+                                                  PlaceHolder="Unique item code"/>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-10">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Description</label>
+                                            <textarea name="" class="textarea form-control" id="item-description-text-area" rows="5" @bind="Model.Description"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (Model.IsGoods)
+                                {
+                                    <div class="row">
+                                      @*   <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                                    HSN :
+                                                    <span class="ms-1" style="color:red">*</span>
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" @bind="Model.HsnCode" @onclick="async () => await HandleHsnSacTextInputClick()" disabled="@(Model.HsnID != null ? "disabled" : null)" />
+                                                    @if (Model.HsnID != null)
+                                                    {
+                                                        <span>
+                                                            <button class="btn btn-light" type="button" id="button-addon2" @onclick="async () => await HandleHsnSacTextInputClick()">
+                                                                <i class="fa fa-pencil"></i>
+                                                            </button>
+                                                        </span>
+
+                                                    }
+                                                </div>
+                                                <ValidationMessage For="() => Model.HsnID" />
+                                            </div>
+                                        </div> *@
+                                        <DropdownSelect DivClass="col-md-5"
+                                                        DropdownID="item-category-drop-down"
+                                                        Label="Item Category :"
+                                                        IsRequired="false"
+                                                        Mode="(int)DropdownModes.ItemCategory"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        ReadDataOnSearch="true"
+                                                        ItemSelected="HandleItemCategorySelected"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.CategoryID, Value = Model.CategoryName})"
+                                                        IsAddOptionNeed="true"
+                                                        NewButtonText="Item Category"
+                                                        NewButtonClicked="async () => await HandleItemCategoryAddButtonClick()">
+                                        </DropdownSelect>
+                                    </div>
+
+                                    <div class="row">
+                                        <DropdownSelect DivClass="col-md-5"
+                                                        DropdownID="item-group-drop-down"
+                                                        Label="Item Group :"
+                                                        Mode="(int)DropdownModes.ItemGroup"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        ReadDataOnSearch="true"
+                                                        ItemSelected="HandleItemGroupSelected"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.GroupID, Value = Model.GroupName})"
+                                                        IsAddOptionNeed="true"
+                                                        NewButtonText="Item Group"
+                                                        NewButtonClicked="async () => await HandleItemGrouAddButtonClick()">
+                                        </DropdownSelect>
+
+                                        <DropdownSelect DivClass="col-md-5"
+                                                        DropdownID="item-brand-drop-down"
+                                                        Label="Item Brand :"
+                                                        Mode="(int)DropdownModes.ItemBrand"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        ReadDataOnSearch="true"
+                                                        ItemSelected="HandleItemBrandSelected"
+                                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.BrandID, Value = Model.BrandName})"
+                                                        IsAddOptionNeed="true"
+                                                        NewButtonText="Item Brand"
+                                                        NewButtonClicked="async () => await HandleItemBrandAddButtonClick()">
+                                        </DropdownSelect>
+                                    </div>
+
+                                    <div class="row">
+                                        <DropdownSelect DivClass="col-md-5" @ref="@TaxPreferenceDropdown"
+                                                        DropdownID="@TaxPreferenceDropdownID"
+                                                        Label="Tax Preference :"
+                                                        IsRequired="false"
+                                                        ReadDataOnSearch="false"
+                                                        Mode="(int)DropdownModes.TaxPreference"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        ItemSelected="HandleTaxPreferenceSelected"
+                                                        SelectedItem="new DropdownSelectedItemModel(){ID = Model.TaxPreferenceTypeID,Value = Model.TaxPreferenceName}">
+                                          
+                                        </DropdownSelect>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="row">
+
+                                       @*  <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                                    SAC :
+                                                    <span class="ms-1" style="color:red">*</span>
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="text" class="form-control" @bind="Model.SacCode" @onclick="async () => await HandleHsnSacTextInputClick()" disabled="@(Model.SacID != null ? "disabled" : null)" />
+                                                    @if (Model.SacID != null)
+                                                    {
+                                                        <span>
+                                                            <button class="btn btn-light" type="button" id="button-addon2" @onclick="async () => await HandleHsnSacTextInputClick()">
+                                                                <i class="fa fa-pencil"></i>
+                                                            </button>
+                                                        </span>
+                                                    }
+                                                </div>
+                                                <ValidationMessage For="() => Model.SacID" />
+                                            </div>
+                                        </div> *@
+
+                                        <DropdownSelect DivClass="col-md-5" @ref="@TaxPreferenceDropdown"
+                                                        DropdownID="@TaxPreferenceDropdownID"
+                                                        Label="Tax Preference :"
+                                                        IsRequired="false"
+                                                        ReadDataOnSearch="false"
+                                                        Mode="(int)DropdownModes.TaxPreference"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        ItemSelected="HandleTaxPreferenceSelected"
+                                                        SelectedItem="new DropdownSelectedItemModel(){ID = Model.TaxPreferenceTypeID,Value = Model.TaxPreferenceName}">
+                                          
+                                        </DropdownSelect>
+                                    </div>
+                                }
+
+                                @if (Model.TaxPreferenceTypeID != null && Model.TaxPreferenceTypeID == (int)TaxPreferences.Taxable)
+                                {
+                                    <div class="row">
+                                        <div class="col-md-7">
+                                            <div class="my-4">
+                                                <div class=" form-check form-check-inline font-large">
+                                                    <input id="item-model" class="ember-checkbox ember-view form-check-input" type="checkbox" @bind="Model.IsInclusiveTax">
+                                                    <label class="form-check-label fs-16 fw-bold" for="item-model">Inclusive of all Tax</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <DropdownSelect DivClass="col-md-7" @ref="@IntraTaxCategoryDropdown"
+                                                        DropdownID="@IntraTaxDropdownID"
+                                                        Label="Intra Tax Category :"
+                                                        ReadDataOnSearch="false"
+                                                        IsAddOptionNeed="true"
+                                                        IsRequired="false"
+                                                        Mode="(int)DropdownModes.IntraTaxCategory"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        ItemSelected="HandleIntraTaxCategorySelected"
+                                                        SelectedItem="new DropdownSelectedItemModel(){ID = Model.IntraTaxCategoryID,Value = Model.IntraTaxCategoryName}"
+                                                        NewButtonText="Add new tax category"
+                                                        NewButtonClicked="HandleNewIntraTaxCategoryAddButtonClick">
+                                            
+                                        </DropdownSelect>
+                                        <DropdownSelect DivClass="col-md-7" @ref="@InterTaxCategoryDropdown"
+                                                        DropdownID="@InterTaxDropdownID"
+                                                        Label="Inter Tax Category :"
+                                                        ReadDataOnSearch="false"
+                                                        IsAddOptionNeed="true"
+                                                        IsRequired="false"
+                                                        Mode="(int)DropdownModes.InterTaxCategory"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        ItemSelected="HandleInterTaxCategorySelected"
+                                                        SelectedItem="new DropdownSelectedItemModel(){ID = Model.InterTaxCategoryID,Value = Model.InterTaxCategoryName}"
+                                                        NewButtonText="Add new tax category"
+                                                        NewButtonClicked="HandleNewInterTaxCategoryAddButtonClick">
+                                           
+                                        </DropdownSelect>
+                                    </div>
+                                }
+
+                                @if (Model.IsGoods)
+                                {
+                                    <!--Default Model Images-->
+                                    <div class="row">
+                                        <ItemImageUploader ImageItemsInput="Model.ItemImages" ItemID="Model.ItemID" FileSelectorID="item-single-image-chooser" Updated="HandelItemImageUpdated" />
+                                    </div>
+                                }
+
+                                @if (!Model.HasMultipleModels)
+                                {
+                                    <div class="row">
+                                        <InputTextBox Label="Url Code:" @bind-Value="Model.UrlCode"
+                                                      DivClass="col-md-10"
+                                                      IsRequired="false"
+                                                      PlaceHolder="Unique url code"/>
+
+                                    </div>
+
+                                    <div class="row">
+                                        <DropdownSelect DivClass="col-md-5" @ref="@PackingTypeDrowpdownSelect"
+                                                        Label="Packing Type:"
+                                                        IsRequired="false"
+                                                        IsAddOptionNeed="true"
+                                                        ReadDataOnSearch="false"
+                                                        Mode="(int)DropdownModes.ItemPackingType"
+                                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                                        ItemSelected="HandleItemPackingTypeSelected"
+                                                        SelectedItem="new DropdownSelectedItemModel(){ID = Model.PackingTypeID,Value = Model.PackingTypeName}"
+                                                        NewButtonClicked="HandleNewItemPackingTypeAddButtonClick"
+                                                        NewButtonText="New Packing Type">
+
+                                        </DropdownSelect>
+
+                                        <div class="col-md-5">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                                    UM Unit :
+                                                    @* <span class="ms-1" style="color:red">*</span> *@
+                                                </label>
+                                                <input class="form-control " @bind="Model.UMUnit" id="item-um-unit-box">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @if (Model.IsGoods)
+                                    {
+                                        <div class="row">
+                                            <DropdownSelect DivClass="col-md-5" @ref="@ItemSizeDrowpdownSelect"
+                                                            Label="Size :"
+                                                            PlaceHolder="Select size"
+                                                            IsAddOptionNeed="true"
+                                                            ReadDataOnSearch="true"
+                                                            ValidationFor="() => Model.SizeID"
+                                                            Mode="(int)DropdownModes.ItemSize"
+                                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                                            ItemSelected="HandleItemSizeSelected"
+                                                            SelectedItem="new DropdownSelectedItemModel(){ID = Model.SizeID,Value = Model.Size}"
+                                                            NewButtonClicked="HandleItemSizeAddButtonClick"
+                                                            NewButtonText="New Item Size">
+                                            </DropdownSelect>
+                                        </div>
+
+                                        <div class="row position-relative pb-3">
+                                            <DropdownSelect DivClass="col-md-7"
+                                                            Label="Color :"
+                                                            PlaceHolder="Select color"
+                                                            IsAddOptionNeed="true"
+                                                            ReadDataOnSearch="true"
+                                                            ValidationFor="() => Model.ColorID"
+                                                            Mode="(int)DropdownModes.ItemColor"
+                                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                                            ItemSelected="HandleItemColorSelected"
+                                                            SelectedItem="new DropdownSelectedItemModel(){ID = Model.ColorID,Value = Model.ColorName}"
+                                                            NewButtonClicked="HandleItemColorAddButtonClick"
+                                                            NewButtonText="Item Color" />
+                                            <div class="validation-for-dropdown">
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="row">
+                                        <div class="col-md-7">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                                    Purchase Cost :
+                                                </label>
+                                                <input class="form-control " @bind="Model.Cost" id="item-um-unit-box">
+                                                <ValidationMessage For="() => Model.Cost" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-7">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                                    Selling price :
+                                                    <span class="ms-1" style="color:red">*</span>
+                                                </label>
+                                                <input class="form-control " @bind="Model.Price" id="item-um-unit-box">
+                                                <ValidationMessage For="() => Model.Price" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    @if (Model.IsGoods)
+                                    {
+                                        <!--Default Model Images-->
+                                        @if (Model.ItemImages.Count > 0)
+                                        {
+                                            <div class="row">
+                                                @foreach (var itemImage in Model.ItemImages)
+                                                {
+                                                    <div class="col-md-1">
+                                                        <input type="checkbox" class="top-left" @onchange=" (ChangeEventArgs e) => HandleToCheckItemImage(e,itemImage)" checked="@(Model.DefaultItemVariantImages.Where(itemVariantImage=>itemVariantImage.MediaID==itemImage.MediaID).FirstOrDefault()!=null?"checked":null)">
+                                                        <img style="height:60px;width:60px;" src="@itemImage.FileName" alt="@itemImage.AltText">
+                                                    </div>
+                                                }
+                                            </div>
+
+                                        }
+                                        @*  <ImageUploader ImageItemsInput="Model.Images" ItemVariantID="Model.ItemVariantID" FileSelectorID="item-single-default-variant-image-chooser" Updated="HandelItemModelImageUpdated" /> *@
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="row mt-5">
+                                        <div class="col-12">
+                                            <div class="card">
+                                                <div class="card-header">
+                                                    <h3 class="card-title">Item Variants</h3>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="table-responsive">
+                                                        <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>No</th>
+                                                                    <th>Model Name</th>
+                                                                    <th>Unit</th>
+                                                                    <th>UM Unit</th>
+                                                                    <th>Size</th>
+                                                                    <th>Colour</th>
+                                                                    <th>Purchase Cost</th>
+                                                                    <th>selling Price</th>
+                                                                    <th>Action</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @if (Model.ItemVariants is not null && Model.ItemVariants.Count > 0)
+                                                                {
+                                                                    @foreach (var data in Model.ItemVariants.Select((value, i) => new { i, value }))
+                                                                    {
+                                                                        var itemModel = data.value;
+                                                                        int index = data.i;
+                                                                        <tr>
+                                                                            <td>@(index + 1)</td>
+                                                                            <td>@itemModel.ItemModelName</td>
+                                                                            <td>@itemModel.PackingTypeName</td>
+                                                                            <td>@itemModel.UMUnit</td>
+                                                                            @if (itemModel.SizeID is null)
+                                                                            {
+                                                                                <td>--</td>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <td>@itemModel.Size</td>
+                                                                            }
+                                                                            @if (itemModel.ColorID is null)
+                                                                            {
+                                                                                <td>--</td>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <td>@itemModel.ColorName</td>
+                                                                            }
+                                                                            @if (itemModel.Cost is null || itemModel.Cost is 0)
+                                                                            {
+                                                                                <td>0.00</td>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <td>@itemModel.Cost</td>
+                                                                            }
+                                                                            <td>@itemModel.Price</td>
+                                                                            <td>
+                                                                                <a @onclick="async () => await HandleEditItemVariantClick(itemModel)"><i class="fe fe-edit me-3"></i></a>
+                                                                                <a @onclick="async () => await HandleItemVariantRemoveButtonClick(itemModel)"><i class="fe fe-trash"></i></a>
+                                                                            </td>
+                                                                        </tr>
+                                                                        @if (itemModel.ItemVariantImages.Count > 0)
+                                                                        {
+                                                                            <tr>
+                                                                                <td colspan="9" class="py-1 bg-light">
+                                                                                    <div class="d-flex gap-2">
+                                                                                        @foreach (var itemVariantImage in itemModel.ItemVariantImages)
+                                                                                        {
+                                                                                            <img style="height:60px;width:60px;" src="@itemVariantImage.FileName" alt="@itemVariantImage.AltText">
+                                                                                        }
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <tr>
+                                                                                <td colspan="9" class="py-1 bg-light">
+                                                                                    <!--Empty row-->
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    }
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (Model.IsGoods)
+                                {
+                                    <div class="col-12 mt-5">
+                                        <button class="btn btn-primary add-row" type="button" @onclick="async () => await  HandleAddItemVariantButtonClick()">
+                                            <i class="fa fa-plus"></i>
+                                            Add product varient
+                                        </button>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-footer-action d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary me-2">@(Model.ItemID > 0 ? "Update" : "Save")</button>
+            <a class="btn btn-danger me-2 text-white" @onclick="Cancel">Cancel</a>
+        </div>
+    </EditForm>
+</PageLayoutNew>
+
+<div class="modal fade" id="sac-search-modal">
+    <div class="modal-dialog modal-dialog-centered modal-md modal-dialog-scrollable">
+        <div class="modal-content modal-content-demo" style="min-height:300px">
+            <div class="modal-header">
+                <h6 class="modal-title">
+                    Search @(Model.IsGoods ? "HSN" : "SAC") codes
+                </h6>
+                <button type="button" class="btn-close" @onclick="async () => await HideHsnSacSearchModal()">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-2">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <input class="form-control" type="text" placeholder="Type code or description.." id="sac-code-search-box" @bind="@HsnSacSearchString" @onkeyup="async (KeyboardEventArgs k)=> await HandleSacSearchStringEntered(k)" />
+                        </div>
+                    </div>
+                    @if (HsnSacSearchString != null && HsnSacSearchString.Length < 3)
+                    {
+                        <div class="col-md-12">
+                            Please type atleast 3 charecters..
+                        </div>
+                    }
+                </div>
+                <div class="row mb-2">
+                    <div class="table-responsive">
+                        <table class="table border text-wrap text-md-nowrap table-hover mb-0 mt-2 ">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        @(Model.IsGoods ? "HSN Code" : "SAC Code")
+                                    </th>
+                                    <th>
+                                        Description
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (HsnSacSearchResult != null && HsnSacSearchResult.Count > 0)
+                                {
+                                    @foreach (var item in HsnSacSearchResult)
+                                    {
+                                        <tr style="cursor:pointer" @onclick="@(async ()=> await HandleHsnSacSelected(item))">
+                                            <td>
+                                                @item.Code
+                                            </td>
+
+                                            <td>
+                                                @item.Description
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ModalTaxCategory @ref="modalTaxCategory" CallbackWithIdnValue="HandleNewTaxCategoryAdded" />
+<ModalItemCategory @ref="modalItemCategory" Saved="HandleNewIteCategoryAdded" />
+<ModalItemGroup @ref="modalItemGroup" Saved="HandleNewIteGroupAdded" />
+
+@if (Model.IsGoods)
+{
+    <ModalItemBrand @ref="modalItemBrand" Saved="HandleNewIteBrandAdded" />
+}
+
+@if (!Model.HasMultipleModels)
+{
+    <ModalPackingType @ref="@packingTypeChildModal" Saved="HandleNewItemPackingTypeAdded" />
+    @if (Model.IsGoods)
+    {
+        <ModalItemSize @ref="@modalItemSize" Saved="HandleNewItemSizeAdded" />
+        <ModalItemColor @ref="@modalItemColor" Saved="HandleNewItemColorAdded" />
+    }
+}
+else
+{
+    <ModalItemModel IsGoods="Model.IsGoods" @ref="modalItemModel" ImageItems="Model.ItemImages" CallbackWithModel="(Func<ItemVariantModel, Task>)HandleEventCallbackFromItemModelModal" />
+}
+
+@code {
+
+    [Parameter] public int ItemID { get; set; } = 0;
+
+    private ItemSingleModel Model = new();
+
+    private bool canProceed = true;
+    private bool needDeleteOption = false;
+    private bool IsNeedModels = false;
+
+    private string UnitDropdownID = "item-unit-drop-down";
+    private string TaxPreferenceDropdownID = "intra-tax-drop-down";
+    private string IntraTaxDropdownID = "intra-tax-drop-down";
+    private string InterTaxDropdownID = "inter-tax-drop-down";
+
+    private ModalItemModel modalItemModel = new();
+    private ModalPackingType packingTypeChildModal = new();
+    private ModalItemSize modalItemSize = new();
+    private ModalTaxCategory modalTaxCategory = new();
+    private ModalItemCategory modalItemCategory = new();
+    private ModalItemGroup modalItemGroup = new();
+    private ModalItemBrand modalItemBrand = new();
+    private ModalItemColor modalItemColor = new();
+
+    private DropdownSelect PackingTypeDrowpdownSelect = new();
+    private DropdownSelect ItemSizeDrowpdownSelect = new();
+    private DropdownSelect IntraTaxCategoryDropdown = new();
+    private DropdownSelect InterTaxCategoryDropdown = new();
+    private DropdownSelect TaxPreferenceDropdown = new();
+
+    private ItemVariantModel DefaultItemModel = new();
+    private EditContext? itemModelEditContext;
+
+    private DataAnnotationsValidator? IntraTaxCategoryValidator;
+    private DataAnnotationsValidator? InterTaxCategoryValidator;
+
+    private bool needAddButton = false;
+    private string? HsnSacCode = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model = new();
+        if (ItemID != 0)
+        {
+            Model = await API.GetAsync<ItemSingleModel>($"item/get-item/{ItemID}", true);
+            HsnSacCode = Model.IsGoods ? Model.HsnCode : Model.SacCode;
+        }
+        itemModelEditContext = new EditContext(Model);
+        await FocusElement("item-name-text-box");
+    }
+
+    #region Main Functions
+
+    private async Task FocusDropdown(string dropdownID)
+    {
+        await JS.InvokeVoidAsync("setDropdownFocus", dropdownID, "drop-down-focused");
+    }
+    private async Task FocusElement(string elementID)
+    {
+        await JS.InvokeVoidAsync("focusElement", elementID);
+    }
+    private async Task SaveItem()
+    {
+        // Validation and Item model related works pending here
+        var result = await API.PostAsync<ItemAddResultModel, ItemSingleModel>("item/save-item", Model);
+        if (result != null)
+        {
+            Nav.NavigateTo($"items-view/{result.ItemID}");
+        }
+    }
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            if (ItemID != 0)
+                Nav.NavigateTo($"items-view/{ItemID}");
+            else
+                Nav.NavigateTo("items");
+        }
+    }
+
+    #endregion
+
+    #region Item Variant Related Functions
+
+    private int CurrentItemModelIndex = -1;
+    private async Task HandleAddItemVariantButtonClick()
+    {
+        if (string.IsNullOrEmpty(Model.ItemName))
+        {
+            await JS.ErrorMessage("Please enter Item name for the item");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(Model.ItemCode))
+        {
+            await JS.ErrorMessage("Please enter Item code for the item");
+            return;
+        }
+
+        if (Model.ItemVariants is null)
+        {
+            if (Model.PackingTypeID is null)
+            {
+                await JS.ErrorMessage("Please choose a unit for the first variant");
+                return;
+            }
+
+            // if (string.IsNullOrEmpty(Model.UrlCode))
+            // {
+            //     await JS.ErrorMessage("Please provide a unique url code for the first variant");
+            //     return;
+            // }
+
+            // if (Model.PackingTypeID is null)
+            // {
+            //     await JS.ErrorMessage("Please choose a unit for the first variant");
+            //     return;
+            // }
+
+            if (Model.UMUnit < 1)
+            {
+                await JS.ErrorMessage("Please enter number of unit for the item");
+                return;
+            }
+
+            if (Model.Price is null)
+            {
+                await JS.ErrorMessage("Please enter the selling price for the item");
+                return;
+            }
+
+            Model.ItemVariants = new();
+            ItemVariantModel itemModelView = new()
+                {
+                    ItemVariantID = Model.ItemVariantID,
+                    ItemModelName = Model.ItemModelName,
+                    ItemID = Model.ItemID,
+                    UrlCode = Model.UrlCode,
+                    PackingTypeID = Model.PackingTypeID,
+                    PackingTypeName = Model.PackingTypeName,
+                    UMUnit = Model.UMUnit,
+                    Price = Model.Price,
+                    Cost = Model.Cost,
+                    SizeID = Model.SizeID,
+                    Size = Model.Size,
+                    ColorID = Model.ColorID,
+                    ColorName = Model.ColorName,
+                    ItemVariantImages = Model.DefaultItemVariantImages,
+                };
+            itemModelView.ItemModelName = GetItemModelName(itemModelView);
+            Model.ItemVariants.Add(itemModelView);
+        }
+        Model.HasMultipleModels = true;
+        StateHasChanged();
+        await Task.Delay(50);
+        CurrentItemModelIndex = -1;
+        await OpenItemVariantModal();
+    }
+    private async Task HandleEditItemVariantClick(ItemVariantModel itemModel)
+    {
+        if (Model.ItemVariants is not null)
+            CurrentItemModelIndex = Model.ItemVariants.IndexOf(itemModel);
+        await OpenItemVariantModal(itemModel);
+    }
+    private async Task OpenItemVariantModal(ItemVariantModel? itemModel = null)
+    {
+        await modalItemModel.OpenItemVariantModal(itemModel);
+    }
+    private async Task HandleEventCallbackFromItemModelModal(ItemVariantModel itemModel)
+    {
+        if (ValidateItemModelExistance(itemModel))
+        {
+            string errorMessage = "There is an item variant exist with same properties";
+            await modalItemModel.SetItemModelDuplicationExist(errorMessage);
+            return;
+        }
+
+        modalItemModel.SetItemModelDuplicationNotExist();
+        itemModel.ItemModelName = GetItemModelName(itemModel);
+        Model.ItemVariants ??= new();
+        if (CurrentItemModelIndex == -1)
+            Model.ItemVariants.Add(itemModel);
+        else
+            Model.ItemVariants[CurrentItemModelIndex] = itemModel;
+    }
+    private async Task HandleItemVariantRemoveButtonClick(ItemVariantModel itemModel)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove '" + itemModel.ItemModelName + "' from the item.?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel"))
+        {
+            if (itemModel.ItemVariantID > 0 && itemModel.ItemID is not null && Model.ItemVariants is not null)
+            {
+                var result = await API.GetAsync<BaseSuccessResponse>($"item/delete-item-model/{itemModel.ItemVariantID}", true);
+                if (result is not null)
+                {
+                    Model.ItemVariants.Remove(itemModel);
+                    HandleItemModelRemoveSuccess();
+                }
+            }
+            else if (Model.ItemVariants is not null)
+            {
+                Model.ItemVariants.Remove(itemModel);
+                HandleItemModelRemoveSuccess();
+            }
+        }
+    }
+    private void HandleItemModelRemoveSuccess()
+    {
+        if (Model.ItemVariants is not null && Model.ItemVariants.Count == 1)
+        {
+            Model.ItemVariantID = Model.ItemVariants[0].ItemVariantID;
+            Model.ItemModelName = Model.ItemVariants[0].ItemModelName;
+            Model.UrlCode = Model.ItemVariants[0].UrlCode;
+            Model.PackingTypeID = Model.ItemVariants[0].PackingTypeID;
+            Model.PackingTypeName = Model.ItemVariants[0].PackingTypeName;
+            Model.UMUnit = Model.ItemVariants[0].UMUnit;
+            Model.Price = Model.ItemVariants[0].Price;
+            Model.Cost = Model.ItemVariants[0].Cost;
+            Model.SizeID = Model.ItemVariants[0].SizeID;
+            Model.Size = Model.ItemVariants[0].Size;
+            Model.ColorID = Model.ItemVariants[0].ColorID;
+            Model.ColorName = Model.ItemVariants[0].ColorName;
+            Model.DefaultItemVariantImages = Model.ItemVariants[0].ItemVariantImages;
+            Model.HasMultipleModels = false;
+            StateHasChanged();
+        }
+    }
+    private bool ValidateItemModelExistance(ItemVariantModel itemModel)
+    {
+        bool hasDuplicates = false;
+        if (Model.ItemVariants is not null)
+        {
+            hasDuplicates = Model.ItemVariants.Any(im =>
+                    im.ItemVariantID != itemModel.ItemVariantID &&
+                    im.PackingTypeID == itemModel.PackingTypeID &&
+                    im.UMUnit == itemModel.UMUnit &&
+                    im.Price == itemModel.Price &&
+                    im.Cost == itemModel.Cost &&
+                    im.SizeID == itemModel.SizeID &&
+                    im.ColorID == itemModel.ColorID);
+        }
+        return hasDuplicates;
+    }
+    private string? GetItemModelName(ItemVariantModel itemModel)
+    {
+        string? itemModelName = Model.ItemName + ' ' + itemModel.PackingTypeName;
+        if (itemModel.SizeID is not null)
+            itemModelName += (itemModel.Size + ' ');
+        if (itemModel.ColorID is not null)
+            itemModelName += (itemModel.ColorName + ' ');
+        return itemModelName;
+    }
+
+    #endregion
+
+    #region Item Packing Type
+
+    private void HandleNewItemPackingTypeAdded(IdnValuePair itempackingType)
+    {
+        Model.PackingTypeID = itempackingType.ID;
+        Model.PackingTypeName = itempackingType.Value;
+    }
+    private void HandleItemPackingTypeSelected(DropdownItemSelectedCallbackModel itemPackingType)
+    {
+        Model.PackingTypeID = itemPackingType.ID;
+        Model.PackingTypeName = itemPackingType.Value;
+    }
+    private async Task HandleNewItemPackingTypeAddButtonClick()
+    {
+        await packingTypeChildModal.OpenItemPackingTypeModal();
+    }
+
+    #endregion
+
+    #region Item Size
+
+    private void HandleNewItemSizeAdded(IdnValuePair itemSize)
+    {
+        Model.SizeID = itemSize.ID;
+        Model.Size = itemSize.Value;
+    }
+    private async Task HandleItemSizeAddButtonClick()
+    {
+        await modalItemSize.OpenItemSizeModal();
+    }
+    private void HandleItemSizeSelected(DropdownItemSelectedCallbackModel itemSize)
+    {
+        Model.SizeID = itemSize.ID;
+        Model.Size = itemSize.Value;
+    }
+
+    #endregion
+
+    #region Item Color
+
+    private void HandleNewItemColorAdded(IdnValuePair itemColor)
+    {
+        Model.ColorID = itemColor.ID;
+        Model.ColorName = itemColor.Value;
+    }
+    private async Task HandleItemColorAddButtonClick()
+    {
+        await modalItemColor.HandleOpenItemColorModal();
+    }
+    private void HandleItemColorSelected(DropdownItemSelectedCallbackModel iemColor)
+    {
+        Model.ColorID = iemColor.ID;
+        Model.ColorName = iemColor.Value;
+    }
+
+    #endregion
+
+    #region Tax Preference
+
+    private void HandleTaxPreferenceSelected(DropdownItemSelectedCallbackModel taxPreference)
+    {
+        Model.TaxPreferenceTypeID = taxPreference.ID;
+        Model.TaxPreferenceName = taxPreference.Value;
+        if (itemModelEditContext is not null)
+            itemModelEditContext.NotifyFieldChanged(itemModelEditContext.Field(nameof(Model.TaxPreferenceTypeID)));
+    }
+
+    #endregion
+
+    #region Tax Category
+
+    private bool IsIntraTaxCategory = false;
+    private async Task HandleNewIntraTaxCategoryAddButtonClick()
+    {
+        IsIntraTaxCategory = true;
+        await modalTaxCategory.OpenTaxCategoryModal();
+    }
+    private async Task HandleNewInterTaxCategoryAddButtonClick()
+    {
+        IsIntraTaxCategory = false;
+        await modalTaxCategory.OpenTaxCategoryModal();
+    }
+    private void HandleInterTaxCategorySelected(DropdownItemSelectedCallbackModel interTaxCategory)
+    {
+        Model.InterTaxCategoryID = interTaxCategory.ID;
+        Model.InterTaxCategoryName = interTaxCategory.Value;
+    }
+    private void HandleIntraTaxCategorySelected(DropdownItemSelectedCallbackModel intraTaxCategory)
+    {
+        Model.IntraTaxCategoryID = intraTaxCategory.ID;
+        Model.IntraTaxCategoryName = intraTaxCategory.Value;
+    }
+    private async Task HandleNewTaxCategoryAdded(IdnValuePair taxCategory)
+    {
+        if (IsIntraTaxCategory)
+        {
+            Model.IntraTaxCategoryID = taxCategory.ID;
+            Model.IntraTaxCategoryName = taxCategory.Value;
+        }
+        else
+        {
+            Model.InterTaxCategoryID = taxCategory.ID;
+            Model.InterTaxCategoryName = taxCategory.Value;
+        }
+        await IntraTaxCategoryDropdown.RefreshList();
+        await InterTaxCategoryDropdown.RefreshList();
+    }
+
+    #endregion
+
+    #region Item Category
+
+    private void HandleItemCategorySelected(DropdownItemSelectedCallbackModel itemCategory)
+    {
+        Model.CategoryID = itemCategory.ID;
+        Model.CategoryName = itemCategory.Value;
+    }
+    private async Task HandleItemCategoryAddButtonClick()
+    {
+        await modalItemCategory.OpenItemCategoryModal();
+    }
+    private void HandleNewIteCategoryAdded(IdnValuePair itemCategory)
+    {
+        Model.CategoryID = itemCategory.ID;
+        Model.CategoryName = itemCategory.Value;
+    }
+
+    #endregion
+
+    #region Item Group
+
+    private void HandleItemGroupSelected(DropdownItemSelectedCallbackModel itemGroup)
+    {
+        Model.GroupID = itemGroup.ID;
+        Model.GroupName = itemGroup.Value;
+    }
+    private async Task HandleItemGrouAddButtonClick()
+    {
+        await modalItemGroup.OpenItemGroupModal();
+    }
+    private void HandleNewIteGroupAdded(IdnValuePair itemGroup)
+    {
+        Model.GroupID = itemGroup.ID;
+        Model.GroupName = itemGroup.Value;
+    }
+
+    #endregion
+
+    #region Item Brand
+
+    private void HandleItemBrandSelected(DropdownItemSelectedCallbackModel itemBrand)
+    {
+        Model.GroupID = itemBrand.ID;
+        Model.BrandName = itemBrand.Value;
+    }
+    private async Task HandleItemBrandAddButtonClick()
+    {
+        await modalItemBrand.OpenItemBrandModal();
+    }
+    private void HandleNewIteBrandAdded(IdnValuePair itemBrand)
+    {
+        Model.BrandID = itemBrand.ID;
+        Model.BrandName = itemBrand.Value;
+    }
+
+    #endregion
+
+    #region HSN SAC
+
+    private List<HsnSacModel>? HsnSacSearchResult;
+    private string? HsnSacSearchString;
+    private async Task HandleHsnSacTextInputClick()
+    {
+        HsnSacSearchModel hsnSacSearchModel = new();
+        if (Model.IsGoods && Model.HsnID is not null)
+        {
+            HsnSacSearchString = Model.HsnCode;
+            hsnSacSearchModel = new()
+                {
+                    SearchString = Model.HsnCode,
+                    IsGoods = Model.IsGoods
+                };
+        }
+        else if (!Model.IsGoods && Model.SacID is not null)
+        {
+            HsnSacSearchString = Model.SacCode;
+            hsnSacSearchModel = new()
+                {
+                    SearchString = Model.SacCode,
+                    IsGoods = Model.IsGoods
+                };
+        }
+        else
+        {
+            HsnSacSearchString = "";
+            hsnSacSearchModel = new()
+                {
+                    SearchString = "",
+                    IsGoods = Model.IsGoods
+                };
+        }
+
+        HsnSacSearchResult = await SearchHsnSacCodes(hsnSacSearchModel);
+        await JS.InvokeVoidAsync("ShowModal", "sac-search-modal");
+    }
+    private async Task OpenSacSearchModal()
+    {
+        HsnSacSearchString = Model.IsGoods switch
+        {
+            true => Model.HsnCode,
+            false => Model.SacCode
+        };
+        HsnSacSearchModel hsnSacSearchModel = new()
+            {
+                SearchString = HsnSacSearchString,
+                IsGoods = Model.IsGoods
+            };
+        HsnSacSearchResult = await SearchHsnSacCodes(hsnSacSearchModel);
+        await JS.InvokeVoidAsync("ShowModal", "sac-search-modal");
+    }
+    private async Task HideHsnSacSearchModal()
+    {
+        HsnSacSearchString = null;
+        HsnSacSearchResult = null;
+        await JS.InvokeVoidAsync("HideModal", "sac-search-modal");
+    }
+    private async Task HandleSacSearchStringEntered(KeyboardEventArgs k)
+    {
+        HsnSacSearchString = await JS.InvokeAsync<string?>("getElementValue", "sac-code-search-box");
+        if (string.IsNullOrEmpty(HsnSacSearchString))
+        {
+            HsnSacSearchModel hsnSacSearchModel = new()
+                {
+                    SearchString = HsnSacSearchString,
+                    IsGoods = Model.IsGoods
+                };
+            HsnSacSearchResult = await SearchHsnSacCodes(hsnSacSearchModel);
+        }
+        if (HsnSacSearchString != null && HsnSacSearchString.Length >= 3)
+        {
+            HsnSacSearchModel hsnSacSearchModel = new()
+                {
+                    SearchString = HsnSacSearchString,
+                    IsGoods = Model.IsGoods
+                };
+            HsnSacSearchResult = await SearchHsnSacCodes(hsnSacSearchModel);
+        }
+    }
+    private async Task<List<HsnSacModel>> SearchHsnSacCodes(HsnSacSearchModel hsnSacSearchModel)
+    {
+        return await API.PostAsync<List<HsnSacModel>, HsnSacSearchModel>("item/get-hsn-sac-search-list", hsnSacSearchModel);
+    }
+    private async Task HandleHsnSacSelected(HsnSacModel selectedItem)
+    {
+        if (Model.IsGoods)
+        {
+            Model.HsnID = selectedItem.ID;
+            Model.HsnCode = selectedItem.Code;
+            if (itemModelEditContext != null)
+            {
+                itemModelEditContext.NotifyFieldChanged(itemModelEditContext.Field(nameof(Model.HsnID)));
+            }
+        }
+        else
+        {
+            Model.SacID = selectedItem.ID;
+            Model.SacCode = selectedItem.Code;
+            if (itemModelEditContext != null)
+            {
+                itemModelEditContext.NotifyFieldChanged(itemModelEditContext.Field(nameof(Model.SacID)));
+            }
+        }
+        await HideHsnSacSearchModal();
+    }
+
+    #endregion
+
+    #region Item Variant images
+
+    private void HandelItemModelImageUpdated(List<ItemVariantImageModel> updatedImageModel)
+    {
+        if (!Model.HasMultipleModels)
+        {
+            Model.DefaultItemVariantImages = updatedImageModel;
+        }
+    }
+
+    #endregion
+
+    #region Item Image
+
+    private void HandelItemImageUpdated(List<ItemImageModel> updatedImageModel)
+    {
+        if (!Model.HasMultipleModels)
+        {
+            Model.ItemImages = updatedImageModel;
+        }
+    }
+
+    private async Task HandleToCheckItemImage(ChangeEventArgs e, ItemImageModel model)
+    {
+        bool IsImageChecked = Convert.ToBoolean(e.Value);
+        if (IsImageChecked)
+        {
+            Model.DefaultItemVariantImages.Add(new()
+                {
+                    MediaID = model.MediaID,
+                    FileName = model.FileName,
+                    ItemVariantID = Model.ItemVariantID,
+
+                });
+        }
+        else
+        {
+            Model.DefaultItemVariantImages.Remove(Model.DefaultItemVariantImages.Where(variantImage => variantImage.MediaID == model.MediaID).FirstOrDefault());
+        }
+    }
+
+    #endregion
+
+}

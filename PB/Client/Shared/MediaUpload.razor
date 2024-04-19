@@ -1,0 +1,64 @@
+﻿@using System.IO
+
+<InputFile OnChange="OnInputFileChange" class="@CssClass"  type="file" _bl_5="" id="@Id"/>
+@code {
+    [Parameter]public int? MediaID { get; set; }
+    [Parameter]public string? CssClass { get; set; }
+	[Parameter] public string? FolderName { get; set; }
+    [Parameter]public string? Id { get; set; }
+    [Parameter] public string? FileName { get; set; }
+    [Parameter] public EventCallback FileUpdated { get; set; }
+    [Parameter] public string? ContentType { get; set; }
+    IBrowserFile file;
+    private byte[] buffer;
+    public async Task OnInputFileChange(InputFileChangeEventArgs e)
+	{
+		file = e.File;
+		var format = file.ContentType;
+
+		buffer = new byte[file.Size];
+		await file.OpenReadStream(50000000).ReadAsync(buffer);
+		await FileUpdated.InvokeAsync();
+		//StateHasChanged();
+	}
+    public async Task<int?> UploadFile() 
+	{
+		if (buffer != null)
+		{
+			FileUploadModel Model = new FileUploadModel()
+			{
+				ContentType = ContentType ?? file.ContentType,
+				Extension = Path.GetExtension(file.Name).Substring(1),
+				Content = buffer,
+				FolderName = FolderName,
+				FileName = FileName,
+				MediaID = MediaID
+			};
+
+			var response = await API.PostAsync<MediaIDModel, FileUploadModel>("media/upload-file", Model);
+			if (response != null)
+			{
+				MediaID = response.MediaID;
+				
+			}
+			return MediaID;
+		}
+
+		return null;
+	}	
+	public async Task<bool> RemoveFileFromServer(int mediaID)
+	{
+		MediaIDModel Model = new()
+		{
+			MediaID = mediaID
+		};
+
+		var response = await API.PostAsync<BaseSuccessResponse, MediaIDModel>("media/remove-image", Model);
+		if (response != null)
+		{
+			return true;
+		}
+		else return false;
+	}
+
+}

@@ -1,0 +1,146 @@
+﻿@using PB.CRM.Model.Enum
+@using PB.Shared.Models.Common
+@using PB.Shared.Models.Inventory.Supplier
+
+
+<div class="modal fade" id="supplier-add-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+        <div class="modal-content modal-content-demo ">
+            <EditForm Model="Model" OnValidSubmit="SaveSupplier" autocomplete="off">
+                <DataAnnotationsValidator />
+                <div class="modal-header">
+                    @if (Model.SupplierID != 0)
+                    {
+                        <h6 class="modal-title">@Model.Name</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New Customer</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HideSupplierModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <InputTextBox Label="Company Name : "
+                                      IsRequired="true"
+                                      ValidationFor="() => Model.Name"
+                                      DivClass="col-md-7"
+                                      @bind-Value="Model.Name"
+                                      id="cst-name-box" />
+                    </div>
+                    <div class="row">
+                        <InputTextBox Label="Tax Number : "
+                                      IsRequired="true"
+                                      ValidationFor="() => Model.TaxNumber"
+                                      DivClass="col-md-7"
+                                      @bind-Value="Model.TaxNumber"
+                                      id="cst-taxno-box" />
+                    </div>
+
+                    <div class="row">
+                        <DropdownSelect DivClass="col-sm-7"
+                                        DropdownID="@CountryDropdownID"
+                                        Label="Country :"
+                                        Mode="(int)DropdownModes.Country"
+                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                        ItemSelected="HandleSupplierCountrySelected"
+                                        IsRequired="true"
+                                        ReadDataOnSearch="true"
+                                        SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Phone :
+                                    <span style="color:red">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text" style="min-width: 60px;">
+                                        @Model.ISDCode
+                                    </span>
+                                    <input type="text" class="form-control" @bind="Model.Phone" />
+                                </div>
+                                <ValidationMessage For="() => Model.Phone" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Email :
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-envelope"></i>
+                                    </span>
+                                    <input type="text" class="form-control" @bind="Model.EmailAddress" />
+                                </div>
+                                <ValidationMessage For="() => Model.EmailAddress" />
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" type="submit">@(Model.SupplierID == 0 ? "Save Supplier" : "Update Supplier")</button>
+                    <button class="btn btn-danger" type="button" @onclick="async () => await HideSupplierModal()">Close</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+
+    private SupplierModel Model = new();
+    private string CountryDropdownID = "country-drop-down-select";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var countryModel = await API.GetAsync<Country>("common/get-default-country-details", true);
+        if (countryModel is not null)
+            HandleSupplierCountryDataLoaded(countryModel);
+    }
+    public async Task OpenSupplierModal(int supplierEntityID = 0)
+    {
+        Model = new();
+        if (supplierEntityID > 0)
+            Model = await API.GetAsync<SupplierModel>($"supplier/get-supplier/{supplierEntityID}", true);
+        await JS.InvokeVoidAsync("ShowModal", "supplier-add-modal");
+    }
+    private void HandleSupplierCountryDataLoaded(Country country)
+    {
+        Model.CountryID = country.CountryID;
+        Model.CountryName = country.CountryName;
+        Model.ISDCode = country.ISDCode;
+    }
+    private async Task SaveSupplier()
+    {
+        var res = await API.PostAsync<SupplierSaveSuccessModel, SupplierModel>("supplier/save-supplier", Model);
+        if (res is not null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair() { ID = res.SupplierEntityID, Value = Model.Name });
+            await HideSupplierModal();
+        }
+    }
+    private async Task HandleSupplierCountrySelected(DropdownItemSelectedCallbackModel country)
+    {
+        Model.CountryID = country.ID;
+        Model.CountryName = country.Value;
+        if (Model.CountryID is not null)
+        {
+            var countryModel = await API.GetAsync<Country>($"common/get-country-details/{Model.CountryID}", true);
+            if (country is not null)
+                HandleSupplierCountryDataLoaded(countryModel);
+        }
+    }
+    private async Task HideSupplierModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "supplier-add-modal");
+    }
+}

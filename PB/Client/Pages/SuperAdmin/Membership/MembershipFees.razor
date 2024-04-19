@@ -1,0 +1,285 @@
+﻿@page "/membership-fees"
+@using PB.CRM.Model.Enum;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+
+                    <ListPageHeader Settings="PageHeader" OnFilterButtonClick="SearchByFee" OnAddButtonClick="ShowFeeModal" />
+                </div>
+
+                <div class="card-body">
+                    <ServerMessage />
+                    <div class="table-responsive">
+                        <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                            <thead>
+                                <tr>
+                                    <th>SlNo</th>
+                                    <th>@Localizer["Feature"]</th>
+                                    <th>@Localizer["Capacity"]</th>
+                                    <th>@Localizer["Plan"]</th>
+                                    <th>@Localizer["Fee"]</th>
+                                    <th>@Localizer["ComboFee"]</th>
+                                    @*<th>@Localizer["Reason"]</th>*@
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in FeeListPageModel.Data.Select((data, index) => new { index, data }))
+                                {
+                                    <tr>
+                                        <td>
+                                            @((FeeListPageModel.PageIndex - 1) * FeeListPageModel.PageSize + 1 + item.index)
+                                        </td>
+                                        <td>
+                                            @item.data.FeatureName
+                                        </td>
+                                        <td>
+                                            @item.data.Capacity
+                                        </td>
+                                        <td>
+                                            @item.data.PlanName
+                                        </td>
+                                        <td>
+                                            @item.data.Fee
+                                        </td>
+                                        <td>
+                                            @item.data.ComboFee
+                                        </td>
+
+                                        <td style="width:100px;">
+                                            <div class="d-flex justify-content-center align-items-center">
+                                                <ActionEdit Clicked="async () =>await Edit(item.data.FeeID)" />
+                                                <ActionDelete Clicked="async () => await Remove(item.data.FeeID)" />
+                                            </div>
+                                        </td>
+                                        @*
+                                    @item.data.Name
+                                    </td>
+                                    *@
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <PaginationCustom PageSize="FeeListPageModel.PageSize" TotalCount="FeeListPageModel.TotalCount" TotalPages="FeeListPageModel.TotalPages" PageIndex="FeeListPageModel.PageIndex" LoadPageIndex="PageIndex" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<div class="modal fade" id="AddNewFeeModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Add Plany</h6><button aria-label="Close" class="btn-close" data-bs-dismiss="AddNewFeeModal" @onclick="(async() =>await HideFeeModal())"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="Fee" OnValidSubmit="SaveFee" autocomplete="off">
+                    <DataAnnotationsValidator />
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="form-group">
+
+                                <label class="form-label mt-0 me-1 " style="text-align:left">Feature :</label>
+                                <DropdownSelect DropdownID="@FeatureDropdownSelect"
+                                                DivClass="col-md-11"
+                                                IsRequired="true"
+                                                IsAddOptionNeed="false"
+                                                ReadDataOnSearch="false"
+                                                Mode="(int)DropdownModes.Feature"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = Fee.FeatureID, Value=Fee.FeatureName})"
+                                                ItemSelected="ItemSelected"
+                                                PlaceHolder="Select Feature" />
+                                <ValidationMessage For="()=>Fee.FeatureID" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Capacity :</label>
+                                <DropdownSelect DropdownID="@FeatureDropdownSelect"
+                                                DivClass="col-md-11"
+                                                IsRequired="true"
+                                                IsAddOptionNeed="false"
+                                                ReadDataOnSearch="false"
+                                                Mode="(int)DropdownModes.Capacity"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = Fee.CapacityID, Value=Fee.Capacity})"
+                                                ItemSelected="ItemSelected"
+                                                PlaceHolder="Select Capacity" />
+                                <ValidationMessage For="()=>Fee.CapacityID" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Plan :</label>
+                                <DropdownSelect DropdownID="@FeatureDropdownSelect"
+                                                DivClass="col-md-11"
+                                                IsRequired="true"
+                                                IsAddOptionNeed="false"
+                                                ReadDataOnSearch="false"
+                                                Mode="(int)DropdownModes.Plan"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = Fee.PlanID, Value=Fee.PlanName})"
+                                                ItemSelected="ItemSelected"
+                                                PlaceHolder="Select Plan" />
+                                <ValidationMessage For="()=>Fee.PlanID" />
+
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Fee :</label>
+                                <input type="number" class="form-control" label="Name" @bind="Fee.Fee" placeholder="Fee">
+                                <ValidationMessage For="()=>Fee.Fee" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">ComboFee :</label>
+                        <input type="number" class="form-control" label="MonthCount" @bind="Fee.ComboFee" placeholder="ComboFee">
+                        <ValidationMessage For="()=>Fee.ComboFee" />
+                    </div>
+
+                    <div class="form-group">
+                        <button class="btn btn-primary" type="submit">Save</button>
+                        <button class="btn btn-primary" type="button" @onclick="@(async ()=>await Cancel())">Cancel</button>
+                    </div>
+                </EditForm>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public int FeeId { get; set; }
+    private PagedListPostModelWithFilter ListPageSearchModel = new();
+    private PagedList<MembershipFeeModel> FeeListPageModel = new();
+    HeaderSettingsModel? PageHeader;
+
+    private MembershipFeeModel Fee = new();
+
+
+    private string FeatureDropdownSelect = "feature-drop-down-select";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        PageHeader = new()
+            {
+                Heading = "Membership Fee",
+                SearchPlaceHolder = "Search with Fee",
+                NeedAddButton = true,
+                AddButtonText = "Add Fee ",
+
+            };
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        FeeListPageModel = await API.PostAsync<PagedList<MembershipFeeModel>, PagedListPostModelWithFilter>("support/get-all-fee", ListPageSearchModel);
+    }
+
+    #region Search
+
+    private async Task SearchByFee(PagedListPostModelWithFilter searchModel)
+    {
+        ListPageSearchModel = searchModel;
+        await LoadData();
+    }
+
+    #endregion
+    private async Task Edit(int FeeId)
+    {
+        Fee = await API.GetAsync<MembershipFeeModel>($"support/get-fee/{FeeId}", true);
+        //await LoadFeature();
+        await ShowFeeModal();
+    }
+
+
+    async Task Remove(int Id)
+    {
+        if (await API.DeleteAsync("support/delete-fee", Id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadData();
+        }
+    }
+
+
+    private async Task PageIndex(int pageIndex)
+    {
+        ListPageSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    private async Task ShowFeeModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "AddNewFeeModal");
+    }
+
+    private async Task HideFeeModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "AddNewFeeModal");
+    }
+
+    #region AddNewPlan
+
+
+    private async Task SaveFee()
+    {
+
+        var result = await API.PostAsync<BaseSuccessResponse, MembershipFeeModel>("support/save-fee", Fee);
+        if (result != null)
+        {
+            Fee = new MembershipFeeModel();
+            await Task.Delay(100);
+            await LoadData();
+            await HideFeeModal();
+        }
+
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            Fee = new();
+            await HideFeeModal();
+
+        }
+    }
+    #endregion
+
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Feature:
+                Fee.FeatureID = data.ID;
+                Fee.FeatureName = data.Value;
+                break;
+            case (int)DropdownModes.Capacity:
+                Fee.CapacityID = data.ID;
+                Fee.Capacity = data.Value;
+                break;
+            case (int)DropdownModes.Plan:
+                Fee.PlanID = data.ID;
+                Fee.PlanName = data.Value;
+                break;
+
+        }
+    }
+}
+
+

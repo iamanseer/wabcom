@@ -1,0 +1,270 @@
+﻿@page "/vouchers"
+@using PB.Shared.Models.Accounts.VoucherEntry;
+@using PB.Shared.Models.Common;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    @if (IsHeaderReady)
+                    {
+                        <ListPageHeader Settings="@VouchersFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)ApplyFilterTo" />
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table border text-nowrap table-hover text-md-nowrap mb-0 mt-2">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Sl No.
+                                    </th>
+                                    <th>
+                                        Voucher
+                                    </th>
+                                    <th>
+                                        Date
+                                    </th>
+                                    <th>
+                                        Entry Against
+                                    </th>
+                                    <th>
+                                        Vefification Status
+                                    </th>
+                                    <th>
+                                        Verified Date
+                                    </th>
+                                    <th>
+                                        Status
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (VoucherList.Data != null && VoucherList.Data.Count > 0)
+                                {
+                                    @foreach (var item in VoucherList.Data.Select((value, i) => new { i, value }))
+                                    {
+                                        var entry = item.value;
+                                        var index = item.i;
+                                        <tr style="cursor:pointer;" @onclick="() => NavigateToSinglePage(entry.JournalMasterID)">
+
+                                            <td>
+                                                @if (VoucherList.PageIndex == 1)
+                                                {
+                                                    @(index + 1)
+                                                }
+                                                else
+                                                {
+                                                    @((VoucherList.PageIndex * VoucherList.PageSize) + (index + 1) - 10)
+                                                }
+                                            </td>
+
+                                            <td>
+                                                @entry.PrefixNJournalNumber
+                                            </td>
+
+                                            <td>
+                                                @(entry.Date is not null ? entry.Date.Value.ToString("dd/MM/yyyy") : "")
+                                            </td>
+
+                                            <td>
+                                                @entry.EntityName
+                                            </td>
+
+                                            <td>
+                                                <span class="@entry.VerficationStatusBadgeClass">
+                                                    @(entry.IsVerified ? "Verified" : "Not Verified")
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                @(entry.VerifiedOn is not null ? entry.VerifiedOn.Value.ToString("dd/MM/yyyy") : "")
+                                            </td>
+
+                                            <td>
+                                                <span class="@entry.SuccessStatusBadgeClass">
+                                                    @(entry.IsSuccess ? "Success" : "Failed")
+                                                </span>
+                                            </td>
+
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                        <PaginationCustom PageSize="VoucherList.PageSize" TotalCount="VoucherList.TotalCount" TotalPages="VoucherList.TotalPages" PageIndex="VoucherList.PageIndex" LoadPageIndex="SetPageIndex" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+
+    [Inject] public AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
+
+    private int CurrentUserTypeID;
+
+    private PagedList<VoucherListModel> VoucherList = new();
+    private PagedListPostModelWithFilter ListPageSearchModel = new();
+
+    private HeaderSettingsModel? VouchersFilterSettings;
+
+    private bool IsHeaderReady = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateProvider is not null)
+        {
+            var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+            var authState = await localStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            bool IsAuthenticated = user.Identity is not null ? user.Identity.IsAuthenticated : false;
+            if (IsAuthenticated)
+            {
+                CurrentUserTypeID = Convert.ToInt32(user.Claims.First(c => c.Type == "UserTypeID").Value);
+            }
+        }
+
+        List<FilterSortInputModel> SortInputItems = new()
+        {
+            new()
+            {
+                DisplayName = "Date",
+                FieldName = "J.Date"
+            },
+            new()
+            {
+                DisplayName = "Voucher against",
+                FieldName = "E.Name"
+            },
+            new()
+            {
+                DisplayName = "Vefification Status",
+                FieldName = "J.IsVerified"
+            },
+            new()
+            {
+                DisplayName = "Status",
+                FieldName = "J.IsSucces"
+            }
+        };
+
+        List<FilterDateInputModel> filterDateInputs = new()
+        {
+            new()
+            {
+                FieldName="J.Date",
+                DisplayName = "Date",
+            },
+            new()
+            {
+                FieldName="J.VerifiedOn",
+                DisplayName = "Verified Date",
+            }
+        };
+
+        List<FilterIdnValueInputModel> FilterEnumInputItems = new()
+        {
+            new()
+            {
+                DisplayName = "Voucher Type",
+                FiledName = "J.VoucherTypeID",
+                CustomOptionApiPath = "common/get-list-of-voucher-types"
+            }
+        };
+
+        if (CurrentUserTypeID is not (int)UserTypes.Staff)
+        {
+            FilterIdnValueInputModel branchFilter = new()
+                {
+                    DisplayName = "Branch",
+                    FiledName = "J.BranchID",
+                    CustomOptionApiPath = "common/get-list-of-branches"
+                };
+            FilterEnumInputItems.Add(branchFilter);
+        }
+
+        List<FilterBooleanInputModel> FilterBooleanInputs = new()
+        {
+            new()
+            {
+                DisplayName = "Status",
+                FiledName = "J.IsSuccess",
+                DisplayItems = new()
+                {
+                    new()
+                    {
+                        ItemDisplayName = "Success",
+                        ItemValue = true
+                    },
+                    new()
+                    {
+                        ItemDisplayName = "Failed",
+                        ItemValue = false
+                    }
+                }
+            },
+            new()
+            {
+                DisplayName = "Verification Status",
+                FiledName = "J.IsVerified",
+                DisplayItems = new()
+                {
+                    new()
+                    {
+                        ItemDisplayName = "Verified",
+                        ItemValue = true
+                    },
+                    new()
+                    {
+                        ItemDisplayName = "Not Verified",
+                        ItemValue = false
+                    }
+                }
+            }
+        };
+
+        VouchersFilterSettings = new()
+            {
+                Heading = "Vouchers",
+                NeedAddButton = true,
+                AddButtonText = "Voucher",
+                SinglePageURL = "voucher-entry",
+                SearchPlaceHolder = "Search voucher..",
+                NeedSortOption = true,
+                SortMenuItems = SortInputItems,
+                NeedFilterOption = true,
+                DateFilters = filterDateInputs,
+                IdnValueFilters = FilterEnumInputItems,
+                BooleanFilters = FilterBooleanInputs
+            };
+        
+        IsHeaderReady = true;
+        await LoadData();
+    }
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        ListPageSearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    private async Task SetPageIndex(int pageIndex)
+    {
+        ListPageSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        VoucherList = await API.PostAsync<PagedList<VoucherListModel>, PagedListPostModelWithFilter>("accounts/get-vouchers-paged-list", ListPageSearchModel);
+    }
+
+    private void NavigateToSinglePage(int LedgerID)
+    {
+        Nav.NavigateTo($"voucher-view/{LedgerID}");
+    }
+}

@@ -1,0 +1,226 @@
+﻿@page "/court"
+@page "/court/{CourtID:int}"
+
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Models.Court;
+@using PB.Shared.Tables.CourtClient;
+@using PB.Shared.Enum;
+@using PB.Shared.Models.Common;
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="SaveCourt">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Court Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="col-sm-7">
+                                <div class="row">
+                                    <DropdownSelect DivClass="col-12"
+                                                    @ref="@GameMasterDrowpdownSelect"
+                                                    Label="Game :"
+                                                    Mode="(int)DropdownModes.GameMaster"
+                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                    ItemSelected="ItemSelected"
+                                                    IsRequired="true"
+                                                    ReadDataOnSearch="true"
+                                                    ValidationFor="() => Model.GameID"
+                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.GameID,Value=Model.GameName})" />
+
+
+                                    <InputTextBox Label="Court Name : "
+                                                  IsRequired="true"
+                                                  ValidationFor="() => Model.CourtName"
+                                                  DivClass="col-12"
+                                                  @bind-Value="Model.CourtName"
+                                                  id="cst-name-box" />
+
+                                    <div class="col-12">
+                                        <div class="form-group">
+
+                                            <label class="form-label mt-0 me-1">Hall Name :</label>
+                                            <select id="lead-quality-select" class="form-control form-select" @onchange="(ChangeEventArgs e)=> ChangeHall(e)">
+                                                <option value="0" selected> Choose </option>
+                                                @if (HallList != null)
+                                                {
+                                                    @foreach (var hall in HallList)
+                                                    {
+                                                        if (hall.ID == Model.HallID)
+                                                        {
+                                                            <option value="@(hall.ID)" selected>@hall.Value</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@(hall.ID)">@hall.Value</option>
+                                                        }
+                                                    }
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <DropdownSelect @ref="@PriceGroupDropdown"
+                                                    DropdownID="@PriceGroupDropdownID"
+                                                    DivClass="col-md-12"
+                                                    IsRequired="true"
+                                                    Label="Price Group :"
+                                                    ReadDataOnSearch="true"
+                                                    Mode="(int)DropdownModes.PriceGroup"
+                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.PriceGroupID, Value=Model.PriceGroupName})"
+                                                    ItemSelected="ItemSelected" />
+                                    <ValidationMessage For="()=>Model.PriceGroupID" />
+
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label form-check-label ms-2">
+                                            Hall Sections
+                                        </label>
+
+                                        <div class="mt-2 border p-1 d-flex flex-row flex-wrap gap-1">
+
+                                            @foreach (var item in CourtSections)
+                                            {
+                                                <div class="form-check form-check-inline bx-border">
+
+                                                    <input class="form-check-input" type="checkbox" id="@("assignee-"+item.SectionID)" @onchange=" (ChangeEventArgs e)=> CheckboxClicked(e,item)" checked="@(Model.CourtSections.Any(i=>i.SectionID==item.SectionID)?"checked":null)">
+
+                                                    <label class="form-check-label ms-2">
+                                                        @item.SectionName
+                                                    </label>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md">
+                                        <div class="form-check form-check-inline bx-border">
+                                            <input class="form-check-input" type="checkbox" id="IsActive" @bind-value="Model.IsActive" checked="@(Model.IsActive?"checked":null)">
+                                            <label class="form-check-label ms-2" for="IsActive">
+                                                Is Active
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer-action d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+            <button type="button" class="btn btn-danger me-2" @onclick="Cancel">Cancel</button>
+        </div>
+
+    </EditForm>
+</PageLayoutNew>
+
+@code {
+    [Parameter] public int CourtID { get; set; }
+
+    private CourtModel Model = new();
+    private List<IdnValuePair> HallList = new();
+    List<IdnValuePair> TaxCategories = new();
+
+    private DropdownSelect? GameMasterDrowpdownSelect;
+    private DropdownSelect? PriceGroupDropdown;
+    private List<CourtSectionMapModel> CourtSections { get; set; } = new();
+
+    private string PriceGroupDropdownID = "price-group-dropdown";
+
+    protected override async Task OnInitializedAsync()
+    {
+        HallList = await API.GetAsync<List<IdnValuePair>>($"court/get-all-halls", true);
+
+        if (CourtID != 0)
+        {
+            Model = await API.GetAsync<CourtModel>($"court/get-court-view/{CourtID}", true);
+            await LoadSections();
+        }
+        else if (HallList.Count == 1)
+        {
+            Model.HallID = HallList[0].ID;
+            Model.HallName = HallList[0].Value;
+        }
+    }
+
+    private async Task ChangeHall(ChangeEventArgs e)
+    {
+        Model.HallID = Convert.ToInt32(e.Value);
+    }
+
+    private async Task LoadSections()
+    {
+        CourtSections = await API.GetAsync<List<CourtSectionMapModel>>($"court/get-all-hall-section/{Model.HallID}", true);
+    }
+
+    private async Task SaveCourt()
+    {
+        var res = await API.PostAsync<CourtAddResultModel, CourtModel>("court/save-court", Model);
+        if (res != null)
+        {
+            await JS.SuccessMessage("Saved Successfully");
+            Model ??= new();
+            Nav.NavigateTo($"court-view/{res.CourtID}");
+
+        }
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to leave this page..?", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            if (Model.CourtID != 0)
+            {
+                Nav.NavigateTo($"court-view/{Model.CourtID}");
+                StateHasChanged();
+            }
+
+            else
+                Nav.NavigateTo("courts");
+        }
+    }
+
+    private async Task CheckboxClicked(ChangeEventArgs e, CourtSectionMapModel list)
+    {
+
+        if ((Convert.ToBoolean(e.Value)))
+        {
+            Model.CourtSections.Add(list);
+        }
+        else
+        {
+            Model.CourtSections.Remove(Model.CourtSections.Where(f => f.SectionID == list.SectionID).First());
+        }
+    }
+
+
+    #region Dropdown Related functions
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.GameMaster:
+                Model.GameID = data.ID;
+                Model.GameName = data.Value;
+                break;
+            case (int)DropdownModes.PriceGroup:
+
+                Model.PriceGroupID = data.ID;
+                Model.PriceGroupName = data.Value;
+
+                break;
+        }
+    }
+
+    #endregion
+}

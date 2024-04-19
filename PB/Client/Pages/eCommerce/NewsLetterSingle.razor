@@ -1,0 +1,86 @@
+﻿@page "/add-newsletter"
+@using Blazored.TextEditor
+@using PB.Shared.Models.eCommerce.SEO;
+<PageLayoutNew>
+    <EditForm Model="@Model" OnValidSubmit="Save">
+     <div class="main-container container-fluid">
+            <div class="row page-header ">
+
+                <div class="col-12">
+                    <div class="card" style="min-height:500px;">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Blog Details</h5>
+                        </div>
+
+<div class="card" style="display:block">
+                        <div class="col-md-7">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1">Subject :</label>
+                                    <textarea class="form-control" placeholder="" rows="2" @bind="Model.Subject"></textarea> <br>
+                            </div>
+                        </div>
+                <div class="card-body col-7">
+                            <BlazoredTextEditor @ref="@QuillHtml">
+                        <ToolbarContent>
+                            <select class="ql-header">
+                                <option selected=""></option>
+                                <option value="1"></option>
+                                <option value="2"></option>
+                                <option value="3"></option>
+                                <option value="4"></option>
+                                <option value="5"></option>
+                            </select>
+                            <span class="ql-formats">
+                                <button class="ql-bold"></button>
+                                <button class="ql-italic"></button>
+                                <button class="ql-underline"></button>
+                                <button class="ql-strike"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <select class="ql-color"></select>
+                                <select class="ql-background"></select>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-list" value="ordered"></button>
+                                <button class="ql-list" value="bullet"></button>
+                            </span>
+                            <span class="ql-formats">
+                                <button class="ql-link"></button>
+                            </span>
+                        </ToolbarContent>
+                        <EditorContent>
+                                    @Model.BodeyContent
+
+                        </EditorContent>
+                    </BlazoredTextEditor>
+                </div>
+                </div>
+                </div>
+                </div>
+                </div>
+
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-success" >Save</button>
+                </div>
+            </div>
+            </EditForm>
+</PageLayoutNew>
+@code {
+    BlazoredTextEditor? QuillHtml;
+    private NewLetterModel Model = new();
+    protected override async Task OnInitializedAsync()
+    {
+     
+    }
+    async Task Save()
+    {
+        Model.BodeyContent = await QuillHtml.GetHTML();
+        var res = await API.PostAsync<BaseSuccessResponse, NewLetterModel>("seo/save-news-letter", Model);
+        if (res != null)
+        {
+            await JS.SuccessMessage();
+            Nav.NavigateTo("newsletter-list");
+
+        }
+    }
+}

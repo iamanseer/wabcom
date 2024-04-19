@@ -1,0 +1,625 @@
+﻿@page "/quotation-view/{QuotationID:int}"
+@page "/quotation-view/{QuotationID:int}/{ReturnType:int}"
+
+@using PB.Client.Shared.Common
+@using PB.Shared.Enum.Inventory
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Enum.CRM;
+@using PB.Shared.Models.Common
+@attribute [Authorize(Roles = "Quotation,FollowUp")]
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row">
+
+            <ListPageMenuLayout MenuItems="FollowupMenuList"
+                                SelectedMenuID="QuotationFollowupData.QuotationID"
+                                OnMenuItemSelect="LoadQuotationFollowupData"
+                                IsNeedDeleteOption="false"
+                                LoaderDivID="@LeftMenuID"
+                                ListHeading="All Quotations"
+                                IsNeedAddNewButton=false />
+
+            <div class="itemlist-container">
+
+                <div class="page-header">
+
+                    <h1 class="page-title">@("Quotation : " + QuotationFollowupData.QuotationName)</h1>
+
+                    <div class="btn-toolbar float-right mr-7">
+
+                        @if (QuotationFollowupData.MediaID is not null)
+                        {
+                            <a class="btn btn-white btn-md me-2" @onclick="async () => await ViewQuotationPDF()">
+                                <i class="fa fa-eye" style="color:var(--primary-bg-color)"></i>
+                            </a>
+                            <a class="btn btn-white btn-md me-2" href="@QuotationFollowupData.FileName" download="@QuotationFollowupData.FileName" target="_blank">
+                                <i class="fa fa-download" style="color:var(--primary-bg-color)"></i>
+                            </a>
+                            <a class="btn btn-white btn-md me-2" @onclick="async () => await SendQuotation()">
+                                <i class="mdi mdi-send" style="color:var(--primary-bg-color)"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-white btn-md me-2" @onclick="async () => await GenerateQuotationPDF()">
+                                <i class="mdi mdi-file-pdf-box" style="color:var(--primary-bg-color)"></i>
+                            </a>
+                        }
+
+                        @switch (QuotationFollowupData.CurrentFollowupNature)
+                        {
+                            case (int)FollowUpNatures.New:
+                            case (int)FollowUpNatures.Followup:
+
+                                <AuthorizeView Roles="FollowUp">
+                                    <a class="btn btn-white btn-md me-2" @onclick="AddNewFollowup">
+                                        Follow-up<i class="fa fa-plus ms-2" style="color:var(--primary-bg-color)"></i>
+                                    </a>
+                                </AuthorizeView>
+
+                                <a class="btn btn-white btn-md me-2" @onclick="NavigateToQuotationSinglePage">
+                                    Quotation<i class="fa fa-pencil ms-2" style="color:var(--primary-bg-color)"></i>
+                                </a>
+
+                                break;
+
+                            <!--Invoice section-->
+                            case not (int)FollowUpNatures.Cancelled:
+                                @if (QuotationFollowupData.InvoiceID == null)
+                                {
+                                    <a class="btn btn-white btn-md me-2" @onclick="ConvertToInvoice">
+                                        Invoice <i class="fe fe-file-plus mb-0 ms-2" style="font-size: 15px;color:var(--primary-bg-color)"></i>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-white btn-md me-2" @onclick="NivagateToInvoice">
+                                        Invoice <i class="fa fa-mail-reply mb-0 ms-2" style="font-size: 15px;color:var(--primary-bg-color)"></i>
+                                    </a>
+                                }
+                                break;
+
+                        }
+
+                        @if (ReturnType == 0)
+                        {
+                            <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"quotations"))">
+                                <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-white btn-md me-2" @onclick="@(()=>Nav.NavigateTo($"follow-ups"))">
+                                <i class="ion-close-round" style="color:var(--secondary-bg-color)"></i>
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <div class="row mt-4" id="quotation-followup-detatils-div">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="panel panel-primary">
+                                    <div class=" tab-menu-heading">
+                                        <div class="tabs-menu1">
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <!--Overview Tab-->
+                                                <li><a href="#overViewTab" class="active" data-bs-toggle="tab">Overview</a></li>
+                                                <li><a href="#tab6" data-bs-toggle="tab">Items</a></li>
+
+                                                <AuthorizeView Roles="FollowUp">
+                                                    @if (HasFollowupHistory)
+                                                    {
+                                                        <!--History Tab-->
+                                                        <li><a href="#historyTab" data-bs-toggle="tab">Followup History</a></li>
+                                                    }
+                                                </AuthorizeView>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <!--Tab Main Content-->
+                                    <div class="panel-body tabs-menu-body">
+                                        <div class="tab-content">
+
+                                            <!--Overview Tab-->
+                                            <div class="tab-pane active" id="overViewTab">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <!--Details-->
+                                                        <div class="col-lg-8 col-12">
+
+                                                            <!--Quotation Details-->
+                                                            <div class="group pb-3">
+
+                                                                <div class="row">
+                                                                    <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">
+                                                                        Quotation Details
+                                                                    </label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">
+                                                                        Quotation No
+                                                                    </label>
+                                                                    <label class="col-md-7 col-auto ">
+                                                                        @QuotationFollowupData.QuotationNo
+                                                                    </label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">
+                                                                        Customer Name
+                                                                    </label>
+                                                                    <label class="col-7 col-auto">
+                                                                        @QuotationFollowupData.CustomerName
+                                                                    </label>
+                                                                </div>
+                                                                @if(!string.IsNullOrEmpty(QuotationFollowupData.TaxNumber))
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-5 col-auto items-label text-muted">
+                                                                            TaxNumber
+                                                                        </label>
+                                                                        <label class="col-7 col-auto">
+                                                                            @QuotationFollowupData.TaxNumber
+                                                                        </label>
+                                                                    </div>
+                                                                }
+                                                                
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">
+                                                                        Mobile Number
+                                                                    </label>
+                                                                    <label class="col-7 col-auto">
+                                                                        @QuotationFollowupData.MobileNumber
+                                                                    </label>
+                                                                </div>
+
+                                                                @if (!string.IsNullOrEmpty(QuotationFollowupData.EmailAddress))
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class="col-5 col-auto items-label text-muted">
+                                                                            Email Address
+                                                                        </label>
+                                                                        <label class="col-7 col-auto">
+                                                                            @QuotationFollowupData.EmailAddress
+                                                                        </label>
+                                                                    </div>
+                                                                }
+
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">
+                                                                        Added On
+                                                                    </label>
+                                                                    <label class="col-7 col-auto">
+                                                                        @(QuotationFollowupData.Date.HasValue ? QuotationFollowupData.Date.Value.ToString("dd/MM/yyyy") : "--:--:----")
+                                                                    </label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">
+                                                                        Created By
+                                                                    </label>
+                                                                    <label class="col-7 col-auto">
+                                                                        @QuotationFollowupData.Username
+                                                                    </label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-5 col-auto items-label text-muted">
+                                                                        Status
+                                                                    </label>
+                                                                    <label class="col-7 col-auto">
+                                                                        @(QuotationFollowupData.CurrentFollowupNature.HasValue ? ((FollowUpNatures)QuotationFollowupData.CurrentFollowupNature).ToString() : "")
+                                                                    </label>
+                                                                </div>
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">
+                                                                        Item Counts
+                                                                    </label>
+                                                                    <label class="col-md-7 col-auto with-breaks">
+                                                                        @QuotationFollowupData.ItemsCount
+                                                                    </label>
+                                                                </div>
+
+                                                                @if (QuotationFollowupData.ExpiryDate != null)
+                                                                {
+                                                                    <div class="row">
+                                                                        <label class=" text-muted items-label col-md-5 col-auto">
+                                                                            Expiry Date
+                                                                        </label>
+                                                                        <label class="col-md-7 col-auto">
+                                                                            @QuotationFollowupData.ExpiryDate.Value.ToString("dd/MM/yyyy")
+                                                                        </label>
+                                                                    </div>
+                                                                }
+
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">
+                                                                        Total Amount
+                                                                    </label>
+                                                                    <label class="col-md-7 col-auto with-breaks">
+                                                                        @QuotationFollowupData.TotalAmount
+                                                                    </label>
+                                                                </div>
+
+                                                            </div>
+
+                                                            <!--Quotation Assignees-->
+                                                            @if (QuotationFollowupData.FollowupAssignees.Count > 0)
+                                                            {
+                                                                <div class="group pb-3">
+
+                                                                    <div class="row">
+                                                                        <label class="pb-3 fw-bold fs-16" style="color:var(--primary-bg-color)">Quotation Assignees </label>
+                                                                    </div>
+
+                                                                    @for (int i = 0; i < QuotationFollowupData.FollowupAssignees.Count; i++)
+                                                                    {
+                                                                        var assignee = QuotationFollowupData.FollowupAssignees[i];
+
+                                                                        <div class="row">
+                                                                            <label class="col-12 col-auto items-label text-muted">@assignee</label>
+                                                                        </div>
+                                                                    }
+
+                                                                </div>
+                                                            }
+                                                        </div>
+
+                                                        <!--Last Followup Details-->
+                                                        <div class="col-lg-4 col-12">
+                                                            <div class="group pt-4 position-relative">
+                                                                <div class="right-field" style="padding-top: 22px;">
+                                                                    <div class="fw-500 fs-16 mb-2">
+                                                                        @if (!HasFollowupHistory)
+                                                                        {
+                                                                            @("Quotation Created")
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            @("Last Followup")
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                                <div class="right-field">
+                                                                    <div class="font-weight-light">
+                                                                        <span>
+                                                                            <span class="text-dashed-underline">
+                                                                                Date
+                                                                            </span>
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="fw-500 fs-16">
+                                                                        @if (!HasFollowupHistory)
+                                                                        {
+                                                                            @("--:--:----")
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            @(LatestFollowup.FollowUpDate.HasValue ? LatestFollowup.FollowUpDate.Value.ToString("dd/MM/yyyy") : "--:--:----")
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                                <div class="right-field">
+                                                                    <div class="font-weight-light">
+                                                                        <span>
+                                                                            <span class="text-dashed-underline">
+                                                                                Status
+                                                                            </span>
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="fw-500 fs-16">
+                                                                        @if (!HasFollowupHistory)
+                                                                        {
+                                                                            @("New Quotation")
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            @(LatestFollowup.Status)
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                                <div class="right-field">
+                                                                    <div class="font-weight-light">
+                                                                        <span>
+                                                                            <span class="text-dashed-underline">
+                                                                                @if (!HasFollowupHistory)
+                                                                                {
+                                                                                    @("Created By")
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    @("Updated By")
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="fw-500 fs-16">
+                                                                        @if (HasFollowupHistory)
+                                                                        {
+                                                                            @LatestFollowup.Username
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            @QuotationFollowupData.Username
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                                <div class="right-field">
+                                                                    <div class="font-weight-light">
+                                                                        <span>
+                                                                            <span class="text-dashed-underline">
+                                                                                @if (!HasFollowupHistory)
+                                                                                {
+                                                                                    @("Fisrt Followup Date")
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    @("Next Followup Date")
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="fw-500 fs-16">
+                                                                        @(LatestFollowup.NextFollowUpDate.HasValue ? LatestFollowup.NextFollowUpDate.Value.ToString("dd/MM/yyyy") : "--:--:----")
+                                                                    </div>
+                                                                </div>
+
+                                                                <AuthorizeView Roles="FollowUp">
+                                                                    @if (HasFollowupHistory && (QuotationFollowupData.CurrentFollowupNature == (int)FollowUpNatures.New || QuotationFollowupData.CurrentFollowupNature == (int)FollowUpNatures.Followup))
+                                                                    {
+                                                                        <!--Edit button-->
+                                                                        <button class="btn btn-last-followup-edit" type="button" @onclick="async () => await EditLastFollowup()">
+                                                                            <i class="fe fe-edit" style="color:var(--primary-bg-color)"></i>
+                                                                        </button>
+                                                                    }
+                                                                </AuthorizeView>
+
+                                                            </div>
+
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+
+                                            <div class="tab-pane" id="tab6">
+                                                <div class="row">
+                                                    <table class="table border table-responsive text-wrap text-nowrap table-bordered mb-1 ">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Item Name</th>
+                                                                <th>Description</th>
+                                                                <th>Quantity</th>
+                                                                <th>Rate</th>
+                                                                <th>Discount</th>
+                                                                <th>Amount</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @if (QuotationFollowupData.QuotationItems.Count > 0)
+                                                            {
+                                                                @foreach (var enquiry in QuotationFollowupData.QuotationItems)
+                                                                {
+                                                                    <tr>
+
+                                                                        <td style="min-width:200px">
+                                                                            @enquiry.ItemName
+                                                                        </td>
+                                                                        <td style="min-width:200px">
+                                                                            @enquiry.Description
+                                                                        </td>
+                                                                        <td style="min-width:120px">
+                                                                            @enquiry.Quantity
+                                                                        </td>
+                                                                        <td style="min-width:120px">
+                                                                            @enquiry.Rate
+                                                                        </td>
+                                                                        <td style="min-width:120px">
+                                                                            @enquiry.Discount
+                                                                        </td>
+                                                                        <td style="min-width:120px">
+                                                                            @enquiry.NetAmount
+                                                                        </td>
+
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+
+                                            @if (HasFollowupHistory)
+                                            {
+                                                <!--History Tab-->
+                                                <div class="tab-pane" id="historyTab">
+                                                    <table class="table details-page-table text-wrap text-nowrap">
+                                                        <thead>
+                                                            <tr class="text-muted">
+                                                                <th width="25%">Date</th>
+                                                                <th width="25%"> Next Followup Date</th>
+                                                                <th>Details</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @for (int i = 0; i < QuotationFollowupData.Histories.Count; i++)
+                                                            {
+                                                                var historyItem = QuotationFollowupData.Histories[i];
+                                                                <tr>
+                                                                    <td class="text-muted" style="font-size: 12px;">
+                                                                        @(historyItem.FollowUpDate == null ? "" : historyItem.FollowUpDate.Value.ToString("dd/MM/yyy"))
+                                                                    </td>
+                                                                    <td class="text-muted" style="font-size: 12px;">
+                                                                        @(historyItem.NextFollowUpDate == null ? "" : historyItem.NextFollowUpDate.Value.ToString("dd/MM/yyy"))
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="position-relative pb-2">
+                                                                            <span style="font-size: 13px;">@historyItem.Status</span>
+                                                                            <span style="color: red; font-size: 12px;font-style: italic;">@historyItem.ShortDescription</span>
+                                                                            <div class="follow-up-history-user">
+                                                                                <span style="font-size:11px">
+                                                                                    @("followup by") <i class="text-muted">
+                                                                                        @(" - " + historyItem.Username)
+                                                                                    </i>
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<ModalFollowUp @ref="childFollowupModal" Saved="ModalQuotationFollowupCallbackRecieved" />
+@if (QuotationFollowupData.CustomerEntityID is not null)
+{
+    <ModalPdfSendConfirmation @ref="modalPdfSendConfirmation" CustomerEntityID="QuotationFollowupData.CustomerEntityID.Value" />
+}
+
+@code {
+    [Parameter] public int QuotationID { get; set; }
+    [Parameter] public int ReturnType { get; set; } = 0;
+
+    private bool HasFollowupHistory = false;
+    private bool IsNewFollowup = false;
+
+    private ModalFollowUp childFollowupModal = new();
+    private ModalPdfSendConfirmation modalPdfSendConfirmation = new();
+
+    private string LeftMenuID = "";
+
+    private List<ViewPageMenuModel>? FollowupMenuList = new();
+    private FollowUpModel LatestFollowup = new();
+
+    private PagedListPostModelWithFilter? FollowupSearchModel = new();
+
+    private QuotationFollowupModel QuotationFollowupData = new();
+
+    #region Quotation Follow-up Details
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadQuotationFollowupData(QuotationID);
+    }
+    private async Task LoadQuotationFollowupData(int? quotationID)
+    {
+        await LoadQuotationFollowupMenuList();
+        QuotationFollowupData = await API.GetAsync<QuotationFollowupModel>($"crm/get-quotation-details/{quotationID}", true);
+        if (QuotationFollowupData.Histories.Count > 0)
+        {
+            HasFollowupHistory = true;
+            LatestFollowup = QuotationFollowupData.Histories[0];
+        }
+        else
+        {
+            HasFollowupHistory = false;
+            LatestFollowup.NextFollowUpDate = QuotationFollowupData.FirstFollowUpDate;
+        }
+    }
+
+    private void NavigateToQuotationSinglePage()
+    {
+        Nav.NavigateTo($"quotation/{QuotationFollowupData.QuotationID}");
+    }
+    private async Task LoadQuotationFollowupMenuList()
+    {
+        if (ReturnType == 1)
+        {
+            FollowupMenuList = await API.GetAsync<List<ViewPageMenuModel>>("crm/get-quotation-followup-menu-list", true);
+        }
+        else
+        {
+            FollowupMenuList = await API.GetAsync<List<ViewPageMenuModel>>("crm/get-quotation-menu-list", true);
+        }
+    }
+
+    #endregion
+
+    #region Followup Modal
+
+    private async Task AddNewFollowup()
+    {
+
+        IsNewFollowup = true;
+        await childFollowupModal.AddNewFollowUp(
+            QuotationFollowupData.QuotationID,
+            (int)FollowUpTypes.Quotation,
+            QuotationFollowupData.QuotationName);
+
+    }
+    private async Task EditLastFollowup()
+    {
+        await childFollowupModal.UpdateFollowUp(
+            LatestFollowup.FollowUpID,
+            QuotationFollowupData.QuotationName + " Followup");
+    }
+    private async void ModalQuotationFollowupCallbackRecieved()
+    {
+        await LoadQuotationFollowupData(QuotationFollowupData.QuotationID);
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region PDF
+
+    private async Task GenerateQuotationPDF()
+    {
+        var result = await API.GetAsync<PdfGeneratedResponseModel>($"crm/generate-quotation-pdf/{QuotationFollowupData.QuotationID}", true);
+        if (result is not null)
+        {
+            QuotationFollowupData.MediaID = result.MediaID;
+            QuotationFollowupData.FileName = result.MailDetails.FileName;
+            await modalPdfSendConfirmation.OpenSendMailConfirmationModal(result.MailDetails);
+        }
+    }
+    private async Task ViewQuotationPDF()
+    {
+        var htmlContent = await API.GetAsync<StringModel>($"crm/get-quotation-pdf/{QuotationFollowupData.QuotationID}", true);
+        if (htmlContent is not null && !string.IsNullOrEmpty(htmlContent.Value))
+            await JS.InvokeVoidAsync("PrintPdfDocument", htmlContent.Value);
+    }
+    private async Task SendQuotation()
+    {
+        var mailDetails = await API.GetAsync<MailDetailsModel>($"crm/get-quotation-mail-details/{QuotationFollowupData.QuotationID}", true);
+        if (mailDetails is not null)
+            await modalPdfSendConfirmation.OpenSendMailConfirmationModal(mailDetails);
+    }
+
+    #endregion
+
+    #region Invoice
+
+    private void NivagateToInvoice()
+    {
+        Nav.NavigateTo($"invoice/{QuotationFollowupData.InvoiceID}");
+    }
+    private void ConvertToInvoice()
+    {
+        Nav.NavigateTo($"invoice/0/{QuotationFollowupData.QuotationID}");
+    }
+
+    #endregion
+}

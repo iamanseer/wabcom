@@ -1,0 +1,26 @@
+﻿@if (string.IsNullOrEmpty(Roles))
+{
+	<li>
+		<NavLink href="@Link" Match="NavLinkMatch.All">
+			@Localizer[Label]
+		</NavLink>
+	</li>
+}
+else
+{
+	<AuthorizeView Roles="@Roles">
+		<li>
+			<NavLink href="@Link" Match="NavLinkMatch.All">
+				@Localizer[Label]
+			</NavLink>
+		</li>
+	</AuthorizeView>
+}
+
+
+@code {
+	[Parameter] public string Link { get; set; }
+	[Parameter] public string Label { get; set; }
+	[Parameter] public string Roles { get; set; }
+}
+

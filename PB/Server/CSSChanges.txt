@@ -1,0 +1,4 @@
+22 July 2023 added by hridya
+
+1. Add a style in PageLayoutNew 
+<div class="app-content" style="overflow:hidden">

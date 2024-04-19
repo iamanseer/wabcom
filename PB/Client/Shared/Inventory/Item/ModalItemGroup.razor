@@ -1,0 +1,85 @@
+﻿@using PB.Shared.Models.Common
+@using PB.Shared.Models.Inventory.Items
+
+<div class="modal fade" id="item-group-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-md" role="document">
+        <EditForm Model="Model" autocomplete="off" OnValidSubmit="SaveItemGroup">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    @if (Model.GroupID != 0)
+                    {
+                        <h6 class="modal-title">@Model.GroupName</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New Group</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HideItemGroupModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row">
+                        <InputTextBox Label="Item Group:"
+                                      DivClass="col-md-12"
+                                      IsRequired="true"
+                                      PlaceHolder="Item group"
+                                      ValidationFor="() => Model.GroupName"
+                                      @bind-Value="Model.GroupName"
+                                      id="item-size-text-box" />
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    @if (Model.GroupID == 0)
+                    {
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideItemGroupModal()">Close</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideItemGroupModal()">Close</button>
+                    }
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; } 
+    private ItemGroupModel Model = new();
+
+
+    public async Task OpenItemGroupModal(int groupID = 0)
+    {
+        Model = new();
+        if (groupID != 0)
+        {
+            Model = await API.GetAsync<ItemGroupModel>($"item/get-item-group/{groupID}", true);
+        }
+        await JS.InvokeVoidAsync("ShowModal", "item-group-modal");
+    }
+
+    private async Task HideItemGroupModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "item-group-modal");
+    }
+
+    private async Task SaveItemGroup()
+    {
+        var result = await API.PostAsync<ItemGroupSaveSuccessModel, ItemGroupModel>("item/save-item-group", Model);
+        if(result is not null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair()
+                {
+                    ID = result.GroupID,
+                    Value = result.GroupName
+                });
+            await HideItemGroupModal();
+        }
+    }
+}

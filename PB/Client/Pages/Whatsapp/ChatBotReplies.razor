@@ -1,0 +1,878 @@
+﻿@page "/chatbot-replies"
+@using PB.Client.Shared.Inventory.Item
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Tables;
+@using System.Net.Http.Headers;
+@attribute [Authorize]
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row page-header ">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 style="margin-bottom: 0 !important;">Chatbot Setup</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.ReplyID != 0)
+                        {
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <div class="form-floating">
+                                        <input maxlength="60" @bind-value="Model.ReplyHeader" class="form-control valid" type="text" placeholder=" ">
+                                        <label for="floatingInput">@(Localizer["Reply Header"] + Localizer["(Max 60 Char)"])</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 form-group form-group--lg">
+                                <label class="form-label">@(Localizer["Description"] + Localizer["(Max 1024 Char)"])</label>
+                                <div class="input-editor">
+                                    <textarea class="form-control col-12" @bind="@Model.ReplyBody" rows="3" maxlength="1024"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <div class="form-floating">
+                                        <input maxlength="60" @bind-value="Model.ReplyFooter" class="form-control valid" type="text" placeholder=" ">
+                                        <label for="floatingInput">@(Localizer["Reply Footer"] + Localizer["(Max 60 Char)"])</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (Model.ReplyTypeID == (int)ChatbotReplyTypes.Forward || Model.ReplyTypeID == (int)ChatbotReplyTypes.List)
+                            {
+                                <div class="col-12">
+                                    <div class="form-group">
+                                        <div class="form-floating">
+                                            <input maxlength="20" @bind-value="Model.ListButtonText" class="form-control valid" type="text" placeholder=" ">
+                                            <label for="floatingInput">@(Localizer["List Button Caption (Applicable if there are more than 3 items in the reply list)"] + Localizer["(Max 20 Char)"])</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="col-sm-12 mt-2 mb-2">
+                                <button class="btn btn-primary  float-start" type="button" @onclick="()=>Forward(Model.ParentReplyID)">
+                                    <i class="fa fa-backward" /> @Localizer["Back"]
+                                </button>
+                                <button class="ms-2 btn btn-primary  float-start" type="button" @onclick="Update">
+                                    <i class="fa fa-shekel" /> @Localizer["Update"]
+                                </button>
+                                <button class="ms-2 btn btn-primary" type="button" @onclick="NewReplyOption">
+                                    <i class="fa fa-plus-square" /> @Localizer["Add Reply Options"]
+                                </button>
+                                <button class="ms-2 btn btn-primary" type="button" @onclick="NewMultiAnswer">
+                                    <i class="fa fa-plus-square" /> @Localizer["Add Multiple Reply"]
+                                </button>
+                            </div>
+                        }
+
+                        <div class="col-12">
+                            <Grid TableClass="table-striped" Data="Model.ReplyList" Context=cn>
+                                <GridHeader>
+                                    <th>@Localizer["Description"]</th>
+                                    <th>@Localizer["Action"]</th>
+                                </GridHeader>
+                                <GridRow>
+                                    <td>@(cn.Code == 0 ? "" : cn.Code) @cn.Description</td>
+                                    <td style="width:145px">
+                                        @if (cn.ParentReplyID != 0)
+                                        {
+                                            <button type="button" align="center" class="btn btn-dark waves-effect waves-light me-1" @onclick="()=>Edit(cn.ReplyID)"><i class="fa fa-edit"></i></button>
+                                            <button type="button" align="center" class="btn btn-dark waves-effect waves-light me-1" @onclick="()=>Delete(cn.ReplyID)"><i class="fa fa-trash"></i></button>
+                                        }
+                                        @switch ((ChatbotReplyTypes)cn.ReplyTypeID)
+                                        {
+                                            case ChatbotReplyTypes.ListOption:
+                                            case ChatbotReplyTypes.Purchase:
+                                                break;
+                                            default:
+                                                <button type="button" align="center" class="btn btn-dark waves-effect waves-light me-1" @onclick="()=>Forward(cn.ReplyID)"><i class="fa fa-forward"></i></button>
+                                                break;
+                                        }
+                                    </td>
+                                </GridRow>
+                            </Grid>
+                        </div>
+
+                        @if (Model.ReplyID != 0 && Model.MultiReplyList.Count > 0)
+                        {
+                            <div class="col-12 mt-3">
+                                <Grid DivClass="m-0 mt-3" TableClass="table-striped" Data="Model.MultiReplyList" Context=cn>
+                                    <GridHeader>
+                                        <th>@Localizer["SlNo"]</th>
+                                        <th>@Localizer["MediaType"]</th>
+                                        <th>@Localizer["Caption"]</th>
+                                        <th>@Localizer["FileName/Address"]</th>
+                                        <th>@Localizer["Action"]</th>
+                                    </GridHeader>
+                                    <GridRow>
+                                        <td>@cn.SlNo</td>
+                                        <td>@cn.MediaType</td>
+                                        <td>@(cn.Caption != null && cn.Caption.Length > 20 ? cn.Caption.Substring(1, 20) + ".." : cn.Caption)</td>
+                                        <td>@cn.FileName</td>
+                                        <td style="width:145px">
+                                            <button type="button" align="center" class="btn btn-dark waves-effect waves-light me-1" @onclick="()=>EditMultiReply(cn.MultiReplyID)"><i class="fa fa-edit"></i></button>
+                                            <button type="button" align="center" class="btn btn-dark waves-effect waves-light me-1" @onclick="()=>DeleteMultiReply(cn.MultiReplyID)"><i class="fa fa-trash"></i></button>
+                                        </td>
+                                    </GridRow>
+                                </Grid>
+                            </div>
+                        }
+
+                        <div class="modal fade" id="ReplyOptionModal" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header d-flex justify-content-between align-items-center" id="modal-header" style="background-color:var(--primary-bg-color)">
+                                        <h5 class="modal-title" id="exampleModalToggleLabel" style="color:white">@Localizer["Option"]</h5>
+                                        <button type="button" aria-label="Close" class="btn-close" @onclick="@(async() => await CloseModal("ReplyOptionModal"))"><span aria-hidden="true">&times;</span></button>
+                                    </div>
+                                    <EditForm Model="Reply" OnValidSubmit="SaveAsync" class="modal-body row">
+                                        <NumberBox Label="@Localizer["Sl No"]" @bind-Value="Reply.Code" FormGroupClass="col-4" IsRequired="true" />
+                                        <div class="col-8">
+                                            <div class="form-floating ">
+                                                <select class="form-select valid" @onchange="OnReplyTypeChange">
+                                                    <option value="0" selected="">(Choose)</option>
+                                                    @if (Model.ReplyTypeID == (int)ChatbotReplyTypes.Enquiry || Model.ReplyTypeID == (int)ChatbotReplyTypes.Submit)
+                                                    {
+                                                        @if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.Text)
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.Text)" selected>Text</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.Text)">Text</option>
+                                                        }
+
+                                                        @if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.List)
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.List)" selected>List</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.List)">List</option>
+                                                        }
+
+                                                        @*@if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.Address)
+                                                    {
+                                                    <option value="@((int)ChatbotReplyTypes.Address)" selected>Address</option>
+                                                    }
+                                                    else
+                                                    {
+                                                    <option value="@((int)ChatbotReplyTypes.Address)">Address</option>
+                                                    }*@
+
+                                                        @if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.Purchase)
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.Purchase)" selected>Purchase</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.Purchase)">Purchase</option>
+                                                        }
+                                                    }
+                                                    @if (Model.ReplyTypeID == (int)ChatbotReplyTypes.Forward)
+                                                    {
+                                                        @if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.Forward)
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.Forward)" selected>Forward</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.Forward)">Forward</option>
+                                                        }
+
+                                                        @if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.Enquiry)
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.Enquiry)" selected>Enquiry</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.Enquiry)">Enquiry</option>
+                                                        }
+
+                                                        @if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.ChatWithAgent)
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.ChatWithAgent)" selected>Chat With Agent</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.ChatWithAgent)">ChatWithAgent</option>
+                                                        }
+                                                        @if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.GoToMain)
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.GoToMain)" selected>Goto Main</option>
+                                                        }
+                                                        else
+                                                        {
+                                                            <option value="@((int)ChatbotReplyTypes.GoToMain)">Goto Main</option>
+                                                        }
+                                                    }
+
+                                                    @if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.Submit)
+                                                    {
+                                                        <option value="@((int)ChatbotReplyTypes.Submit)" selected>Submit</option>
+                                                    }
+                                                    else
+                                                    {
+                                                        <option value="@((int)ChatbotReplyTypes.Submit)">Submit</option>
+                                                    }
+                                                </select>
+                                                <label class="floating-label floating-select-label" for="floatingSelectGrid">Type <span style="color:red">*</span></label>
+                                            </div>
+                                        </div>
+
+                                        <TextBox Label="@(Localizer[HeaderShort]+Localizer["(Max 24 Char)"])" @bind-Value="Reply.Short" FormGroupClass="col-12" maxlength="24" IsRequired=true />
+
+                                        @if (ShowListOptionSmallDescription)
+                                        {
+                                            <TextBox Label="@(Localizer["List Option Description"])" @bind-Value="Reply.SmallDescription" FormGroupClass="col-12" maxlength="72" />
+                                        }
+
+
+                                        @if (ShowResponseHeader)
+                                        {
+                                            <TextBox Label="@(Localizer["Response Header"]+Localizer["(Max 60 Char)"])" @bind-Value="Reply.Header" FormGroupClass="col-12" maxlength="60" />
+                                        }
+                                        @if (ShowResponseBody)
+                                        {
+                                            <div class="col-12 form-group form-group--lg">
+                                                <label class="form-label">
+                                                    @(
+                                                        Localizer["Response Body"] + Localizer["(Max 1024 Char)"]
+                                                        )
+                                                    <span style="color:red">*</span>
+                                                </label>
+                                                <div class="input-editor">
+                                                    <textarea class="form-control col-12" @bind="@Reply.Detailed" rows="3" maxlength="1024"></textarea>
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (ShowResponseFooter)
+                                        {
+                                            <TextBox Label="@(Localizer["Response Footer"]+Localizer["(Max 60 Char)"])" @bind-Value="Reply.Footer" FormGroupClass="col-12" maxlength="60" />
+                                        }
+
+
+
+                                        @if (ShowListButtonText)
+                                        {
+                                            <TextBox Label="@(Localizer[ListButtonLabel]+Localizer["(Max 20 Char)"])" @bind-Value="Reply.ListButtonText" FormGroupClass="col-12" maxlength="20" />
+                                        }
+
+                                        @if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.List)
+                                        {
+                                            <Grid DivClass="m-0" TableClass="table-striped" Data="Reply.Options" Context="cn">
+                                                <GridHeader>
+                                                    <th scope="col"><span>@Localizer["Code"]</span></th>
+                                                    <th scope="col"><span>@Localizer["Text"]</span></th>
+                                                    <th style="width:50px"></th>
+                                                </GridHeader>
+                                                <GridRow>
+                                                    <td>
+                                                        <GridTextBox class="form-control rounded-cu" @bind-Value="@cn.Code" ValidationFor="() => cn.Code" maxlength="2" />
+                                                    </td>
+                                                    <td>
+                                                        <GridTextBox class="form-control rounded-cu" @bind-Value="@cn.Short" ValidationFor="() => cn.Short" maxlength="20" />
+                                                    </td>
+
+                                                    <td @onclick="async () => await Remove(cn)">
+                                                        <i class="fa fa-trash"></i>
+                                                    </td>
+
+                                                </GridRow>
+                                                <GridFooter>
+                                                    <td>
+                                                        <input class="form-control rounded-cu" placeholder="@Localizer["Code"]" @bind-value="ChatbotReplyOption.Code" @ref="TxtNew" maxlength="2" />
+                                                        <div class="form-control-validation">
+                                                            <ValidationMessage For="() => ChatbotReplyOption.Code" />
+                                                        </div>
+                                                    </td>
+
+                                                    <td>
+                                                        <input class="form-control rounded-cu" placeholder="@Localizer["Text"]" @bind-value="ChatbotReplyOption.Short" maxlength="20" />
+                                                        <div class="form-control-validation">
+                                                            <ValidationMessage For="() => ChatbotReplyOption.Short" />
+                                                        </div>
+                                                    </td>
+
+                                                    <td style="width:50px" @onclick="Add">
+                                                        <i class="fa fa-plus"></i>
+                                                    </td>
+                                                </GridFooter>
+                                            </Grid>
+                                        }
+
+                                        @if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.Submit)
+                                        {
+                                            <div class="col-12">
+                                                <div class="mt-0 mb-2">
+                                                    <div class=" form-check form-check-inline">
+                                                        <input class="ember-checkbox ember-view form-check-input" id="NeedConfirmation" type="checkbox" @bind-value="Reply.NeedConfirmation" checked="@(Reply.NeedConfirmation?"checked":null)">
+                                                        <label for="NeedConfirmation" class="form-check-label" style="cursor:pointer">Need Confirmation</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            @if (Reply.Assignees != null && Reply.Assignees.Count > 0)
+                                            {
+                                                <div class="row mt-2">
+                                                    <div class="col-md-12">
+
+                                                        <div class="mt-2">
+                                                            <label class="form-label" style="display: inline;">Assign To | </label>
+                                                            @if (Reply.Assignees.Where(fA => fA.IsAssigned).Count() != Reply.Assignees.Count)
+                                                            {
+                                                                <input type="checkbox" id="assigneeSelectAll" class="d-none" @onchange="SelectAllAssignees" />
+                                                                <label class="form-label ms-2 text-success" style="display: inline;cursor:pointer;" for="assigneeSelectAll">Select All</label>
+                                                            }
+                                                            else
+                                                            {
+                                                                <input type="checkbox" id="assigneeDeSelectAll" class="d-none" @onchange="DeSelectAllAssignees" />
+                                                                <label class="form-label ms-2 text-info" style="display: inline;cursor:pointer;" for="assigneeDeSelectAll">Deselect All</label>
+                                                            }
+                                                        </div>
+
+                                                        <div class="mt-2 border p-1 d-flex flex-row">
+                                                            @for (int i = 0; i < Reply.Assignees.Count; i++)
+                                                            {
+                                                                var salesPerson = Reply.Assignees[i];
+
+                                                                <div class="form-check form-check-inline bx-border">
+                                                                    <input class="form-check-input" type="checkbox" checked="@(salesPerson.IsAssigned?"checked":null)" id="@("assignee-"+salesPerson.EntityID)" @onchange="(ChangeEventArgs e) => SelectAssignee(e, salesPerson)">
+                                                                    <img class="ms-2" src="/assets/images/user.svg" style="width: 20px;" alt="">
+                                                                    <label class="form-check-label ms-2" for="@("assignee-"+salesPerson.EntityID)">
+                                                                        @salesPerson.Name
+                                                                    </label>
+                                                                </div>
+                                                            }
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+
+                                        @if (ShowItem)
+                                        {
+
+                                            <div class="col-12 mb-2">
+                                                <label class="form-label">@Localizer["Linked Product"]</label>
+                                                <DropdownSelect DropdownID="Item" @ref="ItemList"
+                                                            DivClass="col-md-12 px-0"
+                                                            FormGroupClass="form-group mb-0"
+                                                            IsAddOptionNeed="true"
+                                                            ReadDataOnSearch="true"
+                                                            Mode="(int)DropdownModes.Item"
+                                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = Reply.ItemVariantID, Value = Reply.ItemName})"
+                                                            ItemSelected="ItemSelected" NewButtonText="New Item"
+                                                            NewButtonClicked="AddNewItem" />
+                                            </div>
+                                        }
+
+                                        @if (ShowPurchase)
+                                        {
+                                            <TextBox Label="@Localizer["Quantity Label"]" @bind-Value="Reply.QuantityLabel" FormGroupClass="col-12" maxlength="100" />
+                                            <TextBox Label="@Localizer["Message with payment link (Use @Amount for show the amount)"]" @bind-Value="Reply.PaymentLabel" FormGroupClass="col-12" maxlength="100" />
+                                            <TextBox Label="@Localizer["Validation Failed Message"]" @bind-Value="Reply.ValidationFailedMessage" FormGroupClass="col-12" maxlength="100" />
+                                            <TextBox Label="@Localizer["Payment Success Message"]" @bind-Value="Reply.PaymentSuccessMessage" FormGroupClass="col-12" maxlength="100" />
+                                            <TextBox Label="@Localizer["Payment Failed Message"]" @bind-Value="Reply.PaymentFailedMessage" FormGroupClass="col-12" maxlength="100" />
+                                        }
+
+                                        @if (ShowCampaignKey)
+                                        {
+                                            <TextBox Label="@Localizer["Campaign Key"]" @bind-Value="Reply.SearchKey" FormGroupClass="col-12" maxlength="30" />
+                                        }
+
+
+
+                                        <div class="col-12">
+                                            <div class="mt-0 mb-2">
+                                                <div class=" form-check form-check-inline">
+                                                    <input class="ember-checkbox ember-view form-check-input" id="NotifyUser" type="checkbox" @bind-value="Reply.NotifyUser" checked="@(Reply.NotifyUser?"checked":null)">
+                                                    <label for="NotifyUser" class="form-check-label" style="cursor:pointer">Notify Agent</label>
+                                                </div>
+                                            </div>
+                                        </div>
+
+
+                                        <div class="col-lg-2 mt-4">
+                                            <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>
+                                        </div>
+                                    </EditForm>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal fade" id="MultiAnswerModal" data-backdrop="static" data-keyboard="false" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+                            <div class="modal-dialog modal-dialog-centered ">
+                                <div class="modal-content">
+                                    <div class="modal-header d-flex justify-content-between align-items-center" id="modal-header" style="background-color:var(--primary-bg-color)">
+                                        <h5 class="modal-title" id="exampleModalToggleLabel" style="color:white">@Localizer["Option"]</h5>
+                                        <button type="button" aria-label="Close" class="btn-close" @onclick="@(async() => await CloseModal("MultiAnswerModal"))"><span aria-hidden="true">&times;</span></button>
+                                    </div>
+
+                                    <EditForm Model="MultiReply" OnValidSubmit="SaveMultiReplyAsync" class="modal-body row">
+                                        <NumberBox Label="@Localizer["Sl No"]" @bind-Value="MultiReply.Reply.SlNo" FormGroupClass="col-4" />
+                                        <div class="col-8">
+                                            <div class="form-floating ">
+                                                <select class="form-select valid" @bind="MultiReply.Reply.MediaTypeID">
+                                                    <option value="0" selected="">(Choose)</option>
+                                                    <option value="@((int)MessageTypes.Text)">Text</option>
+                                                    <option value="@((int)MessageTypes.Image)">Image</option>
+                                                    <option value="@((int)MessageTypes.Audio)">Audio</option>
+                                                    <option value="@((int)MessageTypes.Document)">Document</option>
+                                                    <option value="@((int)MessageTypes.Video)">Video</option>
+                                                    <option value="@((int)MessageTypes.Location)">Location</option>
+                                                </select>
+                                                <label class="floating-label floating-select-label" for="floatingSelectGrid">Type</label>
+                                            </div>
+                                        </div>
+
+                                        @if (MultiReply.Reply.MediaTypeID != null)
+                                        {
+                                            @switch ((MessageTypes)MultiReply.Reply.MediaTypeID)
+                                            {
+                                                case MessageTypes.Text:
+                                                    <div class="col-12 form-group form-group--lg">
+                                                        <label class="form-label">@Localizer["Text"]</label>
+                                                        <div class="input-editor">
+                                                            <textarea class="form-control col-12" @bind="@MultiReply.Reply.Caption" rows="5"></textarea>
+                                                        </div>
+                                                    </div>
+                                                    break;
+                                                case MessageTypes.Audio:
+                                                case MessageTypes.Video:
+                                                case MessageTypes.Image:
+                                                case MessageTypes.Document:
+                                                    <div class="col-12 form-group form-group--lg">
+                                                        <label class="form-label">@Localizer["Caption"]</label>
+                                                        <div class="input-editor">
+                                                            <textarea class="form-control col-12" @bind="@MultiReply.Reply.Caption" rows="2"></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="form-group">
+                                                            <label class="form-label">Upload Media</label>
+                                                            <InputFile OnChange="@OnInputFileChange" class="form-control" />
+                                                        </div>
+                                                        @*<FileUpload @ref="FileUpload" Label="Upload Media" MediaID="MultiReply.Reply.MediaID" FolderName="chatbot-media" />*@
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="my-4">
+                                                            <div class=" form-check form-check-inline font-large">
+                                                                <input id="item-model-check" class="ember-checkbox ember-view form-check-input" type="checkbox" checked="@(MultiReply.Reply.IsFirst?"checked":null)" @bind-value="MultiReply.Reply.IsFirst">
+                                                                <label class="form-check-label fs-16 fw-bold" for="item-model-check">Attach this media with reply</label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    break;
+                                                case MessageTypes.Location:
+                                                    <TextBox Label="@Localizer["Location Name"]" @bind-Value="MultiReply.Location.Name" FormGroupClass="col-12" />
+                                                    <div class="col-12 form-group form-group--lg">
+                                                        <label class="form-label">@Localizer["Address"]</label>
+                                                        <div class="input-editor">
+                                                            <textarea class="form-control col-12" @bind="@MultiReply.Location.Address" rows="5"></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <NumberBox Label="@Localizer["Latitude"]" @bind-Value="MultiReply.Location.Latitude" FormGroupClass="col-6" />
+                                                    <NumberBox Label="@Localizer["Longitude"]" @bind-Value="MultiReply.Location.Longitude" FormGroupClass="col-6" />
+                                                    break;
+                                            }
+                                        }
+                                        <div class="col-lg-2 mt-4">
+                                            <button type="submit" class="btn btn-primary">@Localizer["Save"]</button>
+                                        </div>
+                                    </EditForm>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <ModalItem @ref="@ItemModal" Saved="ItemAdded" />
+</PageLayoutNew>
+@code {
+
+
+    #region Multi Reply
+
+    //FileUpload FileUpload;
+    ChatbotMultiReplyModel MultiReply = new();
+    private async Task NewMultiAnswer()
+    {
+        if (MultiReply == null || MultiReply.Reply == null || MultiReply.Reply.MultiReplyID != 0)
+            MultiReply = new();
+        await JS.InvokeVoidAsync("ShowModal", "MultiAnswerModal");
+    }
+
+    async Task SaveMultiReplyAsync()
+    {
+        MultiReply.Reply.ReplyID = Model.ReplyID;
+        if ((MessageTypes)MultiReply.Reply.MediaTypeID != MessageTypes.Location && (MessageTypes)MultiReply.Reply.MediaTypeID != MessageTypes.Text)
+{
+            if (file == null && MultiReply.Reply.MultiReplyID == 0)
+            {
+                await JS.ErrorMessage("Please upload a file");
+                return;
+            }
+
+            if (file != null)
+            {
+                var uploadres = (await UploadFileToFb());
+                MultiReply.Reply.WMediaID = uploadres.WMediaID;
+                MultiReply.Reply.MediaID = uploadres.MediaID;
+                MultiReply.Reply.DocumentName = DocumentName;
+            }
+        }
+        var res = await API.PostAsync<BaseSuccessResponse, ChatbotMultiReplyModel>("whatsapp/save-bot-multi-reply", MultiReply);
+        if (res != null)
+        {
+            await JS.SuccessMessage(res.ResponseMessage, res.ResponseTitle);
+            await LoadData(Model.ReplyID);
+            MultiReply = new();
+            await JS.InvokeVoidAsync("HideModal", "MultiAnswerModal");
+        }
+    }
+
+    async Task EditMultiReply(int id)
+    {
+        MultiReply = await API.GetAsync<ChatbotMultiReplyModel>($"whatsapp/get-bot-multi-reply/{id}");
+        await JS.InvokeVoidAsync("ShowModal", "MultiAnswerModal");
+    }
+
+    async Task DeleteMultiReply(int id)
+    {
+        if (await API.DeleteAsync("whatsapp/delete-chatbot-multi-reply", id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            Model.MultiReplyList.Remove(Model.MultiReplyList.Where(s => s.MultiReplyID == id).FirstOrDefault());
+        }
+    }
+
+    #endregion
+
+    private async Task CloseModal(string id)
+    {
+        await JS.InvokeVoidAsync("HideModal", id);
+    }
+
+    ChatbotReplyListModel Model = new();
+    ChatbotReplyModel Reply = new();
+    ChatbotReplyOptionModel ChatbotReplyOption = new();
+    ElementReference TxtNew;
+
+    List<IdnValuePair> Languages = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData(0);
+        Languages = await API.GetAsync<List<IdnValuePair>>("whatsapp/get-languages");
+    }
+
+    private async Task LoadData(int replyID)
+    {
+        Model = await API.GetAsync<ChatbotReplyListModel>($"whatsapp/get-chatbot-replies/{replyID}", true);
+    }
+
+
+    string HeaderShort = "Option Title", ListButtonLabel = "List Button Caption", ResponseBodyLabel = "Response Body";
+    bool ShowListOptionSmallDescription, ShowResponseBody, ShowCampaignKey, ShowResponseHeader, ShowResponseFooter, ShowListButtonText, ShowPurchase, ShowItem;
+    async Task OnReplyTypeChange(ChangeEventArgs e)
+    {
+        Reply.ReplyTypeID = Convert.ToInt32(e.Value);
+        if (Reply.ReplyTypeID == (int)ChatbotReplyTypes.Submit)
+            await GetAssinees(Reply.ReplyID);
+
+        SetForm();
+    }
+
+    void SetForm()
+    {
+        switch ((ChatbotReplyTypes)Reply.ReplyTypeID)
+        {
+            case ChatbotReplyTypes.GoToMain:
+                ShowResponseBody = false;
+                ShowResponseHeader = false;
+                ShowResponseFooter = false;
+                ShowListButtonText = false;
+                ShowPurchase = false;
+                ShowListOptionSmallDescription = true;
+                HeaderShort = "Option Title";
+                break;
+            case ChatbotReplyTypes.Forward:
+                ShowResponseBody = true;
+                ShowResponseHeader = true;
+                ShowResponseFooter = true;
+                ShowListOptionSmallDescription = true;
+                ShowCampaignKey = true;
+                ShowListButtonText = true;
+                ShowPurchase = false;
+                ListButtonLabel = "List Button Caption";
+                HeaderShort = "List Option Title";
+                Reply.ListButtonText ??= "Choose";
+                ResponseBodyLabel = "Response Body";
+                break;
+            case ChatbotReplyTypes.Enquiry:
+                ShowResponseBody = true;
+                ShowResponseHeader = true;
+                ShowResponseFooter = true;
+                ShowListOptionSmallDescription = true;
+                ShowCampaignKey = true;
+                ShowListButtonText = true;
+                ShowPurchase = false;
+                HeaderShort = "List Option Title";
+                ListButtonLabel = "Enquiry Exit Button Caption";
+                Reply.Footer ??= "You can go back any time by pressing Go Back button";
+                Reply.ListButtonText ??= "Go Back";
+                ResponseBodyLabel = "Response Body";
+                break;
+            case ChatbotReplyTypes.ChatWithAgent:
+                ShowResponseBody = true;
+                ShowResponseHeader = false;
+                ShowResponseFooter = false;
+                ShowListOptionSmallDescription = true;
+                ShowCampaignKey = false;
+                ShowListButtonText = false;
+                ShowPurchase = false;
+                HeaderShort = "List Option Title";
+                ResponseBodyLabel = "Response Body";
+                break;
+            case ChatbotReplyTypes.Submit:
+                ShowResponseBody = true;
+                ShowResponseHeader = true;
+                ShowResponseFooter = true;
+                ShowListOptionSmallDescription = false;
+                ShowCampaignKey = true;
+                ShowListButtonText = true;
+                ShowItem = true;
+                ShowPurchase = false;
+                HeaderShort = "List Option Title";
+                ListButtonLabel = "Confirm button text";
+                ResponseBodyLabel = "Response Body";
+                break;
+            case ChatbotReplyTypes.Text:
+            case ChatbotReplyTypes.List:
+                ShowResponseBody = true;
+                ShowResponseHeader = false;
+                ShowResponseFooter = false;
+                ShowListButtonText = false;
+                ShowListOptionSmallDescription = false;
+                ShowPurchase = false;
+                HeaderShort = "Code";
+                ResponseBodyLabel = "Question";
+                break;
+            case ChatbotReplyTypes.Purchase:
+                ShowCampaignKey = false;
+                ShowResponseBody = false;
+                ShowResponseHeader = false;
+                ShowResponseFooter = false;
+                ShowListButtonText = false;
+                ShowListOptionSmallDescription = false;
+                ShowPurchase = true;
+                ShowItem = true;
+                break;
+        }
+        StateHasChanged();
+    }
+
+    async Task Edit(int id)
+    {
+        Reply = await API.GetAsync<ChatbotReplyModel>($"whatsapp/get-bot-reply/{id}");
+        await JS.InvokeVoidAsync("ShowModal", "ReplyOptionModal");
+        SetForm();
+    }
+
+    async Task Forward(int id)
+    {
+        await LoadData(id);
+    }
+
+    async Task Delete(int id)
+    {
+        if (await API.DeleteAsync("whatsapp/delete-chatbot-reply", id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            Model.ReplyList.Remove(Model.ReplyList.Where(s => s.ReplyID == id).FirstOrDefault());
+        }
+    }
+
+    async Task SaveAsync()
+    {
+        if (Reply.ReplyTypeID == 0)
+        {
+            await JS.ErrorMessage("Please choose Reply Type");
+            return;
+        }
+        Reply.WhatsappAccountID = Model.WhatsappAccountID;
+        Reply.ParentReplyID = Model.ReplyID;
+
+        var res = await API.PostAsync<BaseSuccessResponse, ChatbotReplyModel>("whatsapp/save-bot-reply", Reply);
+        if (res != null)
+        {
+            await JS.SuccessMessage(res.ResponseMessage, res.ResponseTitle);
+            await LoadData(Reply.ParentReplyID.Value);
+            Reply = new();
+            await JS.InvokeVoidAsync("HideModal", "ReplyOptionModal");
+        }
+    }
+
+    async Task Update()
+    {
+        ChatbotReplyHeaderUpdateModel reply = new()
+            {
+                ReplyID = Model.ReplyID,
+                ReplyHeader = Model.ReplyHeader,
+                ListButtonText = Model.ListButtonText,
+                ReplyBody = Model.ReplyBody,
+                ReplyFooter = Model.ReplyFooter
+            };
+        var res = await API.PostAsync<BaseSuccessResponse, ChatbotReplyHeaderUpdateModel>("whatsapp/update-bot-reply-header", reply);
+        if (res != null)
+        {
+            await JS.SuccessMessage(res.ResponseMessage, res.ResponseTitle);
+        }
+    }
+
+    private async Task NewReplyOption()
+    {
+        if (Reply.ReplyID != 0)
+            Reply = new();
+        await JS.InvokeVoidAsync("ShowModal", "ReplyOptionModal");
+    }
+
+
+    private async Task Remove(ChatbotReplyOptionModel item)
+    {
+        if (await JS.Confirm())
+        {
+            Reply.Options.Remove(item);
+        }
+        await TxtNew.FocusAsync();
+    }
+
+    private async Task Add()
+    {
+        if (await API.ValidateRow(ChatbotReplyOption))
+        {
+            if (Reply.Options.Where(s => s.Code == ChatbotReplyOption.Code).ToList().Count > 0)
+            {
+                await JS.ErrorMessage("Item already exist");
+                return;
+            }
+
+            Reply.Options.Add(ChatbotReplyOption);
+            ChatbotReplyOption = new();
+        }
+        await TxtNew.FocusAsync();
+    }
+
+
+    #region User Assignment
+
+    private async Task GetAssinees(int replyID = 0)
+    {
+        Reply.Assignees = await API.GetAsync<List<ChatbotSubmitAssigneeModel>>($"whatsapp/get-bot-submit-assignees/{replyID}");
+    }
+
+    private void SelectAllAssignees()
+    {
+        foreach (var assignee in Reply.Assignees)
+        {
+            assignee.IsAssigned = true;
+        }
+    }
+
+    private void DeSelectAllAssignees()
+    {
+        foreach (var assignee in Reply.Assignees)
+        {
+            assignee.IsAssigned = false;
+        }
+    }
+
+    private void SelectAssignee(ChangeEventArgs e, ChatbotSubmitAssigneeModel assignee)
+    {
+        assignee.IsAssigned = Convert.ToBoolean(e.Value);
+    }
+
+    #endregion
+
+    #region Item Assignment
+
+    private ModalItem? ItemModal;
+
+    private DropdownSelect? ItemList;
+
+    private async Task AddNewItem(int mode)
+    {
+        await ItemModal.OpenItemModal();
+    }
+
+    private async Task ItemAdded(IdnValuePair item)
+    {
+        Reply.ItemVariantID = item.ID;
+        Reply.ItemName = item.Value;
+        await JS.InvokeVoidAsync("setDropdownFocus", "Item", "drop-down-focused");
+        ItemList.AddToData(item);
+    }
+
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        Reply.ItemName = data.Value;
+        Reply.ItemVariantID = data.ID;
+        await JS.InvokeVoidAsync("setDropdownFocus", "Item", "drop-down-focused");
+    }
+
+    #endregion
+
+    #region Header Media
+
+    IBrowserFile file;
+    string DocumentName = "";
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        file = e.GetMultipleFiles()[0];
+        DocumentName = file.Name;
+    }
+
+    public async Task<WhatsappMediaUploadResponseModel> UploadFileToFb()
+    {
+        @if (file != null)
+        {
+            using var content = new MultipartFormDataContent();
+
+            try
+            {
+                var fileContent = new StreamContent(file.OpenReadStream(50000000));
+
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue(file.ContentType);
+
+                content.Add(
+                    content: fileContent,
+                    name: "\"files\"",
+                    fileName: file.Name);
+            }
+            catch (Exception ex)
+            {
+
+            }
+            content.Add(new StringContent(Model.WhatsappAccountID.ToString()), "WhatsappAccountID");
+            content.Add(new StringContent("1"), "NeedToSaveFile");
+            content.Add(new StringContent("chatbot-media"), "FolderName");
+            return await API.PostAsync<WhatsappMediaUploadResponseModel>("whatsapp/upload-media-to-fb", content);
+        }
+        return null;
+    }
+
+    #endregion
+}
+

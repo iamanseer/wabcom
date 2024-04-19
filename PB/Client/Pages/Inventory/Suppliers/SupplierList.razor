@@ -1,0 +1,141 @@
+﻿@page "/suppliers"
+@using PB.CRM.Model.Enum
+@using PB.Shared.Models.Common
+@using PB.Shared.Models.Inventory.Supplier
+@attribute [Authorize(Roles = "Supplier")]
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="SupplierFilterSettings" OnFilterButtonClick="FilterListPageTo" />
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    Name
+                                </th>
+                                <th>
+                                    Mobile
+                                </th>
+                                <th>
+                                    Email
+                                </th>
+                                <th>
+                                    Status
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in ViewModel.Data.Select((value, i) => new { i, value }))
+                            {
+                                var entry = item.value;
+                                var index = item.i;
+                                <tr @onclick="@(()=>Nav.NavigateTo($"suppliers-view/{entry.EntityID}"))" style="cursor:pointer">
+                                    <td>
+                                        @if (ViewModel.PageIndex == 1)
+                                        {
+                                            @(index + 1)
+                                        }
+                                        else
+                                        {
+                                            @((ViewModel.PageIndex * ViewModel.PageSize) + (index + 1) - 10)
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @entry.Name
+                                    </td>
+
+                                    <td>
+                                        @entry.Phone
+                                    </td>
+
+                                    <td>
+                                        @entry.EmailAddress
+                                    </td>
+                                    <td>
+                                        @(((CustomerStatus)entry.Status).ToString())
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="ViewModel.PageSize" TotalCount="ViewModel.TotalCount" TotalPages="ViewModel.TotalPages" PageIndex="ViewModel.PageIndex" LoadPageIndex="PageIndex" />
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+    private PagedList<SupplierListModel> ViewModel = new();
+    private PagedListPostModelWithFilter SearchModel = new();
+    private HeaderSettingsModel? SupplierFilterSettings;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        List<FilterSortInputModel> stage1SortMenuItems = new()
+        {
+            new()
+            {
+                DisplayName = "Supplier Name",
+                FieldName = "E.Name"
+            },
+            new()
+            {
+                DisplayName = "Email",
+                FieldName = "E.EmailAddress"
+            },
+        };
+        List<FilterIdnValueInputModel> SupplierEnumFilterList = new()
+        {
+            new()
+            {
+                FiledName = "S.Status",
+                DisplayName = "Status",
+                EnumObject = CustomerStatus.Active
+            },
+        };
+        SupplierFilterSettings = new()
+            {
+                Heading = "Suppliers",
+                NeedAddButton = true,
+                AddButtonText = "Add Supplier",
+                SinglePageURL = "supplier",
+                SearchPlaceHolder = "Search supplier..",
+                NeedSortOption=true,
+                SortMenuItems = stage1SortMenuItems,
+                NeedFilterOption = true,
+                IdnValueFilters = SupplierEnumFilterList,
+            };
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        ViewModel = await API.PostAsync<PagedList<SupplierListModel>, PagedListPostModelWithFilter>("supplier/get-supplier-paged-list", SearchModel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+}

@@ -1,0 +1,61 @@
+﻿@page "/profile"
+
+@attribute [Authorize]
+@using Blazored.LocalStorage
+@inject ILocalStorageService _localStorage
+
+<PageLayoutOld PageName=@Localizer["Profile"] ProfileURL="@ProfileURL">
+
+	<div class="col-lg-8 p-0">
+		<div class="card">
+			<div class="card-body">
+				<EditForm Model="Model" OnValidSubmit="async () => await SaveAsync()">
+					<DataAnnotationsValidator />
+					<div class="row ps-3 pe-3">
+						<div class="col-md-8 ps-0">
+							<TextBox @bind-Value="Model.FirstName" Label="@Localizer["Name"]" FormGroupClass="col-12"></TextBox>
+							<TextBox @bind-Value="Model.Phone" Label="@Localizer["Phone"]" FormGroupClass="col-12"></TextBox>
+							<TextBox @bind-Value="Model.EmailAddress" Label="@Localizer["Email Address"]" FormGroupClass="col-12"></TextBox>
+						</div>
+						<div class="col-md-4 pe-0">
+							<Image @ref="Media" MediaID="Model.MediaID" FolderName="profile" DivClass="col-md-12" Label="@Localizer["Profile Photo"]" />
+						</div>
+					</div>
+					<div class="mb-3 p-0 mt-2 text-center mb-4">
+						<button type="submit" class="btn btn-secondary  pt-3 pb-3 ps-5 pe-5 rounded  mx-auto">@Localizer["Save"]</button>
+					</div>
+					<ValidationSummary />
+				</EditForm>
+			</div>
+		</div>
+	</div>
+
+
+</PageLayoutOld>
+
+@code {
+
+	private string ProfileURL = "";
+	private ProfileModel Model = new();
+	Image Media;
+
+	protected override async Task OnInitializedAsync()
+	{
+		ProfileURL = await _localStorage.GetItemAsync<string>("profile-image");
+		Model = await API.GetAsync<ProfileModel>("profile/get-profile-details");
+	}
+
+	async Task SaveAsync()
+	{
+		Model.MediaID = await Media.UploadImage();
+		var response = await API.PostAsync<ProfileUpdateResultModel, ProfileModel>("profile/update-profile", Model);
+		if (response != null)
+		{
+			ProfileURL = response.ProfileURL;
+			await _localStorage.SetItemAsync("profile-image", response.ProfileURL);
+			await JS.SuccessMessage(response.ResponseMessage, response.ResponseTitle);
+
+			Nav.NavigateTo("home");
+		}
+	}
+}

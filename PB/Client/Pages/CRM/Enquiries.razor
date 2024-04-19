@@ -1,0 +1,269 @@
+﻿@page "/enquiries"
+@page "/enquiries/{Nature}"
+
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Enum.CRM;
+@using PB.Shared.Models.Common;
+
+@attribute [Authorize(Roles = "Enquiry")]
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="EnquiryHeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)ApplyFilterTo" />
+                </div>
+                <div class="card-body">
+                    @if (canShowListPageExtraOptions)
+                    {
+                        <div class="row mb-2">
+                            <div class="col-md-12 d-flex justify-content-end">
+                                <div>
+                                    <button type="button" class="btn btn-secondary btn-md" @onclick="async () => await DownloadEnquiryContactData()">
+                                        <i class="fe fe-download fw-bold"></i> Download
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    Customer Name
+                                </th>
+                                <th>
+                                    EnquiryNo
+                                </th>
+
+                                <th>
+                                    Date
+                                </th>
+                                <th>
+                                    Added By
+                                </th>
+                                <th>
+                                    Assign To
+                                </th>
+                                <th>
+                                    Lead Through
+                                </th>
+                                <th>
+                                    Lead Quality
+                                </th>
+                                <th>
+                                    Status
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in EnquiryListPageModel.Data.Select((value, i) => new { i, value }))
+                            {
+                                var entry = item.value;
+                                var index = item.i;
+                                <tr @onclick="@(()=>Nav.NavigateTo($"enquiry-view/{entry.EnquiryID}"))" style="cursor:pointer">
+                                    <td>
+                                        @if (EnquiryListPageModel.PageIndex == 1)
+                                        {
+                                            @(index + 1)
+                                        }
+                                        else
+                                        {
+                                            @(((EnquiryListPageModel.PageIndex * EnquiryListPageModel.PageSize) + (index + 1)) - 10)
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @entry.CustomerName
+                                    </td>
+
+                                    <td>
+                                        @entry.EnquiryNo
+                                    </td>
+
+                                    <td>
+                                        @(entry.Date.HasValue ? entry.Date.Value.ToString("dd/MM/yyyy") : "--/--/----")
+                                    </td>
+
+                                    <td>
+                                        @entry.AddedBy
+                                    </td>
+
+                                    <td>
+                                        @entry.Assignee
+                                    </td>
+
+                                    <td>
+                                        @(entry.LeadThroughName)
+                                    </td>
+
+                                    <td>
+                                        @(entry.LeadQuality > 0 ? ((LeadQualities)entry.LeadQuality).ToString() : "")
+                                    </td>
+
+                                    <td>
+                                        @if (entry.CurrentFollowupNature == (int)FollowUpNatures.New)
+                                        {
+                                            <span class="@entry.NatureBadgeClass">Enquiry Created</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="@entry.NatureBadgeClass">@(((FollowUpNatures)entry.CurrentFollowupNature).ToString())</span>
+                                        }
+
+                                    </td>
+
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="EnquiryListPageModel.PageSize" TotalCount="EnquiryListPageModel.TotalCount" TotalPages="EnquiryListPageModel.TotalPages" PageIndex="EnquiryListPageModel.PageIndex" LoadPageIndex="PageIndex" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+@code {
+    [Parameter] public string? Nature { get; set; }
+
+    private PagedList<EnquiryListModel> EnquiryListPageModel = new();
+    private PagedListPostModelWithFilter ListPageSearchModel = new();
+
+    HeaderSettingsModel? EnquiryHeaderSettings;
+    private bool canShowListPageExtraOptions = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        EnquiryHeaderSettings = new()
+            {
+                Heading = "Enquiries",
+                NeedAddButton = true,
+                AddButtonText = "New Enquiry",
+                SinglePageURL = "enquiry",
+                SearchPlaceHolder = "Search by customer name..",
+                NeedSortOption = true,
+                NeedFilterOption = true,
+                IdnValueFilters = EnquiryEnumFilterList,
+                DateFilters = EnquiryDateFilterList,
+                SortMenuItems = sortInupuItems
+            };
+
+        if (!string.IsNullOrEmpty(Nature))
+        {
+            switch (Nature)
+            {
+                case "new-enquiries":
+                    ListPageSearchModel.CurrentFollowupNature = (int)FollowUpNatures.New;
+                    break;
+                case "interested":
+                    ListPageSearchModel.CurrentFollowupNature = (int)FollowUpNatures.Converted;
+                    break;
+                case "closed":
+                    ListPageSearchModel.CurrentFollowupNature = (int)FollowUpNatures.Cancelled;
+                    break;
+            }
+        }
+        await LoadData();
+        canShowListPageExtraOptions = true;
+    }
+
+    #region Filter
+
+    List<FilterSortInputModel> sortInupuItems = new()
+    {
+        new ()
+        {
+            DisplayName = "Enquiry Number",
+            FieldName = "E.EnquiryNo"
+        },
+        new ()
+        {
+            DisplayName = "Lead Through",
+            FieldName = "E.LeadThroughID"
+        },
+        new()
+            {
+                DisplayName = "Lead Quality",
+                FieldName = "E.LeadQuality"
+            },
+        new()
+            {
+                DisplayName = "Status",
+                FieldName = "E.CurrentFollowUpNature"
+            },
+    };
+
+    List<FilterIdnValueInputModel> EnquiryEnumFilterList = new()
+    {
+        new()
+        {
+            FiledName = "CurrentFollowupNature",
+            DisplayName = "Status",
+            EnumObject = FollowUpNatures.Converted
+        },
+        new()
+        {
+            FiledName = "E.LeadThroughID",
+            DisplayName = "Lead Through",
+            EnumObject = LeadThroughs.Whatsapp,
+            CustomOptionApiPath = "common/get-list-of-lead-throughs"
+        },
+        new()
+        {
+            FiledName = "LeadQuality",
+            DisplayName = "Lead Quality",
+            EnumObject = LeadQualities.Hot
+        },
+    };
+
+    List<FilterDateInputModel> EnquiryDateFilterList = new()
+    {
+        new()
+        {
+            FieldName = "Date",
+            DisplayName = "Date"
+        }
+    };
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        ListPageSearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    #endregion
+
+    private async Task LoadData()
+    {
+        EnquiryListPageModel = await API.PostAsync<PagedList<EnquiryListModel>, PagedListPostModelWithFilter>("crm/get-enquiry-paged-list", ListPageSearchModel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        ListPageSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    #region Download excel data
+
+    private async Task DownloadEnquiryContactData()
+    {
+        if (await JS.Confirm("Confirm", "Should we continue with creating the Excel file that contains the filtered phone numbers and names from the enquiry list?",SweetAlertMessageType.question,"Yes, Continue","No, Filter again"))
+        {
+            var result = await API.PostAsync<byte[]?, PagedListPostModelWithFilter>("crm/get-customers-excel-file", ListPageSearchModel);
+            if (result is not null)
+            {
+                await JS.InvokeAsync<object>("JSInteropExt.saveAsFile", "Customer'sList.xlsx", "application/vnd.ms-excel", Convert.ToBase64String(result));
+            }
+        }
+    }
+
+    #endregion
+}

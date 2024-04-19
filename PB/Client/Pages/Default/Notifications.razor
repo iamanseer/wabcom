@@ -1,0 +1,33 @@
+﻿@page "/notifications"
+@attribute [Authorize]
+
+<PageLayoutOld Menu="Dashboard" PageName="Notifications">
+	<div class="row">
+
+		<div class="col-lg-8">
+			<div class="notification-list-view">
+				<NotificationComponent Data="Data"/>
+			</div>
+		</div>
+
+	</div>
+</PageLayoutOld>
+
+@code
+{
+	List<ViNotificationCustom> Data = new();
+	NotificationSearchModel SearchModel = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await GetNotifications();
+	}
+	private async Task GetNotifications()
+	{
+		var res = await API.PostAsync<PagedList<ViNotificationCustom>, NotificationSearchModel>("notification/get-notifications", SearchModel);
+		if (res != null)
+		{
+			Data = res.Data;
+		}
+	}
+}

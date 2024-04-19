@@ -1,0 +1,49 @@
+﻿
+
+
+-- 02/04/2024 EC_Item
+
+CREATE TABLE [dbo].[EC_Item](
+	[ItemID] [int] IDENTITY(1,1) NOT NULL PRIMARY KEY,
+	[ClientID] [int] NULL REFERENCES Client(ClientID),
+	[ItemCode] [nvarchar](50) NULL,
+	[ItemName] [nvarchar](200) NULL,
+	[ItemName2] [nvarchar](200) NULL,
+	[GroupID] [int] NULL REFERENCES ItemGroup(GroupID),
+	[BrandID] [int] NULL REFERENCES ItemBrand(BrandID),
+	[CategoryID] [int] NULL REFERENCES ItemCategory(CategoryID),
+	[Description] [nvarchar](max) NULL,
+	[IntraTaxCategoryID] [int] NULL REFERENCES TaxCategory(TaxCategoryID),
+	[IsGoods] [bit] NULL,
+	[InterTaxCategoryID] [int] NULL REFERENCES TaxCategory(TaxCategoryID),
+	[TaxPreferenceTypeID] [int] NULL REFERENCES TaxPreference(TaxPreferenceTypeID),
+	[IsInclusiveTax] [bit] NULL,
+	[AddedBy] [int] NULL,
+	[HasMultipleModels] [bit] NULL,
+	[SacID] [int] NULL REFERENCES SAC(ID),
+	[HsnID] [int] NULL REFERENCES HSN(ID),
+	[IsFeatured] bit NULL,
+	[IsNewArrival] bit NULL,
+	[IsDeleted] [bit] NULL,
+)
+GO
+
+-- EC_ItemVariant
+
+CREATE TABLE [dbo].[EC_ItemVariant](
+	[ItemVaraintID] [int] IDENTITY(1,1) NOT NULL PRIMARY KEY,
+	[ItemID] [int] NULL REFERENCES Item(ItemID),
+	[PackingTypeID] [int] NULL REFERENCES ItemPackingType(PackingTypeID),
+	[SizeID] [int] NULL REFERENCES ItemSize(SizeID),
+	[UmUnit] [int] NULL,
+	[Price] [decimal] NULL,
+	[Cost] [decimal] NULL,
+	[SlugUrl] [nvarchar](MAX) NULL,
+	[MetaTitle] [nvarchar](300) NULL,
+	[MetaDescription] [nvarchar](MAX) NULL,
+	[OgTitle] [nvarchar](300) NULL,
+	[OgDescription] [nvarchar](MAX) NULL,
+	[OgMediaID] [int] NULL REFERENCES Media(MediaID),
+	[IsDeleted] [bit] NULL,
+)
+GO

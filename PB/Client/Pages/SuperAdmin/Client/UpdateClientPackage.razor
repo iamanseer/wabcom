@@ -1,0 +1,144 @@
+﻿@page "/update-client-package"
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="UpdatePackage" autocomplete="off">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Change Package</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <DropdownSelect DropdownID="@ClientDropdownSelect"
+                                                DivClass="col-md-6"
+                                                Label="Client"
+                                                IsRequired="true"
+                                                IsAddOptionNeed="false"
+                                                ReadDataOnSearch="true"
+                                                Mode="(int)DropdownModes.Clients"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.ClientID, Value=Model.Name})"
+                                                ItemSelected="ItemSelected"
+                                                PlaceHolder="Select Client" />
+                                <ValidationMessage For="()=>Model.ClientID" />
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Existing Package Name :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="packageData.PackageName" disabled>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1 text-align-left" style="text-align:left">Existing Package Fee :</label>
+                                        <input type="text" class="form-control" label="Name" @bind="packageData.Fee" disabled>
+
+                                    </div>
+                                </div>
+                                <DropdownSelect DropdownID="@PackageDropdownSelect"
+                                                DivClass="col-md-6"
+                                                Label="Package"
+                                                IsRequired="true"
+                                                IsAddOptionNeed="false"
+                                                ReadDataOnSearch="true"
+                                                Mode="(int)DropdownModes.Package"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.PackageID, Value=Model.PackageName})"
+                                                ItemSelected="ItemSelected"
+                                                PlaceHolder="Select Package" />
+                                <ValidationMessage For="()=>Model.PackageID" />
+
+
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align:left;">
+                                            Discount :
+                                        </label>
+                                        <input class="form-control " @bind="Model.Discount" id="item-um-unit-box">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-primary" type="submit">Save</button>
+                                <button class="btn btn-danger" type="button" @onclick="@(async ()=>await Cancel())">Cancel</button>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+
+
+</PageLayoutNew>
+
+@code {
+    private ClientPackageUpdateModel Model = new();
+    private ClientExistingPackageModel packageData = new();
+    private string ClientDropdownSelect = "client-drop-down-select";
+    private string PackageDropdownSelect = "package-drop-down-select";
+
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Clients:
+                Model.ClientID = data.ID;
+                Model.Name = data.Value;
+                if (Model.ClientID != null)
+                {
+                    await GetExistingPackage(Model.ClientID);
+                }
+                break;
+            case (int)DropdownModes.Package:
+                Model.PackageID = data.ID;
+                Model.PackageName = data.Value;
+                break;
+        }
+    }
+
+    private async Task GetExistingPackage(int? ClientID)
+    {
+        packageData = await API.GetAsync<ClientExistingPackageModel>($"support/get-client-existing-package/{ClientID}", true);
+        if(packageData.BalanceAmount!=null)
+        {
+            Model.Discount = packageData.BalanceAmount.Value;
+        }
+
+    }
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            Model = new();
+            packageData = new();
+
+        }
+    }
+
+    private async Task UpdatePackage()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, ClientPackageUpdateModel>("support/update-client-package",Model);
+        if(res!=null)
+        {
+            Nav.NavigateTo($"client-view/{Model.ClientID}");
+
+        }
+
+    }
+}

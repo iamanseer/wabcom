@@ -1,0 +1,425 @@
+﻿@using Microsoft.AspNetCore.SignalR.Client
+@using Blazored.LocalStorage
+@using System.Net.Http.Headers;
+@using PB.Shared.Models.Inventory.Items;
+@inject ILocalStorageService _localStorage
+
+<AuthorizeView>
+    <div class="page">
+        <div class="page-main">
+            <div class="app-header header sticky">
+                <div class="container-fluid main-container">
+                    <div class="d-flex">
+                        <a aria-label="Hide Sidebar" class="app-sidebar__toggle" data-bs-toggle="sidebar" href="javascript:void(0)"></a>
+                        <!-- sidebar-toggle-->
+                        <a class="logo-horizontal " href="/">
+                            <img src="/assets/images/brand/logo.png" class="header-brand-img desktop-logo" alt="logo">
+                            <img src="/assets/images/brand/logo-3.png" class="header-brand-img light-logo1" alt="logo">
+                        </a>
+                        <!-- LOGO -->@* 
+                        <div class="main-header-center ms-3 d-none d-lg-block">
+                            <input class="form-control" placeholder="Search for results..." type="search">
+                            <button class="btn px-0 pt-2"><i class="fe fe-search" aria-hidden="true"></i></button>
+                        </div> *@
+                        <div class="d-flex order-lg-2 ms-auto header-right-icons">
+                            <div class="dropdown d-none">
+                                <a href="javascript:void(0)" class="nav-link icon" data-bs-toggle="dropdown">
+                                    <i class="fe fe-search"></i>
+                                </a>
+                                <div class="dropdown-menu header-search dropdown-menu-start">
+                                    <div class="input-group w-100 p-2">
+                                        <input type="text" class="form-control" placeholder="Search....">
+                                        <div class="input-group-text btn btn-primary">
+                                            <i class="fe fe-search" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- SEARCH -->
+                            <button class="navbar-toggler navresponsive-toggler d-lg-none ms-auto" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent-4"
+                                    aria-controls="navbarSupportedContent-4" aria-expanded="false"
+                                    aria-label="Toggle navigation">
+                                <span class="navbar-toggler-icon fe fe-more-vertical"></span>
+                            </button>
+                            <div class="navbar navbar-collapse responsive-navbar p-0">
+                                <div class="collapse navbar-collapse" id="navbarSupportedContent-4">
+                                    <div class="d-flex order-lg-2">
+                                        <div class="dropdown d-lg-none d-flex">
+                                            <a href="javascript:void(0)" class="nav-link icon"
+                                               data-bs-toggle="dropdown">
+                                                <i class="fe fe-search"></i>
+                                            </a>
+                                            <div class="dropdown-menu header-search dropdown-menu-start">
+                                                <div class="input-group w-100 p-2">
+                                                    <input type="text" class="form-control" placeholder="Search....">
+                                                    <div class="input-group-text btn btn-primary">
+                                                        <i class="fa fa-search" aria-hidden="true"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>@*
+                                        <div class="d-flex country">
+                                        <a class="nav-link icon text-center" data-bs-target="#quick-selector"
+                                        data-bs-toggle="modal">
+                                        <i class="fe fe-plus-circle"></i><span class="fs-16 ms-2 d-none d-xl-block">Quick Action</span>
+                                        </a>
+                                        </div>
+                                        <div class="dropdown d-flex profile-1">
+                                        <a href="javascript:void(0)" data-bs-toggle="dropdown"
+                                        class="nav-link nav-linkleading-none d-flex">
+                                        <i class="fe fe-globe fs-20"></i><span class="fs-16 ms-2 d-none d-xl-block" id="lang-name">English</span>
+                                        </a>
+                                        <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                        <div class="dropdown-divider m-0"></div>
+
+                                        <a class="dropdown-item" @onclick="@(e=>ChangeLanguage(PDV.Language2Code,PDV.Language2Direction))">
+                                        <img src="assets/images/flags/ae.svg" alt=""
+                                        height="16" /><span> @PDV.Language2 </span>
+                                        </a>
+                                        <a class="dropdown-item" @onclick="@(e=>ChangeLanguage("en"))">
+                                        <img src="assets/images/flags/us.svg" alt=""
+                                        height="16" /><span> English </span>
+                                        </a>
+                                        </div>
+                                        </div>*@
+
+                                        <div class="d-flex country">
+                                            <a class="nav-link icon theme-layout nav-link-bg layout-setting">
+                                                <span class="dark-layout"><i class="fe fe-moon"></i></span>
+                                                <span class="light-layout"><i class="fe fe-sun"></i></span>
+                                            </a>
+                                        </div>
+                                        <div class="dropdown d-flex">
+                                            <a class="nav-link icon full-screen-link nav-link-bg">
+                                                <i class="fe fe-minimize fullscreen-button"></i>
+                                            </a>
+                                        </div>
+
+                                        <div class="dropdown  d-flex notifications">
+                                            <a class="nav-link icon" data-bs-toggle="dropdown" @onclick="GetNotifications">
+                                                <i class="fa fa-bell-o"></i><span class=" pulse"></span>
+                                            </a>
+                                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                                <div class="drop-heading border-bottom">
+                                                    <div class="d-flex">
+                                                        <h6 class="mt-1 mb-0 fs-16 fw-semibold text-dark">
+                                                            Notifications
+                                                        </h6>
+                                                    </div>
+                                                </div>
+                                                <div class="notifications-menu">
+                                                    <NotificationComponent Data="Notifications" />
+                                                </div>
+                                                <div class="dropdown-divider m-0"></div>
+                                                <a @onclick="@(()=>Nav.NavigateTo("notifications"))"
+                                                   class="dropdown-item text-center p-3 text-muted">
+                                                    View all
+                                                    Notification
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        @* <HeaderMessage />*@
+                                        @if(ShowCourtCart)
+                                        {
+                                            <AuthorizeView Roles="CourtBooking" Context="booking">
+                                                <div class="d-flex country">
+                                                    <a class="nav-link icon theme-layout nav-link-bg" data-bs-toggle="offcanvas" data-bs-target="#cartmodal" aria-controls="cartmodal">
+                                                        <span class=""><i class="fe fe-shopping-cart"></i></span>
+                                                        <span class="count">@CourtCartCount</span>
+                                                    </a>
+                                                </div>
+                                            </AuthorizeView>
+                                        }
+
+                                        <div class="dropdown d-flex profile-1">
+                                            <a href="javascript:void(0)" data-bs-toggle="dropdown"
+                                               class="nav-link leading-none d-flex">
+                                                <img src="@ProfileURL" alt="profile-user"
+                                                     class="avatar  profile-user brround cover-image">
+                                            </a>
+                                            <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                                                <div class="drop-heading">
+                                                    <div class="account-dropdown">
+                                                        <img src="@ProfileURL" alt="profile-user"
+                                                             class="avatar avatar-xl brround cover-image">
+                                                        <h5 class="text-dark mb-0 fs-14 fw-semibold mt-2">@context.User.Claims.FirstOrDefault(c => c.Type == "ProfileName").Value</h5>
+                                                        <small class="text-muted fs-13">@context.User.Claims.FirstOrDefault(c => c.Type == "UserTypeName").Value</small>
+                                                        <span class="text-muted fs-13 mb-3">@context.User.Claims.FirstOrDefault(c => c.Type == "EmailAddress").Value</span>
+                                                        <div class="d-flex justify-content-center gap-2">
+                                                            <button type="button" class="btn btn-primary btn-sm mb-1" @onclick="@(()=>Nav.NavigateTo($"edit-profile"))">Account</button>
+                                                            <button type="button" class="btn btn-danger btn-sm mb-1" @onclick="Logout">Sign out</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="dropdown-divider m-0"></div>
+                                                <div class="p-3 bg-light d-flex justify-content-between">
+                                                    <h3 class="fs-14 mb-0">Organizations</h3> <i class="fa fa-gear fs-16"></i>
+                                                </div>
+                                                @*<a class="dropdown-item d-flex" href="">
+                                                <div class="org-names">
+                                                <p class="fs-13 fw-semibold mb-0">@context.User.Claims.FirstOrDefault(c => c.Type == "BranchName").Value</p>
+                                                <p class="fs-12 text-muted">
+                                                Organization ID: 60018902344 <span class=" badge rounded-pill bg-gray">
+                                                Free
+                                                </span>
+                                                </p>
+                                                </div>
+                                                <i class="fa fa-check-circle og-active"></i>
+                                                </a>*@
+                                                <a class="dropdown-item d-flex" href="">
+                                                    <div class="org-names">
+                                                        <p class="fs-13 fw-semibold mb-0">@context.User.Claims.FirstOrDefault(c => c.Type == "BranchName").Value</p>
+                                                        <p class="fs-12 text-muted">
+                                                            Organization ID: 60018902344 <span class=" badge rounded-pill bg-yellow">
+                                                                Pro
+                                                            </span>
+                                                        </p>
+                                                    </div>
+                                                    <i class="fa fa-check-circle og-active"></i>
+                                                </a>
+
+                                            </div>
+                                        </div>
+                                        @*<div class="dropdown d-flex header-settings">
+                                        <a href="javascript:void(0);" class="nav-link icon"
+                                        data-bs-toggle="sidebar-right" data-target=".sidebar-right">
+                                        <i class="fe fe-align-right"></i>
+                                        </a>
+                                        </div>*@
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <NavMenu />
+            <div class="main-content app-content mt-0" style="overflow:hidden;">
+                <div class="side-app position-relative">
+
+                    @ChildContent
+
+                    <!--Loader-->
+                    <div class="inside-loader d-none" id="side-app-loader">
+                        <div class="loading">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        <Sidebar />
+        <QuickOptionModal />
+    </div>
+</AuthorizeView>
+
+@code {
+
+    //[Parameter] public bool SeperateSignalR { get; set; }
+    //[Parameter] public int ChatCount { get; set; }
+    [Parameter] public EventCallback<WhatsappChatHistoryItemModel> NewMessageInInbox { get; set; }
+    [Parameter] public EventCallback<WhatsappChatStatusUpdateModel> NewChatStatusUpdate { get; set; }
+    [Parameter] public EventCallback OnBookingUpdate { get; set; }
+
+    [Parameter] public string? ProfileURL { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter]public bool ShowCourtCart { get; set; }
+    [Parameter] public int CourtCartCount { get; set; }
+
+
+    [Inject] public AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
+
+    int ChatCount;
+    protected override async Task OnInitializedAsync()
+    {
+        ProfileURL = await _localStorage.GetItemAsync<string>("profile-image");
+    }
+
+    async Task ChangeLanguage(string lang = "en", string dir = "ltr")
+    {
+        await JS.InvokeVoidAsync("blazorCulture.set", lang);
+        await JS.InvokeVoidAsync("blazorDirection.set", dir);
+
+        Nav.NavigateTo(Nav.Uri, forceLoad: true);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ChatCount = await API.GetAsync<int>("notification/get-unread-message-count");
+            LoadNotificationCount();
+            await CreateHubConnection();
+
+            await JS.InvokeVoidAsync("hovermenu");
+            await JS.InvokeVoidAsync("setProjectDirection");
+            await JS.InvokeVoidAsync("ActivePScroll");
+        }
+    }
+
+    async Task Logout()
+    {
+        var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+        await localStateProvider.LogoutAsync();
+        await _localStorage.RemoveItemAsync("username");
+        await _localStorage.RemoveItemAsync("profile-image");
+        Nav.NavigateTo("/login");
+    }
+
+
+    async Task LockScreen()
+    {
+        var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+
+        var authState = await localStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        await _localStorage.SetItemAsync("username", user.Claims.FirstOrDefault(c => c.Type == "UserName").Value);
+        await _localStorage.SetItemAsync("profile-image", user.Claims.FirstOrDefault(c => c.Type == "ProfileURL").Value);
+
+        await localStateProvider.LogoutAsync();
+        Nav.NavigateTo("/lock-screen");
+    }
+
+    #region Notification
+
+    int NotificationCount;
+    List<ViNotificationCustom> Notifications;
+    [Inject] HubConnection _hubConnection { get; set; }
+
+    private async Task CreateHubConnection()
+    {
+        //_hubConnection = new HubConnectionBuilder().WithUrl(Nav.BaseUri + "notificationhub").WithAutomaticReconnect().Build();
+
+        if (_hubConnection.State.ToString() == "Disconnected")
+        {
+            await _hubConnection.StartAsync();
+
+            string deviceId = await _localStorage.GetItemAsync<string>("DeviceID");
+            if (string.IsNullOrEmpty(deviceId))
+            {
+                deviceId = Guid.NewGuid().ToString();
+                await _localStorage.SetItemAsync("DeviceID", deviceId);
+            }
+            await API.GetAsync<BaseSuccessResponse>($"notification/add-signalR-id?connectionId={_hubConnection.ConnectionId}&deviceId={deviceId}");
+        }
+
+        _hubConnection.On<string>("notification", m =>
+        {
+            LoadNotificationCount();
+            //JS.InvokeVoidAsync("ShowNotification", m);
+        });
+
+        _hubConnection.On<WhatsappChatHistoryItemModel>("chat", m =>
+        {
+            LoadUnreadMessageCount(m);
+        });
+
+        _hubConnection.On<WhatsappChatStatusUpdateModel>("status_update", m =>
+        {
+            StatusUpdate(m);
+        });
+
+        _hubConnection.On<ItemQrCodeGeneratedPushModel>("item_qr_codes_pdf_generated", async m =>
+        {
+            string? deviceID = await _localStorage.GetItemAsync<string?>("DeviceID");
+            if (!string.IsNullOrEmpty(deviceID) && m.DeviceID == deviceID)
+            {
+                await DownloadItemQrPdf(m);
+                if (m.IsNewQrCodeAdded)
+                    Nav.NavigateTo(Nav.Uri, true);
+            }
+        });
+
+        _hubConnection.On<ItemImportResponsePushModel>("item_import_success", async m =>
+        {
+            if (m.DeviceID == await _localStorage.GetItemAsync<string>("DeviceID"))
+                await ItemImportSuccess(m.SkippedItems);
+        });
+
+        _hubConnection.On<string>("booking", async m =>
+        {
+            await OnBookingUpdate.InvokeAsync();
+        });
+    }
+
+    private void LoadNotificationCount()
+    {
+        Task.Run(async () =>
+        {
+            NotificationCount = await API.GetAsync<int>("notification/get-notification-count");
+            StateHasChanged();
+        });
+    }
+
+    private void LoadUnreadMessageCount(WhatsappChatHistoryItemModel data)
+    {
+        Task.Run(async () =>
+        {
+            ChatCount++;
+            await JS.InvokeVoidAsync("playSound");
+            await NewMessageInInbox.InvokeAsync(data);
+            StateHasChanged();
+        });
+    }
+
+    private void StatusUpdate(WhatsappChatStatusUpdateModel data)
+    {
+        Task.Run(async () =>
+        {
+            await NewChatStatusUpdate.InvokeAsync(data);
+            StateHasChanged();
+        });
+    }
+
+    private async Task DownloadItemQrPdf(ItemQrCodeGeneratedPushModel pushRecieveModel)
+    {
+        string authToken = await _localStorage.GetItemAsync<string>("accessToken");
+        if (!string.IsNullOrEmpty(pushRecieveModel.FileName) && !string.IsNullOrEmpty(authToken))
+        {
+            using (HttpClient httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+                byte[] pdfBytes = await httpClient.GetByteArrayAsync(pushRecieveModel.FileName);
+                string pdfBase64 = Convert.ToBase64String(pdfBytes);
+                await JS.InvokeAsync<object>("JSInteropExt.saveAsFile", "item-qr-codes.pdf", "application/pdf", pdfBase64);
+            }
+        }
+    }
+
+    private async Task ItemImportSuccess(List<ItemImportSkippedModel> skippedItems)
+    {
+        string errroMessage = "";
+        if (skippedItems.Count > 0)
+        {
+            foreach (var skippedItem in skippedItems)
+            {
+                errroMessage += skippedItem.RowNumber + ") " + skippedItem.Description + '\n';
+            }
+            await JS.ErrorMessage(errroMessage, "Some items not imported");
+        }
+        else
+        {
+            await JS.SuccessMessage("All items imported successfully");
+        }
+        Nav.NavigateTo(Nav.Uri, true);
+    }
+
+    private async Task GetNotifications()
+    {
+        var res = await API.PostAsync<PagedList<ViNotificationCustom>, NotificationSearchModel>("notification/get-notifications", new NotificationSearchModel(), false);
+        if (res != null)
+        {
+            Notifications = res.Data;
+        }
+    }
+
+    #endregion
+}

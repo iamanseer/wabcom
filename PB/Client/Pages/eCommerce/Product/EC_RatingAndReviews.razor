@@ -1,0 +1,137 @@
+﻿@page "/rating-and-reviews"
+@using PB.Shared.Models.Common
+@using PB.Shared.Models.eCommerce.Product
+@using PB.Shared.Enum.eCommerce
+@using PB.Shared.Models.Common
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    @if (IsHeaderReady)
+                    {
+                        <ListPageHeader Settings="CartHeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" />
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Sl No.
+                                        </th>
+                                        <th>
+                                            Name
+                                        </th>
+                                        <th>
+                                            Item Name
+                                        </th>
+                                        <th>Rating</th>
+                                        <th>Review</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (RatingAndReviewModel.Data.Count>0)
+                                    {
+                                        @foreach (var item in RatingAndReviewModel.Data.Select((value, i) => new { i, value }))
+                                        {
+                                            var entry = item.value;
+                                            var index = item.i;
+                                            <tr>
+
+                                                <td>
+                                                    @if (RatingAndReviewModel.PageIndex == 1)
+                                                    {
+                                                        @(index + 1)
+                                                    }
+                                                    else
+                                                    {
+                                                        @((RatingAndReviewModel.PageIndex * RatingAndReviewModel.PageSize) + (index + 1) - 10)
+                                                    }
+                                                </td>
+                                                <td>@entry.Name</td>
+                                                <td>@entry.ItemName</td>
+                                                <td>@entry.Rating</td>
+                                                <td>@entry.Review</td>
+
+                                            </tr>
+                                        }
+                                    }
+                                 </tbody>
+                            </table>
+                            <PaginationCustom PageSize="RatingAndReviewModel.PageSize" TotalCount="RatingAndReviewModel.TotalCount" TotalPages="RatingAndReviewModel.TotalPages" PageIndex="RatingAndReviewModel.PageIndex" LoadPageIndex="PageIndex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+    private PagedList<EC_ItemReviewAndRatingViewModel> RatingAndReviewModel = new();
+    private PagedListPostModelWithFilter searchmodel = new();
+    HeaderSettingsModel CartHeaderSettings = new();
+    private bool IsHeaderReady = false;
+    protected override async Task OnInitializedAsync()
+    {
+
+        List<FilterIdnValueInputModel> FilterInputItems = new()
+        {
+            new()
+            {
+                FiledName = "Ratings",
+                DisplayName = "Rating",
+                EnumObject=EC_RatingType.One,
+            },
+            // new()
+            // {
+            //     DisplayName = "Item Name",
+            //     FiledName = "W.ItemVariantID",
+            //     CustomOptionApiPath = "ec_common/get-list-of-ec-items"
+            // }
+        };
+        List<FilterSortInputModel> SortMenuItems = new()
+        {
+            new()
+            {
+                DisplayName = "Customer Name",
+                FieldName = "FirstName"
+            },
+            new()
+            {
+                DisplayName = "Item Name",
+                FieldName = "ItemName"
+            },
+        };
+        CartHeaderSettings = new()
+            {
+                Heading = "Rating And Reviews",
+                SearchPlaceHolder = "Search by item name..",
+                NeedAddButton = false,
+                NeedFilterOption = true,
+                //IdnValueFilters = FilterInputItems,
+                NeedSortOption = true,
+                SortMenuItems = SortMenuItems,
+            };
+        IsHeaderReady = true;
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        RatingAndReviewModel = await API.PostAsync<PagedList<EC_ItemReviewAndRatingViewModel>, PagedListPostModelWithFilter>("ec_customer/get-item-rating-and-review-paged-list", searchmodel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        searchmodel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        searchmodel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+}

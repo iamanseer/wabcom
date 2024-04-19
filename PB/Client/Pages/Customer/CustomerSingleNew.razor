@@ -1,0 +1,465 @@
+﻿
+@page "/customer-new"
+@page "/customer-new/{CustomerEntityID:int}"
+
+@attribute [Authorize(Roles = "Customer")]
+
+@using PB.Client.Shared.Entity
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Tables;
+@using PB.Shared.Enum;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.CRM.Customer;
+
+<PageLayoutNew>
+    <EditForm Model="CustomerModel" OnValidSubmit="SaveCustomer">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Customer Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="col-7">
+                                <div class="my-4 d-flex gap-3">
+
+                                    <label class="custom-control custom-radio">
+                                        <input type="radio" class="custom-control-input" @onchange="@(() => CustomerModel.Type = (int)CustomerTypes.Individual)" name="example-radios" value="option1" checked="@(CustomerModel.Type == (int)CustomerTypes.Individual)">
+                                        <span class="custom-control-label">Individual</span>
+                                    </label>
+                                    <label class="custom-control custom-radio">
+                                        <input type="radio" class="custom-control-input" @onchange="@(() => CustomerModel.Type = (int)CustomerTypes.Business)" name="example-radios" value="option1" checked="@(CustomerModel.Type == (int)CustomerTypes.Business)">
+                                        <span class="custom-control-label">Business</span>
+                                    </label>
+                                </div>
+                            </div>
+                            @if (CustomerModel.Type == (int)CustomerTypes.Business)
+                            {
+                                <div class="row">
+                                    <InputTextBox Label="Company Name : "
+                                                  IsRequired="true"
+                                                  ValidationFor="() => CustomerModel.Name"
+                                                  DivClass="col-md-7"
+                                                  @bind-Value="CustomerModel.Name"
+                                                  id="cst-name-box" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="row">
+                                    <InputTextBox Label="Name : " @bind-Value="CustomerModel.Name"
+                                                  IsRequired="true"
+                                                  ValidationFor="() => CustomerModel.Name"
+                                                  DivClass="col-md-7" id="cst-name-box" />
+
+
+                                </div>
+                            }
+                            <div class="row">
+                                <InputTextBox Label="Tax Number : "
+                                              IsRequired="false"
+                                              DivClass="col-md-7"
+                                              @bind-Value="CustomerModel.TaxNumber"
+                                              id="cst-taxno-box" />
+                            </div>
+                            <div class="row">
+                                <DropdownSelect DivClass="col-sm-7"
+                                                DropdownID="@CustomerCountryDropdownID"
+                                                Label="Country :"
+                                                Mode="(int)DropdownModes.Country"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                ItemSelected="HandleCustomerCountrySelected"
+                                                IsRequired="true"
+                                                ReadDataOnSearch="true"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID=CustomerModel.CountryID,Value=CustomerModel.CountryName})">
+
+                                    <ValidationMessage For="() => CustomerModel.CountryID" />
+                                </DropdownSelect>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align:left;">
+                                            Phone :
+                                            <span class="ms-1" style="color:red">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text" style="min-width:40px;">
+                                                @CustomerModel.ISDCode
+                                            </span>
+                                            <input type="text" class="form-control" @bind="CustomerModel.Phone" />
+                                        </div>
+                                        <ValidationMessage For="() => CustomerModel.Phone" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align:left;">
+                                            Email :
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">
+                                                <i class="fa fa-envelope envclr"></i>
+                                            </span>
+                                            <input type="text" class="form-control" @bind="CustomerModel.EmailAddress" />
+                                        </div>
+                                        <ValidationMessage For="() => CustomerModel.EmailAddress" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (Stage == 2)
+                            {
+                                <div class="row">
+                                    <!--Switching Tabs-->
+                                    <div class="panel panel-primary">
+                                        <div class="tab-menu-heading">
+                                            <div class="tabs-menu1">
+                                                <!-- Tab Heading -->
+                                                <ul class="nav panel-tabs">
+                                                    <li>
+                                                        <a href="#customerModalAddress" class="active" data-bs-toggle="tab">Address</a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#customerModalContactPersons" data-bs-toggle="tab">Contact Persons</a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#customerModalRemarks" data-bs-toggle="tab">Remarks</a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <!--Tab Main Content-->
+                                        <div class="panel-body tabs-menu-body">
+                                            <div class="tab-content">
+
+                                                <!--First Tab-->
+                                                <div class="tab-pane active" id="customerModalAddress">
+                                                    <!--Addresses-->
+                                                    <div class="row">
+                                                        <div class="col-md-12">
+                                                            @if (CustomerModel.Addresses.Count > 0)
+                                                            {
+                                                                <div class="list-group">
+                                                                    @foreach (var customerAddress in CustomerModel.Addresses)
+                                                                    {
+                                                                        var addressLines = customerAddress.CompleteAddress.Split(',');
+                                                                        <div class="list-group">
+                                                                            <a class="list-group-item list-group-item-action mt-2 d-flex justify-content-between">
+                                                                                <div class="address-content">
+                                                                                    @foreach (var line in addressLines.Select((ln, i) => new { ln, i }))
+                                                                                    {
+                                                                                        <span>
+                                                                                            @(line.ln)
+                                                                                            @(line.i != (addressLines.Length - 1) ? "," : "")
+                                                                                        </span> <br>
+                                                                                    }
+                                                                                </div>
+                                                                                <div class="action d-flex flex-column">
+                                                                                    <a class="position-absolute address-edit-btn" @onclick="async () => await HandleOpenAddressModal(customerAddress)">
+                                                                                        <i class="fe fe-edit" style="color:var(--primary-bg-color)"></i>
+                                                                                    </a>
+                                                                                    <a class="position-absolute address-delete-btn" @onclick="async () => await RemoveCustomerAddress(customerAddress.AddressID)">
+                                                                                        <i class="fe fe-trash" style="color:var(--danger)"></i>
+                                                                                    </a>
+                                                                                </div>
+                                                                            </a>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            }
+                                                            <a class="modal-effect address-add-btn mt-5 ms-3" style="color:var(--primary-bg-color)" @onclick="async () => await HandleOpenAddressModal()">Add new address</a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!--Second Tab-->
+                                                <div class="tab-pane" id="customerModalContactPersons">
+                                                    <!--Contact Persons-->
+                                                    <div class="row">
+                                                        <div class="table-responsive">
+                                                            <table class="table border text-nowrap text-md-nowrap table-bordered mb-0">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th style="max-width:25px">
+                                                                            Sl No
+                                                                        </th>
+                                                                        <th>
+                                                                            Name
+                                                                        </th>
+                                                                        <th>
+                                                                            Phone
+                                                                        </th>
+                                                                        <th>
+                                                                            Email
+                                                                        </th>
+                                                                        <th>
+                                                                            Action
+                                                                        </th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @if (CustomerModel.ContactPersons != null && CustomerModel.ContactPersons.Count > 0)
+                                                                    {
+                                                                        @for (int i = 0; i < CustomerModel.ContactPersons.Count; i++)
+                                                                        {
+                                                                            var person = CustomerModel.ContactPersons[i];
+                                                                            <tr>
+                                                                                <td style="max-width:25px">
+                                                                                    <label>@person.RowIndex</label>
+                                                                                </td>
+                                                                                <td>
+                                                                                    @person.Name
+                                                                                </td>
+                                                                                <td>
+                                                                                    @person.Phone
+                                                                                </td>
+                                                                                <td>
+                                                                                    @person.Email
+                                                                                </td>
+                                                                                <td style="width:80px;">
+                                                                                    <div class="d-flex justify-content-evenly">
+                                                                                        <ActionEdit Clicked="async () => await HandleOpenContactPersonModal(person)" />
+                                                                                        <ActionDelete Clicked="async () => await HandleRemoveCustomerContactPersonButtonClick(person.ContactPersonID)" />
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    }
+                                                                </tbody>
+                                                                <tfoot>
+                                                                    <tr>
+                                                                        <td colspan="4">
+                                                                        </td>
+                                                                        <td style="width:80px;">
+                                                                            <div class="d-flex justify-content-evenly">
+                                                                                <ActionAdd Clicked="async () => await HandleOpenContactPersonModal()" />
+                                                                            </div>
+                                                                        </td>
+                                                                    </tr>
+                                                                </tfoot>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!--Third Tab-->
+                                                <div class="tab-pane" id="customerModalRemarks">
+                                                    <!--Remarks-->
+                                                    <div class="row">
+                                                        <div class="col-8">
+                                                            <div class="form-group">
+                                                                <label class="form-label mt-0 me-1">Remarks:</label>
+                                                                <textarea class="textarea form-control" id="customer-remarks-text-area" rows="4" @bind="CustomerModel.Remarks"></textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-footer-action d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+            <button type="button" class="btn btn-danger me-2" @onclick="Cancel">Cancel</button>
+        </div>
+
+    </EditForm>
+</PageLayoutNew>
+
+@if (Stage == 2)
+{
+    <ModalEntityAddress @ref="modalEntityAddress" Saved="HandleAddressSaveEventCallback" Deleted="HandleRemoveAddressEventCallback" />
+    <ModalCustomerEntityContactPerson @ref="entityContactPerson" Saved="HandleContactPersonSaveEventCallback" Deleted="HandleRemoveCntactPersonEventCallback" />
+}
+
+@code {
+
+    [Parameter] public int CustomerEntityID { get; set; }
+
+    private CustomerModelNew CustomerModel = new();
+    private Country CountryModel = new();
+    private int Stage = 1;
+    private string CustomerCountryDropdownID = "customer-country-drop-down-select";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CustomerEntityID == 0)
+        {
+            Stage = 1;
+            CountryModel = await API.GetAsync<Country>("common/get-default-country-details", true);
+            CustomerModel.CountryID = CountryModel.CountryID;
+            CustomerModel.CountryName = CountryModel.CountryName;
+            CustomerModel.ISDCode = CountryModel.ISDCode;
+        }
+        else
+        {
+            Stage = 2;
+            CustomerModel = await API.GetAsync<CustomerModelNew>($"customer/get-customer-new/{CustomerEntityID}", true);
+        }
+    }
+
+    #region Main Functions
+
+    private async Task SaveCustomer()
+    {
+        var res = await API.PostAsync<CustomerAddResultModel, CustomerModelNew>("customer/save-customer", CustomerModel);
+        if (res != null)
+        {
+            Nav.NavigateTo($"customers-view/{res.EntityID}");
+        }
+    }
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to leave this page..?", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            if (CustomerModel.EntityID != 0)
+                Nav.NavigateTo($"customers/{CustomerModel.EntityID}");
+            else
+                Nav.NavigateTo("customers");
+        }
+    }
+    private void HandleCustomerCountrySelected(DropdownItemSelectedCallbackModel country)
+    {
+        CustomerModel.CountryID = country.ID;
+        CustomerModel.CountryName = country.Value;
+    }
+
+    #endregion
+
+    #region Address Modal Related Functions
+
+    private ModalEntityAddress modalEntityAddress = new();
+    private int addressItemIndex = -1;
+    private async Task HandleOpenAddressModal(AddressView? addressView = null)
+    {
+        if (CustomerModel.EntityID is null)
+        {
+            Console.BackgroundColor = ConsoleColor.Red;
+            Console.WriteLine("Only existing customer can add address");
+            return;
+        }
+
+        int addressID = 0;
+        int customerEntityID = CustomerModel.EntityID.Value;
+        if (addressView is not null)
+        {
+            addressItemIndex = CustomerModel.Addresses.IndexOf(addressView);
+            addressID = addressView.AddressID;
+        }
+        await modalEntityAddress.OpenEntityAddressModal(customerEntityID, addressID);
+    }
+    private async Task RemoveCustomerAddress(int addressID)
+    {
+        await modalEntityAddress.DeleteAddress(addressID);
+    }
+    private void HandleRemoveAddressEventCallback(int addressID)
+    {
+        CustomerModel
+        .Addresses
+        .Remove(
+            CustomerModel
+            .Addresses
+            .Where(adrs => adrs.AddressID == addressID)
+            .First()
+        );
+    }
+    private void HandleAddressSaveEventCallback(IdnValuePair address)
+    {
+        if (addressItemIndex == -1)
+        {
+            CustomerModel
+            .Addresses
+            .Add(new AddressView()
+                {
+                    AddressID = address.ID,
+                    CompleteAddress = address.Value
+                });
+        }
+        else
+        {
+            CustomerModel
+            .Addresses[addressItemIndex] = new()
+                {
+                    AddressID = address.ID,
+                    CompleteAddress = address.Value
+                };
+        }
+    }
+
+    #endregion
+
+    #region Contact Persons
+
+    private ModalCustomerEntityContactPerson entityContactPerson = new();
+    private int contactPersonIndex = -1;
+    private async Task HandleOpenContactPersonModal(CustomerContactPersonModel? contactPerson = null)
+    {
+        int contactPersonID = 0;
+        if (CustomerModel.EntityID is null)
+        {
+            Console.BackgroundColor = ConsoleColor.Red;
+            Console.WriteLine("Only existing customer can add contact persons");
+            return;
+        }
+
+        int customerEntityID = CustomerModel.EntityID.Value;
+        if (contactPerson is not null)
+        {
+            contactPersonID = contactPerson.ContactPersonID;
+            contactPersonIndex = CustomerModel.ContactPersons.IndexOf(contactPerson);
+        }
+        await entityContactPerson.OpenCustomerContactPersonModal(customerEntityID, contactPersonID);
+    }
+    private async Task HandleRemoveCustomerContactPersonButtonClick(int contactPersonID)
+    {
+        await entityContactPerson.DeleteContactPerson(contactPersonID);
+    }
+    private void HandleRemoveCntactPersonEventCallback(int contactPersonID)
+    {
+        CustomerModel
+        .ContactPersons
+        .Remove(
+            CustomerModel
+            .ContactPersons
+            .Where(prs => prs.ContactPersonID == contactPersonID)
+            .First()
+        );
+    }
+    private async void HandleContactPersonSaveEventCallback(IdnValuePair contactPerson)
+    {
+        if (contactPersonIndex == -1)
+        {
+            CustomerModel
+            .ContactPersons
+            .Add
+            (
+                await API.GetAsync<CustomerContactPersonModel>($"customer/get-customer-contact-person/{contactPerson.ID}", true)
+            );
+        }
+        else
+        {
+            CustomerModel
+            .ContactPersons[contactPersonIndex] = await API.GetAsync<CustomerContactPersonModel>($"customer/get-customer-contact-person/{contactPerson.ID}", true);
+        }
+    }
+
+    #endregion
+
+}

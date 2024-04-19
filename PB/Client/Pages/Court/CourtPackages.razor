@@ -1,0 +1,97 @@
+﻿@page "/court-packages"
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Court;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="CourtPackageSettings" OnFilterButtonClick="ApplyFilterTo" />
+                </div>
+
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                            <thead>
+                                <tr>
+                                    <th>SlNo</th>
+                                    <th>@Localizer["Package Name"]</th>
+                                    <th>@Localizer["Fee"]</th>
+                                    <th>@Localizer["Validity Month"]</th>
+                                    <th>@Localizer["Total Hours"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in PackageListPageModel.Data.Select((data, index) => new { index, data }))
+                                {
+                                    <tr @onclick="@(()=>Nav.NavigateTo($"court-package-view/{item.data.CourtPackageID}"))">
+                                        <td>
+                                            @((PackageListPageModel.PageIndex - 1) * PackageListPageModel.PageSize + 1 + item.index)
+                                        </td>
+                                        <td>
+                                            @item.data.PackageName
+                                        </td>
+                                        <td>
+                                            @item.data.Fee
+                                        </td>
+                                        <td>
+                                            @item.data.ValidityMonth
+                                        </td>
+                                        <td>
+                                            @item.data.TotalHours
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <PaginationCustom PageSize="PackageListPageModel.PageSize" TotalCount="PackageListPageModel.TotalCount" TotalPages="PackageListPageModel.TotalPages" PageIndex="PackageListPageModel.PageIndex" LoadPageIndex="PageIndex" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+
+@code {
+    private PagedListPostModelWithFilter ListPageSearchModel = new();
+    private PagedList<CourtPackageModel> PackageListPageModel = new();
+    HeaderSettingsModel? CourtPackageSettings;
+    protected override async Task OnInitializedAsync()
+    {
+        CourtPackageSettings = new()
+            {
+                Heading = "Court Package",
+                SearchPlaceHolder = "Search with package",
+                NeedAddButton = true,
+                AddButtonText = "Add Package ",
+                SinglePageURL = "court-package",
+                NeedSortOption = false,
+
+            };
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        PackageListPageModel = await API.PostAsync<PagedList<CourtPackageModel>, PagedListPostModelWithFilter>("court-package/get-all-court-packages", ListPageSearchModel);
+    }
+
+    private async Task PageIndex(int pageIndex)
+    {
+        ListPageSearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        ListPageSearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+    private async Task SearchByFee(PagedListPostModelWithFilter searchModel)
+    {
+        ListPageSearchModel = searchModel;
+        await LoadData();
+    }
+}

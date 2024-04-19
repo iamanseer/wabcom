@@ -1,0 +1,834 @@
+﻿@page "/register"
+@using Blazored.LocalStorage
+@using System.Text;
+@using System.Text.RegularExpressions;
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Models.Common;
+@inject ILocalStorageService _localStorage
+
+
+<LoginLayout>
+    <div class="">
+        <div class="page">
+            <div class="">
+
+                <div class="col-lg-10 offset-lg-1">
+                    <div class="card">
+
+                        <div class="card-body">
+                            <div class="row">
+
+                                <div class="col-md-8">
+                                    <h3 class="fw-semibold mb-2">
+                                        Find the <span class="text-primary">Perfect Plan</span>
+                                        for your Business.
+                                    </h3>
+                                    @*<p class="fs-13 mb-2">
+                                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Iure
+                                        quos debitis aliquam .
+                                    </p>*@
+
+                                    <div class=" d-flex justify-content-between align-items-center">
+
+                                        <p class="mb-0 fw-bold"> Plan Type </p>
+
+                                        <div class="custom-controls-stacked d-flex gap-2">
+                                            @foreach (var plan in Plans)
+                                            {
+                                                @if (PackagesList.Where(s => s.PlanID == plan.PlanID).ToList().Count > 0)
+                                                {
+                                                    <label class="custom-control custom-radio">
+                                                        <input type="radio"
+                                                       class="custom-control-input" name="example-radios1" value="option5"
+                                                       @onchange="(ChangeEventArgs e) => CheckboxClicked(true,plan)" checked> <span class="custom-control-label">@plan.PlanName</span>
+                                                    </label>
+                                                }
+                                                else
+                                                {
+                                                    <label class="custom-control custom-radio">
+                                                        <input type="radio"
+                                                       class="custom-control-input" name="example-radios1" value="option5"
+                                                       @onchange="(ChangeEventArgs e) => CheckboxClicked(true,plan)"> <span class="custom-control-label">@plan.PlanName</span>
+                                                    </label>
+                                                }
+
+                                            }
+
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex gap-3">
+                                        @if(PackagesList.Count>0)
+                                        {
+                                            @foreach (var package in PackagesList)
+                                            {
+                                                @if (Model.PackageID == package.PackageID)
+                                                {
+                                                    <label for="radio-card-@package.PackageID" class="radio-card">
+                                                        <input type="radio" name="radio-card" id="radio-card-@package.PackageID" checked />
+                                                        <div class="card-content-wrapper border position-relative">
+                                                            <span class="check-icon"></span>
+                                                            <div class="card-content">
+                                                                <img src="@package.FileName" alt="" />
+                                                                <p>@package.PackageName</p>
+                                                                <p class="fw-bold">₹ @package.Fee</p>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+
+                                                }
+                                                else
+                                                {
+                                                    <label for="radio-card-@package.PackageID" class="radio-card">
+                                                        <input type="radio" name="radio-card" id="radio-card-@package.PackageID" @onchange="(ChangeEventArgs e) => CheckboxClickedPackage(true,package.PackageID)" />
+                                                        <div class="card-content-wrapper border position-relative">
+                                                            <span class="check-icon"></span>
+                                                            <div class="card-content">
+                                                                <img src="@package.FileName" alt="" />
+                                                                <p>@package.PackageName</p>
+                                                                <p class="fw-bold">₹ @package.Fee</p>
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                }
+                                            }
+                                        }
+
+                                        <label for="radio-card" class="radio-card">
+                                            <input type="radio" name="radio-card" id="radio-card" @onchange="(ChangeEventArgs e) => CheckboxClickedCustom(true)" />
+                                            <div class="card-content-wrapper border">
+                                                <span class="check-icon"></span>
+                                                <div class="card-content">
+                                                    <img src="/assets/images/custom.png" alt="" />
+                                                    <p>Custom Plan</p>
+
+                                                </div>
+                                            </div>
+                                        </label>
+                                        <!-- /.radio-card -->
+                                    </div>
+
+                                    <hr>
+                                    <EditForm Model="Model" OnValidSubmit="SaveAsync">
+                                        <DataAnnotationsValidator />
+                                        <div class="row" style="@Model.CustomStyle">
+                                            <div class="col-12">
+                                                <div class="wrap-input100 validate-input input-group">
+                                                    <a href="javascript:void(0)"
+                                                       class="input-group-text bg-white text-muted" tabindex="-1">
+                                                        <i class="zmdi zmdi-city text-muted" aria-hidden="true"></i>
+                                                    </a>
+                                                    <input class="input100 border-start-0 form-control ms-0" type="text"
+                                                           placeholder="Company Name" @bind="Model.CompanyName">
+
+                                                </div>
+                                                <ValidationMessage For="()=>Model.CompanyName" />
+                                            </div>
+
+                                            <div class="col-md-12">
+                                                <div class="wrap-input100 validate-input input-group">
+                                                    <a href="javascript:void(0)"
+                                                       class="input-group-text bg-white text-muted" tabindex="-1">
+                                                        <i class="zmdi zmdi-assignment-account text-muted"
+                                                           aria-hidden="true"></i>
+                                                    </a>
+                                                    <input class="input100 border-start-0 form-control ms-0" type="text"
+                                                           placeholder="Full Name" @bind="Model.ClientName">
+
+                                                </div>
+                                                <ValidationMessage For="()=>Model.ClientName" />
+                                            </div>
+                                            <div class="col-md-12">
+                                                <div class="wrap-input100 validate-input input-group"
+                                                     data-bs-validate="Valid email is required: ex@abc.xyz">
+                                                    <a href="javascript:void(0)"
+                                                       class="input-group-text bg-white text-muted" tabindex="-1">
+                                                        <i class="zmdi zmdi-email text-muted" aria-hidden="true"></i>
+                                                    </a>
+                                                    <input class="input100 border-start-0 form-control ms-0" type="email"
+                                                           placeholder="Email" @bind="Model.Email">
+
+                                                </div>
+                                                <ValidationMessage For="()=>Model.Email" />
+                                            </div>
+                                            @*<div class="col-md-12">
+                                            <div id="mobile-num" class="wrap-input100 validate-input input-group mb-4">
+
+                                            <select class="input-group-text bg-white text-muted" @bind="Model.CountryID">
+                                            <option value=""></option>
+                                            @foreach (var country in Country.OrderBy(s => s.Value).ToList())
+                                            {
+                                            <option value="@country.ID">@country.Value</option>
+                                            }
+
+                                            </select>
+                                            <input class="input100 border-start-0 form-control ms-0" @bind="Model.MobileNo">
+
+                                            </div>
+                                            <ValidationMessage For="()=>Model.MobileNo" />
+                                            </div>*@
+
+                                            <DropdownSelect DivClass="col-sm-5"
+                                                            DropdownID="@CustomerCountryDropdownID"
+                                                            Label="Country :"
+                                                            Mode="(int)DropdownModes.Country"
+                                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                                            ItemSelected="ItemSelected"
+                                                            IsRequired="true"
+                                                            ReadDataOnSearch="true"
+                                                            SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})" />
+                                            <ValidationMessage For="()=>Model.CountryID" />
+                                            <div class="col-md-7">
+                                                <div class="form-group">
+                                                    <label class="form-label mt-0 me-1" style="text-align:left;">
+                                                        Phone :
+                                                        <span style="color:red">*</span>
+                                                    </label>
+                                                    <div class="input-group">
+                                                        <span class="input-group-text" style="min-width:40px;">
+                                                            @Model.ISDCode
+                                                        </span>
+                                                        <input type="text" class="form-control" @bind="Model.MobileNo" />
+                                                    </div>
+                                                    <ValidationMessage For="() => Model.MobileNo" />
+                                                </div>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+                                                    <a href="javascript:void(0)"
+                                                       class="input-group-text bg-white text-muted" tabindex="-1">
+                                                        <i class="zmdi zmdi-eye text-muted" aria-hidden="true" id="show-password-icon" @onclick="async () => await togglePasswordVisibility(true)"></i>
+                                                    </a>
+                                                    <input class="input100 border-start-0 form-control ms-0" type="password"
+                                                           placeholder="Password" @bind="Model.Password" id="password-field">
+
+                                                </div>
+                                                <ValidationMessage For="()=>Model.Password" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="wrap-input100 validate-input input-group" id="Password-toggle">
+                                                    <a href="javascript:void(0)"
+                                                       class="input-group-text bg-white text-muted" tabindex="-1">
+                                                        <i class="zmdi zmdi-eye text-muted" aria-hidden="true" id="show-password-icon" @onclick="async () => await togglePasswordVisibility(false)"></i>
+                                                    </a>
+                                                    <input class="input100 border-start-0 form-control ms-0" type="password"
+                                                           placeholder="Confirm Password" @bind="Model.ConfirmPassword" id="confirm-password-field">
+
+                                                </div>
+                                                <ValidationMessage For="()=>Model.Password" />
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label class="custom-control custom-checkbox my-4">
+                                                    <input type="checkbox" class="custom-control-input">
+                                                    <span class="custom-control-label">
+                                                        Agree the <a>
+                                                            terms
+                                                            and policy
+                                                        </a>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                            <div class="col-md-12">
+                                                <button type="submit" class="btn btn-primary btn-block modal-effect "
+                                                        data-bs-effect="effect-scale" data-bs-toggle="modal">
+                                                    Create Account
+                                                </button>
+                                            </div>
+
+                                        </div>
+                                    </EditForm>
+
+                                </div>
+
+                                <div class="col-md-4">
+                                    <div class="card ps-3 py-3 pe-0 shadow-none border-primary pricing-card rounded-0 border-start h-100">
+                                        @if (!IsCustom)
+                                        {
+                                            <div class="card-header d-block text-justified pt-2">
+                                                <p class="fs-18 fw-semibold mb-1 pe-0">@Packagedetails.PackageName</p>
+                                                <!-- <p class="text-justify fw-semibold mb-1"> <span class="fs-30 me-2">$</span><span class="fs-30 me-1">1,299</span>
+                                                <span class="fs-25"><span class="op-0-5 text-muted text-20">/</span> year</span></p> -->
+                                                @*<p class="fs-13 mb-2">
+                                            @Packagedetails.PackageDescription
+                                            </p>*@
+
+                                                <p class="fs-13 mb-2">
+                                                    @firstString <span class="fs-13 mb-2 collapse" id="collapseContent">
+                                                        @secondString
+                                                    </span><a class="p-0 mb-0 mt-2 btn-more d-flex align-items-center" data-bs-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">
+                                                        See <span class="see-more ms-1">more</span><span class="see-less ms-1">less</span><i class="fa fa-angle-down ms-2"></i>
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        }
+                                        @if (IsCustom)
+                                        {
+                                            <div class="card-header d-block text-justified pt-2">
+                                                <p class="fs-18 fw-semibold mb-1 pe-0">Custom Plan</p>
+
+                                                <p class="fs-13 mb-2">
+                                                    Customize you agent preference beyond 5 according to your needs. Easily customize with your business
+                                                    <span class=" fs-13 mb-2 collapse" id="collapseContent">
+                                                        goals and customers in mind without being left out on any relevant features ahead. We also provide accounts feature in addition to WhatsApp chat and CRM. You can talk to us directly regarding any additional add-ons or preferences if any.
+                                                        Get ahead of your competition now with our API now!
+                                                        Try our API custom plan now!
+                                                    </span>
+                                                    <a class="p-0 mb-0 mt-2 btn-more d-flex align-items-center" data-bs-toggle="collapse" href="#collapseContent" role="button" aria-expanded="false" aria-controls="collapseContent">
+                                                        See <span class="see-more ms-1">more</span><span class="see-less ms-1">less</span><i class="fa fa-angle-down ms-2"></i>
+                                                    </a>
+                                                </p>
+
+                                            </div>
+                                        }
+
+                                        <div class="card-body pt-2 pricing-detail-view">
+                                            @if (!IsCustom)
+                                            {
+                                                <ul class="text-justify pricing-body ps-0">
+                                                    @foreach (var item in Packagedetails.featureList)
+                                                    {
+                                                        <li>
+                                                            <i class="mdi mdi-checkbox-marked-circle-outline text-primary p-2 fs-16"></i>
+                                                            <strong>@item</strong>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                            @if (IsCustom)
+                                            {
+                                                <div class="d-flex justify-content-center align-items-center flex-column h-100">
+                                                    <img src="/assets/custom.gif" alt="" class="w-100p mb-4">
+                                                    <a class="btn btn-success text-white" @onclick="ShowCustomModal">Contact Us</a>
+                                                </div>
+                                            }
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <!--Modal-->
+                <div class="modal fade" id="modaldemo8">
+                    <div class="modal-dialog modal-dialog-centered modal-md " role="document">
+                        <div class="modal-content modal-content-demo">
+
+                            <div class="modal-body">
+                                @if ((int)RemainingTime.TotalSeconds > 0)
+                                {
+                                    <div class="row">
+
+                                        <img src="/assets/images/opt-illustation.svg" alt="" class="w-260 my-4 mx-auto">
+                                        <h4 class="fw-bold">Confirm Your Email</h4>
+                                        <p>
+                                            We’ve sent verification code
+                                            to <span class="text-primary">@OTPVerifyModel.UserName</span>
+                                        </p>
+
+                                        <div id="login-otp" class="justify-content-around mb-5" style="display: flex;">
+                                            <input class="form-control text-center w-15" id="txt1" maxlength="1" @bind="@OTPModel.Digit1" @onkeyup="async (KeyboardEventArgs k) => await DigitEntered(k, 1)">
+                                            <input class="form-control text-center w-15" id="txt2" maxlength="1" @bind="@OTPModel.Digit2" @onkeyup="async (KeyboardEventArgs k) => await DigitEntered(k, 2)">
+                                            <input class="form-control text-center w-15" id="txt3" maxlength="1" @bind="@OTPModel.Digit3" @onkeyup="async (KeyboardEventArgs k) => await DigitEntered(k, 3)">
+                                            <input class="form-control text-center w-15" id="txt4" maxlength="1" @bind="@OTPModel.Digit4" @onkeyup="async (KeyboardEventArgs k) => await DigitEntered(k, 4)">
+                                        </div>
+                                        @if ((int)RemainingTime.TotalSeconds > 240)
+                                        {
+                                            <span class="text-muted text-center">Resend in @((int)RemainingTime.TotalSeconds - 240)</span>
+                                        }
+                                        else
+                                        {
+                                            <a class="text-muted text-center" @onclick="async () => await RegenerateOTP()">Resend OTP</a>
+
+                                        }
+                                    </div>
+                                }
+                            </div>
+                            <div class="modal-footer border-0">
+                                <button type="button" class="btn btn-primary w-80" @onclick="async () => await VerifyOTP()">Verify</button>
+                                @*<button class="btn btn-light" data-bs-dismiss="modal" @onclick="HideModal">Close</button>*@
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!--EndModal-->
+
+
+            </div>
+        </div>
+        <!-- End PAGE -->
+    </div>
+</LoginLayout>
+
+<!--Contact Modal-->
+
+<div class="modal fade" id="modalcontact" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+        <div class="modal-content modal-content-demo p-0 border-0">
+            <div class="modal-body p-0">
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="contact-details h-100 bg-primary p-4">
+                            <h3 class="fw-semibold mb-2 text-white" style="font-size: 439%;">Get in Touch with Us</h3>
+                            <p class="fs-13 mb-2 text-white">We're here to assist you with any inquiries or special requirements regarding our custom plan.</p>
+
+                            <hr />
+                            <div class="d-flex flex-column gap-3 mt-8">
+                                <div>
+                                    <div class="d-flex align-items-center mb-3 mt-3 text-white">
+                                        <div class="me-4 text-center text-white">
+                                            <span><i class="fe fe-phone fs-20"></i></span>
+                                        </div>
+                                        <div><strong>+971 566 88 5935</strong></div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-3 mt-3 text-white">
+                                        <div class="me-4 text-center text-white">
+                                            <span><i class="fe fe-phone fs-20"></i></span>
+                                        </div>
+                                        <div><strong class="text-white">+91 9846982593 </strong></div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-3 mt-3 text-white">
+                                        <div class="me-4 text-center text-white">
+                                            <span><i class="fe fe-mail fs-20"></i></span>
+                                        </div>
+                                        <div><strong>info@progbiz.io</strong></div>
+                                    </div>
+                                </div>
+
+                                <div class="btn-list">
+                                    <a href="https://www.facebook.com/progbizio" class="btn btn-icon rounded-pill text-white t"><i class="fa fa-facebook"></i></a>
+                                    <a href=@("https://www.youtube.com/"+"@progbiz2026") class="btn btn-icon rounded-pill text-white"><i class="fa fa-youtube"></i></a>
+                                    <a href="https://twitter.com/Progbizio?t=vGs3RZYzZ1CFCn7CITvbFQ&s=09" class="btn btn-icon rounded-pill text-white"><i class="fa fa-twitter"></i></a>
+                                    <a href="https://instagram.com/progbiz.io?igshid=YmMyMTA2M2Y=" class="btn btn-icon rounded-pill text-white"><i class="fa fa-instagram"></i></a>
+                                </div>
+                                <div class="contact-quote d-flex align-items-center" style="width: 85%;">
+                                    <img src="https://gepsenergy.com/assets/images/icons/noteicon.webp" alt="" class="me-2" />
+                                    <p class="text-white">For more informtion drop a message on whatsapp Or, give us a call: <a href="tel:919846982593" class="text-white">+91 9846982593</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="col-md-7">
+                        <EditForm Model="modalModel" OnValidSubmit="SaveData">
+                            <DataAnnotationsValidator />
+                            <div class="plan-contact py-5 ps-0 pe-5">
+
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <label class="form-label">Full Name <span class="text-red">*</span></label>
+                                        <input type="text" class="form-control" placeholder="Full name" @bind="modalModel.Name" />
+                                    </div>
+                                    <ValidationMessage For="()=>modalModel.Name" />
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <label class="form-label">Company Name <span class="text-red">*</span></label>
+                                        <input type="text" class="form-control" placeholder="Company name" @bind="modalModel.CompanyName" />
+                                    </div>
+                                    <ValidationMessage For="()=>modalModel.CompanyName" />
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <label class="form-label">Contact email <span class="text-red">*</span></label>
+                                        <input type="text" class="form-control" placeholder="Contact email" @bind="modalModel.EmailAddress" />
+                                    </div>
+                                    <ValidationMessage For="()=>modalModel.EmailAddress" />
+                                </div>
+                                <div class="col-sm-12">
+                                    <div class="form-group">
+                                        <label class="form-label">Phone Number<span class="text-red">*</span></label>
+                                        <input type="text" class="form-control" placeholder="phone number" @bind="modalModel.Phone" />
+                                    </div>
+                                    <ValidationMessage For="()=>modalModel.Phone" />
+                                </div>
+
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label">Tell us about your specific needs and preferences for a custom plan:<span class="text-red">*</span></label>
+                                        <textarea class="form-control mb-4" placeholder="your message" rows="4" @bind="modalModel.Description"></textarea>
+                                    </div>
+                                    <ValidationMessage For="()=>modalModel.Description" />
+                                </div>
+                                <div class="col-12">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <button type="submit" class="btn btn-primary w-100 modal-effect">Send</button>   @*data-bs-effect="effect-scale" data-bs-toggle="modal" @onclick="async () => await SaveData()"*@
+                                        <button type="button" class="btn btn-danger" data-bs-dismiss="modal" @onclick="HideClientEnquiryModal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </EditForm>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--Modal Done-->
+<div class="modal fade" id="modaldone" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+        <div class="modal-content modal-content-demo p-0 border-0">
+            <div class="modal-body p-0">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="contact-details h-100 bg-primary p-5">
+                            <h3 class="fw-semibold mb-2 text-white" style="font-size: 439%;">Thank you for your interest in our custom plans.</h3>
+                            <p class="fs-18 mb-2 text-white">We'll be in touch shortly to discuss your custom plan. In the meantime, you can learn more about our custom plans by visiting our website. Thank you for your interest!</p>
+
+                            <hr />
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="btn-list mt-5">
+                                    <button type="button" class="btn btn-icon rounded-pill text-white t"><i class="fa fa-facebook"></i></button>
+                                    <button type="button" class="btn btn-icon rounded-pill text-white"><i class="fa fa-youtube"></i></button>
+                                    <button type="button" class="btn btn-icon rounded-pill text-white"><i class="fa fa-twitter"></i></button>
+                                    <button type="button" class="btn btn-icon rounded-pill text-white"><i class="fa fa-instagram"></i></button>
+                                </div>
+
+                                <button class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private RegistrationModel Model = new();
+    private List<IdnValuePair> Country = new();
+    private List<MembershipPackageListModel> PackagesList = new();
+    private List<MembershipPlanModel> Plans = new();
+    private MembershipPackageListModel Packagedetails = new();
+    bool IsCustom = false;
+    private readonly VerifyOTPPostModel VerifyModel = new();
+    private OTPVerficationModel OTPModel = new();
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+    private string? ProfileImage;
+    int? ClientId = null;
+    private string CustomerCountryDropdownID = "customer-country-drop-down-select";
+    string firstString = "";
+    string secondString = "";
+
+
+    #region Main Registration
+    protected override async Task OnInitializedAsync()
+    {
+        _Timer = new System.Timers.Timer();
+        _Timer.Interval = 1000; // 1 second
+        _Timer.Elapsed += CountDownTimer;
+        Country = await API.GetAsync<List<IdnValuePair>>("auth/get-all-country-list");
+        Plans = await API.GetAsync<List<MembershipPlanModel>>("auth/get-membership-plans-list");
+        int PlanID = Plans.Where(s => s.IsSelected).First().PlanID;
+        await AllPackageDetails(PlanID);
+    }
+
+    private async Task AllPackageDetails(int PlanID)
+    {
+        PackagesList = await API.GetAsync<List<MembershipPackageListModel>>($"auth/get-packages-list/{PlanID}", true);
+        if(PackagesList.Count>0)
+        {
+            Model.PackageID = PackagesList[0].PackageID;
+            int packageId = Model.PackageID.Value;
+            Packagedetails = await API.GetAsync<MembershipPackageListModel>($"auth/get-membership-package-details/{packageId}", true);
+            Model.Fee = Packagedetails.Fee;
+            Model.MonthCount = Packagedetails.MonthCount;
+
+            int characterCount = 77;
+            firstString = Packagedetails.PackageDescription.Substring(0, characterCount);
+            secondString = Packagedetails.PackageDescription.Substring(characterCount);
+        }
+    }
+
+
+
+    private async Task CheckboxClicked(bool value, MembershipPlanModel list)
+    {
+        int PlanID = list.PlanID;
+        bool values = value;
+        if (values)
+        {
+            await AllPackageDetails(PlanID);
+            //Package = await API.GetAsync<List<MembershipPackageListModel>>($"auth/get-package-month/{PlanID}");
+            //Model.PackageID = Package[0].PackageID;
+            //int packageId = Model.PackageID.Value;
+            //Packagedetails = await API.GetAsync<MembershipPackageListModel>($"auth/get-package-details/{packageId}");
+
+        }
+
+    }
+    private async Task CheckboxClickedPackage(bool value, int packageId)
+    {
+        bool values = value;
+        if (values)
+        {
+            Model.PackageID = packageId;
+            Packagedetails = await API.GetAsync<MembershipPackageListModel>($"auth/get-membership-package-details/{packageId}", true);
+            Model.Fee = Packagedetails.Fee;
+            Model.MonthCount = Packagedetails.MonthCount;
+            IsCustom = false;
+        }
+
+
+    }
+    private async Task CheckboxClickedCustom(bool value)
+    {
+        bool values = value;
+        if (values)
+        {
+            Model.PackageID = 0;
+            IsCustom = true;
+        }
+
+
+    }
+    private DateTime? OTPgeneratedAt;
+    private TimeSpan OTPValidDuration = TimeSpan.FromMinutes(5);
+    private TimeSpan RemainingTime;
+    private static System.Timers.Timer? _Timer;
+    int? userId = null;
+    private async Task SaveAsync()
+    {
+        var result = await API.PostAsync<RegistraionAddResultModel, RegistrationModel>("auth/register", Model);
+        if (result != null)
+        {
+            ClientId = result.ClientID;
+            userId = result.UserID;
+            await _localStorage.SetItemAsync("username", Model.Email);
+            RemainingTime = OTPValidDuration;
+
+            await ShowModal();
+        }
+    }
+
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Country:
+
+                Model.CountryID = data.ID;
+                Model.CountryName = data.Value;
+                if (Model.CountryID != null)
+                {
+                    var res = await API.GetAsync<StringModel>($"common/get-country-isd-code/{Model.CountryID}", true);
+                    if (res != null)
+                    {
+                        Model.ISDCode = res.Value;
+                    }
+                    else
+                    {
+                        Model.ISDCode = "";
+                    }
+                }
+                break;
+
+        }
+    }
+    #endregion
+
+    #region Verify Modal
+    private async Task ShowModal()
+    {
+        _Timer.Start();
+        StateHasChanged();
+        await JS.InvokeVoidAsync("FixedModal", "modaldemo8");
+        StateHasChanged();
+        await JS.InvokeVoidAsync("ShowModal", "modaldemo8");
+
+        OTPVerifyModel.UserName = await _localStorage.GetItemAsync<string>("username");
+        OTPVerifyModel.UserID = userId;
+    }
+
+    private async Task HideModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "modaldemo8");
+    }
+    private VerifyOTPPostModel OTPVerifyModel = new() { OTP = "" };
+    private async Task DigitEntered(KeyboardEventArgs k, int nThDigit)
+    {
+        var temp = Convert.ToString(k.Key);
+        StringBuilder stringBuilder = new StringBuilder(OTPVerifyModel.OTP);
+        if (Regex.IsMatch(temp, @"^\d+$"))
+        {
+            switch (nThDigit)
+            {
+                case 1:
+                    if (OTPVerifyModel.OTP.Length == 0)
+                    {
+                        OTPVerifyModel.OTP = temp;
+                    }
+                    else
+                    {
+                        stringBuilder.Replace(OTPVerifyModel.OTP[nThDigit - 1], Convert.ToChar(temp), (nThDigit - 1), 1);
+                        OTPVerifyModel.OTP = stringBuilder.ToString();
+                    }
+                    OTPModel.Digit1 = temp;
+                    await JS.InvokeVoidAsync("focusElement", "txt2");
+                    break;
+
+                case 2:
+                    if (OTPVerifyModel.OTP.Length == 1)
+                    {
+                        OTPVerifyModel.OTP += temp;
+                    }
+                    else
+                    {
+                        stringBuilder.Replace(OTPVerifyModel.OTP[nThDigit - 1], Convert.ToChar(temp), (nThDigit - 1), 1);
+                        OTPVerifyModel.OTP = stringBuilder.ToString();
+                    }
+                    OTPModel.Digit2 = temp;
+                    await JS.InvokeVoidAsync("focusElement", "txt3");
+                    break;
+
+                case 3:
+                    if (OTPVerifyModel.OTP.Length == 2)
+                    {
+                        OTPVerifyModel.OTP += temp;
+                    }
+                    else
+                    {
+                        stringBuilder.Replace(OTPVerifyModel.OTP[nThDigit - 1], Convert.ToChar(temp), (nThDigit - 1), 1);
+                        OTPVerifyModel.OTP = stringBuilder.ToString();
+                    }
+                    OTPModel.Digit3 = temp;
+                    await JS.InvokeVoidAsync("focusElement", "txt4");
+                    break;
+
+                case 4:
+                    if (OTPVerifyModel.OTP.Length == 3)
+                    {
+                        OTPVerifyModel.OTP += temp;
+                    }
+                    else
+                    {
+                        stringBuilder.Replace(OTPVerifyModel.OTP[nThDigit - 1], Convert.ToChar(temp), (nThDigit - 1), 1);
+                        OTPVerifyModel.OTP = stringBuilder.ToString();
+                    }
+                    OTPModel.Digit4 = temp;
+                    await JS.InvokeVoidAsync("focusElement", "verify-otp-btn");
+                    break;
+            }
+        }
+
+    }
+
+    private async Task FocusElement(string elementID)
+    {
+        await JS.InvokeVoidAsync("focusElement", elementID);
+    }
+    private async Task VerifyOTP()
+    {
+        var result = await API.PostAsync<BaseSuccessResponse, VerifyOTPPostModel>("auth/verify-otp", OTPVerifyModel);
+        if (result != null)
+        {
+            //await ((LocalAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(result);
+            //var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+            //var authState = await localStateProvider.GetAuthenticationStateAsync();
+            //var user = authState.User;
+            //await _localStorage.SetItemAsync("profile-image", user.Claims.FirstOrDefault(c => c.Type == "ProfileURL").Value);
+            await HideModal();
+            Nav.NavigateTo($"/plan-check-out/{ClientId}");
+        }
+    }
+    #endregion
+
+    #region Regenerate OTP,Timer
+
+    private void StartTimer()
+    {
+        _Timer = new System.Timers.Timer(1000);
+        _Timer.Elapsed += CountDownTimer;
+        _Timer.Enabled = true;
+    }
+
+    private void CountDownTimer(Object? source, System.Timers.ElapsedEventArgs? e)
+    {
+        if (RemainingTime.TotalMinutes > 0)
+        {
+            RemainingTime = RemainingTime.Subtract(TimeSpan.FromSeconds(1));
+        }
+        else
+        {
+            _Timer.Stop();
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RegenerateOTP()
+    {
+        var result = await API.GetAsync<DateTime?>($"auth/regenerate-otp/{OTPVerifyModel.UserID}", true);
+        if (result != null)
+        {
+            OTPgeneratedAt = result;
+            RemainingTime = OTPValidDuration;
+            _Timer.Start();
+        }
+    }
+    #endregion
+
+
+
+    #region Custom Modal
+    private CustomDetailsModel modalModel = new();
+    private async Task ShowCustomModal()
+    {
+        await JS.InvokeVoidAsync("FixedModal", "modalcontact");
+        StateHasChanged();
+        await JS.InvokeVoidAsync("ShowModal", "modalcontact");
+
+    }
+
+    private async Task SaveData()
+    {
+        var res = await API.PostAsync<BaseSuccessResponse, CustomDetailsModel>("auth/save-client-enquiry", modalModel);
+
+        if (res != null)
+        {
+            await HideClientEnquiryModal();
+            await JS.InvokeVoidAsync("FixedModal", "modaldone");
+            StateHasChanged();
+            await JS.InvokeVoidAsync("ShowModal", "modaldone");
+            Nav.NavigateTo("/login");
+            //await JS.ShowMessage("Thank you for choosing our custom plan. Our authorized person will contact you shortly.For any query please contact  9846982593");
+
+        }
+
+    }
+
+    private async Task HideClientEnquiryModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "modalcontact");
+    }
+    #endregion
+
+
+    private async Task togglePasswordVisibility(bool IsPass)
+    {
+        if (IsPass)
+        {
+            await JS.InvokeVoidAsync("togglePasswordVisibility", "password-field");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("togglePasswordVisibility", "confirm-password-field");
+        }
+
+    }
+
+
+}

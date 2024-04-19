@@ -1,0 +1,180 @@
+﻿@using PB.Shared.Tables;
+@using Blazored.LocalStorage;
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+@inject ILocalStorageService _localStorage
+
+
+<div class="modal fade" id="new-city-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+        <EditForm Model="Model" OnValidSubmit="Save" autocomplete="off">
+            <div class="modal-content modal-content-demo">
+
+
+                <div class="modal-header">
+                    @if (Model.CityID != 0)
+                    {
+                        <h6 class="modal-title">@Model.CityName</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New City</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await CloseModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body" style="@pointerEvent; overflow-y:scroll;">
+
+
+                    <DataAnnotationsValidator />
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="my-4 d-flex gap-4">
+                                <h5 style="font-weight:bold">Country : @Model.StateName</h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <InputTextBox Label="City Name : " @bind-Value="Model.StateName"
+                                          IsRequired="true"
+                                          ValidationFor="() => Model.CityName"
+                                          DivClass="col-md-7"
+                                          id="cst-name-box" />
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">Latitude :</label>
+                                    <input type="number" class="form-control" @bind="Model.Lat">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">Longitude :</label>
+                                    <input type="number" class="form-control" @bind="Model.Long">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!IsViewOnly)
+                {
+                    <div class="modal-footer">
+                        @if (Model.CityID == 0)
+                        {
+                            <button type="submit" class="btn btn-primary">Add</button>
+                            <button type="button" class="btn btn-danger" @onclick="async() => await CloseModal()">Close</button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-primary">Update</button>
+                            <button type="button" class="btn btn-danger" @onclick="async() => await CloseModal()">Close</button>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-danger" @onclick="async() => await CloseModal()">Close</button>
+                }
+
+
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair> CallbackWithIdnValue { get; set; }
+
+    private CountryCityModel Model = new();
+
+    private DropdownSelect? StateSelect;
+
+    string errorMessage = "";
+    //int previousId = 0;
+
+    bool ReadOnly = false;
+    bool IsInQuickAddMode = false;
+
+    string disabledMode = "";
+    string pointerEvent = "";
+    int PreviousCityID = 0;
+
+    private bool IsViewOnly;
+
+    public async Task OpenCityModal(int? stateId, string stateName, int cityID = 0, bool isViewOnly = false)
+    {
+        IsViewOnly = isViewOnly;
+        Model.StateID = stateId;
+        Model.StateName = stateName;
+        if (PreviousCityID != cityID)
+        {
+            Model = await API.GetAsync<CountryCityModel>($"common/get-city/{cityID}");
+            PreviousCityID = cityID;
+        }
+        if (IsViewOnly)
+        {
+            pointerEvent = "pointer-events:none;";
+        }
+        else
+        {
+            pointerEvent = "";
+        }
+        StateHasChanged();
+        await OpenModal();
+    }
+
+    public async Task Save()
+    {
+        var res = await API.PostAsync<CityAddResultModel, CountryCityModel>("common/save-city", Model);
+        if (res != null)
+        {
+            Model = new();
+            errorMessage = "";
+
+            await CallbackWithIdnValue.InvokeAsync(new IdnValuePair()
+                {
+                    ID = res.CityID,
+                    Value = res.CityName
+                });
+            await CloseModal();
+        }
+    }
+
+    private async Task Delete()
+    {
+        if (await API.GetAsync<bool>($"common/delete-city/{Model.CityID}"))
+        {
+            Model = new();
+            errorMessage = "";
+            await CloseModal();
+            await CallbackWithIdnValue.InvokeAsync();
+        }
+    }
+
+    private async Task CloseModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "new-city-modal");
+    }
+
+    private async Task OpenModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "new-city-modal", "city-name-text-box");
+    }
+
+    private async Task FocusElement(string elementID)
+    {
+        await JS.InvokeVoidAsync("focusElement", elementID);
+    }
+
+    private void ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        Model.StateID = data.ID;
+        Model.StateName = data.Value;
+    }
+}

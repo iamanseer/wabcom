@@ -1,0 +1,157 @@
+﻿@if (TotalPages > 1)
+{
+    
+
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="row">
+            <div class="mt-1 d-flex justify-content-center">
+                <div>
+                    @if (PageIndex * PageSize < TotalCount)
+                    {
+                        <span style="font-size:11px;">Showing @((PageIndex - 1) * PageSize + 1) to @(PageIndex * PageSize) of @TotalCount items</span>
+                    }
+                    else
+                    {
+                        <span style="font-size:11px;">Showing @((PageIndex - 1) * PageSize + 1) to @TotalCount of @TotalCount items</span>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-right:-0.03rem">
+            <div class="mt-3 d-flex justify-content-center">
+                <ul class="pagination">
+
+                    @{
+                        PaginationSetIndex = (PageIndex - 1) / Five;
+                        //if (PageIndex % Five > 0)
+                        //	PaginationSetIndex++;
+
+                        var i1 = (PaginationSetIndex * Five) + 1;
+                        var i2 = (PaginationSetIndex * Five) + 2;
+                        var i3 = (PaginationSetIndex * Five) + 3;
+                        var i4 = (PaginationSetIndex * Five) + 4;
+                        var i5 = (PaginationSetIndex * Five) + 5;
+                        string active = "";
+                    }
+
+                    @if (PaginationSetIndex > 0)
+                    {
+                        <li class="pagination__item">
+                            <a class="pagination__arrow pagination__arrow__prev" @onclick="@(async () => await LoadPageIndex.InvokeAsync(1))">
+                                @*<i class="fa fa-angle-double-left"></i>*@
+                            </a>
+                        </li>
+                        <li class="page-item page-prev">
+                            <a class="page-link" @onclick="@(async () => await PreviousPaginationSet())">
+                                <i class="fa fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                    }
+
+                    @if (TotalPages >= i1)
+                    {
+                        active = "";
+                        if (PageIndex == i1)
+                        {
+                            active = "active";
+                        }
+                        <li class="page-item @active"><a class="page-link" @onclick="@(async () => await LoadPageIndex.InvokeAsync(i1))">@i1</a></li>
+                    }
+
+                    @if (TotalPages >= i2)
+                    {
+                        active = "";
+                        if (PageIndex == i2)
+                        {
+                            active = "active";
+                        }
+
+                        <li class="page-item @active"><a class="page-link" @onclick="@(async () => await LoadPageIndex.InvokeAsync(i2))">@i2</a></li>
+                    }
+
+                    @if (TotalPages >= i3)
+                    {
+                        active = "";
+                        if (PageIndex == i3)
+                        {
+                            active = "active";
+                        }
+
+                        <li class="page-item @active"><a class="page-link" @onclick="@(async () => await LoadPageIndex.InvokeAsync(i3))">@i3</a></li>
+                    }
+
+                    @if (TotalPages >= i4)
+                    {
+                        active = "";
+                        if (PageIndex == i4)
+                        {
+                            active = "active";
+                        }
+
+                        <li class="page-item @active"><a class="page-link" @onclick="@(async () => await LoadPageIndex.InvokeAsync(i4))">@i4</a></li>
+                    }
+
+                    @if (TotalPages >= i5)
+                    {
+                        active = "";
+                        if (PageIndex == i5)
+                        {
+                            active = "active";
+                        }
+                        <li class="page-item @active"><a class="page-link" @onclick="@(async () => await LoadPageIndex.InvokeAsync(i5))">@i5</a></li>
+                    }
+
+                    @if (TotalPages > (PaginationSetIndex + 1) * Five)
+                    {
+                        <li class="page-item page-next">
+                            <a class="page-link" @onclick="@(async () => await NextPaginationSet())" aria-label="Next">
+                                <i class="fa fa-angle-double-right"></i>
+
+                            </a>
+                        </li>
+                        <li class="pagination__item">
+                            <a class="pagination__arrow pagination__arrow__next" @onclick="@(async () => await LoadPageIndex.InvokeAsync(TotalPages))" aria-label="Next">
+                                @*<span aria-hidden="true">&raquo;</span>
+                        <span class="sr-only">End</span>*@
+                                @*<i class="fa fa-angle-double-right"></i>*@
+                            </a>
+                        </li>
+                    }
+
+
+                </ul>
+            </div>
+        </div>
+        
+    </div>
+
+}
+
+@code {
+    private readonly int Five = 5;
+    private int PaginationSetIndex = 0;
+
+    [Parameter] public EventCallback<int> LoadPageIndex { get; set; }
+    [Parameter] public int PageIndex { get; set; }
+    [Parameter] public int PageSize { get; set; }
+    [Parameter] public int TotalCount { get; set; }
+    [Parameter] public int TotalPages { get; set; }
+
+
+    private async Task NextPaginationSet()
+    {
+        PaginationSetIndex++;
+        PageIndex = (PaginationSetIndex * Five) + 1;
+        await LoadPageIndex.InvokeAsync(PageIndex);
+    }
+
+    private async Task PreviousPaginationSet()
+    {
+        PaginationSetIndex = PageIndex / Five;
+        if (PaginationSetIndex <= 0)
+            PageIndex = 1;
+        else
+            PageIndex = (PaginationSetIndex * Five) - 4;
+        await LoadPageIndex.InvokeAsync(PageIndex);
+    }
+}

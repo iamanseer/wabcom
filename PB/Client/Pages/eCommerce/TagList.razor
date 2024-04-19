@@ -1,0 +1,153 @@
+﻿@page "/tag-list"
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.eCommerce.SEO;
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="TagListHeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" OnAddButtonClick="async () => await OpenTagModal()" />
+                </div>
+                <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Sl No.
+                                        </th>
+                                        <th>
+                                            Name
+                                        </th>
+                                        
+                                        <th>
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in TagPagedListModel.Data.Select((value, i) => new { i, value }))
+                                    {
+                                        var entry = item.value;
+                                        var index = item.i;
+                                        <tr>
+
+                                            <td>
+                                                @if (TagPagedListModel.PageIndex == 1)
+                                                {
+                                                    @(index + 1)
+                                                }
+                                                else
+                                                {
+                                                    @((TagPagedListModel.PageIndex * TagPagedListModel.PageSize) + (index + 1) - 10)
+                                                }
+                                            </td>
+                                            <td>
+                                                @entry.TagName
+                                            </td>
+                                            
+                                            <td>
+                                                <button type="button" class="btn btn-icon btn-primary" @onclick="()=>OpenTagModal(entry.TagID)"><i class="fa fa-edit"></i></button>
+                                                <button type="button" class="btn btn-danger" @onclick="()=>HandleTagItemRemove(entry.TagID)"><i class="fa fa-trash "></i></button>
+                                            </td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <PaginationCustom PageSize="TagPagedListModel.PageSize" TotalCount="TagPagedListModel.TotalCount" TotalPages="TagPagedListModel.TotalPages" PageIndex="TagPagedListModel.PageIndex" LoadPageIndex="PageIndex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<!--Tag Modal-->
+<div class="modal fade" id="TagModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h6 class="modal-title fw-bold">Add Tag</h6><button aria-label="Close" class="btn-close" @onclick="(async() =>await HideTagModal())"><span aria-hidden="true">&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="TagModel" OnValidSubmit="SaveTag" autocomplete="off">
+                    <DataAnnotationsValidator />
+                    <div class="row">
+                        <div class="col-md">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">Tag Name :</label>
+                                <input type="text" class="form-control w-100" @bind-value="TagModel.TagName">
+                                <ValidationMessage For="()=>TagModel.TagName" />
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-primary" type="submit">Save</button>
+                                <button class="btn btn-danger" type="button" @onclick="@(async ()=>await HideTagModal())">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+<!--end modal-->
+@code {
+    private TagModel TagModel = new();
+    private PagedList<TagModel> TagPagedListModel = new();
+    private PagedListPostModelWithFilter searchmodel = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        TagPagedListModel = await API.PostAsync<PagedList<TagModel>, PagedListPostModelWithFilter>("seo/get-all-tags", searchmodel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        searchmodel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    async Task HandleTagItemRemove(int id)
+    {
+        if (await API.DeleteAsync("seo/delete-tag", id, true, Localizer["Confirm"], Localizer["Are you sure you want to delete?"], Localizer["Confirm"], Localizer["Cancel"]))
+        {
+            await JS.SuccessMessage(Localizer["Deleted Successfully"]);
+            await LoadData();
+        }
+    }
+    HeaderSettingsModel TagListHeaderSettings = new()
+        {
+            NeedAddButton = true,
+            AddButtonText = "Add Tag"
+        };
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        searchmodel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+    private async Task OpenTagModal(int tagID = 0)
+    {
+        if (tagID > 0)
+            TagModel = TagPagedListModel.Data.Where(tag => tag.TagID == tagID).First();
+        await JS.InvokeVoidAsync("ShowModal", "TagModal");
+    }
+    private async Task HideTagModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "TagModal");
+    }
+    async Task SaveTag()
+    {
+        var result = await API.PostAsync<BaseSuccessResponse, TagModel>("seo/save-Tag", TagModel);
+        if (result != null)
+        {
+            await JS.InvokeVoidAsync("HideModal", "TagModal");
+            await JS.SuccessMessage("Saved Successfully");
+            await LoadData();
+         
+        }
+    }
+}

@@ -1,0 +1,160 @@
+﻿@using Blazored.LocalStorage;
+@using PB.Shared.Models.Common
+@using PB.Shared.Models.Inventory.Items
+@inject ILocalStorageService _localStorage
+
+<div class="modal fade" id="item-brand-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-md" role="document">
+        <EditForm Model="Model" autocomplete="off" OnValidSubmit="async () => await SaveItemBrand()">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    @if (Model.BrandID != 0)
+                    {
+                        <h6 class="modal-title">@Model.BrandName</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New Item Brand</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HideItemBrandModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row">
+                        <InputTextBox Label="Brand Name:"
+                                      DivClass="col-md-12"
+                                      IsRequired="true"
+                                      PlaceHolder="Item brand"
+                                      ValidationFor="() => Model.BrandName"
+                                      @bind-Value="Model.BrandName"
+                                      id="item-brand-name-box" />
+                    </div>
+                    <div class="image-container">
+                        @if (Model.MediaID is null)
+                        {
+                            <div class="image-item position-relative">
+                                <div class="img-item-card">
+                                    <div class="image-plus-icon" onclick="openFileSelector('@FileSelectorID')">+</div>
+                                </div>
+                                <div class="position-absolute">
+                                    <span class="text-danger" style="font-size: x-small;">Prefer 1200*1200 pixels</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="image-item">
+                                <img src="@Model.FileName" alt="brand-img">
+                                <div class="overlay-icons">
+                                    <div class="edit-icon" onclick="openFileSelector('@FileSelectorID')">Change</div>
+                                </div>
+                                <div>
+                                    <button type="button" class="edit-icon" @onclick="async () => await RemoveImage(Model)">
+                                        Remove
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    @if (Model.BrandID == 0)
+                    {
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideItemBrandModal()">Close</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideItemBrandModal()">Close</button>
+                    }
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+<InputFile type="file" id="@FileSelectorID" style="display: none" accept="image/*" OnChange="HandleFileUploadChange" />
+
+@code {
+
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+
+    private ItemBrandModel Model = new();
+    private string FileSelectorID = "item-brand-image-file-selector";
+    private int currentItemIndex = -1;
+
+    public async Task OpenItemBrandModal(int brandID = 0)
+    {
+        Model = new();
+        if (brandID != 0)
+        {
+            Model = await API.GetAsync<ItemBrandModel>($"item/get-item-brand/{brandID}", true);
+        }
+        await JS.InvokeVoidAsync("ShowModal", "item-brand-modal");
+    }
+
+    private async Task HideItemBrandModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "item-brand-modal");
+    }
+
+    private IBrowserFile? selectedFile;
+    private async Task HandleFileUploadChange(InputFileChangeEventArgs e)
+    {
+        if (e is null)
+            return;
+
+        selectedFile = e.File;
+        currentItemIndex = await _localStorage.GetItemAsync<int>("imageItemIndex");
+        await _localStorage.RemoveItemAsync("imageItemIndex");
+        var result = await UploadFileToServer();
+        if (result is not null)
+        {
+            Model.MediaID = result.MediaID;
+            Model.FileName = result.FilePath;
+        }
+    }
+
+    private async Task<FileUploadResultModel?> UploadFileToServer()
+    {
+        if (selectedFile is not null)
+        {
+            string mediaID = "0";
+            if (Model.MediaID is not null && Model.BrandID is not 0)
+                mediaID = Model.MediaID.Value.ToString();
+            using var fileContent = new MultipartFormDataContent();
+            fileContent.Add(new StreamContent(selectedFile.OpenReadStream(50000000)), "file", selectedFile.Name);
+            fileContent.Add(new StringContent("ItemBrand"), "FolderName");
+            fileContent.Add(new StringContent(selectedFile.ContentType), "ContentType");
+            fileContent.Add(new StringContent(mediaID), "MediaID");
+            return await API.PostAsync<FileUploadResultModel>("media/new-upload-file", fileContent);
+        }
+        return null;
+    }
+
+    private async Task SaveItemBrand()
+    {
+        var result = await API.PostAsync<ItemBrandSaveSuccessModel, ItemBrandModel>("item/save-item-brand", Model);
+        if(result is not null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair() { ID = result.BrandID, Value = result.BrandName });
+            await HideItemBrandModal();
+        }
+    }
+    private async Task RemoveImage(ItemBrandModel itemModelImage)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the image..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel"))
+        {
+            if (itemModelImage.MediaID > 0 && await API.GetAsync<bool>($"item/remove-item-model-image/{itemModelImage.MediaID}", true))
+            {
+                Model.MediaID = null;
+                Model.FileName = null;
+            }
+        }
+    }
+}

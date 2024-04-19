@@ -1,0 +1,758 @@
+﻿@page "/voucher-entry"
+@page "/voucher-entry/{JournalMasterID:int}"
+@using PB.CRM.Model.Enum;
+@using PB.Client.Shared.Accounts;
+@using PB.Shared.Enum.Accounts;
+@using PB.Shared.Models.Accounts
+@using PB.Shared.Models.Accounts.Ledgers
+@using PB.Shared.Models.Accounts.VoucherEntry;
+@using PB.Shared.Models.Common;
+@using System.ComponentModel.DataAnnotations;
+@using PB.Shared.Tables.Accounts.AccountGroups
+
+@if (CanShowPage && VoucherEditContext is not null)
+{
+    <PageLayoutNew>
+        <EditForm EditContext="@VoucherEditContext" OnValidSubmit="SaveVouherEntry">
+            <DataAnnotationsValidator />
+            <div class="main-container container-fluid">
+                <div class="row page-header ">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between">
+                                @*  @if (Model.IsAdmin)
+                            {
+                            <div>
+                            <h5 style="margin-bottom: 0 !important;">Voucher Details</h5>
+                            </div>
+                            <div>
+                            <h5>@(Model.BranchName is not null ? "Branch : " + Model.BranchName : "")</h5>
+                            </div>
+                            }
+                            else
+                            {
+                            <div>
+                            <h5 style="margin-bottom: 0 !important;">Voucher Details</h5>
+                            </div>
+                            } *@
+                                <div>
+                                    <h5 style="margin-bottom: 0 !important;">Voucher Details</h5>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="position-relative pb-3 row">
+                                    @* @if (Model.IsAdmin)
+                                {
+                                <DropdownSelect @ref="@branchDropdown"
+                                DivClass="col-md-6"
+                                DropdownID="branch-dropdown-select"
+                                Label="Branch :"
+                                ItemSelected="HandleBranchSelected"
+                                IsRequired="true"
+                                Mode="@((int)DropdownModes.Branch)"
+                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                ReadDataOnSearch="false"
+                                SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.BranchID, Value = Model.BranchName})">
+                                <ValidationMessage For="()=>Model.BranchID" />
+                                </DropdownSelect>
+                                } *@
+                                    <DropdownSelect DivClass="col-md-6"
+                                                    DropdownID="voucher-type-dropdown-select"
+                                                    Label="Voucher Type :"
+                                                    ItemSelected="async (voucherType) => await HandleVoucherTypeSelected(voucherType)"
+                                                    IsRequired="true"
+                                                    Mode="@((int)DropdownModes.VoucherType)"
+                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                    ReadDataOnSearch="false"
+                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.VoucherTypeID, Value = Model.VoucherTypeName})"
+                                                    IsAddOptionNeed=true
+                                                    NewButtonText="Add voucher type"
+                                                    NewButtonClicked="async () => await HandelVoucherTypeAddButtonClick()">
+                                        <ValidationMessage For="()=>Model.VoucherTypeID" />
+                                    </DropdownSelect>
+
+
+                                    <!--Voucher Number-->
+                                    @if (Model.JournalMasterID == 0)
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1">Voucher Number :</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text" style="background-color:var(--primary-bg-color);">
+                                                        @(Model.JournalNoPrefix)
+                                                    </span>
+                                                    <input type="text" class="form-control" @bind="Model.JournalNo" style="pointer-events:none" disabled>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1">Voucher Number :</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text" style="background-color:var(--primary-bg-color);">
+                                                        @(Model.JournalNoPrefix)
+                                                    </span>
+                                                    <input type="number" class="form-control" @bind="Model.JournalNo" style="pointer-events:none" disabled>
+                                                </div>
+                                                <ValidationMessage For="() => Model.JournalNo" />
+                                            </div>
+                                        </div>
+                                    }
+
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Date :</label>
+                                            <input type="date" class="form-control" @bind="Model.Date">
+                                            <ValidationMessage For="() => Model.Date" />
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label class="form-label" style="text-align: left; margin-top: 0 !important;">Narration Type :</label>
+                                            <select name="narration-type" class="form-control form-select" @bind="Model.NarrationType">
+                                                <option value="0" selected> Choose </option>
+                                                <option value="@((int)VoucherNarrationType.Single)">Single</option>
+                                                <option value="@((int)VoucherNarrationType.Multiple)">Multiple</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    @if (Model.NarrationType == (int)VoucherNarrationType.Single)
+                                    {
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1">Narration :</label>
+                                                <textarea class="form-control" placeholder="" rows="2" @bind="Model.Particular"></textarea> <br>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="">
+                                        <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+
+                                            <thead>
+                                                <tr>
+                                                    <th>
+                                                        Debit/Credit
+                                                    </th>
+                                                    <th>
+                                                        Account Name
+                                                    </th>
+                                                    @if (Model.NarrationType == (int)VoucherNarrationType.Multiple)
+                                                    {
+                                                        <th>
+                                                            Narration
+                                                        </th>
+                                                    }
+                                                    <th>
+                                                        Debit
+                                                    </th>
+                                                    <th>
+                                                        Credit
+                                                    </th>
+                                                </tr>
+                                            </thead>
+
+                                            <!--Entries-->
+                                            <tbody>
+                                                @if (Model.JournalEntries != null && Model.JournalEntries.Count > 0)
+                                                {
+                                                    @foreach (var item in Model.JournalEntries.Select((value, i) => new { i, value }))
+                                                    {
+                                                        int index = item.i;
+                                                        AccJournalEntryModel journalEntry = item.value;
+                                                        LedgerDropdownSelect ledgerDropdownSelect = new();
+
+                                                        <tr>
+                                                            <td class="px-2" style="min-width:100px">
+                                                                <select class="form-control form-select" id="@("row-drcr-select-"+index)" @onchange="async (ChangeEventArgs e) => await HandleJournalEntryItemDrOrCrSelected(e,journalEntry, ledgerDropdownSelect)">
+                                                                    <option value="0" selected> Choose </option>
+                                                                    @foreach (var enumItem in Enum.GetValues(typeof(DebitOrCredit)))
+                                                                    {
+                                                                        if (journalEntry.DrOrCr == (int)enumItem)
+                                                                        {
+                                                                            <option value="@((int)enumItem)" selected>@enumItem</option>
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <option value="@((int)enumItem)">@enumItem</option>
+                                                                        }
+                                                                    }
+                                                                </select>
+                                                            </td>
+
+                                                            <td class="px-0" style="min-width:300px">
+                                                                @if (journalEntry.DrOrCr is 0)
+                                                                {
+                                                                    <input type="text" class="form-control form-control-custom" value="--" disabled />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <LedgerDropdownSelect DropdownID="@("row-ledger-select-"+index)" @ref="@ledgerDropdownSelect"
+                                                                                          DivClass="col-md-12 px-0"
+                                                                                          FormGroupClass="form-group px-0"
+                                                                                          FormControlClass="pb-select form-control"
+                                                                                          ReadDataOnSearch="true"
+                                                                                          LedgerSearch="@GetJournalEntryLedgerSearchModel(journalEntry)"
+                                                                                          SelectedItem="@(new DropdownSelectedItemModel(){ID = journalEntry.LedgerID, Value = journalEntry.LedgerName})"
+                                                                                          LedgerSelected="async (ledger) => await HandleJurnalEntryItemLedgerSelected(ledger,journalEntry)"
+                                                                                          IsAddOptionNeed="true"
+                                                                                          NewButtonText="Add Ledger"
+                                                                                          AddButtonClick="async (dropdownMode) => await OpenLedgerModal()" />
+                                                                }
+                                                            </td>
+
+                                                            @if (Model.NarrationType == (int)VoucherNarrationType.Multiple)
+                                                            {
+                                                                <td class="px-0">
+                                                                    @if (journalEntry.DrOrCr is 0)
+                                                                    {
+                                                                        <input type="text" class="form-control form-control-custom" value="--" disabled />
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <input type="text" class="form-control form-control-custom" placeholder="Narrations if any" id="@("row-narration-box"+index)" @bind="journalEntry.Particular">
+                                                                    }
+                                                                </td>
+                                                            }
+
+                                                            <td class="px-0">
+                                                                @if (journalEntry.DrOrCr is (int)DebitOrCredit.Debit)
+                                                                {
+                                                                    <input type="number" class="form-control form-control-custom" id="@("row-debit-amt-box-"+index)" @onchange="async (ChangeEventArgs e) => await HandleJournalEntryAmountChange(e, journalEntry)">
+                                                                }
+                                                                else
+                                                                {
+                                                                    <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                                }
+                                                            </td>
+
+                                                            <td class="px-0">
+                                                                <div class="position-relative">
+                                                                    @if (journalEntry.DrOrCr is (int)DebitOrCredit.Credit)
+                                                                    {
+                                                                        <input type="number" class="form-control form-control-custom" id="@("row-credit-amt-box-"+index)" @onchange="async (ChangeEventArgs e) => await HandleJournalEntryAmountChange(e, journalEntry)">
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                                    }
+                                                                    <div class="journal-remove-icon">
+                                                                        <span @onclick="async () => await HandleJournalEntryItemRemoveButtonClick(journalEntry)">
+                                                                            <i class="fa fa-trash me-1" style="color:red" aria-hidden="true"></i>
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+
+                                        <!--Summary-->
+                                        @if (Model.JournalEntries != null && Model.JournalEntries.Count > 0)
+                                        {
+                                            <div class="row mt-4">
+                                                <div class="col-md-6 col-12">
+                                                </div>
+                                                <div class="col-md-6 col-12">
+                                                    <div class="card">
+                                                        <div class="card-body fee-card">
+
+                                                            <div class="row">
+                                                                <div class="col-6">
+                                                                    <p style="margin-bottom: 0 !important;">
+                                                                        @("Summary : ")
+                                                                    </p>
+                                                                </div>
+                                                                <div class="col-3">
+                                                                    <p style="margin-bottom: 0 !important; text-align: right;">
+                                                                        @("Debit : ")
+                                                                    </p>
+                                                                </div>
+                                                                <div class="col-3">
+                                                                    <p style="margin-bottom: 0 !important; text-align: right;">
+                                                                        @("Credit : ")
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="row mt-4">
+                                                                <div class="col-6">
+                                                                    <p style="font-size: 18px;font-weight:900;margin-bottom: 0 !important;">
+                                                                        @("Total (₹) ")
+                                                                    </p>
+                                                                </div>
+                                                                <div class="col-3">
+                                                                    <p style="font-size: 18px; font-weight: 900; text-align: right; margin-bottom: 0 !important">
+                                                                        @(Model.JournalEntries.Where(bl => bl.Debit != 0).Sum(bs => bs.Debit))
+                                                                    </p>
+                                                                </div>
+                                                                <div class="col-3">
+                                                                    <p style="font-size: 18px; font-weight: 900; text-align: right; margin-bottom: 0 !important">
+                                                                        @(Model.JournalEntries.Where(bl => bl.Credit != 0).Sum(bs => bs.Credit))
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            @if ((Model.JournalEntries.Where(bl => bl.Debit != 0).Sum(bs => bs.Debit)) != (Model.JournalEntries.Where(bl => bl.Credit != 0).Sum(bs => bs.Credit)))
+                                                            {
+                                                                <div class="row mt-4">
+                                                                    <div class="col-6">
+                                                                        <p style="margin-bottom: 0 !important; color: red;"> @("Difference b/w Debit and Credit : ")</p>
+                                                                    </div>
+                                                                    <div class="col-6">
+                                                                        <p style="margin-bottom: 0 !important; text-align: right; color: red; text-align: right;">
+                                                                            @(Model.JournalEntries.Where(bl => bl.Debit != 0).Sum(bl => bl.Debit) - Model.JournalEntries.Where(bl => bl.Credit != 0).Sum(bl => bl.Credit))
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-footer-action d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary me-2">Save</button>
+                <a class="btn btn-danger me-2 text-white" @onclick="Cancel">Cancel</a>
+            </div>
+
+        </EditForm>
+    </PageLayoutNew>
+
+    <!--Voucher Type Modal-->
+    <ModalVoucherType @ref="voucherTypeModal" Saved="async (IdnValuePair voucherType) => await HandleNewVoucherTypeAdded(voucherType)" />
+
+    <!--Ledger Modal-->
+    <ModalLedger @ref="modalLedger" Saved="HandleNewLedgerAddedEventCallback" />
+
+    <!--BillToBill Reference-->
+    <ModalBillToBillReference @ref="modalBillToBillReference" Save="HandleModalBillToBillReferenceEventCallback" />
+}
+
+@code {
+
+    [Parameter] public int JournalMasterID { get; set; }
+    [Inject] public AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
+
+    private EditContext? VoucherEditContext;
+    private VoucherEntryModel Model = new();
+    private AccJournalEntryModel Footer = new();
+
+    private DropdownSelect branchSelect = new();
+    private DropdownSelect voucherTypeSelect = new();
+    private DropdownSelect RowLedgerSelect = new();
+    private DropdownSelect FooterLedgerSelect = new();
+
+    private ModalVoucherType voucherTypeModal = new();
+    private ModalBillToBillReference modalBillToBillReference = new();
+
+    private List<IdnValuePair> BranchList = new();
+
+    private bool CanShowPage = false;
+    protected override async Task OnInitializedAsync()
+    {
+        CanShowPage = false;
+        // if (AuthenticationStateProvider is not null)
+        // {
+        //     var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+        //     var authState = await localStateProvider.GetAuthenticationStateAsync();
+        //     var user = authState.User;
+        //     bool IsAuthenticated = user.Identity is not null ? user.Identity.IsAuthenticated : false;
+        //     if (IsAuthenticated)
+        //     {
+        //         if (user.Claims.First(c => c.Type == "UserTypeID").Value == ((int)UserTypes.Client).ToString())
+        //         {
+        //             Model.IsAdmin = true;
+        //             IdnValuePair brach = new()
+        //                 {
+        //                     ID = Convert.ToInt32(user.Claims.First(c => c.Type == "BranchID").Value),
+        //                     Value = user.Claims.First(c => c.Type == "BranchName").Value
+        //                 };
+        //             branchDropdown.SetDropdownSelectedValue(brach);
+        //         }
+        //     }
+        // }
+        // if (JournalMasterID > 0)
+        //     Model = await API.GetAsync<VoucherEntryModel>($"accounts/get-voucher-entry/{JournalMasterID}", true);
+
+        VoucherEditContext = new(Model);
+        CanShowPage = true;
+        await Task.Delay(50);
+    }
+
+    #region Admin
+
+    // private DropdownSelect branchDropdown = new();
+    // private void HandleBranchSelected(DropdownItemSelectedCallbackModel branch)
+    // {
+    //     Model.BranchID = branch.ID;
+    //     Model.BranchName = branch.Value;
+    //     if (VoucherEditContext is not null)
+    //         VoucherEditContext.NotifyFieldChanged(VoucherEditContext.Field(nameof(Model.BranchID)));
+    // }
+
+    #endregion
+
+    #region Voucher Type
+
+    private async Task HandleVoucherTypeSelected(DropdownItemSelectedCallbackModel voucherType)
+    {
+        if (Model.IsAdmin && Model.BranchID is null)
+        {
+            await JS.ErrorMessage("Please choose a branch for the manual entry");
+            return;
+        }
+
+        Model.VoucherTypeID = voucherType.ID;
+        Model.VoucherTypeName = voucherType.Value;
+        if (Model.VoucherTypeID is null)
+        {
+            await JS.ErrorMessage("Please choose a voucher type");
+            Model.VoucherTypeID = null;
+            Model.VoucherTypeName = null;
+            return;
+        }
+        Model.JournalEntries = new() { new AccJournalEntryModel() };
+        Footer = new();
+        if (VoucherEditContext is not null)
+            VoucherEditContext.NotifyFieldChanged(VoucherEditContext.Field(nameof(Model.VoucherTypeID)));
+        await GetVoucherNumber(Model.VoucherTypeID.Value);
+    }
+    private async Task HandelVoucherTypeAddButtonClick()
+    {
+        await voucherTypeModal.OpenVoucherTypeModal();
+    }
+    private async Task HandleNewVoucherTypeAdded(IdnValuePair voucherType)
+    {
+        Model.VoucherTypeID = voucherType.ID;
+        Model.VoucherTypeName = voucherType.Value;
+        await GetVoucherNumber(voucherType.ID);
+    }
+    private async Task GetVoucherNumber(int voucherTypeID)
+    {
+        var voucherNumberModel = await API.GetAsync<VoucherNumberDetialsModel>($"accounts/get-voucher-number/{voucherTypeID}", true);
+        if (voucherNumberModel is not null)
+        {
+            Model.JournalNoPrefix = voucherNumberModel.JournalNoPrefix;
+            Model.JournalNo = voucherNumberModel.JournalNo;
+            Model.VoucherTypeNatureID = voucherNumberModel.VoucherTypeNatureID;
+        }
+    }
+
+    #endregion
+
+    #region Journal Entries Row Functions
+
+    private int currentRowIndex = -1;
+    private bool isAnyRowInEditMode = false;
+    private async Task HandleJournalEntryItemEditButtonClick(AccJournalEntryModel journalEntry)
+    {
+        if (!isAnyRowInEditMode)
+        {
+            currentRowIndex = Model.JournalEntries.IndexOf(journalEntry);
+            Model.JournalEntries[currentRowIndex].RowEditMode = true;
+            isAnyRowInEditMode = true;
+            await Task.Delay(50);
+        }
+        else
+        {
+            await JS.ErrorMessage("There is already a row in edit mode, please complete it first");
+        }
+    }
+    private async Task HandleJournalEntryItemUpdateClick(AccJournalEntryModel journalEntry)
+    {
+        var errorMessage = ValidateJournalEntryItem(journalEntry);
+        if (!string.IsNullOrEmpty(errorMessage))
+        {
+            await JS.ErrorMessage("Validation error(s): \n " + errorMessage);
+            return;
+        }
+        journalEntry.RowEditMode = false;
+        isAnyRowInEditMode = false;
+        currentRowIndex = -1;
+    }
+    private string ValidateJournalEntryItem(AccJournalEntryModel journalEntry)
+    {
+        string? errorMessage = "";
+        var validationContext = new ValidationContext(journalEntry, serviceProvider: null, items: null);
+        var validationResults = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(journalEntry, validationContext, validationResults, validateAllProperties: true);
+        if (validationResults is not null)
+        {
+            foreach (var validationItem in validationResults)
+            {
+                errorMessage += validationItem.ErrorMessage + "\n";
+            }
+        }
+
+        if (journalEntry.DrOrCr == (int)DebitOrCredit.Debit && journalEntry.Debit <= 0)
+            errorMessage += "Please enter debit amount \n";
+        else if (journalEntry.Credit == (int)DebitOrCredit.Credit && journalEntry.Debit <= 0)
+            errorMessage += "Please enter credit amount \n";
+        return errorMessage;
+    }
+    private async Task AddFooterToModel()
+    {
+        var errorMessage = ValidateJournalEntryItem(Footer);
+        if (!string.IsNullOrEmpty(errorMessage))
+        {
+            await JS.ErrorMessage("Validation error(s): \n " + errorMessage);
+            return;
+        }
+
+        Footer.RowEditMode = false;
+        Model.JournalEntries.Add(Footer);
+        Footer = new() { RowEditMode = true };
+        currentRowIndex = -1;
+    }
+    private async Task HandleJournalEntryItemRemoveButtonClick(AccJournalEntryModel journalEntry)
+    {
+        if (await JS.Confirm("Cofirm", "Are you sure you want to remove the journal item", SweetAlertMessageType.question, "Yes, Remove", "No, Don't Remove"))
+        {
+            Model.JournalEntries.Remove(journalEntry);
+        }
+    }
+    private void HandleJournalEntryItemResetClick()
+    {
+        Footer = new();
+    }
+    private async Task HandleJournalEntryItemDrOrCrSelected(ChangeEventArgs e, AccJournalEntryModel journalEntry, LedgerDropdownSelect ledgerDropdownSelect)
+    {
+        string selectBoxID = ("row-drcr-select-" + Model.JournalEntries.IndexOf(journalEntry));
+        if (Model.IsAdmin && Model.BranchID is null)
+        {
+            await JS.ErrorMessage("Please choose a branch for the voucher entry");
+            await JS.InvokeVoidAsync("setSelectedOption", selectBoxID);
+            StateHasChanged();
+            return;
+        }
+
+        if (Model.VoucherTypeID is null)
+        {
+            await JS.ErrorMessage("Please choose a voucher type for the voucher entry");
+            await JS.InvokeVoidAsync("setSelectedOption", selectBoxID);
+            StateHasChanged();
+            return;
+        }
+
+        if (Convert.ToInt32(e.Value) is 0)
+        {
+            await JS.ErrorMessage("Please choose debit or credit for the voucher entry");
+            await JS.InvokeVoidAsync("setSelectedOption", selectBoxID);
+            StateHasChanged();
+            return;
+        }
+
+        journalEntry.DrOrCr = 0;
+        StateHasChanged();
+        await Task.Delay(100);
+        journalEntry.DrOrCr = Convert.ToInt32(e.Value);
+        journalEntry.LedgerID = null;
+        journalEntry.LedgerName = null;
+        await JS.InvokeVoidAsync("setSelectedOption", selectBoxID, journalEntry.DrOrCr.ToString());
+        StateHasChanged();
+        await Task.Delay(50);
+    }
+    private async Task HandleJurnalEntryItemLedgerSelected(DropdownItemSelectedCallbackModel ledger, AccJournalEntryModel journalEntry)
+    {
+        if (Model.JournalEntries.Count > 0 && ledger.ID is not null)
+        {
+            AccJournalEntryModel? existingItem = null;
+            existingItem = Model.JournalEntries
+                .Where(i => i.LedgerID == ledger.ID)
+                .FirstOrDefault();
+            if (existingItem != null)
+            {
+                await JS.ErrorMessage("Ledger already added to the list, please verify it..");
+                return;
+            }
+        }
+        int indexOfJournalEntryItem = Model.JournalEntries.IndexOf(journalEntry);
+        journalEntry.LedgerID = ledger.ID;
+        journalEntry.LedgerName = ledger.Value;
+        journalEntry.Debit = null;
+        journalEntry.Credit = null;
+        if (journalEntry.LedgerID is not null)
+        {
+            string boxID = journalEntry.DrOrCr == (int)DebitOrCredit.Debit ? "row-debit-amt-box-" + indexOfJournalEntryItem : "row-credit-amt-box-" + indexOfJournalEntryItem;
+            await FocusElement(boxID);
+            if (indexOfJournalEntryItem == Model.JournalEntries.Count - 1)
+            {
+                Model.JournalEntries.Add(new AccJournalEntryModel());
+            }
+            journalEntry.GroupTypeID = await API.GetAsync<int>($"accounts/get-ledger-group-type/{journalEntry.LedgerID}", true);
+        }
+    }
+    private SearchLedgerModel GetJournalEntryLedgerSearchModel(AccJournalEntryModel journalEntry)
+    {
+        SearchLedgerModel searchLedgerModel = new();
+        switch (Model.VoucherTypeNatureID)
+        {
+            case (int)VoucherTypeNatures.Receipt:
+            case (int)VoucherTypeNatures.Payment:
+                if (journalEntry.DrOrCr == (int)DebitOrCredit.Debit)
+                {
+                    searchLedgerModel.GroupTypeIdsIn =
+                    new List<int>() { (int)AccountGroupTypes.CashInHand, (int)AccountGroupTypes.BankAccounts, };
+                }
+                else
+                {
+                    searchLedgerModel.GroupTypeIdsNotIn =
+                    new List<int>() { (int)AccountGroupTypes.CashInHand, (int)AccountGroupTypes.BankAccounts, };
+                }
+                break;
+
+            case (int)VoucherTypeNatures.Contra:
+                searchLedgerModel.GroupTypeIdsIn =
+                new List<int>() { (int)AccountGroupTypes.CashInHand, (int)AccountGroupTypes.BankAccounts, };
+                break;
+
+            case (int)VoucherTypeNatures.Journal:
+                searchLedgerModel.GroupTypeIdsNotIn =
+                new List<int>() { (int)AccountGroupTypes.CashInHand, (int)AccountGroupTypes.BankAccounts, };
+                break;
+        }
+        return searchLedgerModel;
+    }
+    private async Task HandleJournalEntryAmountChange(ChangeEventArgs e, AccJournalEntryModel journalEntry)
+    {
+        decimal amount = Convert.ToDecimal(e.Value);
+        if (journalEntry.DrOrCr == (int)DebitOrCredit.Debit)
+            journalEntry.Debit = amount;
+        if (journalEntry.DrOrCr == (int)DebitOrCredit.Credit)
+            journalEntry.Credit = amount;
+
+        if (journalEntry.GroupTypeID == (int)AccountGroupTypes.SundryCreditors || journalEntry.GroupTypeID == (int)AccountGroupTypes.SundryDebtors)
+        {
+            currentRowIndex = Model.JournalEntries.IndexOf(journalEntry);
+            await modalBillToBillReference.OpenBillToBillReferenceModal(amount, journalEntry.LedgerID.Value, Model.VoucherTypeID.Value, Model.VoucherTypeNatureID, Model.JournalNoPrefix + Model.JournalNo);
+        }
+    }
+
+    #endregion
+
+    #region Other Functions
+
+    private async Task FocusElement(string elementID)
+    {
+        await JS.InvokeVoidAsync("focusElement", elementID);
+    }
+    private async Task FocusDropdown(string dropdownID)
+    {
+        await JS.InvokeVoidAsync("setDropdownFocus", dropdownID, "drop-down-focused");
+    }
+
+    #endregion
+
+    #region Main Fnctions
+
+    private async Task SaveVouherEntry()
+    {
+        if (Model.IsAdmin && Model.BranchID is null)
+        {
+            await JS.ErrorMessage("Please choose a branch type for the voucher entry");
+            return;
+        }
+        if (Model.VoucherTypeID is null)
+        {
+            await JS.ErrorMessage("Please choose a voucher type for the voucher entry");
+            return;
+        }
+        if (Model.JournalEntries.Count == 0)
+        {
+            await JS.ErrorMessage("Please add journal entry items to the voucher");
+            return;
+        }
+        else
+        {
+            int nullLedgerCount = Model.JournalEntries.Where(je => je.LedgerID is null).ToList().Count;
+            if (nullLedgerCount > 1)
+            {
+                await JS.ErrorMessage("Ledgers for journal entries are not selected correctly, please verify it");
+                return;
+            }
+        }
+
+        if ((Model.JournalEntries.Where(bl => bl.Debit != 0).Sum(bs => bs.Debit)) != (Model.JournalEntries.Where(bl => bl.Credit != 0).Sum(bs => bs.Credit)))
+        {
+            await JS.ErrorMessage("There is a difference between debit and credit, It should be equal");
+            return;
+        }
+
+        var lastEntry = Model.JournalEntries.LastOrDefault();
+        if (lastEntry != null && lastEntry.LedgerID == null)
+        {
+            Model.JournalEntries.Remove(lastEntry);
+        }
+
+        var result = await API.PostAsync<VoucherEntrySuccessModel, VoucherEntryModel>("accounts/insert-voucher-entry", Model);
+        if (result is not null)
+        {
+            await JS.SuccessMessage("Voucher entry inserted");
+            Nav.NavigateTo("home");
+        }
+    }
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to leave this page.?", SweetAlertMessageType.question, "Yes, Leave", "No, Don't Leave"))
+        {
+            Nav.NavigateTo("home");
+        }
+    }
+
+    #endregion
+
+    #region BillToBill Reference
+
+    private void HandleModalBillToBillReferenceEventCallback(List<BillToBillModel> billToBillReferences)
+    {
+        if (currentRowIndex == -1)
+            Footer.BillToBillReferences = billToBillReferences;
+        else
+            Model.JournalEntries[currentRowIndex].BillToBillReferences = billToBillReferences;
+    }
+
+    #endregion
+
+    #region Ledger
+
+    private ModalLedger modalLedger = new();
+    private async Task OpenLedgerModal()
+    {
+        await modalLedger.OpenLedgerModal();
+    }
+    private void HandleNewLedgerAddedEventCallback(IdnValuePair ledger)
+    {
+        if (currentRowIndex == -1)
+        {
+            Footer.LedgerID = ledger.ID;
+            Footer.LedgerName = ledger.Value;
+        }
+        else
+        {
+            Model.JournalEntries[currentRowIndex].LedgerID = ledger.ID;
+            Model.JournalEntries[currentRowIndex].LedgerName = ledger.Value;
+        }
+    }
+
+    #endregion
+}

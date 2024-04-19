@@ -1,0 +1,111 @@
+﻿@page "/membership-feature"
+@page "/membership-feature/{FeatureId:int}"
+
+@using PB.Shared.Models;
+@using PB.Model.Models;
+@attribute [Authorize(Roles = "MembershipManagment")]
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="SaveAsync" autocomplete="off">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Meambership Feature Details</h5>
+                        </div>
+                        <div class="card-body">
+
+                            <div class="row">
+                                <div class="col-md">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Feature Name :</label>
+                                        <input type="text" class="form-control" @bind="Model.FeatureName" id="FeatureName">
+                                        <ValidationMessage For="()=>Model.FeatureName" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Description :</label> 
+                                        <textarea class="textarea form-control" id="customer-remarks-text-area" rows="4" @bind="Model.Description"></textarea>
+                                        <ValidationMessage For="()=>Model.Description" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                               
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-danger error-message-div-page py-1 d-none" id="div-Error-1" role="alert">
+                    <!--Bad Request Errors will display here-->
+                </div>
+                @*<FormValidator @ref="FormValidator">
+                </FormValidator>*@
+            </div>
+        </div>
+
+        <div class="page-footer-action d-flex">
+            <button type="submit" class="btn btn-primary me-2">Save</button> @*@onclick="async () => await SaveEnquiry()"*@
+            <button type="button" class="btn btn-secondary me-2" @onclick="ClearFeature">Clear</button>
+            <button type="button" class="btn btn-danger me-2" @onclick="Cancel">Cancel</button>
+        </div>
+    </EditForm>
+</PageLayoutNew>
+
+@*<ModalCustomer @ref="@customerChildModal" CallbackWithIdnValue="CustomerAdded" />
+<ModalItem @ref="@itemChildModal" CallbackWithIdnValue="ItemAdded" />*@
+
+@code {
+    [Parameter] public int FeatureId { get; set; }
+
+    private MembershipFeatureModel Model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if(FeatureId !=0)
+        {
+            Model = await API.GetAsync<MembershipFeatureModel>($"support/get-feature/{FeatureId}", true);
+            //await LoadFeature();
+        }
+    }
+    private async Task SaveAsync()
+    {
+
+        var result = await API.PostAsync<BaseSuccessResponse, MembershipFeatureModel>("support/save-feature", Model);
+        if (result != null)
+        {
+            Model = new MembershipFeatureModel();
+            await Task.Delay(100);
+            Nav.NavigateTo($"membership-features");
+        }
+
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to go back", SweetAlertMessageType.question, "Yes, Leave", "No, Cancel"))
+        {
+            
+            Nav.NavigateTo("membership-features");
+           
+        }
+    }
+
+    private async Task ClearFeature()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to clear the data", SweetAlertMessageType.question, "Yes, Clear All", "No, Don't Clear"))
+        {
+            FeatureId = 0;
+            Model = new();
+           
+           
+        }
+    }
+}
+

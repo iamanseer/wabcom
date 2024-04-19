@@ -1,0 +1,160 @@
+﻿@page "/get-start"
+@page "/get-start/{ContestId:int}"
+@using PB.Shared.Models.Spin;
+<LoginLayout>
+    <div class="row bg-primary">
+    <!-- CONTAINER OPEN -->
+    <div class="col col-login mx-auto">
+        <div class="text-center side-image ">
+            <img src="/assets/images/brand/white.png" alt="" class="my-auto">
+            <h2>Welcome to spin wheel</h2>
+            <img src="/assets/accounting-gif.gif" alt="" class="my-auto w-50">
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="side-form bg-primary-transparent">
+            <EditForm Model="InitialRegistrationModel" class="login100-form validate-form p-6 w-500 ">
+                <DataAnnotationsValidator />
+                <div class="container-fluid">
+                    <div class="row pt-75">
+                        <div class="col-12">
+                            <div class="section-title text-center  pt-20">
+                                <h1>Spin The Wheel</h1>
+                                <p>Win exciting prizes</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-box">
+                            <div class="customer-login-register">
+                                @if (Stage == 1)
+                                {
+                                    <div class="prize-list" style="background-color: #fff;margin:30px 30px !important;">
+                                        <form action="#">
+                                            <div class="text-center">
+                                                <h3>OTP Verification</h3>
+                                                <p>Enter your Name</p>
+                                            </div>
+                                            <div class="form-fild mt-3">
+
+                                                <input type="text" @bind-value="InitialRegistrationModel.Name">
+                                                <ValidationMessage For="()=>InitialRegistrationModel.Name"></ValidationMessage>
+                                            </div>
+                                            <div class="text-center">
+
+                                                <p>Enter your phone number</p>
+                                            </div>
+
+                                            <div class="form-fild mt-3">
+
+                                                <input name="number" type="text" @bind-value="InitialRegistrationModel.Phone">
+                                                <ValidationMessage For="()=>InitialRegistrationModel.Phone"></ValidationMessage>
+                                            </div>
+
+
+
+                                        </form>
+                                        <div class="d-grid gap-2 mt-3">
+                                            <button class="btn btn-danger" @onclick="GenerateOtp">
+                                                Get
+                                                OTP
+                                            </button>
+                                        </div>
+
+
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="prize-list" style="background-color: #fff; margin:30px 30px !important;">
+                                        <form action="#">
+
+                                            <div class="">
+                                                <div class="text-center">
+                                                    <h3>OTP Verification</h3>
+                                                    <p>Enter the OTP send to your number</p>
+                                                </div>
+                                                <div class="min-h-screen flex flex-col justify-center text-center mt-3">
+
+                                                    <form action="#" method="post">
+                                                        <input id="otp-field" type="text" @onchange="IsOtpVerified" />
+                                                        <input hidden id="otp" name="code">
+
+                                                    </form>
+                                                </div>
+                                            </div>
+
+                                        </form>
+
+                                        <div class="d-grid gap-2 mt-3">
+                                            <button type="button" class="btn btn-danger">
+                                                Submit
+                                            </button>
+
+                                        </div>
+                                        <div class="text-center mt-3">
+                                            Didn't receive the code? <br>
+                                            <a href="#" style="color:#dc3545;" @onclick="ResendOtp">Resend OTP</a>
+                                        </div>
+
+
+                                    </div>
+                                }
+
+                            </div>
+
+                        </div>
+                    </div>
+
+
+
+                </div>
+            </EditForm>
+        </div>
+    </div>
+    </div>
+</LoginLayout>
+
+@code {
+    [Parameter] public int ContestId { get; set; }
+
+    int Stage = 1;
+    string? errorMessage = null;
+
+    private WhatsappContactModel InitialRegistrationModel = new();
+
+    async Task GenerateOtp()
+    {
+        errorMessage = InitialRegistrationModel.VallidateContactModel(InitialRegistrationModel);
+        if (string.IsNullOrEmpty(errorMessage))
+        {
+            InitialRegistrationModel.ContestId = ContestId;
+            var res = await API.PostAsync<IdnValuePair, WhatsappContactModel>("spin/generate-otp", InitialRegistrationModel, true);
+            InitialRegistrationModel.ContactID = res.ID;
+            Stage = 2;
+        }
+        else
+        {
+            await JS.ErrorMessage(errorMessage);
+        }
+
+    }
+    async Task IsOtpVerified(ChangeEventArgs e)
+    {
+        InitialRegistrationModel.OTP = Convert.ToString(e.Value);
+        if (string.IsNullOrEmpty(InitialRegistrationModel.OTP))
+        {
+            await JS.ErrorMessage("Please Enter Valid 4 Digit Otp");
+            return;
+        }
+        var res = await API.PostAsync<int, WhatsappContactModel>("spin/confirm-otp", InitialRegistrationModel, true);
+        if (res != null)
+            Nav.NavigateTo($"spin/{ContestId}/{InitialRegistrationModel.ContactID}");
+    }
+    async Task ResendOtp()
+    {
+        var res = await API.GetAsync<BaseSuccessResponse>($"spin/resend-otp/{InitialRegistrationModel.Phone}");
+    }
+}

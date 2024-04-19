@@ -1,0 +1,129 @@
+﻿@using PB.Shared.Models.CRM.Customer
+@using PB.Shared.Models.Common
+
+<div class="modal fade" id="contact-person-add-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-demo">
+            <EditForm Model="ContactPersonModel" OnValidSubmit="SaveCustomerContactPerson">
+                <DataAnnotationsValidator />
+                <div class="modal-header">
+                    <h6 class="modal-title">
+                        @if (ContactPersonModel.ContactPersonID > 0)
+                        {
+                            @(ContactPersonModel.Name)
+                        }
+                        else
+                        {
+                            @("Customer Contact Person")
+                        }
+                    </h6>
+                    <button type="button" class="btn-close" @onclick="async() => await CloseCustomerContactPersonModal()">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+
+                        <InputTextBox Label="Name :"
+                                      DivClass="col-md-12"
+                                      @bind-Value="ContactPersonModel.Name"
+                                      ValidationFor="() => ContactPersonModel.Name"
+                                      IsRequired="true"
+                                      id="person-email-box" />
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+
+                                    Email :
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fa fa-envelope"></i>
+                                    </span>
+                                    <input type="text" class="form-control" @bind="ContactPersonModel.Email" />
+                                </div>
+                                <ValidationMessage For="()=>ContactPersonModel.Email" />
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+
+                                    Phone :
+                                    <span style="color:red">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        @ContactPersonModel.ISDCode
+                                    </span>
+                                    <input type="text" class="form-control" @bind="ContactPersonModel.Phone" />
+                                </div>
+
+                            </div>
+                            <ValidationMessage For="()=>ContactPersonModel.Phone" />
+                        </div>
+
+                        <InputTextBox Label="Designation :"
+                                      DivClass="col-md-12"
+                                      @bind-Value="ContactPersonModel.Designation"
+                                      id="account-group-name-text-box" />
+                        <InputTextBox Label="Department :"
+                                      DivClass="col-md-12"
+                                      @bind-Value="ContactPersonModel.Department"
+                                      id="dept-text-box" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    @if (ContactPersonModel.ContactPersonID == 0)
+                    {
+                        <button type="submit" class="btn btn-primary">Add</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await CloseCustomerContactPersonModal()">Close</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await CloseCustomerContactPersonModal()">Close</button>
+                    }
+                </div>
+
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+    [Parameter] public EventCallback<int> Deleted { get; set; }
+    private CustomerContactPersonModel ContactPersonModel = new();
+
+    public async Task OpenCustomerContactPersonModal(int entityID, int contactPersonID = 0)
+    {
+        ContactPersonModel = new() { CustomerEntityID = entityID };
+        if (contactPersonID > 0)
+            ContactPersonModel = await API.GetAsync<CustomerContactPersonModel>($"customer/get-customer-contact-person/{contactPersonID}", true);
+        await JS.InvokeVoidAsync("ShowModal", "contact-person-add-modal");
+    }
+    private async Task CloseCustomerContactPersonModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "contact-person-add-modal");
+    }
+    private async Task SaveCustomerContactPerson()
+    {
+        var result = await API.PostAsync<ContactPersonAddResultModel, CustomerContactPersonModel>("customer/save-contact-person", ContactPersonModel);
+        if (result is not null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair() { ID = result.ContactPersonID,Value = result.Name });
+            await CloseCustomerContactPersonModal();
+        }
+    }
+    public async Task DeleteContactPerson(int contactPersonID)
+    {
+        if (await JS.Confirm("Cofirm", "Are you sure you want to remove this contact person", SweetAlertMessageType.question, "Yes, Remove", "No, Don't Remove"))
+        {
+            await API.GetAsync<bool>($"customer/delete-contact-person/{contactPersonID}", true);
+            await Deleted.InvokeAsync(contactPersonID);
+        }
+    }
+}

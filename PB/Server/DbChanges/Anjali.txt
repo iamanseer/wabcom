@@ -1,0 +1,170 @@
+01-04-2024
+
+USE [_Whatsapp]
+GO
+/****** Object:  Table [Hadia].[EC_Testimonial]    Script Date: 02-Apr-24 03:51:11 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [Hadia].[EC_Testimonial](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
+	[MediaID] [int] NULL,
+	[Name] [nvarchar](50) NULL,
+	[Designation] [nvarchar](50) NULL,
+	[Comment] [nvarchar](max) NULL,
+	[ItemID] [int] NULL,
+	[ItemVariantID] [int] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_Testimonial] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+ALTER TABLE [Hadia].[EC_Testimonial]  WITH CHECK ADD  CONSTRAINT [FK_Testimonial_Item] FOREIGN KEY([ItemID])
+REFERENCES [dbo].[Item] ([ItemID])
+GO
+ALTER TABLE [Hadia].[EC_Testimonial] CHECK CONSTRAINT [FK_Testimonial_Item]
+GO
+ALTER TABLE [Hadia].[EC_Testimonial]  WITH CHECK ADD  CONSTRAINT [FK_Testimonial_Media] FOREIGN KEY([MediaID])
+REFERENCES [dbo].[Media] ([MediaID])
+GO
+ALTER TABLE [Hadia].[EC_Testimonial] CHECK CONSTRAINT [FK_Testimonial_Media]
+GO
+ALTER TABLE [Hadia].[EC_Testimonial]  WITH CHECK ADD  CONSTRAINT [FK_Testimonial_Testimonial] FOREIGN KEY([ItemVariantID])
+REFERENCES [dbo].[ItemVariant] ([ItemVariantID])
+GO
+ALTER TABLE [Hadia].[EC_Testimonial] CHECK CONSTRAINT [FK_Testimonial_Testimonial]
+GO
+
+--02/4/2024
+*Add Bloag ,BlogTag and Tag table
+
+USE [_Whatsapp]
+GO
+/****** Object:  Table [Hadia].[EC_Blog]    Script Date: 02-Apr-24 03:54:10 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [Hadia].[EC_Blog](
+	[BlogID] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](50) NULL,
+	[Date] [datetime] NULL,
+	[MediaID] [int] NULL,
+	[BodyContent] [nvarchar](max)  NULL,
+	[AuthorName] [nvarchar](50) NULL,
+	[AuthorDescription] [nvarchar](max) NULL,
+	[CategoryID] [int] NULL,
+	[IsDeleted] [bit] NOT NULL,
+	[ShortDescription] [nvarchar](max) NULL,
+	[ModifiedDate] [datetime] NULL,
+	[SlugURL] [nvarchar](max) NULL,
+	[MetaTittle] [nvarchar](max) NULL,
+	[MetaDescription] [nvarchar](max) NULL,
+	[FacebookLink] [nvarchar](max) NULL,
+	[InstaLink] [nvarchar](max) NULL,
+	[LinkedInLink] [nvarchar](max) NULL,
+ CONSTRAINT [PK_Blog] PRIMARY KEY CLUSTERED 
+(
+	[BlogID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+/****** Object:  Table [Hadia].[EC_BlogTag]    Script Date: 02-Apr-24 03:54:11 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [Hadia].[EC_BlogTag](
+	[BlogTagID] [int] IDENTITY(1,1) NOT NULL,
+	[BlogID] [int] NULL,
+	[TagID] [int] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_BlogTag] PRIMARY KEY CLUSTERED 
+(
+	[BlogTagID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+/****** Object:  Table [Hadia].[EC_Tag]    Script Date: 02-Apr-24 03:54:11 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [Hadia].[EC_Tag](
+	[TagID] [int] IDENTITY(1,1) NOT NULL,
+	[TagName] [nvarchar](50) NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_Tag] PRIMARY KEY CLUSTERED 
+(
+	[TagID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+ALTER TABLE [Hadia].[EC_Blog]  WITH CHECK ADD  CONSTRAINT [FK_Blog_ItemCategory] FOREIGN KEY([CategoryID])
+REFERENCES [dbo].[ItemCategory] ([CategoryID])
+GO
+ALTER TABLE [Hadia].[EC_Blog] CHECK CONSTRAINT [FK_Blog_ItemCategory]
+GO
+ALTER TABLE [Hadia].[EC_Blog]  WITH CHECK ADD  CONSTRAINT [FK_Blog_Media] FOREIGN KEY([MediaID])
+REFERENCES [dbo].[Media] ([MediaID])
+GO
+ALTER TABLE [Hadia].[EC_Blog] CHECK CONSTRAINT [FK_Blog_Media]
+GO
+ALTER TABLE [Hadia].[EC_BlogTag]  WITH CHECK ADD  CONSTRAINT [FK_BlogTag_Blog] FOREIGN KEY([BogID])
+REFERENCES [Hadia].[EC_Blog] ([BlogID])
+GO
+ALTER TABLE [Hadia].[EC_BlogTag] CHECK CONSTRAINT [FK_BlogTag_Blog]
+GO
+ALTER TABLE [Hadia].[EC_BlogTag]  WITH CHECK ADD  CONSTRAINT [FK_BlogTag_Tag] FOREIGN KEY([TagID])
+REFERENCES [Hadia].[EC_Tag] ([TagID])
+GO
+ALTER TABLE [Hadia].[EC_BlogTag] CHECK CONSTRAINT [FK_BlogTag_Tag]
+GO
+
+
+--05-04-2024
+
+USE [_Whatsapp]
+GO
+/****** Object:  Table [Hadia].[EC_NewsLetterSubscription]    Script Date: 06-Apr-24 11:29:00 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [Hadia].[EC_NewsLetterSubscription](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
+	[Email] [nvarchar](50) NULL,
+	[SubscribedON] [datetime] NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_NewsLetterSubscription] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+---06-04-2024
+
+USE [_Whatsapp]
+GO
+/****** Object:  Table [Hadia].[EC_NewsLetter]    Script Date: 06-Apr-24 11:48:02 AM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [Hadia].[EC_NewsLetter](
+	[ID] [int] IDENTITY(1,1) NOT NULL,
+	[Subject] [nvarchar](max) NULL,
+	[BodyContent] [nvarchar](max) NULL,
+	[IsDeleted] [bit] NULL,
+ CONSTRAINT [PK_EC_NewsLetter] PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+

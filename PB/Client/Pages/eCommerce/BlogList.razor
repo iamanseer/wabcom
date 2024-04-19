@@ -1,0 +1,121 @@
+﻿@page "/blog-list"
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.eCommerce.SEO;
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="BloagHeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" />
+                </div>
+                <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            Sl No.
+                                        </th>
+                                        <th>
+                                            Profile Image
+                                        </th>
+                                        <th>
+                                            Name
+                                        </th>
+                                        <th>
+                                            Author Name
+                                        </th>
+                                        
+                                        <th>
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in BlogPagedListModel.Data.Select((value, i) => new { i, value }))
+                                    {
+                                        var entry = item.value;
+                                        var index = item.i;
+                                        <tr>
+
+                                            <td>
+                                                @if (BlogPagedListModel.PageIndex == 1)
+                                                {
+                                                    @(index + 1)
+                                                }
+                                                else
+                                                {
+                                                    @((BlogPagedListModel.PageIndex * BlogPagedListModel.PageSize) + (index + 1) - 10)
+                                                }
+                                            </td>
+                                            <td>
+                                                <img src="@(entry.FileName)" style=" width: 50px;height: 50px;margin-left: 35px;">
+                                                
+                                            </td>
+                                            <td>
+                                                @entry.Name
+                                            </td>
+                                            <td>
+                                                @entry.AuthorName
+                                            </td>
+                                            
+                                            <td>
+                                                <button type="button" class="btn btn-icon btn-primary" @onclick="()=>OnEdit(entry.BlogID)"><i class="fa fa-edit"></i></button>
+                                                <button type="button" class="btn btn-danger" @onclick="()=>Delete(entry.BlogID)"><i class="fa fa-trash "></i></button>
+                                            </td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <PaginationCustom PageSize="BlogPagedListModel.PageSize" TotalCount="BlogPagedListModel.TotalCount" TotalPages="BlogPagedListModel.TotalPages" PageIndex="BlogPagedListModel.PageIndex" LoadPageIndex="PageIndex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+    private PagedList<BlogModel> BlogPagedListModel = new();
+    private PagedListPostModelWithFilter searchmodel = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        BlogPagedListModel = await API.PostAsync<PagedList<BlogModel>, PagedListPostModelWithFilter>("seo/get-all-blogs", searchmodel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        searchmodel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    async void OnEdit(int BlogID)
+    {
+        
+        Nav.NavigateTo($"blog/{BlogID}");
+    }
+    async Task Delete(int id)
+    {
+        if (await API.DeleteAsync("seo/delete-blog", id, true, Localizer["Confirm"], Localizer["Are you sure you want to delete?"], Localizer["Confirm"], Localizer["Cancel"]))
+        {
+            await JS.SuccessMessage(Localizer["Deleted Successfully"]);
+            await LoadData();
+        }
+    }
+    HeaderSettingsModel BloagHeaderSettings = new()
+        {
+            SearchPlaceHolder = "Search by service name..",
+            NeedAddButton = true,
+            SinglePageURL = "blog"
+        };
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        searchmodel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+}

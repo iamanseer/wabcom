@@ -1,0 +1,177 @@
+﻿@using PB.CRM.Model.Enum
+@using PB.Shared.Models.Accounts.AccountGroups;
+@using PB.Shared.Models.Common;
+
+<!--Account Group Modal-->
+<div class="modal fade" id="account-group-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-demo">
+            <EditForm Model="Model" OnValidSubmit="SaveAccountGroup">
+                <DataAnnotationsValidator />
+                <div class="modal-header">
+                    <h6 class="modal-title">
+                        @if (Model.AccountGroupID > 0)
+                        {
+                            @(Model.AccountGroupName)
+                        }
+                        else
+                        {
+                            @("Account Group")
+                        }
+                    </h6>
+                    <button type="button" class="btn-close" @onclick="async() => await HideAccountGroupModal()">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <InputTextBox Label="Group Name :"
+                                      DivClass="col-md-12" @bind-Value="Model.AccountGroupName"
+                                      ValidationFor="() => Model.AccountGroupName"
+                                      IsRequired="true" id="account-group-name-text-box" />
+                    </div>
+
+                    <div class="row">
+                        <InputTextBox Label="Group Code :"
+                                      DivClass="col-md-12" @bind-Value="Model.AccountGroupCode"
+                                      ValidationFor="() => Model.AccountGroupCode"
+                                      IsRequired="true" id="account-group-code-text-box" />
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="col-12">
+                                <div class=" form-check form-check-inline font-large">
+                                    <input class="ember-checkbox ember-view form-check-input" id="is-super-account-group" type="checkbox" @onchange="(ChangeEventArgs e) => HandleSuperParentCheckboxCheck(e)" checked="@(Model.IsSuperParent?"checked":null)">
+                                    <label class="form-check-label fs-16 fw-bold" for="is-super-account-group">Is this a parent group.?</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if(Model.IsSuperParent)
+                    {
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label" style="text-align: left; margin-top: 0 !important;">Account Group Type :</label>
+                                    <select name="narration-type" class="form-control form-select" @bind="Model.GroupTypeID">
+                                        <option value="0" selected> Choose </option>
+                                        @foreach (var item in AccountGroupTypes)
+                                        {
+                                            @if (Model.GroupTypeID == item.ID)
+                                            {
+                                                <option value="@(item.ID)" selected>@item.Value</option>
+                                            }
+                                            else
+                                            {
+                                                <option value="@(item.ID)">@item.Value</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row position-relative pb-3">
+                            <DropdownSelect DivClass="col-md-12" @ref="@ParentGroupDropdown"
+                                            DropdownID="parent-group-drop-down"
+                                            Label="Parent Group"
+                                            Mode="(int)DropdownModes.AccountGroups"
+                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                            ReadDataOnSearch="true"
+                                            ItemSelected="HandleAccountGroupSelected"
+                                            SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.ParentID, Value = Model.ParentGroupName})" />
+                            <div class="validation-for-dropdown">
+                                <ValidationMessage For="()=>Model.ParentID" />
+                            </div>
+                        </div>
+                    }
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.AccountGroupID == 0 ? "Save" : "Update")</button>
+                    @if (Model.AccountGroupID > 0)
+                    {
+                        <button type="button" class="btn btn-danger" @onclick="async () => await DeleteAccountGroup()">Delete</button>
+                    }
+                    <button type="button" class="btn btn-light" @onclick="async() => await HideAccountGroupModal()">Close</button>
+                </div>
+
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public EventCallback<IdnValuePair?> Refresh { get; set; }
+    private AccountGroupModel Model = new();
+    private DropdownSelect ParentGroupDropdown = new();
+    private List<IdnValuePair> AccountGroupTypes = new();
+
+    public async Task OpenAccountGroupModal(int accountGroupID = 0)
+    {
+        if (accountGroupID == 0)
+        {
+            Model = new();
+        }
+        else
+        {
+            Model = await API.GetAsync<AccountGroupModel>($"accounts/get-account-group/{accountGroupID}", true);
+            if (Model.IsSuperParent == true)
+            {
+                await GetAccountGroupType(); 
+            }
+        }
+        await JS.InvokeVoidAsync("ShowModal", "account-group-modal");
+    }
+    private async Task HideAccountGroupModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "account-group-modal");
+    }
+    private async Task SaveAccountGroup()
+    {
+        var result = await API.PostAsync<AccountGroupAddResultModel, AccountGroupModel>("accounts/save-account-group", Model);
+        if (result is not null)
+        {
+            await Refresh.InvokeAsync(new IdnValuePair() { ID = result.AccountGroupID, Value = result.AccountGroupName });
+            await HideAccountGroupModal();
+        }
+    }
+    private async Task DeleteAccountGroup()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete " + Model.AccountGroupName + " account group?", SweetAlertMessageType.question, "Yes, Delete", "no, Cancel"))
+        {
+            if (await API.GetAsync<bool>($"accounts/delete-account-group/{Model.AccountGroupID}", true))
+            {
+                await Refresh.InvokeAsync(null);
+                await HideAccountGroupModal();
+            }
+        }
+    }
+    private void HandleAccountGroupSelected(DropdownItemSelectedCallbackModel parentGroup)
+    {
+        Model.ParentID = parentGroup.ID;
+        Model.ParentGroupName = parentGroup.Value;
+    }
+    private async Task HandleSuperParentCheckboxCheck(ChangeEventArgs e)
+    {
+        Model.IsSuperParent = Convert.ToBoolean(e.Value);
+        if(Model.IsSuperParent)
+        {
+            await GetAccountGroupType();
+        }
+    }
+
+    private async Task GetAccountGroupType()
+    {
+        AccountGroupTypes = await API.GetAsync<List<IdnValuePair>>("common/get-acount-group-types", true);
+
+    }
+}

@@ -1,0 +1,311 @@
+﻿@page "/broadcast"
+@using PB.Shared.Enum.WhatsApp;
+@using PB.Shared.Models.WhatsaApp;
+@using PB.Shared.Tables
+using System.IO;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row page-header ">
+
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 style="margin-bottom: 0 !important;">Broadcast</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="col-6">
+                            @if (Receipients == null || Model.IsSent == true)
+                            {
+                                <EditForm Model="Model" OnValidSubmit="CreateBroadcast">
+                                    <DataAnnotationsValidator />
+                                    <div class="row">
+
+                                        <InputTextBox DivClass="col-md-12" @bind-Value="Model.Title"
+                                                  IsRequired="true" Label="Title:"
+                                                  ValidationFor="() => Model.Title" id="broadcast-name-text-box" />
+                                        @*<TextBox @bind-Value="Model.Title" Label=@Localizer["Title"] FormGroupClass="col-12" ValidationFor="@(()=>Model.Title)" />*@
+
+                                        <div class="col-12">
+                                            <label class="form-label mt-0 me-1" style="text-align:left;">Template:<span class="ms-2" style="color:red">*</span></label>
+                                            <select @onchange="TemplateChanged" class="form-control valid form-select form-select select2">
+                                                <option value="">@Localizer["Choose"]</option>
+                                                @foreach (var item in Templates)
+                                                {
+                                                    <option value="@item.ID">@item.Value</option>
+                                                }
+                                            </select>
+                                            <ValidationMessage For="() => Model.TemplateID" />
+                                        </div>
+
+                                        <!--excel instructions-->
+                                        @if(Model.TemplateID!=0)
+                                        {
+                                            <div class="col-12 mt-2 ">
+                                                <div class="alert alert-info position-relative" role="alert">
+                                                    <div class="position-absolute" style="right: 20px;top: 10px;cursor:pointer" @onclick="async () => await DownloadSampleExcel(Model.TemplateID)">
+                                                        <button class="btn btn-light" type="button" id="button-addon2">
+                                                            <i class="fa fa-download"></i>
+                                                        </button>
+                                                    </div>
+                                                    <label class="col-12">Please upload an excel file that contains following fields</label>
+
+                                                    <label class="col-12">1.@Localizer["Phone"]</label>
+                                                    @for (int i = 0; i < Variables.Variables.Count; i++)
+                                                    {
+                                                        <label class="col-12">@(i + 2) @Variables.Variables[i].Value</label>
+                                                    }
+                                                    <div class="mt-2">
+                                                        <div class="input-group  mt-1">
+                                                            <div class="custom-file">
+                                                                <InputFile OnChange="OnInputFileChange" class="custom-file-input" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" type="file" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            
+                                        }
+                                        <div class="clear-fix"></div>
+
+                                        @if (Variables.HeaderTypeID == (int)WhatsappTemplateHeaderType.MEDIA)
+                                        {
+                                            <div class="col-12 mt-3">
+                                                <label for="users-list-verified"> @Localizer["Upload Header File"] </label>
+                                                <br>
+                                                <div class="input-group  mt-1">
+                                                    <div class="custom-file">
+                                                        @* <MediaUpload FolderName="send-template" Id="file-input1" @ref="HeaderMedia" /> *@
+                                                        <InputFile type="file" id="file-input1" OnChange="HandleHeaderMediaFileUploadChange" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        @*<EnumSelectBox OptionEnum="MessageSendingTypes.SendImmediately" FormGroupClass="col-12 mt-2" Label="@Localizer["Send at"]" @bind-Value="Model.MessageSendingTypes"></EnumSelectBox>*@
+
+                                        <div class="col-12">
+                                            <label class="form-label mt-0 me-1" style="text-align:left;">@Localizer["Send at"]:</label>
+                                            <select @bind="Model.MessageSendingTypes" class="form-control valid form-select form-select select2">
+                                                <option value="0">@Localizer["Choose"]</option>
+                                                <option value="@((int)MessageSendingTypes.SendImmediately)">SendImmediately</option>
+                                                <option value="@((int)MessageSendingTypes.Scheduled)">Scheduled</option>
+                                                <option value="@((int)MessageSendingTypes.Periodic)">Periodic</option>
+                                            </select>
+                                        </div>
+                                        @if (Model.MessageSendingTypes == (int)MessageSendingTypes.Scheduled)
+                                        {
+                                            <div class="col-6 mt-2 pt-1">
+                                                <label for="users-list-verified">@Localizer["Schedule Time (If any)"]</label>
+                                                <br>
+                                                <div class="form-group row" style="margin: 0;">
+                                                    <div class="input-group">
+                                                        <input type='datetime-local' class="form-control" @bind="Model.ScheduleTime" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        @if (Model.MessageSendingTypes == (int)MessageSendingTypes.Periodic)
+                                        {
+
+                                            <div class="col-3">
+                                                <label for="users-list-verified">@Localizer["Every month"]</label>
+                                                <SelectBox class="form-control rounded-cu valid" @bind-Value="Model.PeriodicDay">
+                                                    <Options>
+                                                        @for (var i = 1; i <= 31; i++)
+                                                        {
+                                                            <option value="@i">@i</option>
+                                                        }
+                                                    </Options>
+                                                </SelectBox>
+                                            </div>
+                                        }
+                                        @if (Model.IsSent == false)
+                                        {
+                                            <div class="col-lg-2 mr-3 mt-4">
+                                                <button type="submit" class="btn btn-primary ">@Localizer["Create Broadcast"]</button>
+                                            </div>
+                                        }
+                                    </div>
+                                </EditForm>
+
+                            }
+                            else
+                            {
+                                <div class="col-lg-2 mb-2">
+                                    @if (Receipients != null && Model.IsSent == false)
+                                    {
+                                        <button type="button" class="btn btn-primary" @onclick="SendMessage">@Localizer["Send"]</button>
+                                    }
+                                </div>
+                                <div class="clearfix"></div>
+
+                                <table class="table table-responsive border text-nowrap text-md-nowrap table-hover ">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">@Localizer["Phone"]</th>
+                                            @foreach (var varibale in Variables.Variables)
+                                            {
+                                                <th scope="col">@varibale.Value</th>
+                                            }
+                                            <th scope="col" class="text-center"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Receipients != null)
+                                        {
+                                            @foreach (var receipient in Receipients)
+                                            {
+                                                <tr>
+                                                    <td scope="col">@receipient.Phone</td>
+                                                    @if (receipient.Parameters != null)
+                                                    {
+                                                        @foreach (var parameter in receipient.Parameters)
+                                                        {
+                                                            <td scope="col">@parameter.Value</td>
+                                                        }
+                                                        <td style="width:110px">
+                                                            <button type="button" align="center" class="btn btn-dark" @onclick="()=>Delete(receipient)"><i class="fa fa-trash"></i></button>
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+@code {
+
+    private List<IdnValuePair> Templates = new();
+    CreateBroadcastModel Model = new() { MessageSendingTypes = (int)MessageSendingTypes.SendImmediately };
+    TemplateVariableListModel Variables = new();
+    List<WhatsappBroadcastRecipientSaveModel> Receipients;
+    MediaUpload? HeaderMedia;
+    private StringModel StringModel = new();
+
+    private async Task DownloadSampleExcel(int templateID)
+    {
+        var result = await API.GetAsync<byte[]?>($"whatsapp/get-template-variable-sample-excel-file/{templateID}", true);
+        if (result is not null)
+        {
+            await JS.InvokeAsync<object>("JSInteropExt.saveAsFile", "sample.xlsx", "application/vnd.ms-excel", Convert.ToBase64String(result));
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Templates = await API.GetAsync<List<IdnValuePair>>("whatsapp/get-templates");
+    }
+
+    async Task TemplateChanged(ChangeEventArgs e)
+    {
+        Model.TemplateID = Convert.ToInt32(e.Value);
+        Variables = await API.GetAsync<TemplateVariableListModel>($"whatsapp/get-template-variable-list/{Model.TemplateID}");
+    }
+
+
+    async Task Delete(WhatsappBroadcastRecipientSaveModel data)
+    {
+        if (await JS.Confirm())
+        {
+            var res = await API.GetAsync<BaseSuccessResponse>($"whatsapp/delete-receipient/{data.ReceipientID}");
+            if (res != null)
+                Receipients.Remove(data);
+        }
+    }
+
+    #region Importdata
+
+
+    IBrowserFile excelFile;
+    private byte[] excelFileBuffer;
+    public void OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        excelFile = e.File;
+    }
+
+    private async Task CreateBroadcast()
+    {
+        excelFileBuffer = new byte[excelFile.Size];
+        await excelFile.OpenReadStream(excelFile.Size).ReadAsync(excelFileBuffer);
+        string base64String = $"data:{excelFile.ContentType};base64,{Convert.ToBase64String(excelFileBuffer)}";
+
+        Model.ContentType = excelFile.ContentType;
+        Model.Extension = Path.GetExtension(excelFile.Name).Substring(1);
+        Model.Content = excelFileBuffer;
+        Model.Base64Image = base64String;
+
+        // if (Variables.HeaderTypeID == (int)WhatsappTemplateHeaderType.MEDIA)
+        //     Model.MediaID = await HeaderMedia.UploadFile();
+
+        if (Model.Content == null)
+        {
+            await JS.ErrorMessage(Localizer["Please upload excel file"]);
+            return;
+        }
+        var res = await API.PostAsync<WhatsappBroadcastSaveResultModel, CreateBroadcastModel>("whatsapp/create-broadcast", Model);
+        if (res != null)
+        {
+            Model.BroadcastID = res.BroadcastID;
+            Receipients = res.Receipients;
+        }
+    }
+
+    #endregion
+
+    #region Header Media
+
+    IBrowserFile? headerFile;
+    private byte[]? headerFileBuffer;
+    private async Task HandleHeaderMediaFileUploadChange(InputFileChangeEventArgs e)
+    {
+        if (e is null)
+            return;
+
+        headerFile = e.File;
+        var uploadResult = await UploadFileToServer();
+        if(uploadResult is not null)
+        {
+            Model.MediaID = uploadResult.MediaID;
+        }
+    }
+    private async Task<FileUploadResultModel?> UploadFileToServer()
+    {
+        if (headerFile is not null)
+        {
+            string mediaID = "0";
+            if (Model.MediaID is not null)
+                mediaID = Convert.ToString(Model.MediaID.Value);
+            using var fileContent = new MultipartFormDataContent();
+            fileContent.Add(new StreamContent(headerFile.OpenReadStream(50000000)), "file", headerFile.Name);
+            fileContent.Add(new StringContent("send-template"), "FolderName");
+            fileContent.Add(new StringContent(headerFile.ContentType), "ContentType");
+            fileContent.Add(new StringContent(mediaID), "MediaID");
+            return await API.PostAsync<FileUploadResultModel>("media/new-upload-file", fileContent);
+        }
+        return null;
+    }
+
+    #endregion
+
+    async Task SendMessage()
+    {
+
+        var res = await API.GetAsync<BaseSuccessResponse>($"whatsapp/v2/schedule-broadcast/{Model.BroadcastID}", true);
+        if (res != null)
+        {
+            Model.IsSent = true;
+            await JS.SuccessMessage(res.ResponseMessage, res.ResponseTitle);
+            Nav.NavigateTo("broadcasts");
+        }
+    }
+}

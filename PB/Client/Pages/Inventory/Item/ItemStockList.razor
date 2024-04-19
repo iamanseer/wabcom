@@ -1,0 +1,96 @@
+﻿@page "/item-stock"
+@using PB.Shared.Models.Common
+@using PB.Shared.Models.Inventory.Items
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="HeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleHeaderSettingEventCallback" />
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+
+                                <th>
+                                    Item Name
+                                </th>
+
+                                <th>
+                                    Current Stock
+                                </th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in ItemStockPagedList.Data.Select((value, i) => new { i, value }))
+                            {
+                                var entry = item.value;
+                                var index = item.i;
+                                <tr>
+                                    <td>
+                                        @if (ItemStockPagedList.PageIndex == 1)
+                                        {
+                                            @(index + 1)
+                                        }
+                                        else
+                                        {
+                                            @(((ItemStockPagedList.PageIndex * ItemStockPagedList.PageSize) + (index + 1)) - 10)
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @entry.ItemName
+                                    </td>
+
+                                    <td>
+                                        @entry.Quantity
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="ItemStockPagedList.PageSize" TotalCount="ItemStockPagedList.TotalCount" TotalPages="ItemStockPagedList.TotalPages" PageIndex="ItemStockPagedList.PageIndex" LoadPageIndex="HandlePagedListSetIndexEvenCallback" />
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+
+    [Parameter] public int ItemVariantID { get; set; } = 0;
+
+    private HeaderSettingsModel HeaderSettings = new()
+        {
+            Heading = "Item Stocks",
+            SearchPlaceHolder = "Search Item",
+            NeedAddButton = false
+        };
+    private PagedList<ItemStockViewModel> ItemStockPagedList = new();
+    private PagedListPostModel PagedListPostModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadItemStockData();
+    }
+    private async Task LoadItemStockData()
+    {
+        ItemStockPagedList = await API.PostAsync<PagedList<ItemStockViewModel>, PagedListPostModel>("inventory/get-item-stock-paged-list", PagedListPostModel);
+    }
+    private async Task HandleHeaderSettingEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        PagedListPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadItemStockData();
+    }
+    private async Task HandlePagedListSetIndexEvenCallback(int pageIndex)
+    {
+        PagedListPostModel.PageIndex = pageIndex;
+        await LoadItemStockData();
+    }
+}

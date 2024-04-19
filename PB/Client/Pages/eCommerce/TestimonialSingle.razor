@@ -1,0 +1,81 @@
+﻿@page "/testimonial"
+@page "/testimonial/{testimonialID:int}"
+@using PB.Shared.Models.eCommerce.SEO;
+<PageLayoutNew>
+
+    <EditForm Model="@Model" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+
+                <div class="col-12">
+                    <div class="card" style="min-height:500px;">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Testimonial</h5>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row">
+                            <div class="col-md-4 pe-0">
+                            <Image @ref="Media" MediaID="Model.MediaID" FolderName="Testimonial" DivClass="col-md-8" />
+                            </div>
+                            </div>
+                            <div class="row">
+
+                                <div class="col-md-7">
+
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align: left;">
+                                            Name :
+                                        </label>
+                                        <input name="g-name" type="text" class="form-control w-100" @bind="Model.Name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1" style="text-align: left;">
+                                            Designation :
+                                        </label>
+                                        <input name="g-name" type="text" class="form-control w-100" @bind="Model.Designation">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Comment :</label>
+                                        <textarea class="form-control" placeholder="" rows="2" @bind="Model.Comment"></textarea> <br>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-footer-action d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+        </div>
+    </EditForm>
+
+</PageLayoutNew>
+@code {
+
+    [Parameter] public int testimonialID { get; set; }
+    private TestimonialModel Model = new();
+    Image Media ;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (testimonialID != 0)
+        {
+            Model = await API.GetAsync<TestimonialModel>($"seo/get-testimonial/{testimonialID}", true);
+        }
+
+
+    }
+    async Task Save()
+    {
+        Model.MediaID = await Media.UploadImage();
+        var res = await API.PostAsync<BaseSuccessResponse, TestimonialModel>("seo/save-testimonial", Model);
+        if (res != null)
+        {
+            await JS.SuccessMessage("Saved Successfully");
+            Nav.NavigateTo("testimonial-list");
+        }
+    }
+}

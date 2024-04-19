@@ -1,0 +1,749 @@
+﻿@using PB.Shared.Enum.Common
+@using PB.Shared.Models.Common
+
+
+<div class="modal fade" id="promotion-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document" style="overflow-y: scroll;">
+        <EditForm Model="Model" OnValidSubmit="async () => await SavePromotion()">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    <h6 class="modal-title">@(Model.PromotionID == 0 ? "New Promotion" : Model.PromotionName)</h6>
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HideModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row">
+
+                        <InputTextBox Label="Name:" @bind-Value="Model.PromotionName"
+                                      DivClass="col-md-12" id="tax-category-text-box"
+                                      IsRequired="true"
+                                      ValidationFor="() => Model.PromotionName" />
+
+                    </div>
+
+                    <div class="row">
+
+                        <div class="form-group">
+                            <label class="form-label mt-0 me-1">Start Date :</label>
+                            <input type="date" class="form-control" @bind="Model.StartDate">
+                            <ValidationMessage For="() => Model.StartDate" />
+                        </div>
+
+                    </div>
+
+
+                    <div class="row">
+
+                        <div class="form-group">
+                            <label class="form-label mt-0 me-1">End Date :</label>
+                            <input type="date" class="form-control" @bind="Model.EndDate">
+                            <ValidationMessage For="() => Model.EndDate" />
+                        </div>
+
+                    </div>
+                    <!--Payment term slab-->
+
+
+                    <div class="row">
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-bordered mb-0">
+                                <thead>
+                                    <tr>
+
+                                        <th>
+                                            Item/ItemModel
+                                        </th>
+                                        <th>
+                                            Type
+                                        </th>
+                                        <th>
+                                            Discount Type
+                                        </th>
+                                        <th>
+                                            Percentage
+                                        </th>
+                                        <th>
+                                            Amount
+                                        </th>
+                                        <th>
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    @if (Model.PromotionItems.Count > 0)
+                                    {
+                                        @foreach (var items in Model.PromotionItems)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @items.ItemName
+                                                </td>
+                                                <td>
+                                                    @((items.ItemID is not null ? "Item" : "Item varient"))
+                                                </td>
+                                                <td>
+                                                    @(((DiscountTypes)items.DiscountTypeID).ToString())
+                                                </td>
+                                                <td>
+                                                    @((items.DiscountTypeID == (int)DiscountTypes.Percentage ? items.Percentage : "----"))
+                                                </td>
+                                                <td>
+                                                    @((items.DiscountTypeID == (int)DiscountTypes.Amount ? items.Amount : "----"))
+                                                </td>
+                                                <td style="width:80px;">
+                                                    <div class="d-flex justify-content-evenly">
+                                                        <ActionEdit Clicked="async () => await EditPromotionItem(items)" />
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        @if (Model.PromotionID != 0)
+                                        {
+                                            <td colspan="5">
+                                            </td>
+                                        }
+                                        else
+                                        {
+                                            <td colspan="5">
+                                            </td>
+                                        }
+                                        <td style="width:80px;">
+                                            <div class="d-flex justify-content-evenly">
+                                                <ActionAdd Clicked="async () => await AddNewPromotionItem()" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.PromotionID == 0 ? "Save" : "Update")</button>
+                    @if (Model.PromotionID != 0)
+                    {
+                        <button type="button" class="btn btn-danger" @onclick="async() => await DeletePromotion()">Delete</button>
+
+                    }
+                    <button type="button" class="btn btn-light" @onclick="async() => await HideModal()">Close</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+
+<div class="modal fade" id="promotion-item-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+        <EditForm Model="promotionItem" OnValidSubmit="async () => await SavePromotionItem()">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    @if (Model.PromotionID != 0)
+                    {
+                        <h6 class="modal-title">@Model.PromotionName</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New Promotion Item</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HidePromotionItemModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body" style="overflow-y: scroll;">
+
+                    <div class="row">
+                        <div class="col-md-7">
+
+                            <div class=" my-4 d-flex gap-5">
+                                <label class="custom-control custom-radio">
+                                    <input type="radio" class="custom-control-input" @onchange="(ChangeEventArgs e) => CheckboxClicked(true)" name="example-radios" value="option1" checked="@(promotionItem.ByItem==true)">
+                                    <span class="custom-control-label">By Item</span>
+                                </label>
+                                <label class="custom-control custom-radio">
+                                    <input type="radio" class="custom-control-input" @onchange="(ChangeEventArgs e) => CheckboxClicked(false)" name="example-radios" value="option1" checked="@(promotionItem.ByItem==false)">
+                                    <span class="custom-control-label">By Item Variant</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                    Discount Type :
+                                    <span class="ms-1" style="color:red">*</span>
+                                </label>
+                                <select class="form-control form-select" @onchange="async (ChangeEventArgs e) => await HandleDiscountType(e)">
+                                    <option value="0" selected> Choose </option>
+                                    @foreach (var enumItem in Enum.GetValues(typeof(DiscountTypes)))
+                                    {
+                                        if (promotionItem.DiscountTypeID == (int)enumItem)
+                                        {
+                                            <option value="@((int)enumItem)" selected>@enumItem</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)enumItem)">@enumItem</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        @if (promotionItem.DiscountTypeID == (int)DiscountTypes.Percentage)
+                        {
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1" style="text-align:left;">
+                                        Percentage :
+                                        @*  <span class="ms-1" style="color:red">*</span> *@
+                                    </label>
+                                    <input class="form-control " @bind="promotionItem.Percentage" id="item-um-unit-box">
+                                </div>
+                            </div>
+
+                        }
+                        @if (promotionItem.DiscountTypeID == (int)DiscountTypes.Amount)
+                        {
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1" style="text-align:left;">
+                                        Amount :
+                                        @*  <span class="ms-1" style="color:red">*</span> *@
+                                    </label>
+                                    <input class="form-control " @bind="promotionItem.Amount" id="item-um-unit-box">
+                                </div>
+                            </div>
+
+                        }
+
+                    </div>
+
+
+                    <div class="row">
+
+                        <div class="table-responsive">
+                            <table class="table border text-nowrap text-md-nowrap table-bordered mb-0">
+                                <thead>
+                                    <tr>
+
+                                        <th>
+                                            Item/ItemModel
+                                        </th>
+                                        <th>
+                                            Percentage/Amount
+                                        </th>
+                                        <th>
+                                            Action
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+
+                                    @if (promotionItem.ItemsList.Count > 0)
+                                    {
+                                        @foreach (var item in promotionItem.ItemsList.Select((value, i) => new { i, value }))
+                                        {
+                                            var items = item.value;
+                                            int index = item.i;
+                                            @if (!items.IsRowInEditMode)
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        @items.ItemName
+                                                    </td>
+                                                    <td>
+                                                        @if (promotionItem.DiscountTypeID == (int)DiscountTypes.Percentage)
+                                                        {
+                                                            @items.Percentage
+                                                        }
+                                                        else
+                                                        {
+                                                            @items.Amount
+                                                        }
+                                                    </td>
+                                                    <td style="width:80px;">
+                                                        <div class="d-flex justify-content-evenly">
+                                                            <ActionEdit Clicked="async () => await HandlePromotionItemEditClick(items)" />
+                                                            <ActionDelete Clicked="async () => await HandlePromotionItemRemoveClick(items)" />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                            }
+                                            else
+                                            {
+                                                <tr>
+                                                    <td>
+                                                        @if (promotionItem.ByItem)
+                                                        {
+                                                            <ItemDropdownSelect DropdownID="@("row-item-drop-down")" @ref="@RowItemDropdown"
+                                                                                DivClass=""
+                                                                                FormGroupClass="form-group mb-0"
+                                                                                FormControlClass="pb-select form-control form-control-custom"
+                                                                                ReadDataOnSearch="true"
+                                                                                Mode="(int)ItemDropdownMode.Item"
+                                                                                ModeGroup="(int)ItemDropdownMode.CommonSearch"
+                                                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = items.ItemID, Value = items.ItemName})"
+                                                                                ItemSelected="@(async (DropdownItemSelectedCallbackModel item) => await ItemSelected(item,items))" />
+
+                                                        }
+                                                        else
+                                                        {
+                                                            <ItemDropdownSelect DropdownID="@("row-item-model-drop-down")" @ref="@RowItemModelDropdown"
+                                                                                DivClass=""
+                                                                                FormGroupClass="form-group mb-0"
+                                                                                FormControlClass="pb-select form-control form-control-custom"
+                                                                                ReadDataOnSearch="true"
+                                                                                Mode="(int)ItemDropdownMode.ItemVarient"
+                                                                                ModeGroup="(int)ItemDropdownMode.CommonSearch"
+                                                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = items.ItemVariantID, Value = items.ItemName})"
+                                                                                ItemSelected="@(async (DropdownItemSelectedCallbackModel item) => await ItemSelected(item,items))" />
+
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @if (promotionItem.DiscountTypeID == (int)DiscountTypes.Percentage)
+                                                        {
+                                                            <input class="form-control " @bind="items.Percentage" id="item-um-unit-box">
+                                                        }
+                                                        else
+                                                        {
+                                                            <input class="form-control " @bind="items.Amount" id="item-um-unit-box">
+                                                        }
+                                                    </td>
+                                                    <td style="width:80px;">
+                                                        <div class="d-flex justify-content-evenly">
+                                                            <ActionDone Clicked="async () => await HandlePromotionItemUpdateClick(items)" />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                            }
+
+                                        }
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td>
+                                            @if (promotionItem.ByItem)
+                                            {
+                                                <ItemDropdownSelect DropdownID="@("footer-item-drop-down")" @ref="@FooterItemDropdown"
+                                                                    DivClass=""
+                                                                    FormGroupClass="form-group mb-0"
+                                                                    FormControlClass="pb-select form-control form-control-custom"
+                                                                    ReadDataOnSearch="true"
+                                                                    Mode="(int)ItemDropdownMode.Item"
+                                                                    ModeGroup="(int)ItemDropdownMode.CommonSearch"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Footer.ItemID, Value = Footer.ItemName})"
+                                                                    ItemSelected="@(async (DropdownItemSelectedCallbackModel item) => await ItemSelected(item,Footer))" />
+
+                                            }
+                                            else
+                                            {
+                                                <ItemDropdownSelect DropdownID="@("footer-item-model-drop-down")" @ref="@FooterItemModelDropdown"
+                                                                    DivClass=""
+                                                                    FormGroupClass="form-group mb-0"
+                                                                    FormControlClass="pb-select form-control form-control-custom"
+                                                                    ReadDataOnSearch="true"
+                                                                    Mode="(int)ItemDropdownMode.ItemVarient"
+                                                                    ModeGroup="(int)ItemDropdownMode.CommonSearch"
+                                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Footer.ItemVariantID, Value = Footer.ItemName})"
+                                                                    ItemSelected="@(async (DropdownItemSelectedCallbackModel item) => await ItemSelected(item,Footer))" />
+
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (promotionItem.DiscountTypeID == (int)DiscountTypes.Percentage)
+                                            {
+
+                                                <input class="form-control form-control-custom " @bind="Footer.Percentage" id="item-um-unit-box">
+                                            }
+                                            else
+                                            {
+
+                                                <input class="form-control form-control-custom" @bind="Footer.Amount" id="item-um-unit-box">
+                                            }
+                                        </td>
+                                        <td style="width:80px;">
+                                            <div class="d-flex justify-content-evenly">
+                                                <ActionAdd Clicked="async () => await HandleAddFooterButtonClick()" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-light" @onclick="async() => await HidePromotionItemModal()">Close</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+<div class="modal fade" id="promotion-edit-item-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-ml" role="document">
+        <EditForm Model="ItemModel" OnValidSubmit="async () => await SaveItems()">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    <h6 class="modal-title">@ItemModel.ItemName</h6>
+
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HidePromotionItemModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body" style="overflow-y: scroll;">
+
+                    <div class="row">
+
+                        @if (ItemModel.ByItem)
+                        {
+                            <ItemDropdownSelect DropdownID="@("edit-item-drop-down")" @ref="@EditItemDropdown"
+                                                DivClass=""
+                                                Label="Item"
+                                                FormGroupClass="form-group mb-0"
+                                                FormControlClass="pb-select form-control form-control-custom"
+                                                ReadDataOnSearch="true"
+                                                Mode="(int)ItemDropdownMode.Item"
+                                                ModeGroup="(int)ItemDropdownMode.CommonSearch"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = ItemModel.ItemID, Value = ItemModel.ItemName})"
+                                                ItemSelected="@(async (DropdownItemSelectedCallbackModel item) => await EditItemSelected(item,ItemModel))" />
+
+                        }
+                        else
+                        {
+                            <ItemDropdownSelect DropdownID="@("edit-item-model-drop-down")" @ref="@EditItemModelDropdown"
+                                                DivClass=""
+                                                Label="Item Varient"
+                                                FormGroupClass="form-group mb-0"
+                                                FormControlClass="pb-select form-control form-control-custom"
+                                                ReadDataOnSearch="true"
+                                                Mode="(int)ItemDropdownMode.ItemVarient"
+                                                ModeGroup="(int)ItemDropdownMode.CommonSearch"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = ItemModel.ItemVariantID, Value = ItemModel.ItemName})"
+                                                ItemSelected="@(async (DropdownItemSelectedCallbackModel item) => await EditItemSelected(item,ItemModel))" />
+
+                        }
+
+
+                    </div>
+
+                    <div class="row">
+
+                        @if (ItemModel.DiscountTypeID == (int)DiscountTypes.Percentage)
+                        {
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1">Percentage :</label>
+                                <input class="form-control " @bind="ItemModel.Percentage" id="item-um-unit-box">
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1">Amount :</label>
+                                <input class="form-control " @bind="ItemModel.Amount" id="item-um-unit-box">
+                            </div>
+                        }
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <button type="button" class="btn btn-danger" @onclick="async()=>await RemovePromotionItem(ItemModel)">Remove</button>
+                    <button type="button" class="btn btn-light" @onclick="async() => await HidePromotionItemModal()">Close</button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+
+
+
+
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair?> CallbackWithIdnValue { get; set; }
+    private bool IsEditPromotionItem;
+    #region Promotion
+
+    private PromotionModel Model = new();
+
+    private async Task OpenModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "promotion-modal");
+    }
+
+    private async Task HideModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "promotion-modal");
+    }
+
+    public async Task OpenPromotionModal(int promotionID = 0)
+    {
+        Model = new();
+        if (promotionID != 0)
+        {
+            Model = await API.GetAsync<PromotionModel>($"settings/get-promotions/{promotionID}", true);
+        }
+        await OpenModal();
+    }
+
+    private async Task SavePromotion()
+    {
+        if (Model.PromotionItems.Count == 0)
+        {
+            await JS.ErrorMessage("Please add promotion items");
+            return;
+        }
+
+        var result = await API.PostAsync<PromotionAddResultModel, PromotionModel>("settings/save-promotion", Model);
+        if (result != null)
+        {
+            await CallbackWithIdnValue.InvokeAsync(new IdnValuePair()
+                {
+                    ID = result.PromotionID,
+                    Value = result.PromotionName
+                });
+            await HideModal();
+        }
+    }
+
+    private async Task DeletePromotion()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete this payment term..?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            if (await API.DeleteAsync("settings/delete-promotion", Model.PromotionID))
+            {
+                await CallbackWithIdnValue.InvokeAsync(null);
+                await HideModal();
+            }
+        }
+    }
+
+    #endregion
+
+    #region Payment term slab
+
+
+    private PromotionItemModel promotionItem = new();
+
+
+    private async Task OpenPromotionItemModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "promotion-item-modal");
+    }
+
+    private async Task HidePromotionItemModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "promotion-item-modal");
+    }
+
+    private async Task CheckboxClicked(bool value)
+    {
+        promotionItem.ByItem = value;
+    }
+    private async Task HandleDiscountType(ChangeEventArgs e)
+    {
+        promotionItem.DiscountTypeID = Convert.ToInt32(e.Value);
+    }
+
+    private async Task AddNewPromotionItem()
+    {
+
+        currentRowIndex = -1;
+        promotionItem = new();
+        await OpenPromotionItemModal();
+    }
+    private PromotionItemListViewModel Footer = new();
+    private async Task HandleAddFooterButtonClick()
+    {
+        if (Footer.ItemName == null)
+        {
+            await JS.ErrorMessage("Please choose item name");
+        }
+        if (promotionItem.DiscountTypeID == 0)
+        {
+            await JS.ErrorMessage("Please choose discount type");
+        }
+        else
+        {
+            if (promotionItem.DiscountTypeID == (int)DiscountTypes.Percentage && promotionItem.Percentage < 0)
+            {
+                await JS.ErrorMessage("Please add Percentage");
+            }
+            if (promotionItem.DiscountTypeID == (int)DiscountTypes.Amount && promotionItem.Amount < 0)
+            {
+                await JS.ErrorMessage("Please add amount");
+            }
+        }
+        promotionItem.ItemsList.Add(Footer);
+        Footer = new()
+            {
+                IsRowInEditMode = false
+            };
+    }
+
+    private bool isAnyRowInEditMode = false;
+    private async Task HandlePromotionItemEditClick(PromotionItemListViewModel promotionItem)
+    {
+        if (isAnyRowInEditMode)
+        {
+            await JS.ErrorMessage("There is already a row in edit mode, please complete it first");
+            return;
+        }
+
+        promotionItem.IsRowInEditMode = true;
+        isAnyRowInEditMode = true;
+        await Task.Delay(50);
+    }
+    private async Task HandlePromotionItemRemoveClick(PromotionItemListViewModel Item)
+    {
+        if (await JS.Confirm("Cofirm", "Are you sure you want to remove the promotion item '" + Item.ItemName + "'", SweetAlertMessageType.question, "Yes, Remove", "No, Don't Remove"))
+        {
+            promotionItem.ItemsList.Remove(Item);
+        }
+    }
+
+    private async Task HandlePromotionItemUpdateClick(PromotionItemListViewModel invoiceItem)
+    {
+        invoiceItem.IsRowInEditMode = false;
+        isAnyRowInEditMode = false;
+
+    }
+
+    private async Task SavePromotionItem()
+    {
+        Model.PromotionItems.AddRange(promotionItem.ItemsList);
+        await HidePromotionItemModal();
+        StateHasChanged();
+    }
+
+    #region Item dropdown
+
+    private ItemDropdownSelect FooterItemDropdown = new();
+    private ItemDropdownSelect RowItemDropdown = new();
+    private ItemDropdownSelect FooterItemModelDropdown = new();
+    private ItemDropdownSelect RowItemModelDropdown = new();
+
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data, PromotionItemListViewModel temp)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)ItemDropdownMode.Item:
+
+                temp.ItemID = data.ID;
+                temp.ItemName = data.Value;
+                temp.DiscountTypeID = promotionItem.DiscountTypeID;
+                if (promotionItem.DiscountTypeID == (int)DiscountTypes.Percentage)
+                    temp.Percentage = promotionItem.Percentage;
+                else
+                    temp.Amount = promotionItem.Amount;
+                break;
+            case (int)ItemDropdownMode.ItemVarient:
+
+                temp.ItemVariantID = data.ID;
+                temp.ItemName = data.Value;
+                temp.DiscountTypeID = promotionItem.DiscountTypeID;
+                if (promotionItem.DiscountTypeID == (int)DiscountTypes.Percentage)
+                    temp.Percentage = promotionItem.Percentage;
+                else
+                    temp.Amount = promotionItem.Amount;
+                break;
+        }
+    }
+
+    #endregion
+
+    #endregion
+
+    #region Edit payment term item
+
+    private PromotionItemListViewModel ItemModel = new();
+    private ItemDropdownSelect EditItemDropdown = new();
+    private ItemDropdownSelect EditItemModelDropdown = new();
+    private int currentRowIndex = -1;
+
+    private async Task OpenEditPromotionItemModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "promotion-edit-item-modal");
+    }
+
+    private async Task HideEditPromotionItemModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "promotion-edit-item-modal");
+    }
+
+    private async Task EditItemSelected(DropdownItemSelectedCallbackModel data, PromotionItemListViewModel temp)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)ItemDropdownMode.Item:
+
+                temp.ItemID = data.ID;
+                temp.ItemName = data.Value;
+                break;
+            case (int)ItemDropdownMode.ItemVarient:
+
+                temp.ItemVariantID = data.ID;
+                temp.ItemName = data.Value;
+                break;
+        }
+    }
+
+    private async Task SaveItems()
+    {
+        Model.PromotionItems[currentRowIndex] = ItemModel;
+        await HideEditPromotionItemModal();
+    }
+    private async Task EditPromotionItem(PromotionItemListViewModel item)
+    {
+        currentRowIndex = Model.PromotionItems.IndexOf(item);
+        ItemModel = new()
+            {
+                PromotionItemID = item.PromotionItemID,
+                PromotionID = item.PromotionID,
+                DiscountTypeID = item.DiscountTypeID,
+                ItemID = item.ItemID,
+                ItemVariantID = item.ItemVariantID,
+                Percentage = item.Percentage,
+                Amount = item.Amount,
+                ItemName = item.ItemName,
+                ByItem = item.ItemID != null ? true : false,
+            };
+
+        await OpenEditPromotionItemModal();
+    }
+
+    private async Task RemovePromotionItem(PromotionItemListViewModel item)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete this promotion item..?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            Model.PromotionItems.Remove(Model.PromotionItems.Where(promotionItem => promotionItem.PromotionItemID == item.PromotionItemID).First());
+            await HideEditPromotionItemModal();
+            StateHasChanged();
+        }
+    }
+
+
+    #endregion
+}

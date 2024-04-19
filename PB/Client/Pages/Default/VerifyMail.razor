@@ -1,0 +1,207 @@
+﻿@page "/verify-mail/{UserID:int}"
+@using System.Text;
+@using System.Text.RegularExpressions;
+@using Blazored.LocalStorage
+@using PB.Shared.Models
+@inject ILocalStorageService _localStorage
+
+
+
+<LoginLayout>
+    <div class="">
+        <div class="col col-login mx-auto">
+            <div class="text-center">
+                <img src="/assets/images/brand/logo-white.png" class="header-brand-img m-0" alt="">
+            </div>
+        </div>
+        <div class="container-login100">
+            <div class="wrap-login100 p-6">
+                <EditForm Model="OTPModel" OnValidSubmit="VerifyEmail" class="login100-form validate-form">
+                    <span class="login100-form-title pb-5">
+                        Verify Your account
+                    </span>
+                    <p>
+                        We’ve sent 4 digits verification code
+                        to <span class="text-primary">@UserName</span>
+                    </p>
+                    <div class=" d-flex justify-content-around mb-5">
+                        <input class="form-control text-center w-15" id="txt1" maxlength="1" type="text" @bind="@OTPModel.Digit1" @onkeyup="async (KeyboardEventArgs k) => await DigitEntered(k, 1)" />
+                        <input class="form-control text-center w-15" id="txt2" maxlength="1" type="text" @bind="@OTPModel.Digit2" @onkeyup="async (KeyboardEventArgs k) => await DigitEntered(k, 2)" />
+                        <input class="form-control text-center w-15" id="txt3" maxlength="1" type="text" @bind="@OTPModel.Digit3" @onkeyup="async (KeyboardEventArgs k) => await DigitEntered(k, 3)" />
+                        <input class="form-control text-center w-15" id="txt4" maxlength="1" type="text" @bind="@OTPModel.Digit4" @onkeyup="async (KeyboardEventArgs k) => await DigitEntered(k, 4)" />
+                    </div>
+                    <div class="text-center mt-4">
+                        @if ((int)RemainingTime.TotalSeconds > 240)
+                        {
+                            <span class="text-muted text-center">Resend in @((int)RemainingTime.TotalSeconds - 240)</span>
+                        }
+                        else
+                        {
+                            <a class="text-muted text-center" @onclick="async () => await RegenerateOTP()">Resend OTP</a>
+
+                        }
+                    </div>
+                    <div class="container-login100-form-btn ">
+                        <button href="javascript:void(0)" class="login100-form-btn w-100 btn btn-primary" type="submit" id="generate-otp" >
+                            Proceed
+                        </button>
+                    </div>
+
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</LoginLayout>
+
+@code
+{
+    [Parameter] public int UserID { get; set; }
+    private DateTime? OTPgeneratedAt;
+    private TimeSpan OTPValidDuration = TimeSpan.FromMinutes(5);
+    private TimeSpan RemainingTime;
+    private static System.Timers.Timer? _Timer;
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+
+    private VerifyOTPPostModel OTPVerifyModel = new() { OTP = "" };
+    private OTPVerficationModel OTPModel = new();
+    string UserName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        RemainingTime = OTPValidDuration;
+        _Timer = new System.Timers.Timer();
+        _Timer.Interval = 1000; // 1 second
+        _Timer.Elapsed += CountDownTimer;
+
+        _Timer.Start();
+        OTPVerifyModel.UserName = await _localStorage.GetItemAsync<string>("username");
+        UserName = OTPVerifyModel.UserName;
+        if (string.IsNullOrEmpty(OTPVerifyModel.UserName))
+            Nav.NavigateTo("/login");
+        OTPVerifyModel.UserID = UserID;
+    }
+
+    private void StartTimer()
+    {
+        _Timer = new System.Timers.Timer(1000);
+        _Timer.Elapsed += CountDownTimer;
+        _Timer.Enabled = true;
+    }
+
+    private void CountDownTimer(Object? source, System.Timers.ElapsedEventArgs? e)
+    {
+        if (RemainingTime.TotalMinutes > 0)
+        {
+            RemainingTime = RemainingTime.Subtract(TimeSpan.FromSeconds(1));
+        }
+        else
+        {
+            _Timer.Stop();
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RegenerateOTP()
+    {
+        var result = await API.GetAsync<DateTime?>($"auth/regenerate-otp/{OTPVerifyModel.UserID}", true);
+        if (result != null)
+        {
+            OTPgeneratedAt = result;
+            RemainingTime = OTPValidDuration;
+            _Timer.Start();
+        }
+    }
+    private async Task DigitEntered(KeyboardEventArgs k, int nThDigit)
+    {
+        var temp = Convert.ToString(k.Key);
+        StringBuilder stringBuilder = new StringBuilder(OTPVerifyModel.OTP);
+        if (Regex.IsMatch(temp, @"^\d+$"))
+        {
+            switch (nThDigit)
+            {
+                case 1:
+                    if (OTPVerifyModel.OTP.Length == 0)
+                    {
+                        OTPVerifyModel.OTP = temp;
+                    }
+                    else
+                    {
+                        stringBuilder.Replace(OTPVerifyModel.OTP[nThDigit - 1], Convert.ToChar(temp), (nThDigit - 1), 1);
+                        OTPVerifyModel.OTP = stringBuilder.ToString();
+                    }
+                    OTPModel.Digit1 = temp;
+                    await JS.InvokeVoidAsync("focusElement", "txt2");
+                    break;
+
+                case 2:
+                    if (OTPVerifyModel.OTP.Length == 1)
+                    {
+                        OTPVerifyModel.OTP += temp;
+                    }
+                    else
+                    {
+                        stringBuilder.Replace(OTPVerifyModel.OTP[nThDigit - 1], Convert.ToChar(temp), (nThDigit - 1), 1);
+                        OTPVerifyModel.OTP = stringBuilder.ToString();
+                    }
+                    OTPModel.Digit2 = temp;
+                    await JS.InvokeVoidAsync("focusElement", "txt3");
+                    break;
+
+                case 3:
+                    if (OTPVerifyModel.OTP.Length == 2)
+                    {
+                        OTPVerifyModel.OTP += temp;
+                    }
+                    else
+                    {
+                        stringBuilder.Replace(OTPVerifyModel.OTP[nThDigit - 1], Convert.ToChar(temp), (nThDigit - 1), 1);
+                        OTPVerifyModel.OTP = stringBuilder.ToString();
+                    }
+                    OTPModel.Digit3 = temp;
+                    await JS.InvokeVoidAsync("focusElement", "txt4");
+                    break;
+
+                case 4:
+                    if (OTPVerifyModel.OTP.Length == 3)
+                    {
+                        OTPVerifyModel.OTP += temp;
+                    }
+                    else
+                    {
+                        stringBuilder.Replace(OTPVerifyModel.OTP[nThDigit - 1], Convert.ToChar(temp), (nThDigit - 1), 1);
+                        OTPVerifyModel.OTP = stringBuilder.ToString();
+                    }
+                    OTPModel.Digit4 = temp;
+                    await JS.InvokeVoidAsync("focusElement", "verify-otp-btn");
+                    break;
+            }
+        }
+    }
+    private async Task FocusElement(string elementID)
+    {
+        await JS.InvokeVoidAsync("focusElement", elementID);
+    }
+    private async Task VerifyEmail()
+    {
+        OTPVerifyModel.TimeOffset = await JS.InvokeAsync<int>("GetUCTMinute");
+        if(string.IsNullOrEmpty(OTPVerifyModel.OTP))
+        {
+            await JS.ErrorMessage("Please enter valid 4 digit OTP ");
+            return;
+        }
+        var result = await API.PostAsync<LoginResponseModelCustom, VerifyOTPPostModel>("auth/verify-mail", OTPVerifyModel);
+        if (result != null)
+        {
+            if (result.RenewalStatus == (int)RenewalStatus.NotCompleted)
+            {
+                Nav.NavigateTo($"/login");
+            }
+            await ((LocalAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(result);
+            var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+            var authState = await localStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            await _localStorage.SetItemAsync("profile-image", user.Claims.FirstOrDefault(c => c.Type == "ProfileURL").Value);
+            Nav.NavigateTo($"/reset-password");
+        }
+    }
+}

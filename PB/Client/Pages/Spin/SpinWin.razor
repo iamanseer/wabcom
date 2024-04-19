@@ -1,0 +1,143 @@
+﻿@page "/spin"
+@page "/spin/{ContestId:int}/{ContactId:int}"
+@page "/spin/{ContestId:int}"
+@using PB.Shared.Models.Spin;
+
+<LoginLayout>
+    <div class="col-md-12">
+        <div class="container-fluid">
+
+            <div class="row pt-75 mt-10">
+                <div class="col-12">
+                    <div class="section-title text-center mb-40 pt-20">
+                        <h1>Spin The Wheel</h1>
+                        <p>Win exciting prizes</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4  mb-15 ">
+
+                <div class="col-md-6 ">
+                    <div class="row">
+
+                        <div class="col-md-12 text-center">
+
+                            <div class="wheel-spin-box">
+                                <div id="spinwheel">
+                                    <div class="wheeldotsround">
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                        <div class="wheeldots"></div>
+                                    </div>
+                                </div>
+                                <div id="spin-arrow" class="wheel-spin-arrow">
+
+                                    <svg width="83" height="74" viewBox="0 0 83 74" fill="none"
+                                         xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M32.9489 5.12466C33.8289 3.59888 35.0943 2.3319 36.618 1.45104C38.1417 0.570174 39.8701 0.106445 41.6294 0.106445C43.3888 0.106445 45.1171 0.570174 46.6409 1.45104C48.1646 2.3319 49.43 3.59888 50.31 5.12466L80.9178 58.1922C81.7993 59.7185 82.264 61.4504 82.265 63.2137C82.2659 64.9769 81.8032 66.7094 80.9234 68.2366C80.0435 69.7639 78.7776 71.0322 77.2529 71.9139C75.7282 72.7955 73.9986 73.2595 72.238 73.2591H11.0223C9.26269 73.259 7.53405 72.7951 6.01016 71.9139C4.48627 71.0327 3.22083 69.7653 2.34102 68.2391C1.46121 66.7128 0.998036 64.9815 0.998047 63.2192C0.998058 61.4569 1.46125 59.7256 2.34108 58.1994L32.9489 5.12466Z"
+                                              fill="#2F911E" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="col-md-12 text-center mb-4 mt-5">
+                            <button id="spin" class="spin-click-button" @onclick="CallSpinFunction">Spin the Wheel</button>
+                        </div>
+                        <div class="d-none">
+                            <audio controls="controls" id="wheel" src="./assets/audio/wheel.mp3" type="audio/mp3"></audio>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="prize-list">
+                        <ul>
+                            @foreach (var item in PrizeListModel)
+                            {
+                                <li><img src="./assets/images/avatar/a-1.svg" style="width:40px" alt=""><span class="ms-3">@item.Name has won a @item.GiftName </span></li>
+                            }
+                        </ul>
+                    </div>
+
+
+
+
+                </div>
+            </div>
+        </div>
+    </div>
+</LoginLayout>
+@code {
+    [Parameter] public int ContestId { get; set; }
+    [Parameter] public int ContactId { get; set; }
+
+    int Ratio = 0;
+    int Mode;
+    private string? PrizeWon;
+    private bool showWheel = true;
+    private ContactIDModel contactModel = new();
+    private List<SpinGiftModel> GiftModel = new();
+    private List<WinnersListModel> PrizeListModel = new();
+
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    if (firstRender)
+    //    {
+    //        // Call the spin function here
+    //        await JS.InvokeVoidAsync("spin");
+    //    }
+    //}
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPrizeList();
+        GiftModel = await API.GetAsync<List<SpinGiftModel>>($"spin/get-contest-giftname/{ContestId}", true);
+        showWheel = true;
+        StateHasChanged();
+        await JS.InvokeVoidAsync("displaySpinWheel", GiftModel);
+
+    }
+
+    private async Task CallSpinFunction()
+    {
+
+        var res = await API.GetAsync<CountModel>($"spin/get-count/{ContestId}/{ContactId}");
+        StateHasChanged();
+        if (res != null)
+        {
+            Ratio = res.ExpectedParticipant / res.TotalNoOfGifts;
+            if (res.PositionOfParticipant % Ratio == 0)
+            {
+                PrizeWon = res.GiftName;
+            }
+            else
+            {
+                PrizeWon = null;
+            }
+        }
+        StateHasChanged();
+        bool result = await JS.InvokeAsync<bool>("spin", GiftModel, PrizeWon);
+        if (result == true)
+        {
+            contactModel.ContactID = ContactId;
+            contactModel.GiftID = res.GiftID.Value;
+            await API.PostAsync<BaseSuccessResponse, ContactIDModel>("spin/update-winner", contactModel);
+            await LoadPrizeList();
+        }
+        await Task.Delay(5000);
+        Nav.NavigateTo($"get-start/{ContestId}");
+    }
+    async Task LoadPrizeList()
+    {
+        PrizeListModel = await API.GetAsync<List<WinnersListModel>>($"spin/get-all-winners-by/{ContestId}", true);
+    }
+}

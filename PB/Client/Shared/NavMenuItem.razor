@@ -1,0 +1,26 @@
+﻿@if (string.IsNullOrEmpty(Roles))
+{
+	<li class="slide">
+		<NavLink href="@Link" Match="NavLinkMatch.All" class="side-menu__item" data-bs-toggle="slide">
+			<i class="side-menu__icon @IconClass"></i><span class="side-menu__label"><span>@Localizer[Label]</span></span>
+		</NavLink>
+	</li>
+}
+else
+{
+	<AuthorizeView Roles="@Roles">
+		<li class="slide">
+			<NavLink href="@Link" Match="NavLinkMatch.All" class="side-menu__item" data-bs-toggle="slide">
+				<i class="side-menu__icon @IconClass"></i><span class="side-menu__label"><span>@Localizer[Label]</span></span>
+			</NavLink>
+		</li>
+	</AuthorizeView>
+}
+
+
+@code {
+	[Parameter] public string Link { get; set; }
+	[Parameter] public string Label { get; set; }
+	[Parameter] public string Roles { get; set; }
+	[Parameter] public string IconClass { get; set; }
+}

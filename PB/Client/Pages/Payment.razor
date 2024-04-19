@@ -1,0 +1,47 @@
+﻿@page "/payment/{journalMasterId:int}"
+
+@using PB.Shared.Models.SuperAdmin.PaymentGateway;
+
+@if(ShowPaymentDiv)
+{
+    <form action='@Model.PaymentInitiationLink' method='post'>
+        @if(Model.GatewayType==(int)PaymentGatewayTypes.PayU)
+        {
+            <input type="hidden" name="firstname" value="@Model.FirstName" />
+            <input type="hidden" name="lastname" value="@Model.LastName" />
+            <input type="hidden" name="surl" value='@Model.ResponseAPIURL' />
+            <input type="hidden" name="phone" value="@Model.Phone" />
+            <input type="hidden" name="key" value="@Model.WorkingKey" />
+            <input type="hidden" name="hash" value="@Model.Hash" />
+            <input type="hidden" name="curl" value='@Model.ResponseAPIURL' />
+            <input type="hidden" name="furl" value='@Model.ResponseAPIURL' />
+            <input type="hidden" name="txnid" value="@Model.OrderID" />
+            <input type="hidden" name="productinfo" value="@Model.ProductInfo" />
+            <input type="hidden" name="amount" value="@Model.Amount" />
+            <input type="hidden" name="email" value="@Model.EmailAddress" />
+        }
+        else if(Model.GatewayType==(int)PaymentGatewayTypes.CCAvenue)
+        {
+            <input type="hidden" id="encRequest" name="encRequest" value="@Model.WorkingKey">
+            <input type="hidden" name="access_code" id="access_code" value="@Model.AccessCode">
+        }
+        <input type="submit" class="d-none" value="submit" id="paySubmit">
+    </form>
+}
+
+@code {
+    [Parameter] public int journalMasterId { get; set; }
+    PaymentInitiationModel Model = new();
+    bool ShowPaymentDiv;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await JS.ShowLoading();
+        Model = await API.GetAsync<PaymentInitiationModel>($"court/payment-initiation/{journalMasterId}");
+        ShowPaymentDiv = true;
+        StateHasChanged();
+        await JS.HideLoading();
+        await JS.InvokeVoidAsync("buttonClick", "paySubmit");
+    }
+
+}

@@ -1,0 +1,421 @@
+﻿@page "/court-booking"
+@attribute [Authorize(Roles = "CourtBooking")]
+@using Blazored.LocalStorage
+@inject ILocalStorageService _localStorage
+
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Models.Court;
+@using PB.Shared.Tables.CourtClient;
+@using PB.Shared.Enum;
+<PageLayoutNew CourtCartCount="@CartedDetails.BookingItems.Count" ShowCourtCart=true  OnBookingUpdate="GetCourtAvailability">
+    <div class="side-app">
+        <div class="main-container container-fluid">
+
+
+            <div class="page-header">
+                <h1 class="page-title">Booking</h1>
+                <div>
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="javascript:void(0)">Court Managment</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Booking</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-xl-12">
+                    <div class="card p-0">
+                        <div class="card-body p-4">
+                            <EditForm Model="SearchModel">
+                                <div class="row">
+                                    <div class="col-xl-5 col-lg-8 col-md-8 col-sm-8">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Hall :</label>
+                                            <select class="form-control" @bind="@SearchModel.HallID">
+                                                @foreach (var hall in Halls)
+                                                {
+                                                    <option value="@hall.ID">@hall.Value</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-4 col-lg-4 col-md-4 col-sm-4">
+                                        <div class="form-group" style="margin-bottom:0 !important;">
+                                            <label class="form-label mt-0 me-1">Date :</label>
+                                            <input type="date" class="form-control" @bind="@SearchModel.Date">
+                                            <ValidationMessage For="()=>SearchModel.Date" />
+                                        </div>
+                                    </div>
+                                    <div class="col-xl-3 col-lg-12 mt-4">
+                                        <button class="btn btn-primary btn-block float-end my-2 mt-2" @onclick="async()=>await GetCourtAvailability()">
+                                            Show
+                                            Availability
+                                        </button>
+                                    </div>
+                                </div>
+                            </EditForm>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="col-xl-12">
+                    <div class="card">
+                        <div class="card-body ">
+                            <div class="table-responsive">
+                                <table class="table border text-nowrap text-md-nowrap mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th style="text-align: center;">Time</th>
+                                            @if (Data.Courts != null)
+                                            {
+                                                @foreach (var court in Data.Courts)
+                                                {
+                                                    <th style="text-align: center;">@court.Value</th>
+                                                }
+                                            }
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (Data.Hours != null)
+                                        {
+                                            @foreach (var hour in Data.Hours)
+                                            {
+                                                <tr style="text-align: center;">
+                                                    <td style=" vertical-align: middle;">@hour.Value</td>
+
+                                                    @foreach (var court in Data.Courts)
+                                                    {
+                                                        var booking = Data.Bookings.Where(s => s.HourID == hour.ID && s.CourtID == court.ID).FirstOrDefault();
+                                                        if (booking == null)
+                                                        {
+                                                            <td>
+                                                                <button @onclick="async ()=>await ShowCourtDetailsModal(court.ID,hour.ID,court.Value,hour.Value)"
+                                                                        class="booking-btn modal-effect">
+                                                                    Book
+                                                                </button>
+                                                            </td>
+                                                        }
+                                                        else
+                                                        {
+                                                            if (booking.Status == PB.Shared.Enum.Court.CourtBookingStatus.Carted)
+                                                            {
+                                                                if (booking.BookingID == CartedDetails.BookingID)
+                                                                {
+                                                                    <td>
+                                                                        <button href="#" class="booking-btn off-canvas"
+                                                                                type="button" data-bs-toggle="offcanvas"
+                                                                                data-bs-target="#cartmodal"
+                                                                                aria-controls="cartmodal"
+                                                                                style="background-color: #ec1c24;">
+                                                                            Carted
+                                                                        </button>
+                                                                    </td>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <td>
+                                                                        <button class="booking-btn off-canvas" type="button" style="background-color: #616149;" @onmouseover="@(async ()=>await ShowBookingDetailsPopup("locked-popup"+booking.BookingCourtID))" @onmouseout="@(async ()=>await HideBookingDetailsPopup("locked-popup"+booking.BookingCourtID))">
+                                                                            Locked
+                                                                        </button>
+                                                                        <div class="popup" id="@("locked-popup"+booking.BookingCourtID)">
+                                                                            Carted By : @booking.Name<br>
+                                                                            Carted On : @booking.BookedOn.Value.ToString("dd/MM/yyyy hh:mm tt")
+                                                                        </div>
+                                                                    </td>
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <td>
+                                                                    <button class="bkd-btn @(booking.IsOnlinePayment?"btn-secondary":(!booking.IsPanelBooking?"btn-warning":""))" style="@(booking.IsPanelBooking && !booking.IsOnlinePayment?"background-color:#6574cd;color:white":"")" @onclick="@(()=>GotoBookingDetails(booking.BookingID))" @onmouseover="@(async ()=>await ShowBookingDetailsPopup("popup"+booking.BookingCourtID+"h"+booking.HourID))" @onmouseout="@(async ()=>await HideBookingDetailsPopup("popup"+booking.BookingCourtID+"h"+booking.HourID))">@booking.Name</button>
+                                                                    <div class="popup" id="@("popup"+booking.BookingCourtID+"h"+booking.HourID)">
+                                                                        Booking ID : @booking.BookingNo<br>
+                                                                        Name : @booking.Name<br>
+                                                                        Booked On : @booking.BookedOn.Value.ToString("dd/MM/yyyy hh:mm tt")<br>
+                                                                        Booked From : @(booking.IsPanelBooking ? "Admin Panel" : "Customer Website")<br>
+                                                                        Payment Mode : @(booking.IsOnlinePayment ? "Online" : "Cash")<br>
+                                                                        @if(!booking.IsOnlinePayment && !booking.IsPanelBooking)
+                                                                        {
+                                                                            @($"Counter Code : {booking.CounterCode}")
+
+                                                                            <br>
+                                                                        }
+                                                                        @if(!booking.IsOnlinePayment)
+                                                                        {
+                                                                            @($"Remarks : {booking.Remarks}")
+                                                                        }
+                                                                    </div>
+                                                                </td>
+                                                            }
+                                                        }
+                                                    }
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</PageLayoutNew>
+
+<a href="#top" id="back-to-top" style="z-index: 999! important;"><i class="fa fa-angle-up"></i></a>
+
+<!-- modal -->
+<div class="modal fade" id="court-details-modal">
+    <div class="modal-dialog modal-dialog-centered modal-sm text-center" role="document">
+        <div class="modal-content modal-content-demo">
+            <div class="modal-header">
+                <h5 class="modal-title" style="font-weight: 600;">@CartItem.Date.ToString("ddd, dd-MMM") | @CartItem.HourName</h5><button aria-label="Close" class="btn-close" data-bs-dismiss="modal">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class=" d-flex flex-column justify-content-between">
+                    <div class="d-flex justify-content-between">
+                        <p>Court</p>
+                        <h5 class="card-title">-</h5>
+                        <h6 class="card-title">@CartItem.CourtName</h6>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <p class=" m-0">Price</p>
+                        <h5 class="card-title m-0">-</h5>
+                        <h6 class="card-title m-0">@CartItem.CurrencyName @CartItem.Rate</h6>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex p-3">
+                <button class="btn btn-primary me-2 flex-fill" @onclick="BookNow">Book</button>
+                <button class="btn btn-danger flex-fill" @onclick="AddToCart">Add to cart</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- cart -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="cartmodal" aria-labelledby="cartmodalLabel">
+    <div class="offcanvas-header" style="border-bottom:1px solid #efefef;">
+        <h5 id="cartmodalLabel">Booking Summary</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close">
+            <i class="fe fe-x fs-18"></i>
+        </button>
+    </div>
+    <div class="offcanvas-body p-rlt">
+        <div class="cart-container">
+            @foreach(var item in CartedDetails.BookingItems)
+            {
+                <div class="p-2" style="border-bottom:1px solid #dfdfdf;">
+                    <h5 style="font-weight:800">@item.Date.ToString("ddd, dd-MMM") | @item.Time</h5>
+                    <div class="d-flex justify-content-between mt-4">
+                        <p style="font-size:14px;">@item.CourtName</p>
+                        <p style="font-size:14px;">@item.Currency @item.Rate</p>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 text-end mb-2">
+                            <a @onclick="@(async ()=>await RemoveCartItem(item.BookingCourtID))" style="color: red; text-decoration: none;">
+                                <i class="fa fa-trash" style="margin-right: 3px;"></i>
+                                Remove
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <div class="bottom-check mb-2" style="box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;">
+            <div class="d-flex justify-content-between mt-5" style="padding:0 18px 0 18px;">
+
+                <p style="font-weight: 600; margin-bottom: 0;">Total:</p>
+                <p style="font-size: 18px;font-weight: 600; margin-bottom: 0;">@CurrencyName @Total</p>
+            </div>
+            <div class="d-flex justify-content-between p-4">
+                <button class="btn btn-outline-danger me-2" @onclick="ClearCart">Clear All</button>
+                <button class="btn btn-primary" @onclick="Proceed">Proceed</button>
+            </div>
+        </div>
+    </div>
+</div>
+@*<ModalCourtCustomer @ref="@customerChildModal" CallbackWithIdnValue="CustomerAdded" />*@
+
+@code {
+    DateTime LastSearchDate;
+    List<IdnValuePair> Halls = new();
+    GetCourtDaySchedulePostModel SearchModel = new();
+    GetCourtDayScheduleResultModel Data = new();
+    private CourtBookingModelNew CartedDetails = new();
+    CartItemModel CartItem = new();
+    string CurrencyName = "";
+    decimal Total = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Halls = await API.GetAsync<List<IdnValuePair>>($"court/get-all-halls");
+        if (Halls != null)
+        {
+            SearchModel.HallID = Halls[0].ID;
+            await GetCourtAvailability();
+        }
+        CartedDetails = await _localStorage.GetItemAsync<CourtBookingModelNew>("CartedItem");
+        CartedDetails ??= new();
+
+        @if (CartedDetails.AddedOn.HasValue)
+        {
+            if (CartedDetails.AddedOn.Value.AddMinutes(PDV.CourtCartMinute) < DateTime.UtcNow)
+            {
+                CartedDetails = new();
+                await _localStorage.RemoveItemAsync("CartedItem");
+            }
+        }
+
+        CalculateTotal();
+    }
+
+
+    private async Task GetCourtAvailability()
+    {
+        LastSearchDate = SearchModel.Date;
+        Data = await API.PostAsync<GetCourtDayScheduleResultModel, GetCourtDaySchedulePostModel>($"court/get-court-day-schedule", SearchModel);
+    }
+
+    private async Task ShowCourtDetailsModal(int courtId, int hourId, string courtName, string hourName)
+    {
+        var priceDetails = await API.PostAsync<CourtPriceDetailsModel, CourtPricePostModel>($"court/get-court-price-details", new CourtPricePostModel() { CourtID=courtId, Date=LastSearchDate, HourID=hourId });
+        if (priceDetails != null)
+        {
+            CartItem = new()
+            {
+                CourtID = courtId,
+                CourtName = courtName,
+                HourID = hourId,
+                HourName = hourName,
+                Date = LastSearchDate,
+                CurrencyName = priceDetails.CurrencyName,
+                Rate = priceDetails.Rate,
+                HallID = SearchModel.HallID
+            };
+            await JS.InvokeVoidAsync("ShowModal", "court-details-modal");
+        }
+    }
+
+    private async Task AddToCart()
+    {
+        @if (CartedDetails.AddedOn.HasValue)
+        {
+            if (CartedDetails.AddedOn.Value.AddMinutes(PDV.CourtCartMinute) < DateTime.UtcNow)
+            {
+                CartedDetails = new();
+            }
+        }
+        CartItem.BookingID = CartedDetails.BookingID;
+        var res = await API.PostAsync<CourtBookingViewModelNew, CartItemModel>("court/add-to-cart", CartItem);
+        if (res != null)
+        {
+            CartItem = new();
+            await JS.InvokeVoidAsync("HideModal", "court-details-modal");
+            CartedDetails.BookingItems.Add(res);
+            CartedDetails.BookingID = res.BookingID;
+            CartedDetails.AddedOn = res.AddedOn;
+            await _localStorage.SetItemAsync("CartedItem", CartedDetails);
+            await GetCourtAvailability();
+            CalculateTotal();
+        }
+    }
+
+    private async Task BookNow()
+    {
+        @if (CartedDetails.AddedOn.HasValue)
+        {
+            if (CartedDetails.AddedOn.Value.AddMinutes(PDV.CourtCartMinute) < DateTime.UtcNow)
+            {
+                CartedDetails = new();
+            }
+        }
+        CartItem.BookingID = CartedDetails.BookingID;
+        var res = await API.PostAsync<CourtBookingViewModelNew, CartItemModel>("court/add-to-cart", CartItem);
+        if (res != null)
+        {
+            CartItem = new();
+            await JS.InvokeVoidAsync("HideModal", "court-details-modal");
+            CartedDetails.BookingItems.Add(res);
+            CartedDetails.BookingID = res.BookingID;
+            CartedDetails.AddedOn = res.AddedOn;
+            await _localStorage.SetItemAsync("CartedItem", CartedDetails);
+
+            Nav.NavigateTo($"confirm-booking/{CartedDetails.BookingID}");
+        }
+    }
+
+    private async Task Proceed()
+    {
+        await JS.InvokeVoidAsync("HideCanvas", "cartmodal");
+        StateHasChanged();
+        Nav.NavigateTo($"confirm-booking/{CartedDetails.BookingID}");
+    }
+
+    private async Task RemoveCartItem(int bookingCourtId)
+    {
+        if (await JS.Confirm("Please confirm", "Are you sure you want to remove?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            var res = await API.GetAsync<BaseSuccessResponse>($"court/remove-from-cart/{bookingCourtId}");
+            if (res!=null)
+            {
+                CartedDetails.BookingItems.Remove(CartedDetails.BookingItems.Where(s => s.BookingCourtID == bookingCourtId).First());
+                await _localStorage.SetItemAsync("CartedItem", CartedDetails);
+                CalculateTotal();
+                await GetCourtAvailability();
+            }
+        }
+    }
+
+    async Task ClearCart()
+    {
+        if (CartedDetails.BookingID != 0)
+        {
+            if (await JS.Confirm("Please confirm", "Are you sure you want to clear all?", SweetAlertMessageType.question, "Yes, Clear", "No, Cancel"))
+            {
+                var res = await API.GetAsync<BaseSuccessResponse>($"court/clear-cart/{CartedDetails.BookingID}");
+                if(res!=null)
+                {
+                    CartedDetails.BookingItems = new();
+                    await _localStorage.SetItemAsync("CartedItem", CartedDetails);
+                    CalculateTotal();
+                    await GetCourtAvailability();
+                }
+            }
+        }
+    }
+
+    void CalculateTotal()
+    {
+        if (CartedDetails.BookingItems!=null && CartedDetails.BookingItems.Count>0)
+        {
+            CurrencyName = CartedDetails.BookingItems[0].Currency;
+            Total = CartedDetails.BookingItems.Sum(s => s.Rate);
+        }
+    }
+
+    async Task ShowBookingDetailsPopup(string popupId)
+    {
+        await JS.InvokeVoidAsync("ShowBookingDetailsPopup", popupId);
+    }
+
+    async Task HideBookingDetailsPopup(string popupId)
+    {
+        await JS.InvokeVoidAsync("HideBookingDetailsPopup", popupId);
+    }
+
+    void GotoBookingDetails(int bookingId)
+    {
+        Nav.NavigateTo($"booking-details/{bookingId}");
+    }
+}

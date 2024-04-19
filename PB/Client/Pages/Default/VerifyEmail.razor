@@ -1,0 +1,75 @@
+﻿@page "/verify-email"
+@using Blazored.LocalStorage
+@inject ILocalStorageService _localStorage
+
+<LoginLayout>
+    <EditForm Model="Model" OnValidSubmit="Save">
+        <DataAnnotationsValidator />
+        @* <ValidationSummary />*@
+        <div class="card-body">
+            <label>@Localizer["Please confirm your email address by entering OTP"]</label>
+
+            <div class="form-group">
+                <div class="input-group mt-3 mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon1"><i class="mdi mdi-account-outline font-16"></i></span>
+                    </div>
+                    <InputText Class="form-control" placeholder="@Localizer["Enter username"]" @bind-Value="Model.UserName" readonly />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="input-group mb-2">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="basic-addon3"><i class="mdi mdi-lock-outline font-16"></i></span>
+                    </div>
+                    <input type="text" @bind-value="Model.OTP" class="form-control" placeholder="@Localizer["Enter the OTP"]">
+                </div>
+                <ValidationMessage For="@(()=>Model.OTP)" />
+            </div>
+
+            <div class="form-group mb-0 row">
+                <div class="col-12 mt-2">
+                    <button class="btn btn-primary btn-block waves-effect waves-light" type="submit">@Localizer["Verify Email address"] <i class="fas fa-sign-in-alt ml-1"></i></button>
+                </div>
+            </div>
+            <p class="font-14 mt-3 " style="text-align: center">@Localizer["Not me?"]<a @onclick="Login" class="text-primary font-weight-bold"> @Localizer["Login now"]</a></p>
+        </div>
+    </EditForm>
+</LoginLayout>
+
+@code{
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+    private string ProfileImage;
+    private readonly VerifyOTPPostModel Model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model.UserName = await _localStorage.GetItemAsync<string>("username");
+
+        if (string.IsNullOrEmpty(Model.UserName))
+            Nav.NavigateTo("/login");
+    }
+
+    private async Task Save()
+    {
+        var result = await API.PostAsync<LoginResponseModel, VerifyOTPPostModel>("auth/verify-otp", Model);
+        if (result != null)
+        {
+            await ((LocalAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(result);
+            var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+            var authState = await localStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            await _localStorage.SetItemAsync("profile-image", user.Claims.FirstOrDefault(c => c.Type == "ProfileURL").Value);
+
+            Nav.NavigateTo("/home");
+        }
+    }
+
+    private async Task Login()
+    {
+        await _localStorage.RemoveItemAsync("username");
+        await _localStorage.RemoveItemAsync("profile-image");
+        Nav.NavigateTo("login");
+    }
+}

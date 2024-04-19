@@ -1,0 +1,133 @@
+﻿@using Blazored.LocalStorage;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Inventory.Item;
+@inject ILocalStorageService _localStorage
+
+<!-- Displaying images in the list-->
+<div class="image-container">
+    <div class="image-item position-relative">
+        <div class="img-item-card">
+            <div class="image-plus-icon">
+                <button class="btn" type="button" onclick="openFileSelector('@(FileSelectorID)',-1,'1')">
+                    +
+                </button>
+            </div>
+        </div>
+        <div class="position-absolute">
+            <span class="text-danger" style="font-size: x-small;">Prefer 1200*1200 pixels</span>
+        </div>
+    </div>
+
+    @foreach (var item in ImageItemsInput.Select((imgItem, i) => new { i, imgItem }))
+    {
+        <div class="image-item">
+            <img src="@item.imgItem.FileName" alt="@item.imgItem.AltText">
+            <div class="overlay-icons">
+                <div>
+                    <button type="button" class="edit-icon" onclick="openFileSelector('@(FileSelectorID)',@item.i,'1')">
+                        Change
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="edit-icon" @onclick="async () => await RemoveImage(item.imgItem)">
+                        Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Hidden file input for handling image choose -->
+<InputFile type="file" id="@FileSelectorID" style="display: none" accept="image/*" OnChange="HandleFileUploadChange" />
+
+@code {
+    [Parameter] public int ItemVariantID { get; set; } = 0;
+    [Parameter] public EventCallback<List<ItemVariantImageModel>> Updated { get; set; }
+    [Parameter] public List<ItemVariantImageModel> ImageItemsInput { get; set; } = new();
+    [Parameter] public string? FileSelectorID { get; set; } = "item-model-image-item-file";
+
+    #region File upload
+
+    private IBrowserFile? selectedFile;
+    private int currentItemIndex = -1;
+    private async Task HandleFileUploadChange(InputFileChangeEventArgs e)
+    {
+        if (e is null)
+            return;
+
+        selectedFile = e.File;
+        currentItemIndex = await _localStorage.GetItemAsync<int>("imageItemIndex");
+        await _localStorage.RemoveItemAsync("imageItemIndex");
+        var uploadResult = await UploadFileToServer();
+        if (uploadResult is not null)
+        {
+            ItemVariantImageModel itemModelImageModel = new()
+                {
+                    MediaID = uploadResult.MediaID,
+                    FileName = uploadResult.FilePath,
+                    AltText = "item variant image"
+                };
+
+            if (ItemVariantID > 0)
+            {
+                itemModelImageModel.ItemVariantID = ItemVariantID;
+                itemModelImageModel.ImageID = await SaveItemModelImage(itemModelImageModel);
+            }
+
+            if (currentItemIndex > -1)
+                ImageItemsInput[currentItemIndex] = itemModelImageModel;
+            else
+                ImageItemsInput.Add(itemModelImageModel);
+
+            currentItemIndex = -1;
+            selectedFile = null;
+            StateHasChanged();
+            await Updated.InvokeAsync(ImageItemsInput);
+        }
+        else
+            await JS.ErrorMessage("Something wrong");
+    }
+    private async Task<int> SaveItemModelImage(ItemVariantImageModel itemModelImageModel)
+    {
+        return await API.PostAsync<int, ItemVariantImageModel>("item/save-item-model-image", itemModelImageModel);
+    }
+    private async Task<FileUploadResultModel?> UploadFileToServer()
+    {
+        if (selectedFile is not null)
+        {
+            string mediaID = "0";
+            if (currentItemIndex > -1)
+                mediaID = Convert.ToString(ImageItemsInput[currentItemIndex].MediaID.Value);
+            using var fileContent = new MultipartFormDataContent();
+            fileContent.Add(new StreamContent(selectedFile.OpenReadStream(50000000)), "file", selectedFile.Name);
+            fileContent.Add(new StringContent("ItemImage"), "FolderName");
+            fileContent.Add(new StringContent(selectedFile.ContentType), "ContentType");
+            fileContent.Add(new StringContent(mediaID), "MediaID");
+            return await API.PostAsync<FileUploadResultModel>("media/new-upload-file", fileContent);
+        }
+        return null;
+    }
+
+    #endregion
+
+    private async Task RemoveImage(ItemVariantImageModel itemModelImage)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the image..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel"))
+        {
+            if (itemModelImage.ImageID > 0 && await API.GetAsync<bool>($"item/remove-item-model-image/{itemModelImage.ImageID}", true))
+            {
+                ImageItemsInput.Remove(itemModelImage);
+                await Updated.InvokeAsync(ImageItemsInput);
+                StateHasChanged();
+            }
+            else
+            {
+                ImageItemsInput.Remove(itemModelImage);
+                await Updated.InvokeAsync(ImageItemsInput);
+                StateHasChanged();
+            }
+        }
+    }
+
+}

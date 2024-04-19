@@ -1,0 +1,37 @@
+﻿@*<AuthorizeView Context="admin" Roles="@Role">*@
+<div class="col-sm-6 col-xl-3" @onclick="Navigate">
+    <div class="card">
+        <div class="card-heading p-4">
+            <div class="mini-stat-icon float-end">
+                <i class="@Icon text-white" style="color:@Color !important;"></i>
+            </div>
+            <div>
+                <h5 class="font-16">@Localizer[Label]</h5>
+            </div>
+            <h3 class="mt-4">@Count</h3>
+
+            <div class="progress mt-4" style="height: 4px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: @Progress%" aria-valuenow="@Progress" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <p class="text-muted mt-2 mb-0"><span class="float-end">@Progress%</span></p>
+
+        </div>
+    </div>
+</div>
+@*</AuthorizeView>*@
+
+@code {
+    [Parameter] public string Label { get; set; }
+    [Parameter] public string Icon { get; set; } = "mdi mdi-circle-slice-1";
+    [Parameter] public string Color { get; set; } = "var(--primary-bg-color);";
+    [Parameter] public int Count { get; set; }
+    [Parameter] public int Progress { get; set; }
+    [Parameter] public string Url { get; set; }
+    //[Parameter] public string Role { get; set; }
+
+    private void Navigate()
+    {
+        if (!string.IsNullOrEmpty(Url))
+            Nav.NavigateTo(Url);
+    }
+}

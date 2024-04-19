@@ -1,0 +1,155 @@
+﻿@page "/counter-codes"
+@using PB.Shared.Models.Common;
+@using PB.Shared.Tables;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+
+                    <ListPageHeader Settings="ItemFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)ApplyFilterTo" OnAddButtonClick="AddNewCounterCode"/>
+                </div>
+
+                <div class="card-body">
+                    <ServerMessage />
+                                        <div class="table-responsive">
+                                            <Grid DivClass="m-0" TableClass="table-striped" Data="ViewModel.Data" Context="cn" StartingSlNo="@((ViewModel.PageIndex-1)*ViewModel.PageSize+1)">
+                                                <GridHeader >
+                                                    <TH>@Localizer["Sl.No"]</TH>
+                                                    <TH>@Localizer["Counter Code"]</TH>
+                                                    <TH>@Localizer["Modification"]</TH>
+                                                    <TH>@Localizer["Delete"]</TH>
+                                                </GridHeader>
+                                                <GridRow>
+                                                  
+                                                    <td>@cn.CounterCode</td>
+                                                        <td>
+                                                            <div class="g-2">
+                                                            <a class="btn text-primary btn-sm" data-bs-toggle="tooltip" @onclick="async()=>await ShowModal(cn)" data-bs-original-title="Edit">
+                                                                    <span class="fe fe-edit fs-14"></span>
+                                                                </a>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div class="g-2">
+                                                                <a class="btn text-danger btn-sm" data-bs-toggle="tooltip"  @onclick="async() => await Delete(cn.CounterCodeID)" data-bs-original-title="Delete">
+                                                                    <span class="fe fe-trash-2 fs-14"></span>
+                                                                </a>
+                                                            </div>
+                                                        </td>
+                                                   
+
+                                                </GridRow>
+                                                </Grid>
+                                                   
+                                            	<Pagination PageSize="ViewModel.PageSize" PageIndex="ViewModel.PageIndex" TotalPages="ViewModel.TotalPages" LoadPageIndex="LoadPageIndex"></Pagination>
+                                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+<div class="modal fade" id="counter-code-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-content-demo">
+            <EditForm Model="NewModel" OnValidSubmit="async()=>await Save()">
+                <DataAnnotationsValidator />
+                <div class="modal-header">
+                    <h6 class="modal-title">
+                        Counter Code
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+
+                    <div class="row">
+                        <InputTextBox Label="Counter Code :"
+                                      DivClass="col-md-12" @bind-Value="NewModel.CounterCode"
+                                      ValidationFor="() => NewModel.CounterCode"
+                                      IsRequired="true" id="counter-code-text-box" />
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(NewModel.CounterCodeID == 0 ? "Save" : "Update")</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" aria-label="Close">Close</button>
+                    
+                </div>
+
+            </EditForm>
+        </div>
+    </div>
+</div>
+@code {
+
+    HeaderSettingsModel ItemFilterSettings = new()
+        {
+            Heading = "Counter Codes",
+            SearchPlaceHolder = "Search with code..",
+            NeedAddButton = true,
+            AddButtonText = "Add Counter Code"
+        };
+
+    private CourtCounterCode NewModel = new();
+    private PagedList<CourtCounterCode> ViewModel = new();
+    private PagedListPostModel SearchModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    async Task LoadData()
+    {
+        ViewModel = await API.PostAsync<PagedList<CourtCounterCode>, PagedListPostModel>("court/get-all-counter-code", SearchModel, true);
+    }
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    async Task AddNewCounterCode()
+    {
+        await ShowModal();
+    }
+
+    async Task ShowModal(CourtCounterCode? model=null)
+    {
+        if (model == null)
+            NewModel = new();
+        else
+            NewModel = model;
+        await JS.InvokeVoidAsync("ShowModal", "counter-code-modal");
+    }
+
+    async Task Delete(int contestId)
+    {
+        if (await API.DeleteAsync("court/delete-counter-code", contestId, true, Localizer["Confirm"], Localizer["Are you sure do you want delete"], Localizer["Confirm"], Localizer["Cancel"]))
+        {
+            await LoadData();
+        }
+    }
+
+    private async Task LoadPageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+
+    async Task Save()
+    {
+        var res=await API.PostAsync<BaseSuccessResponse, CourtCounterCode>("court/save-counter-code", NewModel, true);
+        if(res!=null)
+        {
+            await JS.InvokeVoidAsync("HideModal", "counter-code-modal");
+            await JS.SuccessMessage();
+            await LoadData();
+        }
+    }
+}
+

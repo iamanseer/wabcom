@@ -1,0 +1,201 @@
+﻿@page "/booking-details/{BookingID:int}"
+@attribute [Authorize(Roles = "CourtBooking")]
+@using PB.Shared.Enum.Court;
+@using PB.Shared.Models;
+@using PB.Model.Models;
+@using PB.Shared.Models.Court;
+@using PB.Shared.Tables.CourtClient;
+@using PB.Shared.Enum;
+<PageLayoutNew>
+    <div class="side-app">
+        <div class="main-container container-fluid">
+            <div class="page-header">
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Booking Details</h3>
+
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="d-flex justify-content-between">
+                                    <h4 class="mb-4" style="font-weight: 600;">Badminton Premium</h4>
+                                    @*<a href="#">Statement</a>*@
+                                </div>
+                                <p>@Model.Courts.Count() Courts| @Model.Courts.Sum(s=>s.Slots) slots</p>
+                                <div class="col-md-4 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Booking ID</p> <p class="text-muted mb-0">@Model.BookingNo</p></div>
+                                </div>
+                                <div class="col-md-4 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Booked By</p> <p class="text-muted mb-0">@Model.BookedBy</p></div>
+                                </div>
+                                <div class="col-md-4 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Booked On</p> <p class="text-muted mb-0">@Model.BookedOn.ToString("dd/MM/yyyy hh:mm tt")</p></div>
+                                </div>
+                            </div>
+                            <div class="row mt-5">
+
+                                <div class="col-md-4 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Name</p> <p class="text-muted mb-0">@Model.Name</p></div>
+                                </div>
+                                <div class="col-md-4 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Phone Number</p> <p class="text-muted mb-0">@Model.Phone</p></div>
+                                </div>
+                                <div class="col-md-4 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Email</p> <p class="text-muted mb-0">@Model.EmailAddress</p></div>
+                                </div>
+                            </div>
+                            <div class="row mt-5">
+
+                                <div class="col-md-4 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Remarks</p> <p class="text-muted mb-0">@Model.Remarks</p></div>
+                                </div>
+                            </div>
+                            <div class="row mt-5" style="border-top: 1px solid #efefef;">
+                                <h5 class="mb-4 mt-4" style="font-weight: 600;">Court Details</h5>
+
+                                <div class="table-responsive">
+                                    <table class="table border text-nowrap text-md-nowrap mb-0 mt-2 ">
+                                        <thead>
+                                            <tr>
+                                                <th>SlNo</th>
+                                                <th>Court</th>
+                                                <th>Slot</th>
+                                                <th>Price</th>
+                                                <th>Discount</th>
+                                                <th>Net Price</th>
+                                                <th>Tax Category</th>
+                                                <th>Tax</th>
+                                                <th>Gross Total</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var item in Model.Courts.Select((value, i) => new { i, value }))
+                                            {
+                                                var entry = item.value;
+                                                var index = item.i;
+                                                <tr>
+                                                    <td>@(index + 1)</td>
+                                                    <td>@entry.CourtName</td>
+                                                    <td>@entry.Slot</td>
+                                                    @if(entry.IsCancelled && Model.Status==CourtBookingStatus.Booked)
+                                                    {
+                                                        <td colspan="7" style="color:red">Cancelled By @entry.CancelledBy on @entry.CancelledOn</td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td class="text-end">@entry.Price</td>
+                                                        <td class="text-end">@entry.Discount</td>
+                                                        <td class="text-end">@entry.NetPrice</td>
+                                                        <td>@entry.TaxCategoryName</td>
+                                                        <td class="text-end">@entry.Tax</td>
+                                                        <td class="text-end">@entry.TotalPrice</td>
+                                                        @if (entry.IsCancelled)
+                                                        {
+                                                            <td style="color:red">Cancelled</td>
+                                                        }
+                                                        else
+                                                        {
+                                                             <td><button type="button" class="btn btn-icon  btn-danger pt-0 pb-0" @onclick="@(async ()=>await CancelSlot(entry.BookingCourtID))">Cancel Slot</button></td>
+                                                        }
+                                                    }
+                                                </tr>
+                                            }
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="3">Total</td>
+                                                <td class="text-end">@Model.Courts.Where(s=>!s.IsCancelled).Sum(s=>s.Price)</td>
+                                                <td class="text-end">@Model.Courts.Where(s=>!s.IsCancelled).Sum(s=>s.Discount)</td>
+                                                <td class="text-end">@Model.Courts.Where(s=>!s.IsCancelled).Sum(s=>s.NetPrice)</td>
+                                                <td></td>
+                                                <td class="text-end">@Model.Courts.Where(s=>!s.IsCancelled).Sum(s=>s.Tax)</td>
+                                                <td class="text-end">@Model.Courts.Where(s=>!s.IsCancelled).Sum(s=>s.TotalPrice)</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                            @*<div class="row mt-5" style="border-top: 1px solid #efefef;">
+                                <h5 class="mb-4 mt-4" style="font-weight: 600;">Payment Details</h5>
+                                <div class="col-md-3 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Gross</p> <p class="text-muted mb-0"> @Model.Total</p></div>
+                                </div>
+                                <div class="col-md-3 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Discount</p> <p class="text-muted mb-0">
+                                            @Model.Courts.Where(s=>!s.IsCancelled).Sum(s=>s.Discount)
+                                        </p></div>
+                                </div>
+                                <div class="col-md-3 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Collected</p> <p class="text-muted mb-0">@Model.CashCollected</p></div>
+                                </div>
+                                <div class="col-md-3 col-12">
+                                    <div class="media-body valign-middle"> <p class=" fw-semibold text-dark m-0">Balance Due</p> <p class="text-muted mb-0">@Model.Credit</p></div>
+                                </div>
+                            </div>*@
+                        </div>
+                        <div class="card-footer d-flex justify-content-end">
+                            @if(Model.Status==CourtBookingStatus.Cancelled)
+                            {
+                                <div class="mt-2 pe-2" style="color:red">@("Cancelled By " + Model.CancelledBy + " on " + Model.CancelledOn.Value.ToString("dd/MM/yyyy hh:mm tt"))</div>
+                            }
+                            else
+                            {
+                            <button type="button" class="btn btn-danger me-3" @onclick="CancelBooking">Cancel Booking</button>
+                            }
+                            <button type="button" class="btn btn-primary" @onclick="@(()=>Nav.NavigateTo("court-booking"))">Go to Booking</button>
+                        </div>
+
+                    </div>
+                </div>
+
+
+            </div>
+
+        </div>
+    </div>
+</PageLayoutNew>
+
+@code {
+    [Parameter] public int BookingID { get; set; }
+    BookingReceiptModel Model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Model = await API.GetAsync<BookingReceiptModel>($"court/get-booking-receipt/{BookingID}");
+        if (Model == null)
+        {
+            await JS.ErrorMessage("Booking not found");
+            Nav.NavigateTo("court-booking");
+        }
+    }
+
+    async Task CancelBooking()
+    {
+        if(await JS.Confirm(message:"Are you sure you want to cancel the booking?"))
+        {
+            var res = await API.GetAsync<BookingReceiptModel>($"court/cancel-booking/{BookingID}");
+            if (res != null)
+            {
+                await JS.ErrorMessage("Booking has been cancelled successfully");
+                Nav.NavigateTo("court-booking");
+            }
+        }
+    }
+
+    async Task CancelSlot(int bookingCourtID)
+    {
+        if (await JS.Confirm(message: "Are you sure you want to cancel this slot?"))
+        {
+            var res = await API.GetAsync<BookingReceiptModel>($"court/cancel-slot/{bookingCourtID}");
+            if (res != null)
+            {
+                await JS.ErrorMessage("Booking has been cancelled successfully");
+                Model = await API.GetAsync<BookingReceiptModel>($"court/get-booking-receipt/{BookingID}");
+            }
+        }
+    }
+}

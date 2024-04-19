@@ -1,0 +1,594 @@
+﻿@using PB;
+@using Blazored.LocalStorage;
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using System.Linq.Expressions;
+@using PB.Shared.Models.Common;
+@inject ILocalStorageService _localStorage
+
+<div class="@DivClass">
+    <div class="@FormGroupClass">
+
+        @if (!string.IsNullOrEmpty(Label))
+        {
+            <label class="form-label mt-0 me-1" style="text-align:left;">
+                @Label
+                @if (IsRequired)
+                {
+                    <span class="ms-1" style="color:red">*</span>
+                }
+            </label>
+        }
+
+        <!--Selected Item-->
+        <div class="@FormControlClass" tabindex="0" data-bs-toggle="dropdown" id="@DropdownID" @onclick="async () => await HandleOnClick()">
+
+            <div class="pb-selected">
+                @if (SelectedItem == null || SelectedItem.ID == null)
+                {
+                    @(PlaceHolder != null ? PlaceHolder : "Choose")
+                }
+                else
+                {
+                    @(SelectedItem.Value)
+                }
+            </div>
+
+            @if (SelectedItem == null || (SelectedItem != null && Convert.ToInt32(SelectedItem.ID) != 0))
+            {
+                <a class="remove-selected fa fa-close ms-auto text-muted" aria-hidden="true" @onclick="async () => await HandleRemoveItemClicked()"> </a>
+            }
+
+            <div class="dropdown-toggle"></div>
+
+        </div>
+        <ul class="dropdown-menu pb-select-container" role="menu" style="z-index:999; min-width:350px !important;" id="@("items-list-"+DropdownID)">
+
+            <!--Search option-->
+            @if (ReadDataOnSearch != false)
+            {
+                <li class="dropdown-plus-title">
+                    <input type="text" name="name" class="drop-down-search-input" value="@SearchString" @onkeyup="async (KeyboardEventArgs k) => await SearchItem(k)" placeholder="Search here.." id="@searchBoxID" />
+                </li>
+            }
+
+            <!--Item List-->
+            <ul class="list-data" style="min-height:100px;" id="@(DropdownID +"-ul")">
+                @if (Temp != null && Temp.Count > 0)
+                {
+                    foreach (var item in Temp)
+                    {
+                        if (SelectedItem != null && SelectedItem.ID == item.ID)
+                        {
+                            <li tabindex="0" class="active" id="@("list-item-"+item.ID)"><a>@item.Value</a></li>
+                        }
+                        else
+                        {
+                            <li tabindex="0" id="@("list-item-"+item.ID)"><a @onclick="async () => await HandleItemSelected(item)">@item.Value</a></li>
+                        }
+                    }
+                }
+            </ul>
+
+            <!--Add Button-->
+            @if (string.IsNullOrEmpty(RoleName))
+            {
+                @if (IsAddOptionNeed)
+                {
+                    <li class="divider my-1"></li>
+                    <li class="dropdown-footer p-0">
+                        <a @onclick="async () => await HandleNewButtonClicked()">
+                            <i class="fa fa-cogs me-1 "></i>
+                            @if (!string.IsNullOrEmpty(NewButtonText))
+                            {
+                                @NewButtonText
+                            }
+                            else
+                            {
+                                @("New Item")
+                            }
+
+                        </a>
+                    </li>
+                }
+            }
+            else
+            {
+                <AuthorizeView Roles="@RoleName">
+                    @if (IsAddOptionNeed)
+                    {
+                        <li class="divider my-1"></li>
+                        <li class="dropdown-footer p-0">
+                            <a @onclick="async () => await HandleNewButtonClicked()">
+                                <i class="fa fa-cogs me-1 "></i>
+                                @if (!string.IsNullOrEmpty(NewButtonText))
+                                {
+                                    @NewButtonText
+                                }
+                                else
+                                {
+                                    @("New Item")
+                                }
+
+                            </a>
+                        </li>
+                    }
+                </AuthorizeView>
+            }
+
+        </ul>
+
+        @if (ChildContent != null)
+        {
+                @ChildContent
+        }
+
+    </div>
+</div>
+
+@code {
+
+    [Parameter] public EventCallback<DropdownItemSelectedCallbackModel> ItemSelected { get; set; }
+    [Parameter] public EventCallback<int> NewButtonClicked { get; set; } 
+    [Parameter] public string? DivClass { get; set; } = "col-md-4";
+    [Parameter] public string? FormGroupClass { get; set; } = "form-group";
+    [Parameter] public string? FormControlClass { get; set; } = "pb-select form-control";
+    [Parameter] public string? DropdownID { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public bool IsAddOptionNeed { get; set; } = false;
+    [Parameter] public bool IsRequired { get; set; } = false;
+    [Parameter] public Expression<Func<int?>>? ValidationFor { get; set; } = null;
+    [Parameter] public int Mode { get; set; }
+    [Parameter] public int ModeGroup { get; set; }
+    [Parameter] public bool? ReadDataOnSearch { get; set; } = null;
+    [Parameter] public DropdownSelectedItemModel? SelectedItem { get; set; } = null;
+    [Parameter] public CommonSearchModel CommonSearch { get; set; } = new();
+    [Parameter] public LedgerSearchModel LedgerSearch { get; set; } = new();
+    [Parameter] public string? NewButtonText { get; set; } = null;
+    [Parameter] public string? PlaceHolder { get; set; } = null;
+    [Parameter] public string? RoleName { get; set; } = null;
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private List<IdnValuePair>? Data = new();
+    private List<IdnValuePair>? Temp = new();
+
+    private string? searchBoxID = null;
+    private string? SearchString;
+
+    private bool CanShowDropdownSelect = false;
+
+    #region OnInitializedAsync
+
+    protected override async Task OnInitializedAsync()
+    {
+        searchBoxID = "dropdown-search-box-" + DropdownID;
+
+        if (ModeGroup == (int)DropdownModes.CommonSearch)
+        {
+            CommonSearch.ReadDataOnSearch = Convert.ToBoolean(ReadDataOnSearch);
+            CommonSearch.DropdownMode = Mode;
+            await HandleDropdownSearch();
+        }
+
+        if (ModeGroup == (int)DropdownModes.CommonSearchWithID || ModeGroup == (int)DropdownModes.CommonSearchForSignup)
+        {
+            CommonSearch.ReadDataOnSearch = Convert.ToBoolean(ReadDataOnSearch);
+            CommonSearch.DropdownMode = Mode;
+        }
+
+        if (ModeGroup == (int)DropdownModes.AccountsSearch)
+        {
+            LedgerSearch.ReadDataOnSearch = Convert.ToBoolean(ReadDataOnSearch);
+            LedgerSearch.DropdownMode = Mode;
+            await HandleDropdownSearch();
+        }
+    }
+
+    #endregion
+
+    #region Other functions
+
+    private async Task HandleOnClick()
+    {
+        await SetFocus();
+        if (ReadDataOnSearch == true)
+            await JS.InvokeVoidAsync("focusElement", searchBoxID);
+    }
+
+    public void AddToData(IdnValuePair data)
+    {
+        if (Data != null && Temp != null && Data.Count > 0 && Temp.Count > 0)
+        {
+            Data.Add(data);
+            Temp.Add(data);
+        }
+    }
+
+    public async Task RefreshList(int? id = null)
+    {
+        if (id != null && ModeGroup == (int)DropdownModes.CommonSearchWithID)
+        {
+            CommonSearch.ID = id.Value;
+        }
+
+        if (id != null && ModeGroup == (int)DropdownModes.CommonSearchForSignup)
+        {
+            CommonSearch.ID = id.Value;
+        }
+
+        await HandleDropdownSearch();
+        StateHasChanged();
+    }
+
+    private async Task SetFocus()
+    {
+        if (DropdownID != null)
+            await JS.InvokeVoidAsync("setDropdownFocus", DropdownID, "drop-down-focused");
+    }
+
+    private async Task RemoveFocus()
+    {
+        if (DropdownID != null)
+            await JS.InvokeVoidAsync("removeDropdownFocus", DropdownID, "drop-down-focused");
+    }
+
+    #endregion
+
+    #region Search Item
+
+    private async Task SearchItem(KeyboardEventArgs k)
+    {
+        SearchString = await JS.InvokeAsync<string>("getElementValue", searchBoxID);
+
+        if ((ModeGroup == (int)DropdownModes.CommonSearchWithID || ModeGroup == (int)DropdownModes.CommonSearchForSignup) && CommonSearch.ID == 0)
+        {
+            return;
+        }
+
+        if (ReadDataOnSearch == true && (ModeGroup == (int)DropdownModes.CommonSearch || ModeGroup == (int)DropdownModes.CommonSearchWithID || ModeGroup == (int)DropdownModes.CommonSearchForSignup))
+        {
+            switch (SearchString.Length)
+            {
+                case 0:
+
+                    CommonSearch.SearchString = "";
+                    await HandleDropdownSearch();
+
+                    break;
+
+                case 1:
+
+                    CommonSearch.SearchString = SearchString;
+                    await HandleDropdownSearch();
+
+                    break;
+
+                case > 1:
+
+                    if (Data != null && Data.Count > 0)
+                    {
+                        Temp = Data.Where(i => !string.IsNullOrEmpty(i.Value) && i.Value.ToLower().Contains(SearchString.ToLower())).ToList();
+                        StateHasChanged();
+                    }
+
+                    break;
+
+            }
+        }
+
+        if (ReadDataOnSearch == true && ModeGroup == (int)DropdownModes.AccountsSearch)
+        {
+            LedgerSearch.ReadDataOnSearch = true;
+
+            switch (SearchString.Length)
+            {
+                case 0:
+
+                    LedgerSearch.SearchString = "";
+                    await HandleDropdownSearch();
+
+                    break;
+
+                case 1:
+
+                    LedgerSearch.SearchString = SearchString;
+                    await HandleDropdownSearch();
+
+                    break;
+
+                case > 1:
+
+                    if (Data != null && Data.Count > 0)
+                    {
+                        Temp = Data.Where(i => !string.IsNullOrEmpty(i.Value) && i.Value.ToLower().Contains(SearchString.ToLower())).ToList();
+                        StateHasChanged();
+                    }
+
+                    break;
+
+            }
+        }
+    }
+
+    #endregion
+
+    #region Search Data
+
+    private async Task HandleDropdownSearch()
+    {
+        switch (Mode)
+        {
+
+            case (int)DropdownModes.Zone:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-zones", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Country:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-countries", CommonSearch);
+                break;
+
+            case (int)DropdownModes.State:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-states", CommonSearch);
+                break;
+
+            case (int)DropdownModes.City:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-cities", CommonSearch);
+                break;
+
+            case (int)DropdownModes.StateForSignup:
+                CommonSearch.DropdownMode = Mode;
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-states", CommonSearch);
+                break;
+
+            case (int)DropdownModes.CityForSignup:
+                CommonSearch.DropdownMode = Mode;
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-cities", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Customer:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-customers", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Supplier:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-supplier", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Item:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-items", CommonSearch);
+                break;
+
+            case (int)DropdownModes.GoodsItem:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-goods-items", CommonSearch);
+                break;
+
+            case (int)DropdownModes.ItemPackingType:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-item-units", CommonSearch);
+                break;
+
+            case (int)DropdownModes.ItemSize:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-item-sizes", CommonSearch);
+                break;
+
+            case (int)DropdownModes.ItemColor:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-item-colors", CommonSearch);
+                break;
+
+            case (int)DropdownModes.ItemBrand:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-item-brands", CommonSearch);
+                break;
+
+            case (int)DropdownModes.ItemGroup:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-item-groups", CommonSearch);
+                break;
+
+            case (int)DropdownModes.ItemCategory:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-item-categories", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Feature:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-membership-features", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Plan:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-membership-plans", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Capacity:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-membership-capacities", CommonSearch);
+                break;
+
+            case (int)DropdownModes.LeadThrough:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-lead-throughs", CommonSearch);
+                break;
+
+            case (int)DropdownModes.FollowupStatus:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-followup-status", CommonSearch);
+                break;
+
+            case (int)DropdownModes.TaxPreference:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>("common/get-list-of-tax-preferences", CommonSearch);
+                break;
+
+            case (int)DropdownModes.TaxCategory:
+            case (int)DropdownModes.IntraTaxCategory:
+            case (int)DropdownModes.InterTaxCategory:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-tax-categories", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Currency:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-currencies", CommonSearch);
+                break;
+            case (int)DropdownModes.Package:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-membership-package", CommonSearch);
+                break;
+
+            case (int)DropdownModes.GameMaster:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-game-master", CommonSearch);
+                break;
+
+            case (int)DropdownModes.HourMaster:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-hour-master", CommonSearch);
+                break;
+
+            case (int)DropdownModes.CourtCustomer:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-court-customer", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Clients:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-clients", CommonSearch);
+                break;
+
+            case (int)DropdownModes.PlaceOfSupply:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-place-of-supplies", CommonSearch);
+                break;
+
+            case (int)DropdownModes.AccountGroups:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-account-groups", CommonSearch);
+                break;
+
+            case (int)DropdownModes.CourtPackage:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-court-package", CommonSearch);
+                break;
+
+            case (int)DropdownModes.AISCMembers:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-aisc-members", CommonSearch);
+                break;
+
+            case (int)DropdownModes.AISCTeam:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-aisc-teams", CommonSearch);
+                break;
+
+            case (int)DropdownModes.VoucherType:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-voucher-types", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Ledger:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, LedgerSearchModel>($"common/get-list-of-ledgers", LedgerSearch);
+                //Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-ledger", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Branch:
+                Data = Temp = await API.GetAsync<List<IdnValuePair>?>($"common/get-branch-list", true);
+                break;
+
+            case (int)DropdownModes.WhatsappAccount:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-whatsapp-accounts", CommonSearch);
+                break;
+
+            case (int)DropdownModes.Language:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-language", CommonSearch);
+                break;
+
+            case (int)DropdownModes.InvoiceType:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-invoice-types", CommonSearch);
+                break;
+
+            case (int)DropdownModes.PriceGroup:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-price-groups", CommonSearch);
+                break;
+
+            case (int)DropdownModes.GeneralLedgerReport:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-general-ledgers", CommonSearch);
+                break;
+            case (int)DropdownModes.TaxCategoryLedger:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-tax-category-ledgers", CommonSearch);
+                break;
+            case (int)DropdownModes.PaymentTerms:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-payment-terms", CommonSearch);
+                break;
+
+            case (int)DropdownModes.None:
+                break;
+
+        }
+    }
+
+    #endregion
+
+    #region Item Selected
+
+    private async Task HandleItemSelected(IdnValuePair item)
+    {
+        DropdownSelectedItemModel selectedItem = new()
+            {
+                ID = item.ID,
+                Value = item.Value
+            };
+        SelectedItem = selectedItem;
+        DropdownItemSelectedCallbackModel SelectedItemReturnModel = new()
+            {
+                ID = item.ID,
+                Value = item.Value,
+                DropdownMode = Mode
+            };
+
+        CommonSearch.SearchString = "";
+        SearchString = "";
+        await HandleDropdownSearch();
+        await RemoveFocus();
+        StateHasChanged();
+        await ItemSelected.InvokeAsync(SelectedItemReturnModel);
+    }
+
+    #endregion
+
+    #region Add New Item
+
+    private async Task HandleNewButtonClicked()
+    {
+        SelectedItem = null;
+        CommonSearch.SearchString = "";
+        SearchString = "";
+        await RemoveFocus();
+        await JS.InvokeVoidAsync("setElementValue", searchBoxID, "");
+        await NewButtonClicked.InvokeAsync(Mode);
+    }
+
+    #endregion
+
+    #region Remove Selected Item
+
+    private async Task HandleRemoveItemClicked()
+    {
+        SelectedItem = null;
+        CommonSearch.SearchString = "";
+        SearchString = "";
+        await RemoveFocus();
+        DropdownItemSelectedCallbackModel RemovedItemReturnModel = new()
+            {
+                ID = null,
+                Value = null,
+                DropdownMode = Mode
+            };
+
+        await ItemSelected.InvokeAsync(RemovedItemReturnModel);
+    }
+
+    #endregion
+
+    #region Ledger SearchModel
+
+    public void SetLedgerSearchModel(LedgerSearchModel ledgerSearchModel)
+    {
+        if (ModeGroup == (int)DropdownModes.AccountsSearch)
+        {
+            LedgerSearch = ledgerSearchModel;
+        }
+    }
+
+    #endregion
+
+    #region Set a value
+
+    public void SetDropdownSelectedValue(IdnValuePair selectedValue)
+    {
+        SelectedItem = SelectedItem ?? new();
+        SelectedItem.ID = selectedValue.ID;
+        SelectedItem.Value = selectedValue.Value;
+    }
+
+    #endregion
+
+}

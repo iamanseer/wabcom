@@ -1,0 +1,139 @@
+﻿@page "/clients"
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="ClientFilterSettings" OnFilterButtonClick="ApplyFilterTo" />
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    Name
+                                </th>
+                                <th>
+                                    Mobile
+                                </th>
+                                <th>
+                                    Email
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in ClientViewModel.Data.Select((value, i) => new { i, value }))
+                            {
+                                var entry = item.value;
+                                var index = item.i;
+                                <tr style="cursor:pointer" @onclick="@(()=>Nav.NavigateTo($"client-view/{entry.ClientID}"))">
+                                    <td>
+                                        @if (ClientViewModel.PageIndex == 1)
+                                        {
+                                            @(index + 1)
+                                        }
+                                        else
+                                        {
+                                            @((ClientViewModel.PageIndex * ClientViewModel.PageSize) + (index + 1) - 10)
+                                        }
+                                    </td>
+
+                                    <td>
+                                        @entry.Name
+                                    </td>
+
+                                    <td>
+                                        @entry.Phone
+                                    </td>
+
+                                    <td>
+                                        @entry.EmailAddress
+                                    </td>
+                                    <td>
+                                        @if(entry.IsBlock)
+                                        {
+                                            <span class="badge bg-danger">Blocked</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="ClientViewModel.PageSize" TotalCount="ClientViewModel.TotalCount" TotalPages="ClientViewModel.TotalPages" PageIndex="ClientViewModel.PageIndex" LoadPageIndex="PageIndex" />
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+
+
+@code {
+    private PagedList<ClientListViewModel> ClientViewModel = new();
+    private PagedListPostModelWithFilter SearchModel = new();
+    
+
+    #region Main
+    protected override async Task OnInitializedAsync()
+    {
+        ClientFilterSettings.SortMenuItems = SortMenuItems;
+        ClientFilterSettings.Heading = "Clients";
+        ClientFilterSettings.SinglePageURL = "client-register";
+        ClientFilterSettings.AddButtonText = "Add Client";
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        ClientViewModel = await API.PostAsync<PagedList<ClientListViewModel>, PagedListPostModelWithFilter>("support/get-admin-client-paged-list", SearchModel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    #endregion
+
+
+    #region Sort, Filter
+
+    HeaderSettingsModel ClientFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by client name..",
+            NeedSortOption = true,
+            NeedFilterOption = false,
+        };
+
+
+    private async Task ApplyFilterTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+    private List<FilterSortInputModel> SortMenuItems = new()
+    {
+    new()
+    {
+    DisplayName = "Client Name",
+    FieldName = "Name"
+    },
+    new()
+    {
+    DisplayName = "Email",
+    FieldName = "EmailAddress"
+    },
+    };
+    #endregion
+
+
+    
+}

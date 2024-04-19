@@ -1,0 +1,587 @@
+﻿@using PB.Model.Models;
+@using System.Text;
+
+@code {
+
+    public async Task PrintQuotationPDF(int quotationID, string loadingDivID = "")
+    {
+
+        var htmlContent = await API.GetAsync<StringModel>($"crm/get-quotation-pdf/{quotationID}", true);
+
+        if (htmlContent is not null && !string.IsNullOrEmpty(htmlContent.Value))
+        {
+            await JS.InvokeVoidAsync("PrintQuotationPDF", htmlContent.Value);
+        }
+
+
+    //    decimal totalAmount = Model.Items.Sum(i => i.TotalAmount);
+
+    //    var BillingAddress = new StringBuilder();
+
+    //    BillingAddress.Append($@"
+    //        {Model.CustomerName},<br>
+    //        {Model.Phone},<br>
+    //    ");
+
+    //    if (!string.IsNullOrEmpty(Model.EmailAddress))
+    //    {
+    //        BillingAddress.Append($@"
+    //            {Model.EmailAddress},<br>
+    //        ");
+    //    }
+
+    //    BillingAddress.Append($@"
+    //        {Model.BillingAddressLine1},<br>
+    //    ");
+
+    //    if (!string.IsNullOrEmpty(Model.BillingAddressLine2 ))
+    //    {
+    //        BillingAddress.Append($@"
+    //            {Model.BillingAddressLine2},<br>
+    //        ");
+    //    }
+
+    //    if (!string.IsNullOrEmpty(Model.BillingAddressLine3))
+    //    {
+    //        BillingAddress.Append($@"
+    //            {Model.BillingAddressLine3},<br>
+    //        ");
+    //    }
+    //    if (!string.IsNullOrEmpty(Model.BillingState))
+    //    {
+    //        BillingAddress.Append($@"
+    //            {Model.BillingState},<br>
+    //        ");
+    //    }
+    //    if (!string.IsNullOrEmpty(Model.BillingPinCode))
+    //    {
+    //        BillingAddress.Append($@"
+    //            {Model.BillingPinCode},<br>
+    //        ");
+    //    }
+    //    if (!string.IsNullOrEmpty(Model.BillingCountry))
+    //    {
+    //        BillingAddress.Append($@"
+    //            {Model.BillingCountry}<br>
+    //        ");
+    //    }
+    //    if (!string.IsNullOrEmpty(Model.TaxNumber))
+    //    {
+    //        BillingAddress.Append($@"<br>Tax No :  {Model.TaxNumber}<br>
+    //        ");
+    //    }
+
+    //    var ShippingAddress = new StringBuilder();
+
+    //    ShippingAddress.Append($@"
+    //        {Model.CustomerName},<br>
+    //        {Model.Phone},<br>
+    //    ");
+
+    //    if (!string.IsNullOrEmpty(Model.EmailAddress))
+    //    {
+    //        ShippingAddress.Append($@"
+    //            {Model.EmailAddress},<br>
+    //        ");
+    //    }
+
+
+    //    ShippingAddress.Append($@"
+    //        {Model.ShippingAddressLine1},<br>
+    //    ");
+
+    //    if (!string.IsNullOrEmpty(Model.ShippingAddressLine2 ))
+    //    {
+    //        ShippingAddress.Append($@"
+    //            {Model.ShippingAddressLine2},<br>
+    //        ");
+    //    }
+
+    //    if (!string.IsNullOrEmpty(Model.ShippingAddressLine3))
+    //    {
+    //        ShippingAddress.Append($@"
+    //            {Model.ShippingAddressLine3},<br>
+    //        ");
+    //    }
+    //    if (!string.IsNullOrEmpty(Model.ShippingState))
+    //    {
+    //        ShippingAddress.Append($@"
+    //            {Model.ShippingState},<br>
+    //        ");
+    //    }
+    //    if (!string.IsNullOrEmpty(Model.ShippingPinCode))
+    //    {
+    //        ShippingAddress.Append($@"
+    //            {Model.ShippingPinCode},<br>
+    //        ");
+    //    }
+    //    if (!string.IsNullOrEmpty(Model.ShippingCountry))
+    //    {
+    //        ShippingAddress.Append($@"
+    //            {Model.ShippingCountry}<br>
+    //        ");
+    //    }
+
+
+    //    var ClientAddress = new StringBuilder();
+
+
+    //    ClientAddress.Append($@"
+    //        {Model.ClientAddressLine1},<br>
+    //    ");
+
+    //    if (!string.IsNullOrEmpty(Model.ClientAddressLine2 ))
+    //    {
+    //        ClientAddress.Append($@"
+    //        {Model.ClientAddressLine2},<br>
+    //                ");
+    //    }
+
+    //    if (!string.IsNullOrEmpty(Model.ClientAddressLine3))
+    //    {
+    //        ClientAddress.Append($@"
+    //{Model.ClientAddressLine3},<br>
+    //                 ");
+    //    }
+    //    if (!string.IsNullOrEmpty(Model.ClientState))
+    //    {
+    //        ClientAddress.Append($@"
+    //{Model.ClientState},<br>
+    //                ");
+    //    }
+    //    if (!string.IsNullOrEmpty(Model.ClientPinCode))
+    //    {
+    //        ClientAddress.Append($@"
+    //{Model.ClientPinCode},<br>
+    //            ");
+    //    }
+    //    if (!string.IsNullOrEmpty(Model.ClientCountry))
+    //    {
+    //        ClientAddress.Append($@"
+    //{Model.ClientCountry}<br>
+    //                ");
+    //    }
+
+    //    var quotationHtmlContent = new StringBuilder();
+
+    //    quotationHtmlContent.Append($@"
+    //                            <!DOCTYPE html>
+    //                            <html lang='en'>
+    //                            <head>
+    //                                <meta charset='UTF-8'>
+    //                                <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    //                                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    //                                <title>Quotation</title>
+    //                                <style>
+    //                                     .invoice {{
+    //                                        width: 100%;
+    //                                        max-width: 800px;
+    //                                        margin: 10px auto;
+    //                                        font-family: Arial, sans-serif;
+    //                                        font-size: 12px
+    //                                      }}
+    //                                        @media print {{
+    //                                            @page {{
+    //                                            size: A4;
+    //                                            margin: 0
+    //                                        }}
+    //                                        body {{
+    //                                            margin: 1cm
+    //                                        }}
+    //                                        }}
+    //                                      .header table{{ 
+    //                                                border-left: 1px solid #000000;
+			 //                                       border-top: 1px solid #000000;
+			 //                                       border-right: 1px solid #000000;
+			 //                                       border-collapse: collapse
+    //                                      }}
+    //                                    .main-table table thead td{{ 
+    //                                                padding: 10px
+    //                                    }}
+		  //                              .main-table table ,.main-table th ,.main-table td{{
+    //                                        border-left: 1px solid #000000;
+			 //                               border-bottom: 1px solid #000000;
+			 //                               border-right: 1px solid #000000;
+			 //                               border-collapse: collapse
+		  //                              }}
+		  //                              .main-table td{{ 
+    //                                        text-align: center
+		  //                              }}
+    //                                    .main-table th{{ 
+    //                                        background-color: #F2F3F4
+    //                                    }}
+		  //                              .table-1 th{{ 
+    //                                        text-align: left
+		  //                              }}
+		  //                              .table-1 table{{ 
+    //                                        border-left: 1px solid #000000;
+			 //                               border-top: 1px solid #000000;
+			 //                               border-right: 1px solid #000000;
+			 //                               border-collapse: collapse;
+			 //                               float: left
+		  //                              }}
+		  //                              .table-1 td{{ 
+    //                                        padding-left: 10px
+		  //                              }}
+
+    //                                    .table-1-1 table{{ 
+    //                                        border-top: 1px solid #000000;
+			 //                               border-right: 1px solid #000000;
+			 //                               border-collapse: collapse
+		  //                            }}
+    //                                    .table-1-1 th{{ 
+    //                                        text-align: left
+		  //                             }}
+		  //                              .table-1-1 td{{ 
+    //                                        padding-left: 10px
+		  //                             }}
+
+    //                                    .table-2 table {{ 
+    //                                            float: left
+
+    //                                   }}
+
+		  //                              .table-2 table , .table-2 th , .table-2 td{{
+    //                                            border: 1px solid #000000;
+			 //                                   border-collapse: collapse
+		  //                              }}
+		  //                               .table-2 th{{ 
+    //                                            text - align: left;
+	   //                                         padding-left: 10px
+		  //                              }}
+		  //                                  .table-2 td , .table-2-1 td{{
+    //                                            padding-left: 10px
+		  //                              }}
+    //                                        .table-2-1 table  {{
+    //                                              float: left;
+    //                                              border-bottom: 1px solid #000000;
+    //                                              border-right : 1px solid #000000;
+    //                                              border-collapse: collapse
+    //                                    }}
+    //                                        .table-2-1 th {{ 
+    //                                            text-align: left;
+    //                                            border-top: 1px solid #000000;
+    //                                            border-bottom: 1px solid #000000;
+	   //                                         padding-left: 10px
+    //                                    }}
+		  //                                  .table-3 table{{ 
+    //                                            float: left;
+			 //                                   border-left : 1px solid #000000;
+			 //                                   border-collapse: collapse
+		  //                              }}
+    //                                        .table-3 td {{ 
+    //                                            padding: 10px
+    //                                    }}
+		  //                                  .table-4 table , .table-5 table{{
+    //                                            border - left: 1px solid #000000;
+			 //                                   border-bottom: 1px solid #000000;
+			 //                                   border-right: 1px solid #000000;
+			 //                                   border-collapse: collapse
+		  //                              }}
+		  //                                  .table-4 th , .table-4 td {{ 
+    //                                            text-align: right;
+			 //                                   padding-right: 10px
+		  //                              }}
+		  //                                  .table-5 table{{ 
+    //                                            float: right
+		  //                              }}
+		  //                                  .table-5 td{{ 
+    //                                            text-align: center;
+    //                                            padding-top: 70px
+		  //                              }}
+		  //                                  .table-bottom{{ 
+    //                                            float: left;
+			 //                                   border-left: 1px solid #000000;
+			 //                                   border-bottom: 1px solid #000000;
+			 //                                   border-right: 1px solid #000000;
+			 //                                   border-collapse: collapse
+		  //                              }}
+    //                                </style>
+    //                            </head>
+    //            ");
+
+    //    quotationHtmlContent.Append($@"
+    //                                <body>
+    //                                    <div class='invoice'>
+    //                                        <div class='header'>
+    //                                            <table style='width: 100%;'>
+    //                                                <tr>
+    //                                                    <td style='width: 23%; padding-left: 10px;'><img style='width: 160px; height: 160px;' src='{Model.DomainUrl}/{Model.ClientImage}' alt=''> </td>
+    //                                                    <td style='text-align: start; padding-left: 10px; width: 53%;'><h3>{Model.ClientName}</h3><br> {ClientAddress} <br> {Model.GSTNo}</td>
+    //                                                    <td style='text-align: end; padding-top: 130px; padding-right: 10px;  width: 24%;'><h1>QUOTATION</h1></td>
+
+    //                                                </tr>
+    //                                            </table>
+
+    //                                        </div>
+    //                                        <div class='table-1'>
+    //                                            <table style='width: 50%; height: 100px;'>
+    //                                                <tr>
+    //                                                    <td>Quotation No</td>
+    //                                                    <th>: #QT-{Model.QuotationNo}</th>
+    //                                                </tr>
+    //                                                <tr>
+    //                                                    <td>Quotation Date </td>
+    //                                                    <th>: {(Model.Date.HasValue ? Model.Date.Value.ToString(dateFormat) : string.Empty)}</th>
+    //                                                </tr>
+    //                                                <tr>
+    //                                                    <td>Terms </td>
+    //                                                    <th>: --</th>
+    //                                                </tr>
+    //                                                <tr>
+    //                                                    <td>Expiry Date</td>
+    //                                                    <th>: {(Model.ExpiryDate.HasValue ? Model.ExpiryDate.Value.ToString(dateFormat) : string.Empty)}</th>
+    //                                                </tr>
+
+    //                                              </table>
+    //                                         </div>
+    //                                         <div class='table-1-1'>
+    //                                            <table style='width:50%; height: 100px; '>
+    //                                                <tr>
+    //                                                    <td></td>
+    //                                                    <th></th>
+    //                                                </tr>
+
+    //                                              </table>
+    //                                         </div>
+
+    //                                         <div class='table-2' >
+    //                                            <table style='width:50%; '>
+    //                                               <tr>
+
+    //                                                    <th style='height: 25px; background-color:#F2F3F4;text-align:left;'>Bill To</th>
+
+
+    //                                                </tr>
+    //                                                <tr style='height:130px;'>
+    //                                                    <td style='height: 35px;'> <b>{BillingAddress}</td>
+
+    //                                                </tr>
+
+
+    //                                            </table>
+    //                                         </div>");
+
+    //    if (Model.ShippingAddressID != null)
+    //    {
+    //        quotationHtmlContent.Append($@"<div class='table-2-1' >
+    //                                    <table style='width: 50%; '>
+    //                                        <tr>
+
+
+    //                                            <th style='height: 25px; background-color:#F2F3F4;'>Ship To</th>
+
+    //                                        </tr>
+    //                                        <tr style='height:130px;'>
+
+    //                                            <td style='height: 35px;'>{ShippingAddress}</td>
+    //                                        </tr>
+
+
+    //                                    </table>
+    //                                 </div>
+
+    //                ");
+    //    }
+    //    else
+    //    {
+    //        quotationHtmlContent.Append($@"<div class='table-2-1' >
+    //                                    <table style='width: 50%; '>
+    //                                        <tr>
+
+
+    //                                            <th style='height: 25px; background-color:#F2F3F4;'>Ship To</th>
+
+    //                                        </tr>
+    //                                        <tr style='height:130px;'>
+
+    //                                            <td style='height: 35px;'></td>
+    //                                        </tr>
+
+
+    //                                    </table>
+    //                                 </div>
+
+    //                ");
+    //    }
+
+    //    quotationHtmlContent.Append($@"
+    //                                        <div class='main-table'>
+    //                                            <table style='width: 100%;'>
+    //                                                <thead >
+    //                                                    <tr>
+    //                                                <td colspan='9' style='text-align: left;'>Subject : <br> <br> {Model.Subject}</td>
+    //                                                    </tr>
+    //                                                  <tr >
+    //                                                    <th rowspan='2' style='padding-left: 10px; text-align: left;'>No.</th>
+    //                                                    <th rowspan='2'>Item & Description</th>
+    //                                                    <th rowspan='2'> Qty</th>
+    //                                                    <th rowspan='2'> Rate </th>
+    //                                                    <th colspan='2'>CGST</th>
+    //                                                    <th colspan='2'>SGST</th>
+    //                                                    <th rowspan='2'> Amount</th>
+    //                                                  </tr>
+    //                                                  <tr>
+
+    //                                                    <th>%</th>
+    //                                                    <th>Amt</th>
+    //                                                    <th>%</th>
+    //                                                    <th>Amt</th>
+
+
+    //                                                  </tr>
+    //                                                </thead>
+    //                                                <tbody>
+    //            ");
+
+    //    foreach (var item in Model.Items)
+    //    {
+    //        quotationHtmlContent.Append($@"
+    //                                                    <tr>
+    //                                                        <td style='padding-left: 10px; text-align: left;'>{item.RowIndex}</td>
+    //                                                        <td style='color:#212020; text-align: left; padding: 10px;'>{item.ItemName} <br> {item.Description}</td>
+    //                                                        <td>{item.Quantity}</td>
+    //                                                        <td>{item.Rate}</td>
+    //                ");
+
+    //        switch (item.TaxCategoryItems.Count)
+    //        {
+    //            case 0:
+
+    //                quotationHtmlContent.Append($@"
+    //                                                        <td>--</td>
+    //                                                        <td>--</td>
+    //                                                        <td>--</td>
+    //                                                        <td>--</td>
+    //                 ");
+
+    //                break;
+
+    //            case 1:
+
+    //                quotationHtmlContent.Append($@"
+    //                                                        <td>{item.TaxCategoryItems[0].Percentage}</td>
+    //                                                        <td>{item.TaxCategoryItems[0].Amount}</td>
+    //                                                        <td>--</td>
+    //                                                        <td>--</td>
+    //            ");
+
+    //                break;
+
+    //            case 2:
+
+    //                quotationHtmlContent.Append($@"
+    //                                                        <td>{item.TaxCategoryItems[0].Percentage}</td>
+    //                                                        <td>{item.TaxCategoryItems[0].Amount}</td>
+    //                                                        <td>{item.TaxCategoryItems[1].Percentage}</td>
+    //                                                        <td>{item.TaxCategoryItems[1].Amount}</td>
+    //            ");
+
+    //                break;
+    //        }
+
+
+    //        quotationHtmlContent.Append($@"
+    //                                                        <td>{item.TotalAmount}</td>
+    //                                                    </tr>
+    //                ");
+    //    }
+
+    //    quotationHtmlContent.Append($@"
+    //                                                </tbody>
+    //                                              </table>
+    //                                        </div>
+    //                                        <div class='table-3'>
+
+    //                                           <table style='width: 60%;height:250px;'>
+    //                                        <td >Total In Words <br> <b> {Model.CurrencyName} {Model.AmountInWords} Only</b>
+    //                                        </td>
+    //                                    </tr>
+                
+    //                                    <tr>
+    //        <td> <span style='color: gray;'>Customer Notes :</span> <br> {Model.CustomerNote}</td>
+    //                                    </tr>
+    //                                    <tr>
+    //        <td> <span style='color: gray;'>Terms & Conditions</span>  <br> {Model.TermsandCondition}</td>
+    //                                    </tr>
+
+    //                                    </table>
+
+    //                                        </div>
+    //                                        <div class='table-4'>
+    //                                            <table style='width: 40%; height: 120px;border-left: 1px solid #000;'>
+    //                                                    <tr>
+    //                                                        <td style='padding-top:10px;'>Sub Total</td>
+    //                                                        <td style='padding-top:10px;'>{Model.Items.Sum(item => item.TotalAmount)} </td>
+    //                                                    </tr>
+    //                                                    <tr>
+    //                                                        <td style='padding-top:10px;'>Discount</td>
+    //                                                        <td style='padding-top:10px;'>{Model.Items.Sum(i => i.Discount)} </td>
+    //                                                    </tr>
+    //                                                    <tr>
+    //                                                        <th>Net Amount</th>
+    //                                                        <th> {Model.CurrencySymbol} {(Model.Items.Sum(i => i.NetAmount))} </th>
+    //                                                    </tr>
+    //            ");
+
+    //            var allTaxCategoryItems = Model.Items.SelectMany(item => item.TaxCategoryItems).ToList();
+    //            var groupedTaxCategoryItems = allTaxCategoryItems
+    //            .GroupBy(item => item.TaxCategoryItemID)
+    //            .Select(group => new QuotationItemTaxCategoryItemsModel
+    //            {
+    //                TaxCategoryItemID = group.Key,
+    //                TaxCategoryItemName = group.First().TaxCategoryItemName,
+    //                Percentage = group.First().Percentage,
+    //                Amount = group.Sum(item => item.Amount)
+    //            }).ToList();
+
+    //            foreach (var item in groupedTaxCategoryItems)
+    //            {
+    //                quotationHtmlContent.Append($@"              
+    //                                                            <tr>
+    //                                                                <td>{item.TaxCategoryItemName}</td>
+    //                                                                <td>{item.Amount}</td>
+    //                                                            </tr>");
+
+    //            }
+
+    //        quotationHtmlContent.Append($@"
+    //                                                    <tr>
+    //                                                        <th>Gross Amount</th>
+    //                                                        <th> {Model.CurrencySymbol} {(Model.Items.Sum(item => item.GrossAmount))} </th>
+    //                                                    </tr>
+    //                                                    <tr>
+    //                                                        <td>Payment Made </td>
+    //                                                        <td style='color: red;'>  {Model.CurrencySymbol} 0.00 </td>
+    //                                                    </tr>
+    //                                                    <tr>
+    //                                                        <th style='padding-bottom:10px;'>Balance Due </th>
+    //                                                        <th style='padding-bottom:10px;'>  {Model.CurrencySymbol} {(Model.Items.Sum(item => item.GrossAmount))}</th>
+    //                                                    </tr>
+
+    //                                            </table>
+    //                                        </div>
+    //                                        <div class='table-5''>
+    //                                            <table style='width: 40%; height: 100px;border-left: 1px solid #000;'>
+
+    //                                                <tr>
+    //                                                    <td  >Authorized Signature</td>
+    //                                                </tr>
+
+
+    //                                            </table>
+    //                                        </div>
+    //                                        <div class='table-bottom' style='width: 99.7%; height: 200px;'>
+    //                                        </div>
+    //                                    </div>
+    //                                </body>
+    //        ");
+
+
+        
+
+
+    }
+
+}
+

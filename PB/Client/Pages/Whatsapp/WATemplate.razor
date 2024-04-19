@@ -1,0 +1,1503 @@
+﻿@page "/whatsapp-template"
+@page "/whatsapp-template/{TemplateID:int}"
+
+@using AutoMapper;
+@using Blazored.LocalStorage;
+@using Newtonsoft.Json;
+@using PB.Shared.Enum.WhatsApp;
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using PB.Shared.Models.WhatsaApp;
+@using PB.Shared.Tables;
+@using System.Net.Http.Headers;
+@using System.Text.RegularExpressions;
+@using PB.Shared.Tables.Whatsapp;
+@using System.ComponentModel.DataAnnotations;
+
+<PageLayoutNew>
+    @if (templateEditContext != null)
+    {
+        <EditForm EditContext="templateEditContext" OnValidSubmit="async () => await SaveAsync()">
+            <DataAnnotationsValidator />
+            <div class="main-container container-fluid">
+                <div class="row page-header ">
+                    <div class="row mt-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 style="margin-bottom: 0 !important;">Whatsapp Template</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <InputTextBox DivClass="col-md-12" @bind-Value="Model.TemplateName"
+                                                      IsRequired="true" Label="Template Name :"
+                                                      ValidationFor="() => Model.TemplateName" id="template-name-text-box" />
+
+                                        <div class="row position-relative pb-3" style="@Model.PointerEventStyle">
+                                            <DropdownSelect DivClass="col-md-12"
+                                                            Label="@Localizer["Whatsapp Account"]"
+                                                            DropdownID="@WhatsappAccountSelectID"
+                                                            PlaceHolder="Choose Account"
+                                                            Mode="(int)DropdownModes.WhatsappAccount"
+                                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                                            ItemSelected="ItemSelected"
+                                                            ReadDataOnSearch="true"
+                                                            IsRequired="true"
+                                                            SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.WhatsappAccountID,Value=Model.AccountName})" />
+                                            <div class="validation-for-dropdown">
+                                                <ValidationMessage For="()=>Model.WhatsappAccountID" />
+                                            </div>
+                                        </div>
+
+                                        <div class="row position-relative pb-3" style="@Model.PointerEventStyle">
+                                            <DropdownSelect DivClass="col-md-12"
+                                                            Label="@Localizer["Language"]"
+                                                            DropdownID="@LanguageSelectID"
+                                                            PlaceHolder="Choose Language"
+                                                            Mode="(int)DropdownModes.Language"
+                                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                                            ItemSelected="ItemSelected"
+                                                            ReadDataOnSearch="true"
+                                                            IsRequired="true"
+                                                            SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.LanguageID,Value=Model.LanguageName})" />
+                                            <div class="validation-for-dropdown">
+                                                <ValidationMessage For="()=>Model.LanguageID" />
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group col-md-12">
+                                            <label class="form-label" style="text-align: left; margin-top: 0 !important;">
+                                                @Localizer["Category"] :
+                                                <span class="ms-1" style="color:red">*</span>
+                                            </label>
+                                            <select class="form-control form-select" id="address-type-select" @bind="Model.CategoryID" disabled="@(Model.TemplateID > 0 && Model.StatusID == (int)WhatsappTemplateStatus.APPROVED ? "disabled" : null)">
+                                                <option value="0" selected>Choose</option>
+                                                <option value="@((int)WhatsappTemplateCategory.MARKETING)">Marketing</option>
+                                                <option value="@((int)WhatsappTemplateCategory.UTILITY)">Utility</option>
+                                                <option value="@((int)WhatsappTemplateCategory.AUTHENTICATION)">Authentication</option>
+                                            </select>
+                                            <ValidationMessage For="() => Model.CategoryID" />
+                                        </div>
+
+                                        <div class="form-group col-md-12 mt-3 mb-2">
+                                            <label class="form-label" style="text-align: left; margin-top: 0 !important;">
+                                                @Localizer["Header Type"] :
+                                                <span class="ms-1" style="color:red">*</span>
+                                            </label>
+                                            <select class="form-control form-select" id="address-type-select" @bind="Model.HeaderTypeID">
+                                                <option value="0" selected>Choose</option>
+                                                <option value="@((int)WhatsappTemplateHeaderType.NONE)">None</option>
+                                                <option value="@((int)WhatsappTemplateHeaderType.TEXT)">Text</option>
+                                                <option value="@((int)WhatsappTemplateHeaderType.MEDIA)">Media</option>
+                                            </select>
+                                            <ValidationMessage For="() => Model.HeaderTypeID" />
+                                        </div>
+
+                                        @if (Model.HeaderTypeID == (int)WhatsappTemplateHeaderType.MEDIA)
+                                        {
+                                            <div class="form-group col-md-12">
+                                                <label class="form-label" style="text-align: left; margin-top: 0 !important;">
+                                                    @Localizer["Media Type"] :
+                                                    <span class="ms-1" style="color:red">*</span>
+                                                </label>
+                                                <select class="form-control form-select" id="address-type-select" @bind="Model.HeaderMediaTypeID">
+                                                    <option value="0" selected>Choose</option>
+                                                    <option value="@((int)WhatsappTemplateHeaderMediaType.IMAGE)">Image</option>
+                                                    <option value="@((int)WhatsappTemplateHeaderMediaType.VIDEO)">Video</option>
+                                                    <option value="@((int)WhatsappTemplateHeaderMediaType.DOCUMENT)">Document</option>
+                                                    <option value="@((int)WhatsappTemplateHeaderMediaType.LOCATION)">Location</option>
+                                                </select>
+                                                <ValidationMessage For="() => Model.HeaderMediaTypeID" />
+                                            </div>
+                                            @if (Model.HeaderMediaTypeID != null && Model.HeaderMediaTypeID.Value != 0)
+                                            {
+                                                <InputFile id="myFileChooser" accept="@(fileTypes.Where(fileType => fileType.ID == Model.HeaderMediaTypeID.Value).First().Value)" OnChange="@HandleHeaderMediaFileChange" />
+                                            }
+                                        }
+
+                                        @if (Model.HeaderTypeID == (int)WhatsappTemplateHeaderType.TEXT)
+                                        {
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label class="form-label mt-0 me-1">
+                                                        @Localizer["Header Text"]
+                                                        <span class="ms-1" style="color:red">*</span>
+                                                    </label>
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control" @onchange="(ChangeEventArgs e) => HandleHeaderChange(e)" maxlength=" 60" value="@Model.HeaderText">
+                                                        @if (!Model.HasHeaderVariable)
+                                                        {
+                                                            <span class="input-group-text bg-light" @onclick="() =>AddHeaderVariable()">
+                                                                <i class="fa fa-plus" style="color:var(--primary-bg-color); cursor:pointer"></i>
+                                                            </span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="input-group-text bg-light" @onclick="async () => await RemoveHeaderVariable()">
+                                                                <i class="fa fa-trash" style="color:red; cursor:pointer"></i>
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                    <ValidationMessage For="() => Model.HeaderText" />
+                                                </div>
+                                            </div>
+
+                                            <!--Header Variable-->
+                                            @if (Model.HasHeaderVariable && Model.Variables is not null)
+                                            {
+                                                var headerVariable = Model.Variables.Where(variable => variable.Section == (int)WhatsappTemplateVariableSection.HEADER).FirstOrDefault();
+                                                @if (headerVariable is not null)
+                                                {
+                                                    <div class="col-md-12">
+                                                        <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td>
+                                                                        @("{{" + headerVariable.OrderNo + "}}")
+                                                                    </td>
+                                                                    <td>
+                                                                        <input type="text" class="@headerVariable.VariableNameClass" placeholder="Variable name" value="@headerVariable.VariableName" @onchange="async (ChangeEventArgs e) => await HandleVariableNameChange(e,headerVariable)" />
+                                                                    </td>
+                                                                    <td>
+                                                                        <select class="form-control form-select" id="address-type-select" @bind="headerVariable.DataType">
+                                                                            <option value="0" selected>choose</option>
+                                                                            @foreach (var item in Enum.GetValues(typeof(WhatsappTemplateVariableDataType)))
+                                                                            {
+                                                                                if (headerVariable.DataType == (int)item)
+                                                                                {
+                                                                                    <option value="@((int)item)" selected>@item</option>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <option value="@((int)item)">@item</option>
+                                                                                }
+                                                                            }
+                                                                        </select>
+                                                                    </td>
+                                                                    <td>
+                                                                        <input type="text" class="@headerVariable.SampleValueClass" placeholder="Sample value" value="@headerVariable.SampleValue" @onchange="async (ChangeEventArgs e) => await HandleVariableSampleValueChange(e,headerVariable)" />
+                                                                    </td>
+                                                                    @if (headerVariable.VariableID > 0)
+                                                                    {
+                                                                        <td>
+                                                                            <ActionUpdate Clicked="async () => await UpdateVariable(headerVariable)" />
+                                                                        </td>
+                                                                    }
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                }
+                                            }
+                                        }
+
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label class="form-label mt-0 me-1">
+                                                    @Localizer["Body"]
+                                                </label>
+                                                <textarea class="textarea form-control" rows="15" @onchange="(ChangeEventArgs e) => HandleBodyTextChange(e)" value="@Model.Body">
+
+                                                                                                                                </textarea>
+                                                <ValidationMessage For="()=>Model.Body" />
+                                            </div>
+                                        </div>
+
+                                        <!--Body Variables-->
+                                        <div class="col-md-12 position-relative" style="min-height: 50px;">
+                                            <!--Add button-->
+                                            <div class="position-absolute pe-3" style="top: 0px;right: 0px;">
+                                                <button type="button" class="btn btn-primary" @onclick="AddBodyVariable">
+                                                    <i class="fe fe-plus me-2"></i>Add Body Variables
+                                                </button>
+                                            </div>
+                                            @if (Model.HasBodyVariable && Model.Variables is not null)
+                                            {
+                                                var bodyVariables = Model.Variables.Where(variable => variable.Section == (int)WhatsappTemplateVariableSection.BODY).ToList();
+                                                @if (bodyVariables is not null)
+                                                {
+                                                    <div class="col-md-12 px-0" style="margin-top: 51px;">
+                                                        <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+                                                            <tbody>
+                                                                @foreach (var variable in bodyVariables.OrderBy(item => item.OrderNo))
+                                                                {
+                                                                    <tr>
+                                                                        <td>
+                                                                            @("{{" + variable.OrderNo + "}}")
+                                                                        </td>
+                                                                        <td>
+                                                                            <input type="text" class="@variable.VariableNameClass" placeholder="Variable name" value="@variable.VariableName" @onchange="async (ChangeEventArgs e) => await HandleVariableNameChange(e,variable)" />
+                                                                        </td>
+                                                                        <td>
+                                                                            <select class="form-control form-select" id="address-type-select" @bind="variable.DataType">
+                                                                                <option value="0" selected>Choose</option>
+                                                                                @foreach (var item in Enum.GetValues(typeof(WhatsappTemplateVariableDataType)))
+                                                                                {
+                                                                                    if (variable.DataType == (int)item)
+                                                                                    {
+                                                                                        <option value="@((int)item)" selected>@item</option>
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        <option value="@((int)item)">@item</option>
+                                                                                    }
+                                                                                }
+                                                                            </select>
+                                                                        </td>
+                                                                        <td>
+                                                                            <input type="text" class="@variable.SampleValueClass" placeholder="Sample value" value="@variable.SampleValue" @onchange="async (ChangeEventArgs e) => await HandleVariableSampleValueChange(e,variable)" />
+                                                                        </td>
+                                                                        <td>
+                                                                            @if (variable.VariableID > 0)
+                                                                            {
+                                                                                <ActionUpdate Clicked="async () => await UpdateVariable(variable)" />
+                                                                            }
+                                                                            <ActionDelete Clicked="async () => await RemoveBodyVariable(variable)" />
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+
+                                        <div class=" col-md-12">
+                                            <div class="form-group">
+                                                <label class="form-label">@Localizer["Footer Text"]</label>
+                                                <input type="text" class="form-control" placeholder="footer text" maxlength=" 60" @onchange="(ChangeEventArgs e) => HandleFooterText(e)" value="@Model.Footer"> @*@bind="Model.Footer"*@
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="screen">
+                                <div class="screen-container">
+                                    <div class="wa-chat">
+                                        <div class="wa-chat-container">
+                                            <div class="conversation">
+                                                <div class="conversation-container position-relative">
+
+                                                    <div class="wa-message received" style="width: 100%;">
+
+                                                        @if (Model.HeaderTypeID == (int)WhatsappTemplateHeaderType.MEDIA && Model.HeaderMediaTypeID == (int)WhatsappTemplateHeaderMediaType.IMAGE)
+                                                        {
+                                                            <div class="wa-gallery">
+                                                                @if (Model.TemplateID > 0)
+                                                                {
+                                                                    <img src="@(Model.FileName != null ? Model.FileName : FileContent)" alt="" style="border-radius: 6px;" />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <img src="@(FileContent != null ? FileContent : "")" alt="" style="border-radius: 6px;" />
+                                                                }
+                                                            </div>
+                                                        }
+
+                                                        @if (Model.HeaderTypeID == (int)WhatsappTemplateHeaderType.TEXT)
+                                                        {
+                                                            var HeaderContent = TemplateContents.Where(content => content.Key == "Header").FirstOrDefault();
+
+                                                            <div class="wa-title">
+                                                                <h6 class="fw-bold my-2">
+                                                                    @(HeaderContent is not null ? HeaderContent.Value : "")
+                                                                </h6>
+                                                            </div>
+                                                        }
+
+                                                        @if (Model.HeaderTypeID == (int)WhatsappTemplateHeaderType.NONE || Model.HeaderTypeID == (int)WhatsappTemplateHeaderType.MEDIA || Model.HeaderTypeID == (int)WhatsappTemplateHeaderType.TEXT)
+                                                        {
+                                                            var BodyContent = TemplateContents.Where(content => content.Key == "Body").ToList();
+                                                            @if (BodyContent != null)
+                                                            {
+                                                                <div class="wa-body">
+                                                                    <p class="mb-0">
+                                                                        @foreach (var content in BodyContent)
+                                                                        {
+                                                                            @content.Value
+                                                                            <br />
+                                                                        }
+                                                                    </p>
+                                                                </div>
+                                                            }
+                                                            <span class="metadata"><span class="time"> @DateTime.Now.ToString("hh.mm")</span></span>
+                                                        }
+
+                                                        @if (Model.Footer != null)
+                                                        {
+                                                            var FooterContent = TemplateContents.Where(content => content.Key == "Footer").FirstOrDefault();
+                                                            @if (FooterContent != null)
+                                                            {
+                                                                <div class="wa-title">
+                                                                    <h6 class="fw-bold my-2">
+                                                                        @(FooterContent.Value)
+                                                                    </h6>
+                                                                </div>
+                                                            }
+                                                        }
+
+                                                    </div>
+
+                                                    <div class="wa-action-btns wa-message p-0">
+                                                        @if (Model.Buttons is not null)
+                                                        {
+                                                            @switch (Model.Buttons.Count)
+                                                            {
+                                                                case 1:
+                                                                    <a class="btn" style="background-color: #fff; color: #159eff;">@Model.Buttons[0].Text</a>
+                                                                    break;
+                                                                case 2:
+                                                                    <a class="btn" style="background-color: #fff; color: #159eff;">@Model.Buttons[0].Text</a>
+                                                                    <a class="btn" style="background-color: #fff; color: #159eff;">@Model.Buttons[1].Text</a>
+                                                                    break;
+                                                                case 3:
+                                                                    <a class="btn" style="background-color: #fff; color: #159eff;">@Model.Buttons[0].Text</a>
+                                                                    <a class="btn" style="background-color: #fff; color: #159eff;">@Model.Buttons[1].Text</a>
+                                                                    <a class="btn" style="background-color: #fff; color: #159eff;">@Model.Buttons[2].Text</a>
+                                                                    break;
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+
+                    <div class="col-12 mt-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 style="margin-bottom: 0 !important;">Buttons</h5>
+                            </div>
+                            <div class="card-body">
+                                <!--Buttons-->
+                                <div class="row my-4">
+                                    <div class="col-md-12 position-relative" style="min-height: 50px;">
+                                        <!--Add button-->
+                                        <div class="position-absolute pe-3" style="top: 0px;right: 0px;">
+                                            <button type="button" class="btn btn-primary" @onclick="async () => await AddButton()">
+                                                <i class="fe fe-plus me-2"></i>Add Button
+                                            </button>
+                                        </div>
+                                        <div class="col-md-12 px-0" style="margin-top: 51px;">
+                                            <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+                                                <tbody>
+                                                    @if (Model.Buttons is not null)
+                                                    {
+                                                        @foreach (var button in Model.Buttons)
+                                                        {
+                                                            <tr>
+                                                                <td>
+                                                                    <select class="@button.ButtonTypeClass" @onchange="async (ChangeEventArgs e) => await HandleButtonTypeChange(e, button)">
+                                                                        <option value="0" selected>Choose</option>
+                                                                        @foreach (var item in Enum.GetValues(typeof(WhatsappTemplateButtonType)))
+                                                                        {
+                                                                            @if (button.Type == (int)item)
+                                                                            {
+                                                                                <option value="@((int)item)" selected>@item</option>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <option value="@((int)item)">@item</option>
+                                                                            }
+                                                                        }
+                                                                    </select>
+                                                                </td>
+
+                                                                <td>
+                                                                    <input type="text" placeholder="Button text" class="@(button.ButtonTextClass)" value="@(button.Text)" @onchange="async (ChangeEventArgs e) => await HandleButtonTextChange(e, button)" />
+                                                                </td>
+
+                                                                @switch (button.Type)
+                                                                {
+
+                                                                    @case 0:
+
+                                                                        <td>
+                                                                            <input type="text" class="form-control" diabled style="pointer-events:none" />
+                                                                        </td>
+
+                                                                        <td>
+                                                                            <input type="text" class="form-control" diabled style="pointer-events:none" />
+                                                                        </td>
+                                                                        break;
+
+                                                                    @case (int)WhatsappTemplateButtonType.QUICK_REPLY:
+
+                                                                        <td>
+                                                                            <input type="text" class="form-control" diabled style="pointer-events:none" />
+                                                                        </td>
+
+                                                                        <td>
+                                                                            <input type="text" class="form-control" diabled style="pointer-events:none" />
+                                                                        </td>
+                                                                        break;
+
+                                                                    @case (int)WhatsappTemplateButtonType.URL:
+
+                                                                        <td>
+                                                                            <select class="@(button.ButtonUrlTypeClass)" @onchange="async (ChangeEventArgs e) => await HandleButtonUrlTypeChange(e,button)">
+                                                                                <option value="0" selected>Choose</option>
+                                                                                @foreach (var item in Enum.GetValues(typeof(WhatsappTemplateButtonUrlType)))
+                                                                                {
+                                                                                    if (button.UrlType == (int)item)
+                                                                                    {
+                                                                                        <option value="@((int)item)" selected>@item</option>
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        <option value="@((int)item)">@item</option>
+                                                                                    }
+                                                                                }
+                                                                            </select>
+                                                                        </td>
+
+                                                                        <td>
+                                                                            <input type="text" class="@(button.ButtonUrlClass)" placeholder="https://example.com/" value="@(button.Url)" @onchange="async (ChangeEventArgs e) => await HandleButtonUrlChange(e, button)" />
+                                                                        </td>
+                                                                        break;
+
+                                                                    @case (int)WhatsappTemplateButtonType.PHONE_NUMBER:
+
+                                                                        <td class="px-0">
+                                                                            <DropdownSelect DivClass="col-md-12"
+                                                                                            FormControlClass="@button.CountryClass"
+                                                                                            DropdownID="@WhatsappCountryDropdownID"
+                                                                                            PlaceHolder="Choose Country"
+                                                                                            Mode="(int)DropdownModes.Country"
+                                                                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                                            ItemSelected="ItemSelected"
+                                                                                            IsRequired="true"
+                                                                                            ReadDataOnSearch="true"
+                                                                                            SelectedItem="@(new DropdownSelectedItemModel(){ID=button.CountryID,Value=button.CountryName})" />
+                                                                        </td>
+
+                                                                        <td>
+                                                                            <input type="text" class="@button.PhoneClass" placeholder="Phone number" value="@button.Phone" @onchange="(ChangeEventArgs e) => HandleButtonPhoneChange(e, button)" />
+                                                                        </td>
+                                                                        break;
+                                                                }
+
+                                                                @if (button.ButtonID > 0)
+                                                                {
+                                                                    <td>
+                                                                        <ActionUpdate Clicked="async () => await UpdateButton(button)" />
+                                                                    </td>
+                                                                }
+                                                                <td>
+                                                                    <ActionDelete Clicked="async () => await RemoveButton(button)" />
+                                                                </td>
+
+                                                            </tr>
+
+                                                            @if (button.UrlType == (int)WhatsappTemplateButtonUrlType.DYNAMIC)
+                                                            {
+                                                                TemplateVariablePageModel? urlVariable = button.ButtonVariable;
+                                                                @if (urlVariable is not null)
+                                                                {
+                                                                    string placeHolder = button.Url is not null && button.Url.Contains("/{{1}}") ? button.Url.Replace("{{1}}", "sub-url") : "https://example.com/sub-url";
+                                                                    <tr class="mb-1">
+                                                                        <td class="py-1 bg-light">
+                                                                            @("{{" + urlVariable.OrderNo + "}}")
+                                                                        </td>
+                                                                        <td class="py-1 bg-light">
+                                                                            <input type="text" class="@urlVariable.VariableNameClass" placeholder="Variable name" value="@urlVariable.VariableName" @onchange="async (ChangeEventArgs e) => await HandleVariableNameChange(e,urlVariable)" />
+                                                                        </td>
+
+                                                                        <td class="py-1 bg-light">
+                                                                            <input type="text" class="@urlVariable.SampleValueClass" placeholder="@placeHolder" value="@urlVariable.SampleValue" @onchange="async (ChangeEventArgs e) => await HandleVariableSampleValueChange(e,urlVariable)" />
+                                                                        </td>
+                                                                        <td class="py-1 bg-light">
+                                                                            @if (urlVariable.VariableID > 0)
+                                                                            {
+                                                                                <ActionUpdate Clicked="async () => await UpdateVariable(urlVariable)" />
+                                                                            }
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="page-footer-action d-flex">
+
+                @if (Model.TemplateID == 0)
+                {
+                    <button type="submit" class="btn btn-primary me-2">Save</button>
+                }
+                else if (Model.TemplateID > 0 && (Model.StatusID == (int)WhatsappTemplateStatus.APPROVED || Model.StatusID == (int)WhatsappTemplateStatus.REJECTED || Model.StatusID == (int)WhatsappTemplateStatus.PAUSED))
+                {
+                    <button type="submit" class="btn btn-primary me-2">Edit</button>
+                    <a class="btn btn-danger me-2" @onclick="async () => await Delete()">Delete</a>
+                }
+                <a class="btn btn-light me-2" @onclick="async () => await Cancel()">Cancel</a>
+
+            </div>
+        </EditForm>
+
+    }
+</PageLayoutNew>
+
+@code {
+
+    [Parameter] public int TemplateID { get; set; }
+
+    private WhatsappTemplatePageModel Model = new();
+    List<KeyValueModel> TemplateContents = new();
+    private EditContext? templateEditContext;
+    private bool hasRendered = false;
+
+    private string WhatsappCountryDropdownID = "whatsapp-country-drop-down-select";
+    private string WhatsappAccountSelectID = "whatsapp-account-drop-down";
+
+    private string LanguageSelectID = "language-drop-down";
+    private DropdownSelect? WhatsappAccountDropdown;
+    private DropdownSelect? LaguageDropdown;
+
+    #region Main Function
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (TemplateID != 0)
+        {
+            Model = await API.GetAsync<WhatsappTemplatePageModel>($"whatsapp/v2/get-template/{TemplateID}", true);
+            if (Model != null)
+            {
+                if (Model.HeaderText is not null)
+                    GenerateHeaderTextView();
+
+                if (Model.Body is not null)
+                    GenerateBodyTextView();
+
+                if (Model.Footer is not null)
+                    GenerateFooterTextView();
+
+            }
+            Model = Model ?? new();
+        }
+        templateEditContext = new(Model);
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            hasRendered = true;
+        }
+
+        if (hasRendered)
+        {
+            if (Model.HeaderTypeID is not null && Model.HeaderTypeID == (int)WhatsappTemplateHeaderType.MEDIA && Model.FileName is not null)
+            {
+                int startIndex = Model.FileName.LastIndexOf('/') + 1;
+                int endIndex = Model.FileName.Length;
+                string filename = Model.FileName.Substring(startIndex, endIndex - startIndex);
+                await JS.InvokeVoidAsync("setFileNameToInput", "myFileChooser", filename);
+                hasRendered = false; // Reset the flag to prevent continuous calls.
+            }
+        }
+    }
+
+    public async Task SaveAsync()
+    {   
+        if (await ValidateTemplateModel())
+        {
+            var result = await API.PostAsync<BaseSuccessResponse, WhatsappTemplatePageModel>("whatsapp/v2/save-template", Model);
+            if (result != null)
+            {
+                await JS.SuccessMessage(result.ResponseMessage);
+                Nav.NavigateTo("whatsapp-templates");
+            }
+        }
+    }
+
+    private async Task<bool> ValidateTemplateModel()
+    {
+        //Validating Varaibles
+        if (Model.Variables is not null)
+        {
+            foreach (var variable in Model.Variables)
+            {
+                var error = ValidateItem(variable);
+                if (!string.IsNullOrEmpty(error))
+                {
+                    string errorMsg = "Validation error(s) for variable '" + (!string.IsNullOrEmpty(variable.VariableName) ? variable.VariableName : "{{" + variable.OrderNo) + "}} \n" + error;
+                    await JS.ErrorMessage(errorMsg);
+                    return false;
+                }
+            }
+        }
+
+        //Validating Buttons
+        if (Model.Buttons is not null)
+        {
+            foreach (var buttonItem in Model.Buttons.Select((btn, index) => (btn, index)))
+            {
+                TemplateButtonPageModel button = buttonItem.btn;
+                if (button.Type == null || button.Type == 0)
+                {
+                    string errorMsg = "Validation error(s) for button '" + (!string.IsNullOrEmpty(button.Text) ? button.Text : "no:" + (buttonItem.index + 1)) + "' \n Please choose a button button type";
+                    await JS.ErrorMessage(errorMsg);
+                    return false;
+                }
+                else
+                {
+                    var error = ValidateItem(button);
+                    if (!string.IsNullOrEmpty(error))
+                    {
+                        string errorMsg = "Validation error(s) for button '" + (!string.IsNullOrEmpty(button.Text) ? button.Text : "no:" + (buttonItem.index + 1)) + "' \n" + error;
+                        await JS.ErrorMessage(errorMsg);
+                        return false;
+                    }
+
+                    if (button.ButtonVariable is not null)
+                    {
+                        var urlVariableError = ValidateItem(button.ButtonVariable);
+                        if (!string.IsNullOrEmpty(urlVariableError))
+                        {
+                            string errorMsg = "Validation error(s) for url variable '" + (!string.IsNullOrEmpty(button.Text) ? button.Text : "for button no:" + (buttonItem.index + 1)) + (!string.IsNullOrEmpty(button.ButtonVariable.VariableName) ? button.ButtonVariable.VariableName : "{{" + button.ButtonVariable.OrderNo) + "}} \n" + error;
+                            await JS.ErrorMessage(errorMsg);
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        //Media saving an MediaID getting
+        if (Model.HeaderTypeID == (int)WhatsappTemplateHeaderType.MEDIA)
+        {
+            if (file == null)
+            {
+                await JS.ErrorMessage("Please choose a header media file");
+                return false;
+            }
+
+            var mediaRes = await UploadFile();
+            if (mediaRes is null)
+            {
+                await JS.ErrorMessage("Someting went wrong with file upload");
+                return false;
+            }
+
+            Model.HeaderMediaHandle = mediaRes.FilePath;
+            Model.HeaderMediaID = mediaRes.MediaID;
+        }
+        return true;
+    }
+
+    private async Task Delete()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            int Id = Model.TemplateID;
+            if (await API.GetAsync<bool>($"whatsapp/delete-template/{Id}", true))
+            {
+                Nav.NavigateTo("whatsapp-templates");
+            }
+        }
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to leave this page?", SweetAlertMessageType.question, "Yes, Leave", "No, Stay"))
+        {
+            Nav.NavigateTo("whatsapp-templates");
+        }
+    }
+
+    #endregion
+
+    #region Button and Variables validation
+
+    private string? ValidateItem(object item)
+    {
+        var validationContext = new ValidationContext(item, serviceProvider: null, items: null);
+        var validationResults = new List<ValidationResult>();
+
+        bool isValid = Validator.TryValidateObject(item, validationContext, validationResults, validateAllProperties: true);
+        if (validationResults is not null)
+        {
+            string? errorMessage = "";
+            foreach (var validationItem in validationResults)
+            {
+                errorMessage += validationItem.ErrorMessage + "\n";
+            }
+            return errorMessage;
+        }
+        return null;
+    }
+
+    #endregion
+
+    #region Header Media
+
+    List<IdnValuePair> fileTypes = new()
+    {
+        new(){ID=(int)WhatsappTemplateHeaderMediaType.IMAGE, Value = ".jpg,.jpeg,.png"},
+        new(){ID=(int)WhatsappTemplateHeaderMediaType.VIDEO, Value = ".mp4,.avi,.mkv"},
+        new(){ID=(int)WhatsappTemplateHeaderMediaType.DOCUMENT, Value = ".pdf,.doc,.docx,.txt,.csv,.xlsx,.xls,.ppt,.pptx"},
+        new(){ID=(int)WhatsappTemplateHeaderMediaType.LOCATION, Value = ".kml"},
+    };
+
+    IBrowserFile? file;
+    string? fileContentType = null;
+    byte[]? buffer;
+    string? FileContent = null;
+
+
+    private async Task HandleHeaderMediaFileChange(InputFileChangeEventArgs e)
+    {
+        file = e.GetMultipleFiles().FirstOrDefault();
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            var bytesRead = await file.OpenReadStream(50000000).ReadAsync(buffer);
+            if (bytesRead > 0)
+            {
+                FileContent = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+                Model.FileName = null;
+            }
+        }
+    }
+
+
+
+    // Use a reasonable buffer size for reading the file (e.g., 4096 bytes)
+    // var bytesRead = await file.OpenReadStream().ReadAsync(buffer);
+    // if (bytesRead > 0)
+    // {
+    //     FileContent = $"data:{fileContentType};base64,{Convert.ToBase64String(buffer)}";
+    //     Model.FileName = null;
+    // }
+
+    private async Task<bool> ValidateSelectedMediaFile()
+    {
+        if (Model.HeaderMediaTypeID != null && !string.IsNullOrEmpty(fileContentType))
+        {
+            switch (Model.HeaderMediaTypeID)
+            {
+                case (int)WhatsappTemplateHeaderMediaType.IMAGE:
+                    if (!fileContentType.StartsWith("image/"))
+                    {
+                        await JS.ErrorMessage("Only image files are allowed");
+                        file = null;
+                        fileContentType = null;
+                        return false;
+                    }
+                    break;
+
+                case (int)WhatsappTemplateHeaderMediaType.DOCUMENT:
+                    if (!IsDocument(fileContentType, file.Name))
+                    {
+                        await JS.ErrorMessage("Only document files are allowed");
+                        file = null;
+                        fileContentType = null;
+                        return false;
+                    }
+                    break;
+
+                case (int)WhatsappTemplateHeaderMediaType.VIDEO:
+                    if (!fileContentType.StartsWith("video/"))
+                    {
+                        await JS.ErrorMessage("Only video files are allowed");
+                        file = null;
+                        fileContentType = null;
+                        return false;
+                    }
+                    break;
+
+                case (int)WhatsappTemplateHeaderMediaType.LOCATION:
+                    if (fileContentType != "application/vnd.google-earth.kml+xml")
+                    {
+                        await JS.ErrorMessage("Only location files are allowed");
+                        file = null;
+                        fileContentType = null;
+                        return false;
+                    }
+                    break;
+
+                default:
+                    // Handle other cases or provide an error message for unsupported values.
+                    await JS.ErrorMessage("Unsupported media type");
+                    file = null;
+                    fileContentType = null;
+                    return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private bool IsDocument(string mimeType, string fileName)
+    {
+        // Check if the MIME type or file extension represents a document file
+        return mimeType.StartsWith("application/") || fileName.EndsWith(".doc") || fileName.EndsWith(".docx") || fileName.EndsWith(".pdf") || fileName.EndsWith(".txt") || fileName.EndsWith(".csv") || fileName.EndsWith(".xlsx") || fileName.EndsWith(".xls") || fileName.EndsWith(".ppt") || fileName.EndsWith(".pptx");
+    }
+
+    public async Task<FileUploadResultModel?> UploadFile()
+    {
+        if (file != null)
+        {
+            // Verify that ContentType is not null or empty
+            if (!string.IsNullOrEmpty(file.ContentType))
+            {
+                using var fileContent = new MultipartFormDataContent();
+
+                // Add the byte array content to the form data
+                fileContent.Add(new StreamContent(file.OpenReadStream(50000000)), "file", file.Name);
+                fileContent.Add(new StringContent(file.ContentType), "ContentType");
+                fileContent.Add(new StringContent(Convert.ToString(Model.WhatsappAccountID)), "WhatsappAccountID");
+                fileContent.Add(new StringContent("TemplateImage"), "FolderName");
+
+                return await API.PostAsync<FileUploadResultModel>("whatsapp/add-template-header-media", fileContent);
+            }
+        }
+        return null;
+    }
+
+    #endregion
+
+    #region Dropdown Select
+
+    string? ISDCode = "";
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Country:
+
+                var button = Model.Buttons.Where(btn => btn.Type == (int)WhatsappTemplateButtonType.PHONE_NUMBER).First();
+                if (button is not null)
+                {
+                    button.CountryID = data.ID;
+                    button.CountryName = data.Value;
+                    button.CountryClass = button.CountryID == null ? "input-invalid-border pb-select form-control" : "pb-select form-control";
+                    if (button.CountryID is not null)
+                    {
+                        var res = await API.GetAsync<StringModel>($"common/get-country-isd-code/{button.CountryID}", true);
+                        if (res != null)
+                        {
+                            ISDCode = res.Value;
+                        }
+                        templateEditContext.NotifyFieldChanged(templateEditContext.Field(nameof(button.CountryID)));
+                    }
+                }
+
+                break;
+
+            case (int)DropdownModes.WhatsappAccount:
+
+                Model.WhatsappAccountID = data.ID;
+                Model.AccountName = data.Value;
+                if (Model.WhatsappAccountID is not null)
+                    templateEditContext.NotifyFieldChanged(templateEditContext.Field(nameof(Model.WhatsappAccountID)));
+
+                break;
+
+            case (int)DropdownModes.Language:
+
+                Model.LanguageID = data.ID;
+                Model.LanguageName = data.Value;
+                if (Model.LanguageID is not null)
+                    templateEditContext.NotifyFieldChanged(templateEditContext.Field(nameof(Model.LanguageID)));
+
+                break;
+
+        }
+    }
+
+    #endregion
+
+    #region Header
+
+    private void AddHeaderVariable()
+    {
+        Model.Variables = Model.Variables ?? new();
+        Model.HasHeaderVariable = true;
+        Model.Variables.Add(new()
+            {
+                OrderNo = 1,
+                Section = (int)WhatsappTemplateVariableSection.HEADER,
+                VariableNameClass = "form-control input-invalid-border",
+                SampleValueClass = "form-control input-invalid-border"
+            });
+
+        Model.HeaderText = !Model.HeaderText.Contains("{{1}}") ? Model.HeaderText + " {{1}}" : Model.HeaderText;
+        StateHasChanged();
+    }
+
+    private async Task RemoveHeaderVariable()
+    {
+        if (Model.Variables is not null && await JS.Confirm("Confirm", "Are you sure you want to remove the variable from header..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel"))
+        {
+            var item = Model.Variables.Where(hVariable => hVariable.Section == (int)WhatsappTemplateVariableSection.HEADER).FirstOrDefault();
+            if (item is not null)
+            {
+                Model.Variables.Remove(item);
+                Model.HeaderText = Model.HeaderText.Replace("{{" + item.OrderNo + "}}", "");
+                Model.HasHeaderVariable = false;
+                GenerateHeaderTextView();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async void HandleHeaderChange(ChangeEventArgs e)
+    {
+        Model.HeaderText = Convert.ToString(e.Value);
+        if (Model.HeaderTypeID != null && Model.HeaderTypeID == (int)WhatsappTemplateHeaderType.TEXT && string.IsNullOrEmpty(Model.HeaderText))
+        {
+            await JS.ErrorMessage("Please provide header content");
+            return;
+        }
+
+        if (Model.HasHeaderVariable && !string.IsNullOrEmpty(Model.HeaderText))
+        {
+            string pattern = @"\{{(.*?)\}}";
+            Regex regex = new Regex(pattern);
+            MatchCollection matchCollection = regex.Matches(Model.HeaderText);
+            int count = matchCollection.Count;
+            if (Model.Variables is not null && count == 0)
+            {
+                var headerVariable = Model.Variables.Where(variable => variable.Section == (int)WhatsappTemplateVariableSection.HEADER).FirstOrDefault();
+                if (headerVariable is not null)
+                {
+                    Model.Variables.Remove(headerVariable);
+                    Model.HasHeaderVariable = false;
+                }
+            }
+        }
+
+        GenerateHeaderTextView();
+    }
+
+    private void GenerateHeaderTextView()
+    {
+        var headerItem = TemplateContents.Where(header => header.Key == "Header").FirstOrDefault();
+        if (headerItem == null)
+        {
+            KeyValueModel HeaderItems = new()
+                {
+                    Key = "Header",
+                    Value = Model.HeaderText
+                };
+
+            TemplateContents.Add(HeaderItems);
+        }
+        else
+        {
+            headerItem.Value = Model.HeaderText;
+        }
+
+        var headerViewContent = TemplateContents.Where(item => item.Key == "Header").FirstOrDefault();
+        if (Model.Variables is not null && headerViewContent is not null)
+        {
+            var headerVariable = Model.Variables.Where(item => item.Section == (int)WhatsappTemplateVariableSection.HEADER).FirstOrDefault();
+            if (headerVariable != null)
+            {
+                headerViewContent.Value = headerViewContent.Value.Replace("{{" + headerVariable.OrderNo + "}}", headerVariable.SampleValue is not null ? headerVariable.SampleValue : headerVariable.VariableName);
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region Body
+
+    private async Task HandleBodyTextChange(ChangeEventArgs e)
+    {
+        Model.Body = Convert.ToString(e.Value);
+        if (string.IsNullOrEmpty(Model.Body))
+        {
+            await JS.ErrorMessage("Please povide body content");
+            return;
+        }
+
+        BodyTextChangeVariableValidation(Model.Body);
+        GenerateBodyTextView();
+    }
+
+    private void BodyTextChangeVariableValidation(string body)
+    {
+        List<string> matches = new List<string>();
+
+        string pattern = @"\{{(.*?)\}}";
+
+        Regex regex = new Regex(pattern);
+
+        MatchCollection matchCollection = regex.Matches(body);
+
+        if (Model.Variables != null && Model.Variables.Where(v => v.Section == (int)WhatsappTemplateVariableSection.BODY).ToList().Count > 0)
+        {
+            if (matchCollection.Count == 0)
+            {
+                Model.Variables.RemoveAll(variable => variable.Section == (int)WhatsappTemplateVariableSection.BODY);
+            }
+            else
+            {
+                foreach (Match match in matchCollection)
+                {
+                    matches.Add(match.Groups[1].Value);
+                }
+
+                List<int> existingBodyVariables = matches.Select(int.Parse).ToList();
+                if (Model.Variables is not null && existingBodyVariables.Count > 0)
+                {
+                    Model.Variables.RemoveAll(variable => variable.Section == (int)WhatsappTemplateVariableSection.BODY && !existingBodyVariables.Contains(variable.OrderNo));
+                    ReorderBodyVariables(Model.Variables);
+                }
+
+            }
+
+        }
+    }
+
+    private void GenerateBodyTextView()
+    {
+        var bodyItems = TemplateContents.Where(item => item.Key == "Body").ToList();
+        if (bodyItems.Count == 0)
+        {
+            if (!string.IsNullOrEmpty(Model.Body))
+            {
+                string[] lines = Model.Body.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (string line in lines)
+                {
+                    KeyValueModel BodyItem = new()
+                        {
+                            Key = "Body",
+                            Value = line
+                        };
+
+                    TemplateContents.Add(BodyItem);
+                }
+            }
+        }
+        else
+        {
+            TemplateContents.RemoveAll(item => item.Key == "Body");
+            if (!string.IsNullOrEmpty(Model.Body))
+            {
+                string[] lines = Model.Body.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string line in lines)
+                {
+                    KeyValueModel BodyItem = new()
+                        {
+                            Key = "Body",
+                            Value = line
+                        };
+
+                    TemplateContents.Add(BodyItem);
+                }
+            }
+        }
+
+        var updatedBodyItems = TemplateContents.Where(item => item.Key == "Body").ToList();
+        foreach (var item in updatedBodyItems.Where(i => i.Value is not null))
+        {
+            if (Model.Variables is not null)
+            {
+                var bodyVariables = Model.Variables.Where(item => item.Section == (int)WhatsappTemplateVariableSection.BODY).ToList();
+                if (bodyVariables != null && bodyVariables.Count > 0)
+                {
+                    foreach (var variable in bodyVariables)
+                    {
+                        item.Value = item.Value.Replace("{{" + variable.OrderNo + "}}", variable.SampleValue is not null ? variable.SampleValue : variable.VariableName);
+                    }
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private void AddBodyVariable()
+    {
+        //if (Model.Variables is not null)
+        //{
+        //List<TemplateVariablePageModel> bodyList = Model.Variables != null ? Model.Variables.Where(v => v.Section == (int)WhatsappTemplateVariableSection.Body).ToList() : new();
+        try
+        {
+            int Count = 0;
+            if (Model.Variables != null && Model.Variables.Where(v => v.Section == (int)WhatsappTemplateVariableSection.BODY).ToList() != null)
+            {
+                Count = Model.Variables is not null ? Model.Variables.Where(v => v.Section == (int)WhatsappTemplateVariableSection.BODY).ToList().Count : new();
+
+            }
+
+            TemplateVariablePageModel bodyVariable = new()
+                {
+                    Section = (int)WhatsappTemplateVariableSection.BODY,
+                    OrderNo = Count == 0 ? 1 : Count + 1,
+                    VariableNameClass = "form-control input-invalid-border",
+                    SampleValueClass = "form-control input-invalid-border"
+                };
+
+            Model.Variables = Model.Variables ?? new();
+            Model.Variables.Add(bodyVariable);
+            Model.Body += " {{" + bodyVariable.OrderNo + "}}";
+            Model.HasBodyVariable = Model.HasBodyVariable == false ? true : true;
+
+            GenerateBodyTextView();
+
+            //Model.Variables is not null ? Model.Variables.Where(v => v.Section == (int)WhatsappTemplateVariableSection.Body).ToList().Count : new();
+
+
+        }
+        catch (Exception e)
+        {
+
+        }
+        // }
+    }
+
+    private async Task RemoveBodyVariable(TemplateVariablePageModel item)
+    {
+        if (Model.Variables is not null && await JS.Confirm("Confirm", "Are you sure you want to remove the variable from body..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel"))
+        {
+            Model.Body = Model.Body.Replace("{{" + item.OrderNo + "}}", "");
+            Model.Variables.Remove(item);
+            ReorderBodyVariables(Model.Variables);
+            List<TemplateVariablePageModel> bodyVariables = Model.Variables.Where(v => v.Section == (int)WhatsappTemplateVariableSection.BODY).ToList();
+            Model.HasBodyVariable = bodyVariables.Count is 0 ? false : true;
+            GenerateBodyTextView();
+            StateHasChanged();
+        }
+    }
+
+    private void ReorderBodyVariables(List<TemplateVariablePageModel> variables)
+    {
+        var section2Variables = variables.Where(v => v.Section == (int)WhatsappTemplateVariableSection.BODY).OrderBy(v => v.OrderNo).ToList();
+
+        for (int i = 0; i < section2Variables.Count; i++)
+        {
+            Model.Body = Model.Body.Replace("{{" + section2Variables[i].OrderNo + "}}", "{{" + (i + 1) + "}}");
+            section2Variables[i].OrderNo = i + 1;
+        }
+    }
+
+    #endregion
+
+    #region Footer
+
+    private void HandleFooterText(ChangeEventArgs e)
+    {
+        Model.Footer = Convert.ToString(e.Value);
+        GenerateFooterTextView();
+    }
+
+    private void GenerateFooterTextView()
+    {
+        if (Model.Footer != null)
+        {
+            KeyValueModel HeaderItems = new()
+                {
+                    Key = "Footer",
+                    Value = Model.Footer
+                };
+
+            TemplateContents.Add(HeaderItems);
+        }
+
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region Button
+
+    private async Task AddButton()
+    {
+        if (Model.Buttons is not null && Model.Buttons.Count == 3)
+        {
+            await JS.ErrorMessage("Only 3 buttons allowed in a template");
+            StateHasChanged();
+            return;
+        }
+
+        Model.Buttons = Model.Buttons ?? new();
+        Model.Buttons.Add(new TemplateButtonPageModel()
+            {
+                ButtonTextClass = "form-control",
+                ButtonTypeClass = "form-control form-select input-invalid-border"
+            });
+    }
+
+    private async Task HandleButtonTypeChange(ChangeEventArgs e, TemplateButtonPageModel button)
+    {
+        int newButtonType = Convert.ToInt32(e.Value);
+
+        // Perform additional tasks here if needed
+
+        button.Type = newButtonType;
+        button.ButtonTypeClass = "form-control form-select";
+        button.ButtonTextClass = "form-control input-invalid-border";
+
+        if (newButtonType == 0)
+        {
+            button.ButtonTypeClass = "form-control form-select input-invalid-border";
+            button.ButtonTextClass = "form-control";
+            await JS.ErrorMessage("Please choose a button type");
+        }
+
+        await ValidateButtonTypeSelected(button);
+    }
+
+    private async Task ValidateButtonTypeSelected(TemplateButtonPageModel button)
+    {
+        if (Model.Buttons is not null)
+        {
+            switch (button.Type)
+            {
+                case ((int)WhatsappTemplateButtonType.PHONE_NUMBER):
+
+                    var PhoneButtons = Model.Buttons.Where(phone => phone.Type == button.Type).ToList();
+                    if (PhoneButtons != null && PhoneButtons.Count > 1)
+                    {
+                        button.ButtonTextClass = "form-control input-invalid-border";
+                        button.ButtonTypeClass = "form-control form-select input-invalid-border";
+                        await JS.ErrorMessage("Only one phone number is allowed");
+                        button.Type = 0;
+                        return;
+                    }
+                    else
+                    {
+                        button.CountryClass = "form-control pb-delect input-invalid-border ";
+                        button.PhoneClass = "form-control input-invalid-border ";
+                    }
+                    break;
+
+                case ((int)WhatsappTemplateButtonType.URL):
+
+                    var UrlButtons = Model.Buttons.Where(url => url.Type == button.Type).ToList();
+                    if (UrlButtons != null && UrlButtons.Count > 2)
+                    {
+                        button.ButtonTextClass = "form-control input-invalid-border";
+                        button.ButtonTypeClass = "form-control form-select input-invalid-border";
+                        await JS.ErrorMessage("Only 2 url buttons are allowed");
+                        button.Type = 0;
+                        return;
+                    }
+                    else
+                    {
+                        button.ButtonUrlTypeClass = "form-control form-select input-invalid-border ";
+                        button.ButtonUrlClass = "form-control input-invalid-border ";
+                    }
+                    break;
+            }
+            button.ButtonTypeClass = "form-control form-select";
+        }
+        StateHasChanged();
+    }
+
+    private async Task HandleButtonTextChange(ChangeEventArgs e, TemplateButtonPageModel button)
+    {
+        button.Text = Convert.ToString(e.Value);
+        if (string.IsNullOrEmpty(button.Text))
+        {
+            button.ButtonTextClass = "form-control input-invalid-border";
+            await JS.ErrorMessage("Please provide Text for the button");
+            StateHasChanged();
+            return;
+        }
+        button.ButtonTextClass = "form-control";
+    }
+
+    private async Task HandleButtonUrlTypeChange(ChangeEventArgs e, TemplateButtonPageModel button)
+    {
+        int urlType = Convert.ToInt32(e.Value);
+        if (urlType == 0)
+        {
+            await JS.ErrorMessage("Please choose a url type");
+            button.ButtonUrlTypeClass = "input-invalid-border form-control form-select";
+            StateHasChanged();
+            return;
+        }
+
+        button.ButtonUrlTypeClass = "form-control form-select";
+        button.UrlType = urlType;
+        SetOrRemoveUrlAndDynamicVariable(button);
+    }
+
+    private async Task HandleButtonUrlChange(ChangeEventArgs e, TemplateButtonPageModel button)
+    {
+        button.Url = Convert.ToString(e.Value);
+        if (string.IsNullOrEmpty(button.Url))
+        {
+            button.ButtonUrlClass = "input-invalid-border form-control";
+            await JS.ErrorMessage("Please provide Url for the button");
+            return;
+        }
+        button.ButtonUrlClass = "form-control";
+        SetOrRemoveUrlAndDynamicVariable(button);
+    }
+
+    private void SetOrRemoveUrlAndDynamicVariable(TemplateButtonPageModel button)
+    {
+        if (button.UrlType == (int)WhatsappTemplateButtonUrlType.DYNAMIC)
+        {
+            if (button.ButtonVariable is null)
+            {
+                button.ButtonVariable = new()
+                    {
+                        Section = (int)WhatsappTemplateVariableSection.BUTTON,
+                        OrderNo = 1,
+                        VariableNameClass = "form-control input-invalid-border",
+                        SampleValueClass = "form-control input-invalid-border"
+                    };
+            }
+            //Adding /{{1}} to the url
+
+            try
+            {
+                button.Url = button.Url is not null && !button.Url.Contains("/{{1}}") ?
+                    button.Url + "/{{1}}" : button.Url;
+            }
+            catch (Exception e) { }
+        }
+
+        if (button.UrlType == (int)WhatsappTemplateButtonUrlType.STATIC)
+        {
+            button.ButtonVariable = null;
+            //Removing /{{1}} from the url
+            button.Url = button.Url is not null && button.Url.Contains("/{{1}}") ?
+            button.Url.Replace("/{{1}}", "") : button.Url;
+        }
+        StateHasChanged();
+    }
+
+    private async Task HandleButtonPhoneChange(ChangeEventArgs e, TemplateButtonPageModel button)
+    {
+        button.Phone = Convert.ToString(e.Value);
+        if (string.IsNullOrEmpty(button.Phone))
+        {
+            button.PhoneClass = "input-invalid-border form-control";
+            await JS.ErrorMessage("Please provide phone number for the button");
+            return;
+        }
+        button.PhoneClass = "form-control";
+    }
+
+    private async Task RemoveButton(TemplateButtonPageModel button)
+    {
+        if (Model.Buttons is not null && await JS.Confirm("Confirm", "Are you sure you want to remove the button from template..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel"))
+        {
+            Model.Buttons.Remove(button);
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateButton(TemplateButtonPageModel button)
+    {
+        try
+        {
+            if (await API.ValidateModel<TemplateButtonPageModel>(button))
+            {
+                var result = await API.PostAsync<BaseSuccessResponse, TemplateButtonPageModel>("whatsapp/v2/save-template-button", button);
+            }
+            else
+            {
+                await JS.ErrorMessage("Please provide required datas for button");
+            }
+        }
+        catch (Exception e)
+        {
+
+        }
+    }
+
+    #endregion
+
+    #region Variable Related functions
+
+    private async Task HandleVariableNameChange(ChangeEventArgs e, TemplateVariablePageModel variable)
+    {
+        variable.VariableName = Convert.ToString(e.Value);
+        if (string.IsNullOrEmpty(variable.VariableName))
+        {
+            variable.VariableNameClass = "input-invalid-border form-control";
+            await JS.ErrorMessage("Please provide name for the variable");
+        }
+        else
+        {
+            variable.VariableNameClass = "form-control";
+        }
+
+        switch (variable.Section)
+        {
+            case (int)WhatsappTemplateVariableSection.HEADER:
+                GenerateHeaderTextView();
+                break;
+
+            case (int)WhatsappTemplateVariableSection.BODY:
+                GenerateBodyTextView();
+                break;
+
+        }
+    }
+
+    private async Task HandleVariableSampleValueChange(ChangeEventArgs e, TemplateVariablePageModel variable)
+    {
+        variable.SampleValue = Convert.ToString(e.Value);
+        if (string.IsNullOrEmpty(variable.SampleValue))
+        {
+            variable.SampleValueClass = "input-invalid-border form-control";
+            await JS.ErrorMessage("Please provide name for the variable");
+        }
+        else
+        {
+            variable.SampleValueClass = "form-control";
+        }
+
+        switch (variable.Section)
+        {
+            case (int)WhatsappTemplateVariableSection.HEADER:
+                GenerateHeaderTextView();
+                break;
+
+            case (int)WhatsappTemplateVariableSection.BODY:
+                GenerateBodyTextView();
+                break;
+
+        }
+    }
+
+    private async Task UpdateVariable(TemplateVariablePageModel variable)
+    {
+        if (await API.ValidateModel<TemplateVariablePageModel>(variable))
+        {
+            var result = await API.PostAsync<BaseSuccessResponse, TemplateVariablePageModel>("whatsapp/v2/save-template-variable", variable);
+        }
+        else
+        {
+            await JS.ErrorMessage("Please provide required datas for variable");
+        }
+    }
+
+    #endregion
+}
+
+

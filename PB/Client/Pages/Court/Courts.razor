@@ -1,0 +1,136 @@
+﻿@page "/courts"
+
+@using PB.Shared.Models;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Court;
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="CourtFilterSettings" OnFilterButtonClick="FilterListPageTo"/>
+                </div>
+                <div class="card-body">
+                    <table class="table border text-nowrap text-md-nowrap table-hover ">
+                        <thead>
+                            <tr>
+                                <th>
+                                    Sl No.
+                                </th>
+                                <th>
+                                    Court Name
+                                </th>
+                                <th>
+                                    Hall
+                                </th>
+                                <th>
+                                    Game 
+                                </th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in CourtListModel.Data.Select((data, index) => new { index, data }))
+                            {
+                                <tr @onclick="@(()=>Nav.NavigateTo($"court-view/{item.data.CourtID}"))" style="cursor:pointer">
+                                    <td>
+                                        @((CourtListModel.PageIndex - 1) * CourtListModel.PageSize + 1 + item.index)
+                                    </td>
+                                    <td>
+                                        @item.data.CourtName
+                                    </td>
+                                    <td>
+                                        @item.data.HallName
+                                    </td>
+                                    <td>@item.data.GameName</td>
+
+                                </tr>
+
+                            }
+
+                        </tbody>
+                    </table>
+                    <PaginationCustom PageSize="CourtListModel.PageSize" TotalCount="CourtListModel.TotalCount" TotalPages="CourtListModel.TotalPages" PageIndex="CourtListModel.PageIndex" LoadPageIndex="PageIndex" />
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</PageLayoutNew>
+
+
+@code {
+    [Parameter] public int? HallID { get; set; }
+    private PagedList<CourtModel> CourtListModel = new();
+    private PagedListPostModelWithFilter SearchModel = new();
+
+    private CourtModel NewCourt = new();
+
+    private DropdownSelect? GameMasterDrowpdownSelect;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourtData();
+    }
+    #region Sort, Filter
+
+    HeaderSettingsModel CourtFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by Court",
+            NeedSortOption = false,
+            NeedFilterOption = false,
+            // SortMenuItems = stage1SortMenuItems,
+
+            DateFilters = null,
+            Heading = "Court",
+            SinglePageURL = "court",
+            AddButtonText = "New Court",
+        };
+
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        SearchModel = filterModel == null ? new() : filterModel;
+        await LoadCourtData();
+    }
+
+    private async Task PageIndex(int pageIndex)
+    {
+        SearchModel.PageIndex = pageIndex;
+        await LoadCourtData();
+    }
+    private async Task ShowModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "CourtModal");
+    }
+    private async Task HideModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "CourtModal");
+    }
+    #endregion
+    private async Task LoadCourtData()
+    {
+
+        CourtListModel = await API.PostAsync<PagedList<CourtModel>, PagedListPostModelWithFilter>("court/get-court-list", SearchModel);
+
+    }
+    private async Task SaveCourt()
+    {
+        
+    }
+
+    #region Dropdown Related functions
+
+    private async Task ItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+       
+        NewCourt.GameID = data.ID;
+        NewCourt.GameName = data.Value;
+        await GameMasterDrowpdownSelect.RefreshList();
+               
+
+    }
+
+    #endregion
+}

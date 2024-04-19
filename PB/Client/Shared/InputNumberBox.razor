@@ -1,0 +1,30 @@
+﻿@using System.Text.RegularExpressions;
+@using System.Linq.Expressions;
+@typeparam TNumber
+@inherits InputNumber<TNumber>
+
+<div class="@DivClass">
+    <div class="@FormGroupClass">
+        <label class="form-label mt-0 me-1" style="text-align:left;">
+            @Label
+            @if (IsRequired)
+            {
+                <span style="color:red">*</span>
+            }
+        </label>
+        <input class="form-control " placeholder="@PlaceHolder" value="@CurrentValue" @attributes="AdditionalAttributes" @oninput="EventCallback.Factory.CreateBinder<string>(this, __value => CurrentValueAsString = __value,CurrentValueAsString)">
+        @if (ValidationFor != null)
+        {
+            <ValidationMessage For="@ValidationFor" />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? DivClass { get; set; } = "col-md-12";
+    [Parameter] public Expression<Func<TNumber>>? ValidationFor { get; set; }
+    [Parameter] public string? PlaceHolder { get; set; } = "";
+    [Parameter] public string FormGroupClass { get; set; } = "form-group";
+    [Parameter] public bool IsRequired { get; set; } = false;
+}

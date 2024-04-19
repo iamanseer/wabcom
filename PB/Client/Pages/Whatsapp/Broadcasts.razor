@@ -1,0 +1,207 @@
+﻿@page "/broadcasts"
+@using PB.Model.Models;
+@using PB.Shared.Tables
+@using System.IO;
+@using PB.Shared.Models.Common
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row page-header ">
+
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header py-2">
+                        <ListPageHeader Settings="ItemFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)ApplyFilterToData" />
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="table-responsive">
+                                <table class="table border text-nowrap text-md-nowrap table-hover mb-0 ">
+                                    <thead>
+                                        <tr>
+                                            <th>SlNo</th>
+                                            <th scope="col">@Localizer["Broadcast Name"]</th>
+                                            <th scope="col">@Localizer["Date"]</th>
+                                            <th scope="col">@Localizer["Template"]</th>
+                                            <th scope="col">@Localizer["Total Recipients"]</th>
+                                            <th scope="col">@Localizer["Sent"]</th>
+                                            <th scope="col">@Localizer["Delivered"]</th>
+                                            <th scope="col">@Localizer["Read"]</th>
+                                            <th scope="col">@Localizer["Failed"]</th>
+                                            <th scope="col" class="text-center">@Localizer["Action"]</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in MessageList.Data.Select((data, index) => new { index, data }))
+                                        {
+                                            <tr>
+                                                <td>
+                                                    @((MessageList.PageIndex - 1) * MessageList.PageIndex + 1 + item.index)
+                                                </td>
+                                                <td>
+                                                    @item.data.BroadcastName
+                                                </td>
+                                                <td>
+                                                    @item.data.Date.Value.ToString("dd/MM/yyyy")
+                                                </td>
+                                                <td>
+                                                    @item.data.TemplateName
+                                                </td>
+                                                <td>
+                                                    @item.data.TotalRecipients
+                                                </td>
+                                                <td>
+                                                    @item.data.Sent
+                                                </td>
+                                                <td>
+                                                    @item.data.Delivered
+                                                </td>
+                                                <td>
+                                                    @item.data.Read
+                                                </td>
+                                                <td>
+                                                    @item.data.Failed
+                                                </td>
+                                                <td style="width:110px">
+                                                    @if (!item.data.IsSent)
+                                                    {
+                                                        <button type="button" align="center" class="btn btn-dark waves-effect waves-light me-1" @onclick="()=>SendMessage(item.data)">Send</button>
+                                                    }
+                                                    <button type="button" align="center" class="btn btn-dark waves-effect waves-light" @onclick="()=>Edit(item.data.BroadcastID)"><i class="fa fa-eye"></i></button>
+                                                    <button type="button" align="center" class="btn btn-dark waves-effect waves-light" @onclick="()=>Delete(item.data.BroadcastID)"><i class="fa fa-trash"></i></button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        </div>
+                        <Pagination PageSize="MessageList.PageSize" PageIndex="MessageList.PageIndex" TotalPages="MessageList.TotalPages" LoadPageIndex="LoadMessagePageIndex"></Pagination>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+@code {
+    private BroadcastSearchModel MessageListSearchModel = new();
+    private PagedList<MessageListModel> MessageList = new();
+
+    CreateBroadcastModel Model = new() { MessageSendingTypes = (int)MessageSendingTypes.SendImmediately };
+
+    #region Filter And Sort
+
+    HeaderSettingsModel ItemFilterSettings = new()
+        {
+            SearchPlaceHolder = "Search by broadcast..",
+            Heading = "Broadcasts",
+            AddButtonText = "Broadcast",
+            SinglePageURL = "broadcast",
+            NeedFilterOption = true,
+            NeedSortOption = true,
+        };
+
+    List<FilterSortInputModel> sortInputModel = new()
+    {
+        new()
+        {
+            FieldName = "T.BroadcastName",
+            DisplayName = "Broadcast Name"
+        },
+        new ()
+        {
+            FieldName = "T.AddedOn",
+            DisplayName = "Date"
+        },
+        new ()
+        {
+            FieldName = "C.TemplateName",
+            DisplayName = "Template Name"
+        },
+    };
+
+    List<FilterIdnValueInputModel> filterIdnValueItems = new()
+    {
+        new()
+        {
+            FiledName = "C.TemplateID",
+            DisplayName = "Template Name",
+            CustomOptionApiPath = "whatsapp/get-templates",
+            IsGet = true,
+        }
+    };
+
+    List<FilterDateInputModel> filterDateInputModel = new()
+    {
+        new()
+        {
+            FieldName = "T.AddedOn",
+            DisplayName = "Date",
+        }
+    };
+
+    private async Task ApplyFilterToData(PagedListPostModelWithFilter searchModel)
+    {
+        if (searchModel is not null)
+        {
+            MessageListSearchModel.FilterByIdOptions = searchModel.FilterByIdOptions;
+            MessageListSearchModel.FilterByFieldOptions = searchModel.FilterByFieldOptions;
+            MessageListSearchModel.FilterByBooleanOptions = searchModel.FilterByBooleanOptions;
+            MessageListSearchModel.FilterByDateOptions = searchModel.FilterByDateOptions;
+            MessageListSearchModel.OrderByFieldName = searchModel.OrderByFieldName;
+            MessageListSearchModel.SearchString = searchModel.SearchString;
+        }
+        else
+        {
+            MessageListSearchModel = new();
+        }
+        await LoadMessageListData();
+    }
+
+    #endregion
+
+    protected override async Task OnInitializedAsync()
+    {
+        ItemFilterSettings.IdnValueFilters = filterIdnValueItems;
+        ItemFilterSettings.DateFilters = filterDateInputModel;
+        ItemFilterSettings.SortMenuItems = sortInputModel;
+
+        await LoadMessageListData();
+    }
+
+    private async Task LoadMessageListData()
+    {
+        MessageList = await API.PostAsync<PagedList<MessageListModel>, BroadcastSearchModel>("whatsapp/get-broadcast-list", MessageListSearchModel, true);
+    }
+
+    private async Task LoadMessagePageIndex(int pageIndex)
+    {
+        MessageListSearchModel.PageIndex = pageIndex;
+        await LoadMessageListData();
+    }
+
+    void Edit(int id)
+    {
+        Nav.NavigateTo($"broadcast-recipients/{id}");
+    }
+
+    async Task Delete(int id)
+    {
+        if (await API.DeleteAsync("whatsapp/delete-broadcast", id, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadMessageListData();
+        }
+    }
+
+    async Task SendMessage(MessageListModel data)
+    {
+
+        var res = await API.GetAsync<BaseSuccessResponse>($"whatsapp/v2/schedule-broadcast/{data.BroadcastID}");
+        if (res != null)
+        {
+            data.IsSent = true;
+        }
+    }
+}

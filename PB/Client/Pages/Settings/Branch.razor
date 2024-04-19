@@ -1,0 +1,348 @@
+﻿@page "/branch"
+@page "/branch/{BranchId:int}"
+
+@using PB.Shared.Models;
+@using PB.CRM.Model.Enum;
+@using PB.Model.Models;
+@using System.ComponentModel.DataAnnotations;
+@using PB.Shared.Models.Common;
+
+@*<PageLayoutNew NeedPageHeader PageName="Branch"
+            NeedAddButton="false"
+            NeedPageFooterSection="true"
+            PrimaryButtonText="Save Branch" OnPrimaryButtonClick="SaveBranch"
+            SecondaryButtonText="Go Back" OnSecondaryButtonClick="GoBack"
+            NeedDeleteButton="needDeleteOption" DeleteButtonText="Delete Branch" OnDeleteButtonClick="DeleteBranch"
+            NeedFooterBanner="false">*@
+<PageLayoutNew>
+        <EditForm Model="Model" OnValidSubmit="SaveBranch">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6>
+                        Branch Details
+                    </h6>
+                </div>
+                <div class="card-body">@*
+                    <EditForm Model="Model" OnValidSubmit="SaveBranch">
+                        <DataAnnotationsValidator />*@
+                        <div class="row">
+                            <InputTextBox DivClass="col-md-7"
+                                          Label="BranchName :"
+                                          IsRequired="true"
+                                          PlaceHolder="Branch Name"
+                                          @bind-Value="Model.BranchName"
+                                          type="text"
+                                          ValidationFor="() => Model.BranchName" />
+
+                            <InputTextBox DivClass="col-md-7"
+                                          Label="Mobile :"
+                                          IsRequired="true"
+                                          PlaceHolder="Branch mobile number"
+                                          @bind-Value="Model.Phone"
+                                          type="text"
+                                          ValidationFor="() => Model.Phone" />
+
+                            <InputTextBox DivClass="col-md-7"
+                                          Label="Alternative Mobile :"
+                                          PlaceHolder="Alternative mobile number"
+                                          @bind-Value="Model.Phone2"
+                                          type="text"
+                                          ValidationFor="() => Model.Phone2" />
+
+                            <InputTextBox DivClass="col-md-7"
+                                          Label="Email :"
+                                          IsRequired="true"
+                                          PlaceHolder="Branch e-mail"
+                                          @bind-Value="Model.EmailAddress"
+                                          type="text"
+                                          ValidationFor="() => Model.EmailAddress" />
+
+                            <InputTextBox DivClass="col-md-7"
+                                          Label="Contact Person :"
+                                          IsRequired="true"
+                                          PlaceHolder="Authorized person"
+                                          @bind-Value="Model.ContactPerson"
+                                          type="text"
+                                          ValidationFor="() => Model.ContactPerson" />
+
+                            <InputTextBox DivClass="col-md-7"
+                                          Label="Contact Number :"
+                                          IsRequired="true"
+                                          PlaceHolder="Authorized person's mobile"
+                                          @bind-Value="Model.ContactPersonMobile"
+                                          type="text"
+                                          ValidationFor="() => Model.ContactPersonMobile" />
+
+                            <InputTextBox DivClass="col-md-7"
+                                          Label="Contact Email :"
+                                          IsRequired="true"
+                                          PlaceHolder="Authorized person's e-mail"
+                                          @bind-Value="Model.ContactEmail"
+                                          type="text"
+                                          ValidationFor="() => Model.ContactEmail" />
+
+                        </div>
+
+                        <div class="divider my-2"></div>
+
+                        <div class="row">
+
+                            <div class="col-12">
+                                <div class="my-4 d-flex flex-column" style="pointer-events:none">
+                                    <label class="form-check-label fs-13 fw-semibold text-muted"> BRANCH ADDRESS</label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-7">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">
+                                        Address Line 1 :
+                                        <span class="ms-2" style="color:red">*</span>
+                                    </label>
+                                    <textarea class="textarea form-control" id="address-line-2-text-area" rows="2" @bind="Model.AddressLine1"></textarea>
+                                    <ValidationMessage For="() => Model.AddressLine1" />
+                                </div>
+                            </div>
+
+                            <div class="col-md-7">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1">
+                                        Address Line 1:
+                                        <span class="ms-2" style="color:red">*</span>
+                                    </label>
+                                    <textarea class="textarea form-control" id="address-line-2-text-area" rows="2" @bind="Model.AddressLine2"></textarea>
+                                    <ValidationMessage For="() => Model.AddressLine2" />
+                                </div>
+                            </div>
+
+                            <InputTextBox DivClass="col-md-7"
+                                          Label="Pincode :"
+                                          IsRequired="true"
+                                          PlaceHolder="Pincode for the company"
+                                          ValidationFor="() => Model.Pincode"
+                                          @bind-Value="Model.Pincode"
+                                          type="text" />
+
+
+                            <!--COUNTRY-->
+                            <DropdownSelect DivClass="col-md-7"
+                                            DropdownID="@CountryDropDownID"
+                                            Label="Country :"
+                                            Mode="(int)DropdownModes.Country"
+                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                            ItemSelected="DropdownItemSelected"
+                                            IsRequired="true"
+                                            ReadDataOnSearch="true"
+                                            SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})" />
+
+
+                            <!--STATE-->
+                            <DropdownSelect DivClass="col-md-7"
+                                            DropdownID="@StateDropdownID"
+                                            Label="State : "
+                                            IsRequired="true"
+                                            ReadDataOnSearch="true"
+                                            Mode="(int)DropdownModes.State"
+                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                            ItemSelected="DropdownItemSelected"
+                                            CommonSearch="@(new CommonSearchModel(){ID=Convert.ToInt32(Model.CountryID)})"
+                                            SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.StateID,Value=Model.StateName})"
+                                            IsAddOptionNeed="true"
+                                            NewButtonText="Add New State"
+                                            NewButtonClicked="AddNewButtonClicked" />
+                        </div>
+
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+    </div>
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <!--Validation errors-->
+        <div class="alert alert-danger py-1 error-message-div-page" role="alert" style="position:fixed;bottom: 68px;background-color: rgb(238 200 210);">
+            @errorMessage
+        </div>
+    }
+    <div id="divError-1" class="alert alert-danger py-1 d-none error-message-div-page" role="alert" style="position:fixed;bottom: 68px;background-color: rgb(238 200 210);">
+        <!--Bad requests-->
+    </div>
+
+            <div class="page-footer-action d-flex">
+                <button type="button" class="btn btn-primary me-2" @onclick="async () => await SaveBranch()">Save</button>
+                <a class="btn btn-danger me-2" @onclick="GoBack">Go Back</a>
+                <a class="btn btn-secondary me-2" @onclick="DeleteBranch">Delete</a>
+                
+            </div>
+    </EditForm>
+    </PageLayoutNew>
+
+<ModalState @ref="@stateChildModal" CallbackWithIdnValue="StateAdded" />
+
+@code {
+
+    [Parameter] public int BranchId { get; set; }
+
+    private bool needDeleteOption = false;
+
+    private string? errorMessage = "";
+
+    string CountryDropDownID = "country-drop-down-list";
+    string StateDropdownID = "state-drop-down-list";
+
+    private DropdownSelect? StateSelect;
+    private DropdownSelect? CitySelect;
+    private ModalState? stateChildModal;
+
+    private BranchModel Model = new();
+
+    private static System.Timers.Timer _Timer;
+    private TimeSpan errorMessageDuration = TimeSpan.FromSeconds(7);
+    private TimeSpan RemainingTime;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (BranchId != 0)
+        {
+            needDeleteOption = true;
+            Model = await API.GetAsync<BranchModel>($"branch/get-branch-details/{BranchId}");
+        }
+        Model = Model ?? new BranchModel();
+
+        _Timer = new System.Timers.Timer();
+        _Timer.Interval = 1000; // 1 second
+        _Timer.Elapsed += CountDownTimer;
+
+    }
+
+    async Task SaveBranch()
+    {
+        if (ValidateModel())
+        {
+            var response = await API.PostAsync<BranchAddResultModel, BranchModel>("branch/save-branch", Model);
+            if (response != null)
+            {
+                Nav.NavigateTo($"branch-view/{response.BranchID}");
+            }
+        }
+    }
+
+    private async Task DeleteBranch()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete this branch.?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            if(await API.GetAsync<bool>($"branch/delete-branch/{Model.BranchID}"))
+            {
+                Nav.NavigateTo("branches");
+            }
+        }
+    }
+
+    private async Task GoBack()
+    {
+        if(await JS.Confirm("Confirm","Are you sure you want to leave this page.?",SweetAlertMessageType.question,"Yes, Leave","No, Cancel"))
+        {
+            if(Model.BranchID != 0)
+            {
+                Nav.NavigateTo($"branch-view/{Model.BranchID}");
+            }
+            else
+            {
+                Nav.NavigateTo("branches");
+            }
+        }
+    }
+
+    async Task DropdownItemSelected(DropdownItemSelectedCallbackModel data)
+    {
+        switch (data.DropdownMode)
+        {
+            case (int)DropdownModes.Country:
+                Model.CountryID = data.ID;
+                Model.CountryName = data.Value;
+                await StateSelect.RefreshList();
+
+                break;
+
+            case (int)DropdownModes.State:
+
+                Model.StateID = data.ID;
+                Model.StateName = data.Value;
+                await CitySelect.RefreshList(Model.StateID);
+                break;
+
+        }
+    }
+
+    #region State
+
+    async Task AddNewButtonClicked()
+    {
+        await stateChildModal.OpenStateModal(Model.CountryID, Model.CountryName);
+    }
+
+    private void StateAdded(IdnValuePair state)
+    {
+        Model.StateID = state.ID;
+        Model.StateName = state.Value;
+    }
+
+    #endregion
+
+    #region Validation
+
+    private bool ValidateModel()
+    {
+        var validationContext = new System.ComponentModel.DataAnnotations.ValidationContext(Model);
+        List<ValidationResult> validationResults = new List<ValidationResult>();
+
+        Validator.TryValidateObject(Model, validationContext, validationResults, validateAllProperties: true);
+
+        if (validationResults.Count != 0)
+        {
+            errorMessage = validationResults.First().ErrorMessage;
+            RemainingTime = errorMessageDuration;
+            _Timer.Start();
+            return false;
+        }
+        else
+        {
+            return true;
+        }
+    }
+
+    #endregion
+
+    #region Timer
+
+    private void StartTimer()
+    {
+        _Timer = new System.Timers.Timer(1000);
+        _Timer.Elapsed += CountDownTimer;
+        _Timer.Enabled = true;
+    }
+
+    private void CountDownTimer(Object? source, System.Timers.ElapsedEventArgs? e)
+    {
+        if (RemainingTime.TotalSeconds > 0)
+        {
+            RemainingTime = RemainingTime.Subtract(TimeSpan.FromSeconds(1));
+        }
+        else
+        {
+            errorMessage = null;
+            _Timer.Stop();
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    #endregion
+}

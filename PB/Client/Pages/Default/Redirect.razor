@@ -1,0 +1,23 @@
+﻿@page "/redirect/{url}"
+@page "/redirect/{url}/{id:int}"
+@page "/redirect/{url}/{stringText}"
+
+@code {
+    [Parameter] public string URL { get; set; }
+    [Parameter] public int Id { get; set; }
+    [Parameter] public string? stringText { get; set; }
+    protected override void OnInitialized()
+    {
+        if(Id!=0)
+        {
+            Nav.NavigateTo($"{URL}/{Id}");
+        }
+        else if(!string.IsNullOrEmpty(stringText))
+        {
+            Nav.NavigateTo($"{URL}/{stringText}");
+        }
+        else
+            Nav.NavigateTo($"{URL}");
+
+    }
+}

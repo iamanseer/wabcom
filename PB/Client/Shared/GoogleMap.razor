@@ -1,0 +1,33 @@
+﻿<div class="col-12" id="map" style="height:300px"></div>
+
+<button type="button" id="setLocation" @onclick='async (e) => await JS.InvokeVoidAsync("UpdateLocation", DotNetObjectReference.Create(this))' class="d-none">Set Location</button>
+
+@code {
+
+	[Parameter] public double? Lat { get; set; }
+	[Parameter] public double? Long { get; set; }
+	[Parameter] public EventCallback<(double?, double?)> LocationChanged { get; set; }
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			await JS.InvokeVoidAsync("Mapinit", Lat, Long);
+		}
+	}
+
+	[JSInvokable("UpdateLocation")]
+	public async Task ChangeValue(string lat, string lon)
+	{
+		try
+		{
+			Lat = Convert.ToDouble(lat);
+			Long = Convert.ToDouble(lon);
+			StateHasChanged();
+			await LocationChanged.InvokeAsync((Lat, Long));
+
+		}
+		catch { }
+	}
+
+}

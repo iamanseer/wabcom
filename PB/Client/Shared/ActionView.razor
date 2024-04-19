@@ -1,0 +1,11 @@
+﻿
+<a @onclick="async () => await Clicked.InvokeAsync()">
+    <i class="fe fe-eye">
+
+    </i>
+</a>
+
+@code {
+    [Parameter] public EventCallback Clicked { get; set; }
+
+}

@@ -1,0 +1,162 @@
+﻿@page "/ec-item-categories"
+@using PB.Client.Shared.Inventory.Item
+@using PB.Shared.Models.eCommerce.Product
+@using PB.Shared.Models.Common
+
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    @if (IsHeaderReady)
+                    {
+                        <ListPageHeader Settings="CategoryHeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" OnAddButtonClick="async () => await OpenItemCategoryModal()" />
+                    }
+                </div>
+                <div class="card-body">
+                    <div class="row mt-2">
+                        <div class="table-responsive">
+
+                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Sl No</th>
+                                        <th>
+                                            Category Name
+                                        </th>
+                                        <th>
+                                            Parent name
+                                        </th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in ItemCategoryList.Data.Select((data, index) => new { index, data }))
+                                    {
+                                        <tr>
+                                            <td>
+                                                @((ItemCategoryList.PageIndex - 1) * ItemCategoryList.PageSize + 1 + item.index)
+                                            </td>
+                                            <td>
+                                                @item.data.CategoryName
+                                            </td>
+                                            <td>
+                                                @(item.data.ParentCategoryName is null ? "" : item.data.ParentCategoryName)
+                                            </td>
+                                            <td style="width:100px;">
+                                                <ActionEdit Clicked="async () =>await OpenItemCategoryModal(item.data.CategoryID)" />
+                                                <ActionDelete Clicked="async () =>await HandleRemoveCategoryButtonClick(item.data.CategoryID)" />
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+
+                            <PaginationCustom PageSize="ItemCategoryList.PageSize" TotalCount="ItemCategoryList.TotalCount" TotalPages="ItemCategoryList.TotalPages" PageIndex="ItemCategoryList.PageIndex" LoadPageIndex="PageIndex" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
+
+<ModalItemCategory @ref="@modalItemCategory" Saved="async () => await HandleItemCategoryAdded()" />
+@code {
+    private PagedList<EC_ItemCategoryViewModel> ItemCategoryList = new();
+    private PagedListPostModelWithFilter searchmodel = new();
+    HeaderSettingsModel CategoryHeaderSettings = new();
+    private bool IsHeaderReady = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        CategoryHeaderSettings = new()
+            {
+                Heading = "Item Categories",
+                SearchPlaceHolder = "Search by category name..",
+                NeedAddButton = true,
+                NeedSortOption = true,
+                SortMenuItems = SortMenuItems,
+                NeedFilterOption = true,
+                // IdnValueFilters = FilterInputItems,
+                AddButtonText="Category"
+                
+            };
+        IsHeaderReady = true;
+        await LoadData();
+    }
+
+    List<FilterIdnValueInputModel> FilterInputItems = new()
+        {
+            new()
+            {
+                DisplayName = "Categories",
+                FiledName = "C.CategoryID",
+                CustomOptionApiPath = "ec_common/get-list-of-ec-item-category"
+            },
+            new()
+            {
+                DisplayName = "Parent Categories",
+                FiledName = "P.CategoryID",
+                CustomOptionApiPath = "ec_common/get-list-of-ec-item-category"
+            }
+        };
+    List<FilterSortInputModel> SortMenuItems = new()
+        {
+            new()
+            {
+                DisplayName = "Category Name",
+                FieldName = "C.CategoryName"
+            },
+            new()
+            {
+                DisplayName = "Parent Category Name",
+                FieldName = "P.CategoryName"
+            }
+        };
+    private async Task LoadData()
+    {
+        ItemCategoryList = await API.PostAsync<PagedList<EC_ItemCategoryViewModel>, PagedListPostModelWithFilter>("product/get-ec-item-category-paged-list", searchmodel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        searchmodel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        searchmodel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+
+    #region Category Modal
+
+    private ModalItemCategory? modalItemCategory;
+    private bool IsItemCategorySettingsReady = false;
+
+    private async Task OpenItemCategoryModal(int categoryID = 0)
+    {
+        modalItemCategory = modalItemCategory ?? new();
+        await modalItemCategory.OpenItemCategoryModal(categoryID);
+    }
+    private async Task HandleItemCategoryAdded()
+    {
+        await LoadData();
+    }
+    private async Task HandleRemoveCategoryButtonClick(int itemCategoryID)
+    {
+        if (await API.DeleteAsync("product/delete-ec-item-category", itemCategoryID, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadData();
+        }
+    }
+
+
+    #endregion
+}
+
+
+

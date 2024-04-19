@@ -1,0 +1,576 @@
+﻿@page "/invoice-type"
+@page "/invoice-type/{InvoiceTypeID:int}"
+@using PB.CRM.Model.Enum;
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.Inventory.Invoice;
+
+<PageLayoutNew>
+    <EditForm Model="Model" OnValidSubmit="SaveInvoiceType">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="row page-header ">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between">
+                            <div>
+                                <h5 style="margin-bottom: 0 !important;">Invoice Type</h5>
+                            </div>
+                        </div>
+                        <div class="card-body">
+
+                            <div class="row">
+                                <InputTextBox Label="Invoice type name :"
+                                              DivClass="col-md-7" @bind-Value="Model.InvoiceTypeName" @onchange="(ChangeEventArgs e)=>HandleInviceTypeNameChanged(e)"
+                                              ValidationFor="() => Model.InvoiceTypeName" />
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label" style="text-align: left; margin-top: 0 !important;">Invoice Type Nature :</label>
+                                        <select name="narration-typ" class="form-control form-select" @onchange="(ChangeEventArgs e) => HandleInviceTypeNatureSelected(e)">
+                                            <option value="0" selected> Choose </option>
+                                            <option value="@((int)InvoiceTypeNatures.Sales)"> Sales </option>
+                                            <option value="@((int)InvoiceTypeNatures.Sales_Return)"> Sales Return </option>
+                                            <option value="@((int)InvoiceTypeNatures.Purchase)"> Purchase </option>
+                                            <option value="@((int)InvoiceTypeNatures.Purchase_Return)"> Purchase Return </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Prefix :</label>
+                                        <div class="input-group">
+                                            @if (InvoiceTypeID != 0)
+                                            {
+                                                <input type="text" class="form-control" @bind="Model.Prefix" style="pointer-events:none" disabled>
+                                            }
+                                            else
+                                            {
+                                                <input type="text" class="form-control" @bind="Model.Prefix">
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row position-relative pb-3">
+
+                                <DropdownSelect DivClass="col-md-7"
+                                                DropdownID="branch-dropdown-select"
+                                                Label="Ledger :"
+                                                ItemSelected="HandleItemSelected"
+                                                IsRequired="true"
+                                                Mode="@((int)DropdownModes.Ledger)"
+                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                ReadDataOnSearch="false"
+                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.LedgerID, Value = Model.LedgerName})" />
+                                <div class="validation-for-dropdown">
+                                    <ValidationMessage For="()=>Model.LedgerID" />
+                                </div>
+
+                            </div>
+                            @if (Model.IsAdmin)
+                            {
+                                <div class="row position-relative pb-3">
+
+                                    <DropdownSelect DivClass="col-md-7"
+                                                    DropdownID="branch-dropdown-select"
+                                                    Label="Branch :"
+                                                    ItemSelected="HandleItemSelected"
+                                                    IsRequired="true"
+                                                    Mode="@((int)DropdownModes.Branch)"
+                                                    ModeGroup="(int)DropdownModes.CommonSearch"
+                                                    ReadDataOnSearch="false"
+                                                    SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.BranchID, Value = Model.BranchName})" />
+                                    <div class="validation-for-dropdown">
+                                        <ValidationMessage For="()=>Model.BranchID" />
+                                    </div>
+
+                                </div>
+                            }
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label" style="text-align: left; margin-top: 0 !important;">Numbering Type :</label>
+                                        <select name="narration-type" class="form-control form-select" @bind="Model.NumberingTypeID">
+                                            <option value="0" selected> Choose </option>
+                                            @foreach (var item in Enum.GetValues(typeof(VoucherNumberingTypes)))
+                                            {
+                                                if (Model.NumberingTypeID == (int)item)
+                                                {
+                                                    <option value="@((int)item)" selected>@item.ToString().Replace('_',' ')</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@((int)item)">@item.ToString().Replace('_', ' ')</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label" style="text-align: left; margin-top: 0 !important;">Periodicity :</label>
+                                        <select name="narration" class="form-control form-select" @bind="Model.PeriodicityID">
+                                            <option value="0" selected> Choose </option>
+                                            @foreach (var item in Enum.GetValues(typeof(VoucherNumberingPeriodicity)))
+                                            {
+                                                if (Model.PeriodicityID == (int)item)
+                                                {
+                                                    <option value="@((int)item)" selected>@item</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@((int)item)">@item</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+
+                                <InputNumberBox DivClass="col-md-7"
+                                                Label="Starting Number :" @bind-Value="Model.StartingNumber"
+                                                IsRequired="true" ValidationFor="() => Model.StartingNumber" />
+                            </div>
+
+                            <div class="row">
+
+                                <InputTextBox Label="Header :"
+                                              DivClass="col-md-7" @bind-Value="Model.HeaderText"
+                                              id="voucher-type-prefix-text-box" />  @*ValidationFor="() => Model.HeaderText"*@
+                            </div>
+
+                            <div class="row">
+
+                                <InputTextBox Label="Footer :"
+                                              DivClass="col-md-7" @bind-Value="Model.FooterText"
+                                              id="voucher-type-prefix-text-box" />  @*ValidationFor="() => Model.FooterText"*@
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Remarks:</label>
+                                        <textarea class="textarea form-control" id="voucher-type-remarks-text-area" rows="4" @bind="Model.Remarks"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+                </div>
+
+                <div class="col-12 mt-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="margin-bottom: 0 !important;">Invoice Charge</h5>
+                        </div>
+                        <div class="card-body">
+
+                            <div class="row my-4">
+                                <div class="col-md-12 position-relative" style="min-height: 50px;">
+                                    <!--Add button-->
+                                    <div class="position-absolute pe-3" style="top: 0px;right: 0px;">
+                                        <button type="button" class="btn btn-primary" @onclick="(async()=>await OpenInvoiceChargeModal())">
+                                            <i class="fe fe-plus me-2"></i>Add Invoice Charge
+                                        </button>
+                                    </div>
+                                    <div class="col-md-12 px-0" style="margin-top: 51px;">
+                                        <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+                                            <thead>
+                                                <tr>
+                                                    <th>Order No</th>
+                                                    <th>Charge Name</th>
+                                                    <th>Posting Ledger</th>
+                                                    <th>Operation</th>
+                                                    <th>Nature</th>
+                                                    <th>Calculattion Type</th>
+                                                    <th>Affecting Type</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+
+                                                @if (Model.InvoiceCharge != null && Model.InvoiceCharge.Count > 0)
+                                                {
+                                                    @foreach (var ec in Model.InvoiceCharge.Select((value, i) => new { i, value }))
+                                                    {
+                                                        var index = ec.i;
+                                                        var charge = ec.value;
+                                                        <tr>
+                                                            <td>
+                                                                @charge.OrderNumber
+                                                            </td>
+                                                            <td>
+                                                                @charge.ChargeName
+                                                            </td>
+                                                            <td>
+                                                                @charge.LedgerName
+                                                            </td>
+                                                            <td>
+                                                                @(charge.ChargeOperation == 1 ? "Add" : "Subtract")
+                                                            </td>
+                                                            <td>
+                                                                @(((InvoiceTypeChargeNatures)charge.ChargeNature).ToString())
+                                                            </td>
+                                                            <td>
+                                                                @(((InvoiceTypeChargeCalulationMode)charge.ChargeCalculation).ToString())
+                                                            </td>
+                                                            <td>
+                                                                @if (charge.ChargeEffect == (int)InvoiceTypeChargeEffectMode.Invoice)
+                                                                {
+                                                                    @("Invoice")
+                                                                }
+                                                                @if (charge.ChargeEffect == (int)InvoiceTypeChargeEffectMode.InvoiceItems)
+                                                                {
+                                                                    @("Invoice Items")
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                <ActionEdit Clicked="(async()=>await EditInvoiceTypeChargeItem(charge,index))" />
+                                                                <ActionDelete Clicked="(async()=>await DeleteInvoiceTypeCharge(charge))" />
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        <div class="page-footer-action d-flex justify-content-end">
+
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+            <a class="btn btn-light me-2 " @onclick="Cancel">Cancel</a>
+            @if (InvoiceTypeID != 0)
+            {
+                <a class="btn btn-danger me-2 text-white" @onclick="DeleteInvoiceType">Delete</a>
+            }
+
+        </div>
+    </EditForm>
+</PageLayoutNew>
+
+<div class="modal fade" id="ChargeModal">
+    <div class="modal-dialog modal-dialog-centered text-center modal-dialog-scrollable" role="document">
+        <div class="modal-content modal-content-demo">
+            <EditForm Model="InvoiceTypeChargeModel" OnValidSubmit="AddInvoiceTypeChargeItem" autocomplete="off">
+                <DataAnnotationsValidator />
+                <div class="modal-header">
+                    <h6 class="modal-title fw-bold">Invoice Charge</h6><button type="button" aria-label="Close" class="btn-close" @onclick="HideInvoiceChargeModal"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">Order No :</label>
+                                <input type="text" class="form-control" label="Number" @bind="InvoiceTypeChargeModel.OrderNumber" disabled>
+                            </div>
+                            <ValidationMessage For="()=>InvoiceTypeChargeModel.OrderNumber" />
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left">Charge Name :</label>
+                                <input type="text" class="form-control" label="Name" @bind="InvoiceTypeChargeModel.ChargeName">
+                            </div>
+                            <ValidationMessage For="()=>InvoiceTypeChargeModel.ChargeName" />
+                        </div>
+                        <DropdownSelect DivClass="col-md-12"
+                                        DropdownID="branch-dropdown-select"
+                                        Label="Ledger :"
+                                        ItemSelected="HandleInvoiceTypeChargeItemLedgerSelected"
+                                        IsRequired="true"
+                                        Mode="@((int)DropdownModes.Ledger)"
+                                        ModeGroup="(int)DropdownModes.CommonSearch"
+                                        ReadDataOnSearch="false"
+                                        SelectedItem="@(new DropdownSelectedItemModel(){ID = InvoiceTypeChargeModel.LedgerID, Value = InvoiceTypeChargeModel.LedgerName})" />
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label" style="text-align: left; margin-top: 0 !important;">Charge Operation :</label>
+                                <select name="narration-type" class="form-control form-select" @bind="InvoiceTypeChargeModel.ChargeOperation">
+                                    <option value="0" selected> Choose </option>
+                                    @foreach (var item in Enum.GetValues(typeof(InvoiceTypeChargeOperations)))
+                                    {
+                                        if (InvoiceTypeChargeModel.ChargeOperation == (int)item)
+                                        {
+                                            <option value="@((int)item)" selected>@item</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)item)">@item</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <ValidationMessage For="()=>InvoiceTypeChargeModel.ChargeOperation" />
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label" style="text-align: left; margin-top: 0 !important;">Charge Nature :</label>
+                                <select name="narration-type" class="form-control form-select" @bind="InvoiceTypeChargeModel.ChargeNature">
+                                    <option value="0" selected> Choose </option>
+                                    @foreach (var item in Enum.GetValues(typeof(InvoiceTypeChargeNatures)))
+                                    {
+                                        if (InvoiceTypeChargeModel.ChargeNature == (int)item)
+                                        {
+                                            <option value="@((int)item)" selected>@item</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)item)">@item</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <ValidationMessage For="()=>InvoiceTypeChargeModel.ChargeNature" />
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label" style="text-align: left; margin-top: 0 !important;">Charge Calculation :</label>
+                                <select name="narration-type" class="form-control form-select" @bind="InvoiceTypeChargeModel.ChargeCalculation">
+                                    <option value="0" selected> Choose </option>
+                                    @foreach (var item in Enum.GetValues(typeof(InvoiceTypeChargeCalulationMode)))
+                                    {
+                                        if (InvoiceTypeChargeModel.ChargeCalculation == (int)item)
+                                        {
+                                            <option value="@((int)item)" selected>@item</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)item)">@item</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <ValidationMessage For="()=>InvoiceTypeChargeModel.ChargeCalculation" />
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label" style="text-align: left; margin-top: 0 !important;">Charge Effect :</label>
+                                <select name="narration-type" class="form-control form-select" @bind="InvoiceTypeChargeModel.ChargeEffect">
+                                    <option value="0" selected> Choose </option>
+                                    @foreach (var item in Enum.GetValues(typeof(InvoiceTypeChargeEffectMode)))
+                                    {
+                                        if (InvoiceTypeChargeModel.ChargeEffect == (int)item)
+                                        {
+                                            <option value="@((int)item)" selected>@item</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@((int)item)">@item</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <ValidationMessage For="()=>InvoiceTypeChargeModel.ChargeEffect" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-primary" type="submit">Save</button>
+                    <button class="btn btn-danger" type="button" @onclick="HideInvoiceChargeModal">Close</button>
+                </div>
+
+            </EditForm>
+
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public int InvoiceTypeID { get; set; }
+    [Inject] public AuthenticationStateProvider? AuthenticationStateProvider { get; set; }
+    private InvoiceTypeModel Model = new();
+    private InvoiceTypeChargeModel InvoiceTypeChargeModel = new();
+    int Count = 0;
+    int InvoiceChargeItemRowIndex = -1;
+
+    #region InvoiceType main Function
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationStateProvider is not null)
+        {
+            var localStateProvider = (LocalAuthenticationStateProvider)AuthenticationStateProvider;
+            var authState = await localStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            bool IsAuthenticated = user.Identity is not null ? user.Identity.IsAuthenticated : false;
+            if (IsAuthenticated && user.Claims.First(claim => claim.Type == "UserTypeID").Value == ((int)UserTypes.Client).ToString())
+                Model.IsAdmin = true;
+        }
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        if (InvoiceTypeID != 0)
+        {
+            Model = await API.GetAsync<InvoiceTypeModel>($"inventory/get-invoice-type/{InvoiceTypeID}");
+        }
+    }
+
+    private void HandleInviceTypeNameChanged(ChangeEventArgs e)
+    {
+        Model.InvoiceTypeName = Convert.ToString(e.Value);
+        Model.VoucherTypeName = Model.InvoiceTypeName;
+    }
+
+    private void HandleInviceTypeNatureSelected(ChangeEventArgs e)
+    {
+        Model.InvoiceTypeNatureID = Convert.ToInt32(e.Value);
+        Model.VoucherTypeNatureID = Model.InvoiceTypeNatureID switch
+        {
+            (int)InvoiceTypeNatures.Sales => (int)VoucherTypeNatures.Sales,
+            (int)InvoiceTypeNatures.Sales_Return => (int)VoucherTypeNatures.SalesReturn,
+            (int)InvoiceTypeNatures.Purchase => (int)VoucherTypeNatures.Purchase,
+            (int)InvoiceTypeNatures.Purchase_Return => (int)VoucherTypeNatures.PurchaseReturn,
+            _ => null
+        };
+    }
+
+    private async Task SaveInvoiceType()
+    {
+        var res = await API.PostAsync<InvoiceTypeSuccessModel, InvoiceTypeModel>("inventory/save-invoice-type", Model);
+        if (res != null)
+        {
+            Nav.NavigateTo("invoice-types");
+        }
+    }
+
+    private async Task Cancel()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to leave this page.?", SweetAlertMessageType.question, "Yes, Leave", "No, Don't Leave"))
+        {
+            Nav.NavigateTo("invoice-types");
+        }
+    }
+
+    private async Task DeleteInvoiceType()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete this invoice type.?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            var res = await API.GetAsync<BaseErrorResponse>($"inventory/delete-invoice-type/{InvoiceTypeID}", true);
+            if (res != null)
+            {
+                Nav.NavigateTo("invoice-types");
+            }
+        }
+    }
+
+    #endregion
+
+    #region Drop Down Function
+
+    private async Task HandleItemSelected(DropdownItemSelectedCallbackModel item)
+    {
+        switch (item.DropdownMode)
+        {
+
+            case (int)DropdownModes.Branch:
+
+                Model.BranchID = item.ID;
+                Model.BranchName = item.Value;
+
+                break;
+            case (int)DropdownModes.Ledger:
+
+                Model.LedgerID = item.ID;
+                Model.LedgerName = item.Value;
+
+                break;
+        }
+    }
+
+    #endregion
+
+    #region Invoice Type Charge
+
+    private async Task OpenInvoiceChargeModal()
+    {
+        InvoiceChargeItemRowIndex = -1;
+        InvoiceTypeChargeModel.OrderNumber = Model.InvoiceCharge.Count + 1;
+        await JS.InvokeVoidAsync("ShowModal", "ChargeModal");
+    }
+
+    private async Task EditInvoiceTypeChargeItem(InvoiceTypeChargeModel item, int index = 0)
+    {
+        InvoiceTypeChargeModel = item;
+        InvoiceChargeItemRowIndex = index;
+        await JS.InvokeVoidAsync("ShowModal", "ChargeModal");
+    }
+
+    private async Task HideInvoiceChargeModal()
+    {
+        InvoiceTypeChargeModel = new();
+        await JS.InvokeVoidAsync("HideModal", "ChargeModal");
+    }
+
+    private async Task HandleInvoiceTypeChargeItemLedgerSelected(DropdownItemSelectedCallbackModel item)
+    {
+        switch (item.DropdownMode)
+        {
+            case (int)DropdownModes.Ledger:
+
+                InvoiceTypeChargeModel.LedgerID = item.ID;
+                InvoiceTypeChargeModel.LedgerName = item.Value;
+
+                break;
+        }
+    }
+
+    private async void AddInvoiceTypeChargeItem()
+    {
+        if (InvoiceChargeItemRowIndex == -1)
+        {
+            Model.InvoiceCharge.Add(InvoiceTypeChargeModel);
+        }
+        else
+        {
+            Model.InvoiceCharge[InvoiceChargeItemRowIndex] = InvoiceTypeChargeModel;
+        }
+        InvoiceTypeChargeModel = new();
+        await HideInvoiceChargeModal();
+    }
+
+    private async Task DeleteInvoiceTypeCharge(InvoiceTypeChargeModel item)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to delete this invoice type charge..?", SweetAlertMessageType.question, "Yes, Delete", "No, Cancel"))
+        {
+            Model.InvoiceCharge.Remove(item);
+            ReorderInvoiceTypeChargeItems(Model.InvoiceCharge);
+        }
+    }
+
+    private void ReorderInvoiceTypeChargeItems(List<InvoiceTypeChargeModel> invoiceTypeCharges)
+    {
+        var orderedInvoiceTypeCharges = invoiceTypeCharges.OrderBy(v => v.OrderNumber).ToList();
+
+        for (int i = 0; i < orderedInvoiceTypeCharges.Count; i++)
+        {
+            orderedInvoiceTypeCharges[i].OrderNumber = i + 1;
+        }
+    }
+
+    #endregion
+}

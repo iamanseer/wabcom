@@ -1,0 +1,118 @@
+﻿@page "/testimonial-list"
+@using PB.Shared.Models.Common;
+@using PB.Shared.Models.eCommerce.SEO;
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="page-header">
+            <div class="card">
+                <div class="card-header py-2">
+                    <ListPageHeader Settings="ItemHeaderSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" />
+                </div>
+                <div class="card-body">
+<div class="row mt-2">
+    <div class="table-responsive">
+        <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+            <thead>
+                <tr>
+                    <th>
+                        Sl No.
+                    </th>
+                    <th>
+                         Name
+                    </th>
+                    <th>
+                        Designation
+                    </th>
+                    <th>
+                        Comment
+                    </th>
+                   <th>
+                       Action
+                   </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in testimonialPagedList.Data.Select((value, i) => new { i, value }))
+                {
+                    var entry = item.value;
+                    var index = item.i;
+                    <tr>
+
+                        <td>
+                           @if (testimonialPagedList.PageIndex == 1)
+                            {
+                                @(index + 1)
+                            }
+                            else
+                            {
+                            @((testimonialPagedList.PageIndex * testimonialPagedList.PageSize) + (index + 1) - 10)
+                            }
+                        </td>
+                        <td>
+                            @entry.Name
+                        </td>
+                        <td>
+                            @entry.Designation
+                        </td>
+                        <td>
+                            @entry.Comment
+                        </td>
+                        <td>
+                          <button type="button" class="btn btn-icon btn-primary" @onclick="()=>OnEdit(entry.ID)"><i class="fa fa-edit"></i></button>
+                                                <button type="button" class="btn btn-danger" @onclick="()=>Delete(entry.ID)"><i class="fa fa-trash "></i></button>
+                          </td>
+                       
+                    </tr>
+                }
+            </tbody>
+        </table>
+                            <PaginationCustom PageSize="testimonialPagedList.PageSize" TotalCount="testimonialPagedList.TotalCount" TotalPages="testimonialPagedList.TotalPages" PageIndex="testimonialPagedList.PageIndex" LoadPageIndex="PageIndex" />
+    </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</PageLayoutNew>
+@code {
+    private PagedList<TestimonialModel> testimonialPagedList = new();
+    private PagedListPostModelWithFilter searchmodel = new();
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+    private async Task LoadData()
+    {
+        testimonialPagedList = await API.PostAsync<PagedList<TestimonialModel>, PagedListPostModelWithFilter>("seo/get-all-testimonials", searchmodel);
+    }
+    private async Task PageIndex(int pageIndex)
+    {
+        searchmodel.PageIndex = pageIndex;
+        await LoadData();
+    }
+    async void OnEdit(int ID)
+    {
+        int testimonialID = ID;
+        Nav.NavigateTo($"testimonial/{testimonialID}");
+    }
+    async Task Delete(int id)
+    {
+        if (await API.DeleteAsync("seo/delete-testimonial", id, true, Localizer["Confirm"], Localizer["Are you sure you want to delete?"], Localizer["Confirm"], Localizer["Cancel"]))
+        {
+            await JS.SuccessMessage(Localizer["Deleted Successfully"]);
+            await LoadData();
+        }
+    }
+    HeaderSettingsModel ItemHeaderSettings = new()
+        {
+            SearchPlaceHolder = "Search by service name..",
+            NeedAddButton = true,
+            SinglePageURL = "testimonial"
+        };
+    private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
+    {
+        searchmodel = filterModel == null ? new() : filterModel;
+        await LoadData();
+    }
+
+}

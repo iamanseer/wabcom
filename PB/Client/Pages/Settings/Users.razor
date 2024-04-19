@@ -1,0 +1,144 @@
+﻿@page "/users"
+@page "/users/{UserID:int}"
+@using PB.Shared.Models
+@using PB.Shared.Models.Common;
+@attribute [Authorize(Roles = "Users")]
+
+ <PageLayoutNew>
+            <div class="main-container container-fluid">
+                <div class="page-header">
+                    <div class="card">
+                <div class="card-header py-2">
+
+                    <ListPageHeader Settings="UserFilterSettings"
+                                          OnFilterButtonClick="SearchByItem" />
+                </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                @*<a href="#"><i class="fa fa-plus-square me-1"></i>Customize Table</a>*@
+                                <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                Sl No.
+                                            </th>
+                                            <th>
+                                                Name
+                                            </th>
+                                            <th>
+                                                Email
+                                            </th>
+                                            <th>
+                                                Mobile Number
+                                            </th>
+                                            <th>
+                                                User Type
+                                            </th>
+                                        </tr>
+
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var item in Stage1Model.Data.Select((value, i) => new { i, value }))
+                                        {
+                                            var entry = item.value;
+                                            var index = item.i;
+                                        <tr @onclick="@(()=>Nav.NavigateTo($"users-view/{entry.UserID}"))" style="cursor:pointer">
+                                                <td>
+                                                    @if (Stage1Model.PageIndex == 1)
+                                                    {
+                                                        @(index + 1)
+                                                    }
+                                                    else
+                                                    {
+                                                        @((Stage1Model.PageIndex * Stage1Model.PageSize) + (index + 1))
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @entry.Name
+                                                </td>
+                                                <td>
+                                                    @entry.Email
+                                                </td>
+
+                                                <td>
+                                                    @entry.Phone
+                                                </td>
+                                                <td>
+                                                    @entry.UserType
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+           </div>
+</PageLayoutNew>
+
+@code {
+    [Parameter] public int UserID { get; set; }
+    private int Stage = 1;
+
+    private PagedListPostModelWithFilter Stage1SearchModel = new();
+    private PagedList<UserListViewModel> Stage1Model = new();
+    
+    HeaderSettingsModel UserFilterSettings = new()
+        {
+            SearchPlaceHolder = "search",
+        };
+    protected override async Task OnInitializedAsync()
+    {
+        UserFilterSettings.Heading = "Users";
+        UserFilterSettings.SinglePageURL = "user";
+        UserFilterSettings.AddButtonText = "New User";
+        await LoadStage1Data();
+        //if (UserID != 0)
+        //{
+        //    await SwitchToStage2(UserID);
+        //}
+        //else
+        //{
+        //    await SwitchToStage1();
+        //}
+    }
+    private List<string> Stage1SortMenuItems = new()
+    {
+     "Name",
+    "Phone"
+    };
+    private async Task SortEventCallBackRecieved(IdnValuePair Sort)
+    {
+        switch (Sort.ID)
+        {
+            case 0:
+                Stage1SearchModel.OrderByFieldName = "BranchName " + Sort.Value;
+                break;
+            case 1:
+                Stage1SearchModel.OrderByFieldName = "Phone" + Sort.Value;
+                break;
+        }
+    }
+
+    private async Task SwitchToStage1(string? message = null, bool? isErrorMessage = null)
+    {
+        Stage = 1;
+        await LoadStage1Data();
+        
+    }
+
+    private async Task LoadStage1Data()
+    {
+        Stage1Model = await API.PostAsync<PagedList<UserListViewModel>, PagedListPostModelWithFilter>("user/get-all-users", Stage1SearchModel, true);
+    }
+    private async Task SearchByItem(PagedListPostModelWithFilter searchModel)
+    {
+        Stage1SearchModel = searchModel;
+        await LoadStage1Data();
+    }
+    
+}
+
+

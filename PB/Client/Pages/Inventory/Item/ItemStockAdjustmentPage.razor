@@ -1,0 +1,347 @@
+﻿@page "/item-stock-adjustment"
+
+@using PB.CRM.Model.Enum
+@using PB.Shared.Models.Inventory.Items
+@using System.ComponentModel.DataAnnotations
+
+<PageLayoutNew>
+    <EditForm Model="AdjustmentModel" OnValidSubmit="async () => await SaveStockAdjustments()">
+        <DataAnnotationsValidator />
+        <div class="main-container container-fluid">
+            <div class="page-header">
+            </div>
+
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header py-2">
+                        <div class="w-100 d-flex align-items-center  justify-content-between">
+                            <h5>
+                                <span class="me-4">
+                                    Stock Adjustment
+                                </span>
+                            </h5>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-7 ">
+                                <div class="form-group">
+                                    <label class="form-label mt-0 me-1"> Date :</label>
+                                    <input type="date" class="form-control" @bind="AdjustmentModel.Date">
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 style="margin-bottom: 0 !important;">Stock Items</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="">
+                                <table class="table border">
+                                    <thead>
+                                        <tr>
+                                            <th>
+                                                Sl No.
+                                            </th>
+
+                                            <th>
+                                                Item Name
+                                            </th>
+
+                                            <th>
+                                                System Stock
+                                            </th>
+
+                                            <th>
+                                                Physical Stock
+                                            </th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @if (AdjustmentModel.Items.Count > 0)
+                                        {
+                                            @foreach (var item in AdjustmentModel.Items.Select((value, i) => new { i, value }))
+                                            {
+                                                var adjustmentItemModel = item.value;
+                                                int index = item.i;
+                                                @if (!adjustmentItemModel.IsRowEditMode)
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @(index + 1)
+                                                        </td>
+                                                        <td>
+                                                            @adjustmentItemModel.ItemName
+                                                        </td>
+                                                        <td>
+                                                            @adjustmentItemModel.SystemStock
+                                                        </td>
+                                                        <td>
+                                                            @adjustmentItemModel.PhysicalStock
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="4" class="py-1 bg-light">
+                                                            <ul class="d-flex gap-2">
+                                                                <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                                    <span @onclick="async () => await HandleRowEditButtonClick(adjustmentItemModel)">
+                                                                        <i class="fe fe-edit me-1" style="color:var(--primary-bg-color)" aria-hidden="true"></i> Edit stock
+                                                                    </span>
+                                                                </li>
+                                                                <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                                    <span @onclick="async () => await HandleRowRemoveButtoClick(adjustmentItemModel)">
+                                                                        <i class="fa fa-trash me-1" style="color:red" aria-hidden="true"></i> Remove stock
+                                                                    </span>
+                                                                </li>
+                                                            </ul>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                                else
+                                                {
+                                                    <tr>
+                                                        <td>
+                                                            @index
+                                                        </td>
+                                                        <td class="px-0" style="min-width:200px">
+                                                            <DropdownSelect DropdownID="@("row-stock-drop-down-"+index)" @ref="@RowItemDropdown"
+                                                                            DivClass="col-md-12 px-0" 
+                                                                            FormGroupClass="form-group mb-0"
+                                                                            FormControlClass="pb-select form-control form-control-custom"
+                                                                            ReadDataOnSearch="true"
+                                                                            Mode="(int)DropdownModes.GoodsItem"
+                                                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                            SelectedItem="@(new DropdownSelectedItemModel(){ID = adjustmentItemModel.ItemVariantID, Value = adjustmentItemModel.ItemName})"
+                                                                            ItemSelected="@(async (DropdownItemSelectedCallbackModel itemModel) => await HandleItemModelSelected(itemModel, adjustmentItemModel))" />
+                                                        </td>
+                                                        <td>
+                                                            @adjustmentItemModel.SystemStock
+                                                        </td>
+                                                        <td>
+                                                            @if (adjustmentItemModel.ItemVariantID is null)
+                                                            {
+                                                                <input class="form-control form-control-custom" type="number" @bind="@adjustmentItemModel.PhysicalStock" placeholder="Physical stock" disabled />
+                                                            }
+                                                            else
+                                                            {
+                                                                <input class="form-control form-control-custom" type="number" @bind="@adjustmentItemModel.PhysicalStock" placeholder="Physical stock" />
+                                                            }
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="4" class="py-1 bg-light">
+                                                            <ul class="d-flex gap-2">
+                                                                <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                                    <span @onclick="async () => await HandleRowDoneButtonClick(adjustmentItemModel)">
+                                                                        <i class="fe fe-check me-1" style="color:green" aria-hidden="true"></i> Save stock
+                                                                    </span>
+                                                                </li>
+                                                                <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                                    <span @onclick="async () => await HandleRowRemoveButtoClick(adjustmentItemModel)">
+                                                                        <i class="fa fa-trash me-1" style="color:red" aria-hidden="true"></i> Remove stock
+                                                                    </span>
+                                                                </li>
+                                                            </ul>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                        }
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td>
+                                                @(AdjustmentModel.Items.Count + 1)
+                                            </td>
+                                            <td class="px-0" style="min-width:200px">
+                                                <DropdownSelect DropdownID="@("footer-stock-drop-down")" @ref="@FooterItemDropdown"
+                                                                DivClass="col-md-12 px-0"
+                                                                FormGroupClass="form-group mb-0"
+                                                                FormControlClass="pb-select form-control form-control-custom"
+                                                                ReadDataOnSearch="true"
+                                                                Mode="(int)DropdownModes.GoodsItem"
+                                                                ModeGroup="(int)DropdownModes.CommonSearch"
+                                                                SelectedItem="@(new DropdownSelectedItemModel(){ID = Footer.ItemVariantID, Value = Footer.ItemName})"
+                                                                ItemSelected="@(async (DropdownItemSelectedCallbackModel itemModel) => await HandleItemModelSelected(itemModel, Footer))" />
+                                            </td>
+                                            <td>
+                                                @Footer.SystemStock
+                                            </td>
+                                            <td>
+                                                @if (Footer.ItemVariantID is null)
+                                                {
+                                                    <input class="form-control form-control-custom" type="number" @bind="@Footer.PhysicalStock" placeholder="Physical stock" disabled />
+                                                }
+                                                else
+                                                {
+                                                    <input class="form-control form-control-custom" type="number" @bind="@Footer.PhysicalStock" placeholder="Physical stock" />
+                                                }
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="4" class="py-1 bg-light">
+                                                <ul class="d-flex gap-2">
+                                                    <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                        <span @onclick="async () => await HandleFooterAddButtonClick(Footer)">
+                                                            <i class="fe fe-plus plus-icon me-1" aria-hidden="true"></i> Add stock
+                                                        </span>
+                                                    </li>
+                                                    <li class="border-end pe-2 text-muted" style="cursor:pointer">
+                                                        <span @onclick=" () => Footer = new(){IsRowEditMode = false}">
+                                                            <i class="fa fa-refresh me-1" aria-hidden="true"></i> Reset footer
+                                                        </span>
+                                                    </li>
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-footer-action d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary me-2">Save</button>
+            <button type="button" class="btn btn-secondary me-2" @onclick="async () => await Clear()">Clear</button>
+        </div>
+    </EditForm>
+</PageLayoutNew>
+
+@code {
+
+    ItemStockAdjustmentModel AdjustmentModel = new();
+    ItemStockAdjustmentItemModel Footer = new();
+
+    private DropdownSelect FooterItemDropdown = new();
+    private DropdownSelect RowItemDropdown = new();
+
+    #region Main Functions
+
+    private async Task SaveStockAdjustments()
+    {
+        if(AdjustmentModel.Items.Count == 0)
+        {
+            await JS.ErrorMessage("Please add atleast one item to adjust the stock");
+            return;
+        }
+
+        if (await JS.Confirm("Confirm", "Are you sure you want save the stock adjustments..?", SweetAlertMessageType.question, "Yes, Save", "No, Cancel"))
+        {
+            var result = await API.PostAsync<BaseSuccessResponse, ItemStockAdjustmentModel>("inventory/save-item-stock-adjustments", AdjustmentModel);
+            if (result is not null)
+            {
+                await JS.SuccessMessage("Stock adjustments success");
+                Nav.NavigateTo("item-stock");
+            }
+        }
+    }
+    private async Task Clear()
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to clear..?", SweetAlertMessageType.question, "Yes, Clear", "No, Cancel"))
+        {
+            AdjustmentModel.Items = new();
+        }
+    }
+
+    #endregion
+
+    #region Row Functions
+
+    private int CurrentRowIndex = -1;
+    private bool IsAnyRowInEditMode = false;
+    private async Task HandleRowEditButtonClick(ItemStockAdjustmentItemModel adjustmentItemModel)
+    {
+        if (IsAnyRowInEditMode)
+        {
+            await JS.ErrorMessage("Already a row is in edit mode, please complete it..");
+            return;
+        }
+        adjustmentItemModel.IsRowEditMode = true;
+    }
+    private async Task HandleRowDoneButtonClick(ItemStockAdjustmentItemModel adjustmentItemModel)
+    {
+        if (await ValidateStockItem(adjustmentItemModel))
+            adjustmentItemModel.IsRowEditMode = true;
+    }
+    private async Task HandleFooterAddButtonClick(ItemStockAdjustmentItemModel adjustmentItemModel)
+    {
+        if (await ValidateStockItem(adjustmentItemModel))
+        {
+            adjustmentItemModel.IsRowEditMode = false;
+            AdjustmentModel.Items.Add(adjustmentItemModel);
+            Footer = new();
+        }
+    }
+    private async Task<bool> ValidateStockItem(ItemStockAdjustmentItemModel adjustmentItemModel)
+    {
+        string? errorMessage = "";
+        var validationContext = new ValidationContext(adjustmentItemModel, serviceProvider: null, items: null);
+        var validationResults = new List<ValidationResult>();
+        bool isValid = Validator.TryValidateObject(adjustmentItemModel, validationContext, validationResults, validateAllProperties: true);
+        if (validationResults is not null)
+        {
+            foreach (var validationItem in validationResults)
+            {
+                errorMessage += validationItem.ErrorMessage + "\n";
+            }
+        }
+
+        if (!string.IsNullOrEmpty(errorMessage))
+        {
+            errorMessage = "Validation error(s) for '" + adjustmentItemModel.ItemName + "' \n" + errorMessage;
+            await JS.ErrorMessage(errorMessage);
+            return false;
+        }
+        return true;
+    }
+    private async Task HandleRowRemoveButtoClick(ItemStockAdjustmentItemModel adjustmentItemModel)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the stock item from the list..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel"))
+        {
+            AdjustmentModel.Items.Remove(adjustmentItemModel);
+        }
+    }
+    private async Task HandleItemModelSelected(DropdownItemSelectedCallbackModel itemModel, ItemStockAdjustmentItemModel adjustmentItemModel)
+    {
+        adjustmentItemModel.ItemVariantID = itemModel.ID;
+        adjustmentItemModel.ItemName = itemModel.Value;
+
+        if (AdjustmentModel.Items.Count > 0)
+        {
+            ItemStockAdjustmentItemModel? existingItem = null;
+            existingItem = AdjustmentModel.Items
+                .Where(i => i.ItemVariantID == itemModel.ID)
+                .FirstOrDefault();
+
+            if (existingItem != null)
+            {
+                await JS.ErrorMessage("Item alredy added to the list, please choose a different one");
+                return;
+            }
+        }
+
+        if (itemModel.ID is not null)
+        {
+            var result = await API.GetAsync<ItemStockAdjustmentItemModel>($"inventory/get-item-stock-details/{itemModel.ID.Value}", true);
+            if (result is not null)
+            {
+                adjustmentItemModel.ItemVariantID = result.ItemVariantID;
+                adjustmentItemModel.ItemName = result.ItemName;
+                adjustmentItemModel.SystemStock = result.SystemStock;
+                adjustmentItemModel.PhysicalStock = result.PhysicalStock;
+            }
+        }
+    }
+
+    #endregion
+}

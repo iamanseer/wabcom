@@ -1,0 +1,138 @@
+﻿@page "/lock-screen"
+@using Blazored.LocalStorage
+@inject ILocalStorageService _localStorage
+
+<LoginLayout>
+    <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+        <DataAnnotationsValidator />
+
+        <div class="card-body">
+            <div class="text-center m-t-0 m-b-15">
+                <a href="/" class="logo logo-admin"> <i><img src="/assets/images/logo-lg.png" /></i></a>
+            </div>
+
+
+            <div class="user-thumb text-center m-b-30">
+                <img src="@ProfileImage" onerror="this.onerror=null;this.src='_content/PB.ComponentHelper/img/profile.png';" class="rounded-circle img-thumbnail thumb-xl" alt="thumbnail" style="width:80px;height:80px;object-fit: cover;">
+                <h5>@loginModel.Username</h5>
+            </div>
+
+            @if (!hasBranch)
+            {
+                <div class="mb-3">
+                    <label for="userpassword">@Localizer["password"] </label>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="basic-addon3"><i class="mdi mdi-lock-outline font-16"></i></span>
+                        </div>
+                        <input type="password" @bind-value="loginModel.Password" class="form-control" id="userpassword" placeholder="@Localizer["Enter the password"]">
+                    </div>
+                </div>
+            }
+            else
+            {
+                @if (Clients != null)
+                {
+                    <div class="mb-3 form-floating-label">
+                        <label for="ClientID" class="placeholder">Client</label>
+                        <select id="ClientID" Class="form-control" @bind="@loginModel.ClientID">
+                            @foreach (var client in Clients)
+                            {
+                                <option value="@client.ID">@client.Value</option>
+                            }
+                        </select>
+                    </div>
+                    @if (loginModel.ClientID == 0)
+                    {
+                        loginModel.BranchID = 0;
+                    }
+                    else
+                    {
+                        <div class="mb-3 form-floating-label">
+                            <label for="BranchID" class="placeholder">Branch</label>
+                            <select id="BranchID" class="form-control" @bind="@loginModel.BranchID">
+                                @foreach (var branch in Branches.Where(s => s.ParentID == loginModel.BranchID).ToList())
+                                {
+                                    <option value="@branch.ID">@branch.Value</option>
+                                }
+                            </select>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="mb-3 form-floating-label">
+                        <label for="BranchID" class="placeholder">Branch</label>
+                        <select id="BranchID" class="form-control" @bind="@loginModel.BranchID">
+                            @foreach (var branch in Branches)
+                            {
+                                <option value="@branch.ID">@branch.Value</option>
+                            }
+                        </select>
+                    </div>
+                }
+            }
+
+
+            <ValidationSummary />
+            <div class="form-group mb-0 row">
+                <div class="col-12 mt-2">
+                    <button class="btn btn-primary  d-block w-100 waves-effect waves-light" type="submit">@Localizer["Login"] <i class="fas fa-sign-in-alt ml-1"></i></button>
+                </div>
+            </div>
+            <p class="font-14 mt-3 " style="text-align: center">@Localizer["Not me?"]<a @onclick="Login" class="text-primary font-weight-bold"> @Localizer["Login now"]</a></p>
+        </div>
+    </EditForm>
+</LoginLayout>
+@code {
+
+    private string ProfileImage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ProfileImage = await _localStorage.GetItemAsync<string>("profile-image");
+        loginModel.Username = await _localStorage.GetItemAsync<string>("username");
+
+        if (string.IsNullOrEmpty(loginModel.Username))
+            Nav.NavigateTo("/login");
+    }
+
+
+    [Inject] public AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+    private readonly LoginRequestModel loginModel = new();
+    public List<IdnValuePair> Clients { get; set; }
+    public List<IdnValueParentPair> Branches { get; set; }
+
+    protected bool hasBranch = false;
+
+    private async Task HandleLogin()
+    {
+        var result = await API.PostAsync<LoginResponseModel, LoginRequestModel>("auth/login", loginModel);
+        if (result != null)
+        {
+            if (string.IsNullOrEmpty(result.AccessToken))
+            {
+                hasBranch = true;
+                if (result.Clients != null && result.Clients.Count > 0)
+                {
+                    Clients = result.Clients;
+                }
+                Branches = result.Branches;
+            }
+            else
+            {
+                await ((LocalAuthenticationStateProvider)AuthenticationStateProvider).MarkUserAsAuthenticated(result);
+                Nav.NavigateTo("/home");
+            }
+        }
+    }
+
+
+    private async Task Login()
+    {
+        await _localStorage.RemoveItemAsync("username");
+        await _localStorage.RemoveItemAsync("profile-image");
+        Nav.NavigateTo("login");
+    }
+
+}
