@@ -42,14 +42,12 @@
                                 <div class="row">
                                     <InputTextBox Label="Company Name : "
                                                   IsRequired="true"
-                                                  ValidationFor="() => CustomerModel.Name"
+                                                  ValidationFor="() => CustomerModel.CompanyName"
                                                   DivClass="col-md-7"
-                                                  @bind-Value="CustomerModel.Name"
+                                                  @bind-Value="CustomerModel.CompanyName"
                                                   id="cst-name-box" />
                                 </div>
                             }
-                            else
-                            {
                                 <div class="row">
                                     <InputTextBox Label="Name : " @bind-Value="CustomerModel.Name"
                                                   IsRequired="true"
@@ -58,7 +56,7 @@
 
 
                                 </div>
-                            }
+                            
                             <div class="row">
                                 <InputTextBox Label="Tax Number : "
                                               IsRequired="false"
@@ -209,30 +207,34 @@
                                                                 <tbody>
                                                                     @if (CustomerModel.ContactPersons != null && CustomerModel.ContactPersons.Count > 0)
                                                                     {
-                                                                        @for (int i = 0; i < CustomerModel.ContactPersons.Count; i++)
-                                                                        {
-                                                                            var person = CustomerModel.ContactPersons[i];
-                                                                            <tr>
-                                                                                <td style="max-width:25px">
-                                                                                    <label>@person.RowIndex</label>
-                                                                                </td>
-                                                                                <td>
-                                                                                    @person.Name
-                                                                                </td>
-                                                                                <td>
-                                                                                    @person.Phone
-                                                                                </td>
-                                                                                <td>
-                                                                                    @person.Email
-                                                                                </td>
-                                                                                <td style="width:80px;">
-                                                                                    <div class="d-flex justify-content-evenly">
-                                                                                        <ActionEdit Clicked="async () => await HandleOpenContactPersonModal(person)" />
-                                                                                        <ActionDelete Clicked="async () => await HandleRemoveCustomerContactPersonButtonClick(person.ContactPersonID)" />
-                                                                                    </div>
-                                                                                </td>
-                                                                            </tr>
-                                                                        }
+                                                                       @*  @for (int i = 0; i < CustomerModel.ContactPersons.Count; i++)
+                                                                        { *@
+                                                                            @foreach (var person in CustomerModel.ContactPersons)
+                                                                            {
+
+                                                                                //var person = CustomerModel.ContactPersons[i];
+                                                                                <tr>
+                                                                                    <td style="max-width:25px">
+                                                                                        <label>@person.RowIndex</label>
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        @person.Name
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        @person.Phone
+                                                                                    </td>
+                                                                                    <td>
+                                                                                        @person.Email
+                                                                                    </td>
+                                                                                    <td style="width:80px;">
+                                                                                        <div class="d-flex justify-content-evenly">
+                                                                                            <ActionEdit Clicked="async () => await HandleOpenContactPersonModal(person)" />
+                                                                                            <ActionDelete Clicked="async () => await HandleRemoveCustomerContactPersonButtonClick(person.ContactPersonID)" />
+                                                                                        </div>
+                                                                                    </td>
+                                                                                </tr>
+                                                                            }
+                                                                       @*  } *@
                                                                     }
                                                                 </tbody>
                                                                 <tfoot>

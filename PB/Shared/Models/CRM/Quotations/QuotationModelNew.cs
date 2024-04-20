@@ -18,6 +18,9 @@ namespace PB.Shared.Models.CRM
         [Required(ErrorMessage = "Please choose a customer for this quotation")]
         public int? CustomerEntityID { get; set; }
         public int? ClientID { get; set; }
+
+        [Required(ErrorMessage = "Please enter quotation number")]
+        [Range(1, int.MaxValue, ErrorMessage = "Please enter quotation number")]
         public int QuotationNo { get; set; }
         public int? UserEntityID { get; set; }
         public int? EnquiryID { get; set; }
@@ -36,7 +39,7 @@ namespace PB.Shared.Models.CRM
         public int? BranchID { get; set; }
         [Required(ErrorMessage = "Please choose a currency for this quotation")]
         public int? CurrencyID { get; set; }
-        [Required(ErrorMessage = "Please choose a currency for this quotation")]
+       // [Required(ErrorMessage = "Please choose a currency for this quotation")]
         public int? PlaceOfSupplyID { get; set; }
         public string? CustomerName { get; set; }
         public string? TaxNumber { get; set; } 

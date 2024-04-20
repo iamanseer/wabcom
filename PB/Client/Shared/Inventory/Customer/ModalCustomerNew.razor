@@ -33,12 +33,10 @@
                                           IsRequired="true"
                                           ValidationFor="() => Model.Name"
                                           DivClass="col-md-7"
-                                          @bind-Value="Model.Name"
+                                          @bind-Value="Model.CompanyName"
                                           id="cst-name-box" />
                         </div>
                     }
-                    else
-                    {
                         <div class="row">
                             <InputTextBox Label="Name : "
                                           IsRequired="true"
@@ -47,7 +45,7 @@
                                           @bind-Value="Model.Name"
                                           id="cst-name-box" />
                         </div>
-                    }
+                    
                     <div class="row">
                         <InputTextBox Label="Tax Number : "
                                       IsRequired="false"

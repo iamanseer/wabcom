@@ -911,7 +911,7 @@
 
     private async Task SaveLead()
     {
-        var res = await API.PostAsync<LeadThroughAddResultModel, LeadThroughModel>("settings/save-lead", NewLeadThroughModel);
+        var res = await API.PostAsync<LeadThroughAddResultModel, LeadThroughModel>("settings/save-lead-through", NewLeadThroughModel);
         if (res != null)
         {
             Model.LeadThroughID = res.LeadThroughID;

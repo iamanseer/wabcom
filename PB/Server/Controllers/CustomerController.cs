@@ -48,7 +48,7 @@ namespace PB.Server.Controllers
 
         [HttpPost("save-customer")]
         //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
-        public async Task<IActionResult> SaveCustomer(CustomerModel customerModel)
+        public async Task<IActionResult> SaveCustomer(CustomerModelNew customerModel)
         {
             var phone = await _dbContext.GetByQueryAsync<string>(@$"Select Phone 
                                                                             from Entity
@@ -115,12 +115,10 @@ namespace PB.Server.Controllers
                     {
                         EntityInstituteInfoID = customerModel.EntityInstituteInfoID,
                         EntityID = customerEntity.EntityID,
-                        Name = customerModel.Name
+                        Name = customerModel.CompanyName
                     };
                     entityInstituteInfo.EntityInstituteInfoID = await _dbContext.SaveAsync(entityInstituteInfo, tran);
                 }
-                else
-                {
                     var entityPersonal = new EntityPersonalInfo()
                     {
                         EntityPersonalInfoID = customerModel.EntityPersonalInfoID,
@@ -128,7 +126,7 @@ namespace PB.Server.Controllers
                         FirstName = customerModel.Name,
                     };
                     await _dbContext.SaveAsync(entityPersonal, tran);
-                }
+                
 
                 Customer customer = new()
                 {
@@ -217,20 +215,18 @@ namespace PB.Server.Controllers
                     {
                         EntityInstituteInfoID = customerModel.EntityInstituteInfoID,
                         EntityID = customerEntity.EntityID,
-                        Name = customerModel.Name
+                        Name = customerModel.CompanyName
                     };
                     entityInstituteInfo.EntityInstituteInfoID = await _dbContext.SaveAsync(entityInstituteInfo, tran);
                 }
-                else
+                var entityPersonal = new EntityPersonalInfo()
                 {
-                    var entityPersonal = new EntityPersonalInfo()
-                    {
-                        EntityPersonalInfoID = customerModel.EntityPersonalInfoID,
-                        EntityID = customerEntity.EntityID,
-                        FirstName = customerModel.Name,
-                    };
-                    await _dbContext.SaveAsync(entityPersonal, tran);
-                }
+                    EntityPersonalInfoID = customerModel.EntityPersonalInfoID,
+                    EntityID = customerEntity.EntityID,
+                    FirstName = customerModel.Name,
+                };
+                await _dbContext.SaveAsync(entityPersonal, tran);
+
 
                 Customer customer = new()
                 {
@@ -278,7 +274,7 @@ namespace PB.Server.Controllers
 
         [HttpGet("get-customer-new/{customerEntityID}")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
-        public async Task<IActionResult> GetCustomerNew(int customerEntityID) 
+        public async Task<IActionResult> GetCustomerNew(int customerEntityID)
         {
             var customer = await _dbContext.GetByQueryAsync<CustomerModelNew>($@"
                                                     Select 
@@ -296,7 +292,7 @@ namespace PB.Server.Controllers
                                                     Left Join WhatsappContact WC ON C.EntityID=WC.EntityID AND WC.IsDeleted=0
                                                     Where C.EntityID={customerEntityID} and C.ClientID={CurrentClientID} and C.IsDeleted=0", null);
             var addresses = await _entity.GetListOfEntityAddress(customerEntityID, null);
-            foreach(var address in addresses)
+            foreach (var address in addresses)
             {
                 customer
                     .Addresses
@@ -502,7 +498,7 @@ namespace PB.Server.Controllers
                                         Select Phone 
                                         from Entity
                                         where Phone=@Phone and EntityID<>{Convert.ToInt32(contactPersonModel.EntityID)} and ClientID={CurrentClientID} and IsDeleted=0", contactPersonModel);
-            
+
             if (phone != null)
             {
                 return BadRequest(new BaseErrorResponse()
@@ -564,7 +560,7 @@ namespace PB.Server.Controllers
                 ContactPersonID = person.ContactPersonID,
                 EntityID = entity.EntityID,
                 EntityPersonalInfoID = entityPersonal.EntityPersonalInfoID,
-                Name = contactPersonModel.Name + " <" + contactPersonModel.Email + ">",
+                Name = contactPersonModel.Name,
                 EmailAddress = contactPersonModel.Email,
                 ResponseTitle = "Succes",
                 ResponseMessage = "Contact Person added successfully"
@@ -584,7 +580,7 @@ namespace PB.Server.Controllers
         }
 
         [HttpGet("get-customer-contact-person/{contactPersonID}")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+       // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> GetContactPerson(int contactPersonID)
         {
             var result = await _dbContext.GetByQueryAsync<CustomerContactPersonModel>($@"Select
@@ -609,8 +605,8 @@ namespace PB.Server.Controllers
             addressmodel.AddressID = address.AddressID = await _dbContext.SaveAsync(address);
 
             var addressView = _entity.GetEntityAddressView(addressmodel);
-            AddressAddResultModel returnObject = new() 
-            { 
+            AddressAddResultModel returnObject = new()
+            {
                 AddressID = address.AddressID,
                 CompleteAddress = addressView.CompleteAddress,
             };

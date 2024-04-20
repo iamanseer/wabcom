@@ -965,7 +965,7 @@ l
                                     break;
 
 
-                                
+
                                 case (int)GeneralSettingsMenus.Promotion:
                                     @if (IsPromotionReady && PromotionList is not null)
                                     {
@@ -1302,10 +1302,15 @@ l
 @switch (SelectedMenuType)
 {
     case (int)GeneralSettingsMenus.EnquiryFollowupStatus:
+        @if (modalFollowUpStatus is not null && IsFollowupStatusReady)
+        {
+            <ModalFollowUpStatus @ref="@modalFollowUpStatus" TypeID="(int)GeneralSettingsMenus.EnquiryFollowupStatus" Save="async () => await HandleFollowupStatusAdded()" />
+        }
+        break;
     case (int)GeneralSettingsMenus.QuotationFollowStatus:
         @if (modalFollowUpStatus is not null && IsFollowupStatusReady)
         {
-            <ModalFollowUpStatus @ref="@modalFollowUpStatus" Save="async () => await HandleFollowupStatusAdded()" />
+            <ModalFollowUpStatus @ref="@modalFollowUpStatus" TypeID="(int)GeneralSettingsMenus.QuotationFollowStatus" Save="async () => await HandleFollowupStatusAdded()" />
         }
         break;
     case (int)GeneralSettingsMenus.ItemCategory:
@@ -1393,6 +1398,8 @@ l
         switch (selectedMenuType)
         {
             case (int)GeneralSettingsMenus.EnquiryFollowupStatus:
+                await HandleFollowupStatusMenuSelected();
+                break;
             case (int)GeneralSettingsMenus.QuotationFollowStatus:
                 await HandleFollowupStatusMenuSelected();
                 break;
@@ -1423,7 +1430,7 @@ l
             case (int)GeneralSettingsMenus.PaymentTerm:
                 await HandlePaymentTermMenuSelected();
                 break;
-                
+
             case (int)GeneralSettingsMenus.Promotion:
                 await HandlePromotionMenuSelected();
                 break;
@@ -1477,11 +1484,12 @@ l
     private PagedList<FollowupStatusListViewModel>? FollowupStatusPagedList;
     private FollowupStatusPostModel? FollowupStatusPostModel;
     private ModalFollowUpStatus? modalFollowUpStatus;
+    private ModalFollowUpStatus? modalQuotationFollowUpStatus;
     private bool IsFollowupStatusReady = false;
 
     private async Task HandleFollowupStatusMenuSelected()
     {
-        modalFollowUpStatus = new();
+        //modalFollowUpStatus = new();
         if (SelectedMenuType == (int)GeneralSettingsMenus.EnquiryFollowupStatus)
         {
             FollowupStatusPostModel = new() { StatusTypeID = (int)FollowUpTypes.Enquiry };

@@ -439,7 +439,7 @@ Best regards,
                 IdnValuePair Data = await _dbContext.GetByQueryAsync<IdnValuePair>($@"
                                                                     Select E.EnquiryNo AS ID,CE.Name AS Value
                                                                     From Enquiry E 
-                                                                    Left Join viEntity CE ON CE.EntityID=E.CustomerEntityID
+                                                                    Left Join viEntity CE ON CE.EntityID=E.UserEntityID
                                                                     Where E.EnquiryID={enquiryID}
                 ", null);
 

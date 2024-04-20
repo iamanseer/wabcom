@@ -466,12 +466,10 @@ namespace PB.Server.Controllers
         public async Task<IActionResult> CreateQuotationByEnquiry(int enquiryID)
         {
             QuotationModelNew quotation = await _dbContext.GetByQueryAsync<QuotationModelNew>($@"
-                                                Select E.CustomerEntityID,CE.Name AS CustomerName,Cust.TaxNumber,E.EnquiryID,CS.QuotationSubject As Subject,CS.QuotationCustomerNote As CustomerNote,CS.QuotationTermsAndCondition As TermsAndCondition,CNT.CountryID,S.StateID As PlaceOfSupplyID,S.StateName As PlaceOfSupplyName,
-                                                Case 
-                                                When CS.SettingID IS NUll THEN 0 
-                                                When CS.SettingID IS NOT NULL THEN CS.QuotationNeedShippingAddress
-                                                Else  CS.QuotationNeedShippingAddress END AS NeedShippingAddress,
-                                                C.CurrencyID,Concat(C.CurrencyName,' ( ',C.Symbol,' )') AS CurrencyName
+                                               Select E.CustomerEntityID,CE.Name AS CustomerName,Cust.TaxNumber,E.EnquiryID,CS.QuotationSubject As Subject,CS.QuotationCustomerNote As CustomerNote,CS.QuotationTermsAndCondition As TermsAndCondition,CNT.CountryID,S.StateID As PlaceOfSupplyID,S.StateName As PlaceOfSupplyName,
+                                                Case When CS.SettingID IS NUll THEN 0 
+                                                     When CS.SettingID IS NOT NULL THEN CS.QuotationNeedShippingAddress
+                                                     Else  CS.QuotationNeedShippingAddress END AS NeedShippingAddress,C.CurrencyID,Case When C.CurrencyID is null then C.CurrencyName else Concat(C.CurrencyName,' ( ',C.Symbol,' )') end AS CurrencyName
                                                 From Enquiry E
                                                 Join viEntity CE ON CE.EntityID=E.CustomerEntityID
                                                 Left Join Customer Cust ON Cust.EntityID = E.CustomerEntityID
@@ -484,7 +482,7 @@ namespace PB.Server.Controllers
                                                 Where E.EnquiryID={enquiryID} and E.IsDeleted=0 and E.BranchID={CurrentBranchID}", null);
 
             var enquiryItems = await _dbContext.GetListByQueryAsync<EnquiryItem>($"Select * From EnquiryItem Where EnquiryID={enquiryID} And IsDeleted=0", null);
-            int placeOfSupplyID = await _dbContext.GetFieldsAsync<ViBranch, int>("StateID", $"BranchID={CurrentBranchID}", null);
+            int placeOfSupplyID = await _dbContext.GetFieldsAsync<ViBranch, int>("IsNull(StateID,0)", $"BranchID={CurrentBranchID}", null);
             if (enquiryItems is not null)
             {
                 foreach (var enquiryItem in enquiryItems)
@@ -548,7 +546,20 @@ namespace PB.Server.Controllers
                     ResponseMessage = "Not a valid quotation number"
                 });
             }
+            int QuotationNo = await _dbContext.GetByQueryAsync<int>(@$"
+                                       Select IsNull(Count(QuotationNo),0) QuotationNo
+                                       From Quotation
+                                       Where QuotationNo={model.QuotationNo} and QuotationID<>{model.QuotationID} and  BranchID={CurrentBranchID}   and IsDeleted=0",null);
 
+            if (QuotationNo != 0)
+            {
+                return BadRequest(new BaseErrorResponse()
+                {
+                    ErrorCode = 0,
+                    ResponseTitle = "Duplication not allowed",
+                    ResponseMessage = "Quotation number already exist,try different quotation numner"
+                });
+            }
             model.BranchID = CurrentBranchID;
             model.ClientID = CurrentClientID;
             model.UserEntityID = model.UserEntityID == null ? CurrentEntityID : model.UserEntityID;
@@ -573,17 +584,17 @@ namespace PB.Server.Controllers
 
                     #endregion
 
-                    #region Quotation Number
+                   // #region Quotation Number
 
-                    if (model.QuotationID == 0 || model.QuotationNo == 0)
-                    {
-                        model.QuotationNo = await _dbContext.GetByQueryAsync<int>($@"
-                                                                Select isnull(max(QuotationNo)+1,1) AS QuotationNo
-                                                                From Quotation
-                                                                Where BranchID={CurrentBranchID} and IsDeleted=0", null, tran);
-                    }
+                    //if (model.QuotationID == 0 || model.QuotationNo == 0)
+                    //{
+                    //    model.QuotationNo = await _dbContext.GetByQueryAsync<int>($@"
+                    //                                            Select isnull(max(QuotationNo)+1,1) AS QuotationNo
+                    //                                            From Quotation
+                    //                                            Where BranchID={CurrentBranchID} and IsDeleted=0", null, tran);
+                    //}
 
-                    #endregion
+                    //#endregion
 
                     #region Quotation
 

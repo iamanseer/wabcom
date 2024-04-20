@@ -380,7 +380,7 @@
                                                     CommonSearch="@(new CommonSearchModel(){ ID = QuotationSettings.CountryID })"
                                                     SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.PlaceOfSupplyID, Value=Model.PlaceOfSupplyName})"
                                                     ItemSelected="async (DropdownItemSelectedCallbackModel customer) => await HandlePlaceOfSupplySelected(customer)" />
-                                    <ValidationMessage For="()=>Model.PlaceOfSupplyID" />
+                                   @*  <ValidationMessage For="()=>Model.PlaceOfSupplyID" /> *@
                                 </div>
                             }
 
@@ -405,7 +405,7 @@
                             </div>
 
                             <div class="row">
-                                @if (Model.QuotationID == 0)
+                               @*  @if (Model.QuotationID == 0)
                                 {
                                     <div class="col-md-7">
                                         <div class="form-group">
@@ -414,13 +414,13 @@
                                                 <span class="input-group-text" style="background-color:var(--primary-bg-color);">
                                                     @("QT")
                                                 </span>
-                                                <input type="text" class="form-control" value="New Quotation" style="pointer-events:none" disabled>
+                                                <input type="text" class="form-control" value="New Quotation" style="pointer-events:none" >
                                             </div>
                                         </div>
                                     </div>
                                 }
                                 else
-                                {
+                                { *@
                                     <div class="col-md-7">
                                         <div class="form-group">
                                             <label class="form-label mt-0 me-1">Quotation Number :</label>
@@ -428,12 +428,12 @@
                                                 <span class="input-group-text" style="background-color:var(--primary-bg-color);">
                                                     @("QT")
                                                 </span>
-                                                <input type="number" class="form-control" @bind="Model.QuotationNo" style="pointer-events:none" disabled>
+                                                <input type="number" class="form-control" @bind="Model.QuotationNo" >
                                             </div>
                                             <ValidationMessage For="() => Model.QuotationNo" />
                                         </div>
                                     </div>
-                                }
+                                @* } *@
                             </div>
 
                             <div class="row">
@@ -1698,11 +1698,11 @@
             await JS.ErrorMessage("Please choose customer for the quotation");
             return;
         }
-        if (Model.PlaceOfSupplyID is null)
-        {
-            await JS.ErrorMessage("Please choose place of supply for the quotation");
-            return;
-        }
+        // if (Model.PlaceOfSupplyID is null)
+        // {
+        //     await JS.ErrorMessage("Please choose place of supply for the quotation");
+        //     return;
+        // }
         if (Model.CurrencyID is null)
         {
             await JS.ErrorMessage("Please choose a currency for the quotation");
@@ -1738,12 +1738,12 @@
     private async Task HandleQuotationItemQuantityChange(QuotationItemModelNew quotationItem, ChangeEventArgs e)
     {
         quotationItem.Quantity = Convert.ToInt32(e.Value);
-        if (quotationItem.IsGoods && quotationItem.Quantity > quotationItem.CurrentStock)
-        {
-            await JS.ErrorMessage($"The entered stock quantity for the item is not available(Available stock :{quotationItem.CurrentStock})");
-            quotationItem.Quantity = 0;
-            return;
-        }
+        // if (quotationItem.IsGoods && quotationItem.Quantity > quotationItem.CurrentStock)
+        // {
+        //     await JS.ErrorMessage($"The entered stock quantity for the item is not available(Available stock :{quotationItem.CurrentStock})");
+        //     quotationItem.Quantity = 0;
+        //     return;
+        // }
         HandleQuotationItemCalculations(quotationItem);
     }
     private void HandlequotationItemRateChange(QuotationItemModelNew quotationItem, ChangeEventArgs e)
@@ -1798,10 +1798,10 @@
                 errorMessage += validationItem.ErrorMessage + "\n";
             }
         }
-        if (quotationItem.TaxPreferenceTypeID == (int)TaxPreferences.Taxable && quotationItem.TaxCategoryID is null)
-            errorMessage += "Please choose a tax category for the item \n";
-        if (quotationItem.IsGoods && quotationItem.Quantity > quotationItem.CurrentStock)
-            errorMessage += "Available stock for '" + quotationItem.ItemName + "' is " + quotationItem.CurrentStock + '\n';
+        // if (quotationItem.TaxPreferenceTypeID == (int)TaxPreferences.Taxable && quotationItem.TaxCategoryID is null)
+        //     errorMessage += "Please choose a tax category for the item \n";
+        // if (quotationItem.IsGoods && quotationItem.Quantity > quotationItem.CurrentStock)
+        //     errorMessage += "Available stock for '" + quotationItem.ItemName + "' is " + quotationItem.CurrentStock + '\n';
         return errorMessage;
     }
     private async Task HandleQuotationItemUpdateClick(QuotationItemModelNew quotationItem)

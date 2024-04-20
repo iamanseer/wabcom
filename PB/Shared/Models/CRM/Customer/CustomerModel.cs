@@ -17,6 +17,7 @@ namespace PB.Shared.Models.CRM.Customer
         public string? TaxNumber { get; set; }
         [Required(ErrorMessage = "Please provide customer name")]
         public string? Name { get; set; }
+        public string? CompanyName { get; set; }
         public int EntityPersonalInfoID { get; set; }
         public int EntityInstituteInfoID { get; set; }
         public int EntityTypeID { get; set; }

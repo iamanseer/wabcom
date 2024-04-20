@@ -75276,3 +75276,22 @@ span.bill-done-btn {
     color: #d7cfcf;
     transition: inherit;
 }
+body *::-webkit-scrollbar {
+    width: 5px !important;
+    height: 6px;
+    transition: 0.3s background;
+}
+
+body *::-webkit-scrollbar {
+    width: 8px !important;
+    height: 6px;
+    transition: 0.3s background;
+}
+.modal-dialog-scrollable .modal-content {
+    max-height: 100% !important;
+    overflow: auto !important;
+}
+
+.modal-dialog-scrollable .modal-body {
+    overflow-y: auto !important;
+}

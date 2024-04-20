@@ -46,8 +46,7 @@
                             <InputTextBox Label="Item Code:" @bind-Value="Model.ItemCode"
                                           DivClass="col-md-12"
                                           IsRequired="true"
-                                          PlaceHolder="Unique item code"
-                                          ValidationFor="() => Model.ItemCode" id="item-code-text-box" />
+                                          PlaceHolder="Unique item code" id="item-code-text-box" />
                         </div>
 
                         <div class="row">
@@ -61,7 +60,7 @@
 
                         @if (Model.IsGoods)
                         {
-                            <div class="row">
+                            @* <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label class="form-label mt-0 me-1" style="text-align:left;">
@@ -83,7 +82,7 @@
                                         <ValidationMessage For="() => Model.HsnID" />
                                     </div>
                                 </div>
-                            </div>
+                            </div> *@
 
                             <div class="row position-relative pb-3">
                                 <DropdownSelect DivClass="col-md-12"
@@ -98,9 +97,9 @@
                                                 IsAddOptionNeed="true"
                                                 NewButtonText="Item Category"
                                                 NewButtonClicked="async () => await HandleItemCategoryAddButtonClick()" />
-                                <div class="validation-for-dropdown">
+                               @*  <div class="validation-for-dropdown">
                                     <ValidationMessage For="()=>Model.CategoryID" />
-                                </div>
+                                </div> *@
                             </div>
 
                             <div class="row position-relative pb-3">
@@ -115,9 +114,9 @@
                                                 IsAddOptionNeed="true"
                                                 NewButtonText="Item Group"
                                                 NewButtonClicked="async () => await HandleItemGrouAddButtonClick()" />
-                                <div class="validation-for-dropdown">
+                                @* <div class="validation-for-dropdown">
                                     <ValidationMessage For="()=>Model.GroupID" />
-                                </div>
+                                </div> *@
                             </div>
 
                             <div class="row position-relative pb-3">
@@ -132,14 +131,14 @@
                                                 IsAddOptionNeed="true"
                                                 NewButtonText="Item Brand"
                                                 NewButtonClicked="async () => await HandleItemBrandAddButtonClick()" />
-                                <div class="validation-for-dropdown">
+                               @*  <div class="validation-for-dropdown">
                                     <ValidationMessage For="()=>Model.BrandID" />
-                                </div>
+                                </div> *@
                             </div>
                         }
                         else
                         {
-                            <div class="row">
+                           @*  <div class="row">
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label class="form-label mt-0 me-1" style="text-align:left;">
@@ -161,7 +160,7 @@
                                         <ValidationMessage For="() => Model.SacID" />
                                     </div>
                                 </div>
-                            </div>
+                            </div> *@
                         }
 
                         <div class="row position-relative pb-3">
@@ -174,9 +173,9 @@
                                             ModeGroup="(int)DropdownModes.CommonSearch"
                                             ItemSelected="HandleTaxPreferenceSelected"
                                             SelectedItem="new DropdownSelectedItemModel(){ID = Model.TaxPreferenceTypeID,Value = Model.TaxPreferenceName}" />
-                            <div class="validation-for-dropdown">
+                            @* <div class="validation-for-dropdown">
                                 <ValidationMessage For="()=>Model.TaxPreferenceTypeID" />
-                            </div>
+                            </div> *@
                         </div>
 
                         @if (Model.TaxPreferenceTypeID != null && Model.TaxPreferenceTypeID == (int)TaxPreferences.Taxable)
@@ -205,9 +204,9 @@
                                                 SelectedItem="new DropdownSelectedItemModel(){ID = Model.IntraTaxCategoryID,Value = Model.IntraTaxCategoryName}"
                                                 NewButtonText="Add new tax category"
                                                 NewButtonClicked="HandleNewIntraTaxCategoryAddButtonClick" />
-                                <div class="validation-for-dropdown">
+                                @* <div class="validation-for-dropdown">
                                     <ValidationMessage For="()=>Model.IntraTaxCategoryID" />
-                                </div>
+                                </div> *@
                             </div>
 
                             <div class="row">
@@ -223,9 +222,9 @@
                                                 SelectedItem="new DropdownSelectedItemModel(){ID = Model.InterTaxCategoryID,Value = Model.InterTaxCategoryName}"
                                                 NewButtonText="Add new tax category"
                                                 NewButtonClicked="HandleNewInterTaxCategoryAddButtonClick" />
-                                <div class="validation-for-dropdown">
+                               @*  <div class="validation-for-dropdown">
                                     <ValidationMessage For="()=>Model.InterTaxCategoryID" />
-                                </div>
+                                </div> *@
                             </div>
                         }
 
@@ -235,8 +234,7 @@
                                 <InputTextBox Label="Url Code:" @bind-Value="Model.UrlCode"
                                               DivClass="col-md-12"
                                               IsRequired="true"
-                                              PlaceHolder="Unique url code"
-                                              ValidationFor="() => Model.UrlCode" id="item-url-code-text-box" />
+                                              PlaceHolder="Unique url code" id="item-url-code-text-box" />
                             </div>
 
                             <div class="row position-relative pb-3">
@@ -251,9 +249,9 @@
                                                 SelectedItem="new DropdownSelectedItemModel(){ID = Model.PackingTypeID,Value = Model.PackingTypeName}"
                                                 NewButtonClicked="HandleNewItemPackingTypeAddButtonClick"
                                                 NewButtonText="Packing Type" />
-                                <div class="validation-for-dropdown">
+                                @* <div class="validation-for-dropdown">
                                     <ValidationMessage For="()=>Model.PackingTypeID" />
-                                </div>
+                                </div> *@
                             </div>
 
                             <div class="row">
@@ -264,7 +262,7 @@
                                             <span class="ms-1" style="color:red">*</span>
                                         </label>
                                         <input class="form-control " @bind="Model.UMUnit" id="item-um-unit-box">
-                                        <ValidationMessage For="() => Model.UMUnit" />
+                                        @* <ValidationMessage For="() => Model.UMUnit" /> *@
                                     </div>
                                 </div>
                             </div>
@@ -284,9 +282,9 @@
                                                     SelectedItem="new DropdownSelectedItemModel(){ID = Model.SizeID,Value = Model.Size}"
                                                     NewButtonClicked="HandleItemSizeAddButtonClick"
                                                     NewButtonText="Item Size" />
-                                    <div class="validation-for-dropdown">
+                                   @*  <div class="validation-for-dropdown">
                                         <ValidationMessage For="()=>Model.SizeID" />
-                                    </div>
+                                    </div> *@
                                 </div>
 
                                 <div class="row position-relative pb-3">
@@ -302,9 +300,9 @@
                                                     SelectedItem="new DropdownSelectedItemModel(){ID = Model.ColorID,Value = Model.ColorName}"
                                                     NewButtonClicked="HandleItemColorAddButtonClick"
                                                     NewButtonText="Item Size" />
-                                    <div class="validation-for-dropdown">
+                                    @* <div class="validation-for-dropdown">
                                         <ValidationMessage For="()=>Model.ColorID" />
-                                    </div>
+                                    </div> *@
                                 </div>
                             }
 

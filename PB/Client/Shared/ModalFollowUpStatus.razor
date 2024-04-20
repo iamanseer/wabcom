@@ -27,7 +27,7 @@
                     <div class="row">
                         <InputTextBox Label="@Localizer["Status Name"]" DivClass="col-md-12" ValidationFor="() => Model.StatusName" @bind-Value="Model.StatusName" />
 
-                        <div class="form-group col-md-12">
+                      @*   <div class="form-group col-md-12">
                             <label class="form-label" style="text-align: left; margin-top: 0 !important;">
                                 @Localizer["Type"] :
                                 <span style="color:red">*</span>
@@ -38,7 +38,7 @@
                                 <option value="@((int)FollowUpTypes.Quotation)">Quotation</option>
                             </select>
                             <ValidationMessage For="() => Model.Type" />
-                        </div>
+                        </div> *@
 
                         <div class="form-group col-md-12">
                             <label class="form-label" style="text-align: left; margin-top: 0 !important;">
@@ -69,7 +69,7 @@
 @code {
 
     [Parameter] public EventCallback<IdnValuePair> Save { get; set; }
-
+    [Parameter] public int TypeID{ get; set; }
     private FollowupStatus Model = new();
 
     public async Task OpenFollowUpStatusModal(int followUpStatusID = 0)
@@ -80,6 +80,7 @@
     }
     private async Task SaveFollowupStatus()
     {
+        Model.Type = TypeID;
         var res = await API.PostAsync<FollowupStatusAddResultModel, FollowupStatus>("crm/save-followup-status", Model);
         if (res != null)
         {

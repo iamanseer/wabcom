@@ -17,8 +17,8 @@ namespace PB.Shared.Tables.CRM
         [Required(ErrorMessage = "Please choose a nature for the followup")]
         [Range(1, 10, ErrorMessage = "Please choose a valid option")]
         public int Nature { get; set; }
-        [Required(ErrorMessage = "Please choose a type of the followup")]
-        [Range(1, 10, ErrorMessage = "Please choose a valid option")]
+        //[Required(ErrorMessage = "Please choose a type of the followup")]
+        //[Range(1, 10, ErrorMessage = "Please choose a valid option")]
         public int Type { get; set; }
         public int? ClientID { get; set; }
     }
