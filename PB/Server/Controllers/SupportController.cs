@@ -719,81 +719,85 @@ namespace PB.Server.Controllers
                         PackageID = model.PackageID.Value,
                         PaymentStatus = (int)PaymentStatus.Pending
                     };
-                    var result = await _supperAdmin.HandleClientPackageAccountsInvoiceEntries(InsertModel, tran);
 
-                    if (result is not null)
-                    {
-                        var packageRoleGroups = await _supperAdmin.FetchPackageRoleGroups(model.PackageID.Value, tran);
-                        if (packageRoleGroups is not null && packageRoleGroups.Contains((int)RoleGroups.AccountsManagement))
-                        {
-                            await _accounts.InsertClientDefaultAccountsRelatedEntries(model.ClientID.Value, tran);
-                        }
+                    tran.Commit();
+                 
+                    return Ok(new Success());
+                    // var result = await _supperAdmin.HandleClientPackageAccountsInvoiceEntries(InsertModel, tran);
 
-                        if (packageRoleGroups is not null && packageRoleGroups.Contains((int)RoleGroups.InventoryManagement))
-                        {
-                            await _inventory.InsertClientInventoryDefaultEntries(model.ClientID.Value, tran);
-                        }
+                    //if (result is not null)
+                    //{
+                    //    var packageRoleGroups = await _supperAdmin.FetchPackageRoleGroups(model.PackageID.Value, tran);
+                    //    if (packageRoleGroups is not null && packageRoleGroups.Contains((int)RoleGroups.AccountsManagement))
+                    //    {
+                    //        await _accounts.InsertClientDefaultAccountsRelatedEntries(model.ClientID.Value, tran);
+                    //    }
 
-                        if (model.IsPaid == true)   
-                        {
-                            PaymentVerificationPostModel verificationModel = new() 
-                            {
-                                InvoiceID = result.InvoiceID,
-                                RecieptVoucherTypeID = model.VoucherTypeID.Value
-                            };
-                            await _supperAdmin.InsertPaymentVerificationEntries(verificationModel, CurrentUserID, tran);
+                    //    if (packageRoleGroups is not null && packageRoleGroups.Contains((int)RoleGroups.InventoryManagement))
+                    //    {
+                    //        await _inventory.InsertClientInventoryDefaultEntries(model.ClientID.Value, tran);
+                    //    }
 
-                            ClientInvoiceMailDetailsModel sendModel = new();
+                    //    if (model.IsPaid == true)   
+                    //    {
+                    //        PaymentVerificationPostModel verificationModel = new() 
+                    //        {
+                    //            InvoiceID = result.InvoiceID,
+                    //            RecieptVoucherTypeID = model.VoucherTypeID.Value
+                    //        };
+                    //        await _supperAdmin.InsertPaymentVerificationEntries(verificationModel, CurrentUserID, tran);
 
-                            sendModel.MailRecipients = model.EmailAddress;
+                    //        ClientInvoiceMailDetailsModel sendModel = new();
 
-                            sendModel.Subject = "Tank you";
+                    //        sendModel.MailRecipients = model.EmailAddress;
 
-                            sendModel.Message = $@"
-                                           <div style = 'font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2;direction:ltr;'>
-                                                <div style = 'margin:50px auto;width:70%;padding:20px 0'>
-                                                    <div style = 'border-bottom:1px solid #eee' >
-                                                        <a href = ' style = 'font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600'> {PDV.BrandName} </a>
-                                                    </div>
-                                                    <p style = 'font-size:1.1em'>    Hi {model.CompanyName},</p>
-                                                    <p>Your company registration is completed successfully and your account is activated.Now you can login your account with:
-                                                    <br>
-                                                    UserName: {model.EmailAddress}
-                                                    <br>
-                                                    Password:{model.Password}
-                                                    <br>Wish you have a successfull journey with us.</p>
-                                
-                                                    <h2 style = 'background: #00466a;text-align:right;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;'> </h2> 
-                                                   <hr style = 'border: none; border - top:1px solid #eee' />
-                                                <div style='float:right; padding: 8px 0; color:#aaa;font-size:0.8em;line-height:1;font-weight:300'>
-                                                    <p> Regards,</p>
-                                                        < p>  {PDV.BrandName} team</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ";
+                    //        sendModel.Subject = "Tank you";
 
-                            _job.Enqueue(() => _common.SendInvoiceEmailToClient(sendModel));
-                        }
+                    //        sendModel.Message = $@"
+                    //                       <div style = 'font-family: Helvetica,Arial,sans-serif;min-width:1000px;overflow:auto;line-height:2;direction:ltr;'>
+                    //                            <div style = 'margin:50px auto;width:70%;padding:20px 0'>
+                    //                                <div style = 'border-bottom:1px solid #eee' >
+                    //                                    <a href = ' style = 'font-size:1.4em;color: #00466a;text-decoration:none;font-weight:600'> {PDV.BrandName} </a>
+                    //                                </div>
+                    //                                <p style = 'font-size:1.1em'>    Hi {model.CompanyName},</p>
+                    //                                <p>Your company registration is completed successfully and your account is activated.Now you can login your account with:
+                    //                                <br>
+                    //                                UserName: {model.EmailAddress}
+                    //                                <br>
+                    //                                Password:{model.Password}
+                    //                                <br>Wish you have a successfull journey with us.</p>
 
-                        tran.Commit();
+                    //                                <h2 style = 'background: #00466a;text-align:right;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;'> </h2> 
+                    //                               <hr style = 'border: none; border - top:1px solid #eee' />
+                    //                            <div style='float:right; padding: 8px 0; color:#aaa;font-size:0.8em;line-height:1;font-weight:300'>
+                    //                                <p> Regards,</p>
+                    //                                    < p>  {PDV.BrandName} team</p>
+                    //                                </div>
+                    //                            </div>
+                    //                        </div>
+                    //                    ";
 
-                        string packageName = await _dbContext.GetFieldsAsync<MembershipPackage, string>("PackageName", $"PackageID={model.PackageID.Value}", null);
-                        string pdfName = "pdf_invoice_" + packageName.ToLower().Replace(' ', '_');
-                        int pdfMediaID = await _pdf.CreateClientInvoicePdf(result.InvoiceID, pdfName);
-                        if (pdfMediaID > 0)
-                        {
-                            var mailDetails = await _common.GetInvoiceEMailDetailsForClient(result.InvoiceID);
-                            if (mailDetails is not null)
-                                await _common.SendInvoiceEmailToClient(mailDetails);
-                        }
-                        return Ok(new Success());
-                    }
-                    else
-                    {
-                        tran.Rollback();
-                        return BadRequest(new BaseErrorResponse() { ResponseMessage = "SomethingWentWrong" });
-                    }
+                    //        _job.Enqueue(() => _common.SendInvoiceEmailToClient(sendModel));
+                    //    }
+
+                    //    tran.Commit();
+
+                    //    string packageName = await _dbContext.GetFieldsAsync<MembershipPackage, string>("PackageName", $"PackageID={model.PackageID.Value}", null);
+                    //    string pdfName = "pdf_invoice_" + packageName.ToLower().Replace(' ', '_');
+                    //    int pdfMediaID = await _pdf.CreateClientInvoicePdf(result.InvoiceID, pdfName);
+                    //    if (pdfMediaID > 0)
+                    //    {
+                    //        var mailDetails = await _common.GetInvoiceEMailDetailsForClient(result.InvoiceID);
+                    //        if (mailDetails is not null)
+                    //            await _common.SendInvoiceEmailToClient(mailDetails);
+                    //    }
+                    //    return Ok(new Success());
+                    //}
+                    //else
+                    //{
+                    //    tran.Rollback();
+                    //    return BadRequest(new BaseErrorResponse() { ResponseMessage = "SomethingWentWrong" });
+                    //}
                 }
                 catch (Exception e)
                 {

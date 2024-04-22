@@ -11,6 +11,7 @@ namespace PB.Shared.Enum.CRM
         New=0,
         Followup,
         Cancelled,
-        Converted
+        Converted,
+        Won
     }
 }
