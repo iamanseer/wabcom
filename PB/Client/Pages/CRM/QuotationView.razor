@@ -492,7 +492,7 @@
     </div>
 </PageLayoutNew>
 
-<ModalFollowUp @ref="childFollowupModal" Saved="ModalQuotationFollowupCallbackRecieved" />
+<ModalFollowUp @ref="childFollowupModal" Type="(int)FollowUpTypes.Quotation" Saved="ModalQuotationFollowupCallbackRecieved" />
 @if (QuotationFollowupData.CustomerEntityID is not null)
 {
     <ModalPdfSendConfirmation @ref="modalPdfSendConfirmation" CustomerEntityID="QuotationFollowupData.CustomerEntityID.Value" />

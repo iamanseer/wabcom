@@ -1,4 +1,5 @@
-﻿@using PB.Shared.Models;
+﻿@using PB.Shared.Enum.Common
+@using PB.Shared.Models;
 @using PB.CRM.Model.Enum;
 @using PB.Model.Models;
 @using PB.Shared.Enum.CRM;
@@ -116,12 +117,23 @@
     </div>
 </div>
 
-
-<ModalFollowUpStatus @ref="followupStatusChildModal" Save="NewStatusAdded" />
+@if (Type == (int)FollowUpTypes.Enquiry)
+{
+    <ModalFollowUpStatus TypeID="(int)GeneralSettingsMenus.EnquiryFollowupStatus" @ref="followupStatusChildModal" Save="NewStatusAdded" />
+}
+else if (Type == (int)FollowUpTypes.Quotation)
+{
+    <ModalFollowUpStatus @ref="followupStatusChildModal" TypeID="(int)GeneralSettingsMenus.QuotationFollowStatus" Save="NewStatusAdded" />
+}
+else
+{
+    <ModalFollowUpStatus @ref="followupStatusChildModal" Save="NewStatusAdded" />
+}
 
 @code {
     [Parameter] public EventCallback Saved { get; set; }
 
+    [Parameter] public int Type { get; set; }
     private FollowUpModel Model = new() { FollowUpType = (int)FollowUpTypes.Enquiry };
 
     private ModalFollowUpStatus? followupStatusChildModal;

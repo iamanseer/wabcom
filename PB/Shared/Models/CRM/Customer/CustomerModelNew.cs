@@ -26,8 +26,8 @@ namespace PB.Shared.Models.CRM.Customer
         public int EntityPersonalInfoID { get; set; }
         public int EntityInstituteInfoID { get; set; }
         public int EntityTypeID { get; set; }
-        [Required(ErrorMessage = "Please provide customer phone")]
-        [RegularExpression("^[0-9]+$", ErrorMessage = "Only numbers are allowed")]
+        //[Required(ErrorMessage = "Please provide customer phone")]
+        //[RegularExpression("^[0-9]+$", ErrorMessage = "Only numbers are allowed")]
         public string? Phone { get; set; }
         //[EmailAddress(ErrorMessage = "Please povide vallid e-mail address")]
         [RegularExpression("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", ErrorMessage = "Please provide a valid Email like example@test.com")]
@@ -35,7 +35,7 @@ namespace PB.Shared.Models.CRM.Customer
         public int? MediaID { get; set; }
         public bool? AllowType { get; set; }
         public int? ContactID { get; set; }
-        [Required(ErrorMessage = "Please choose a country")]
+       // [Required(ErrorMessage = "Please choose a country")]
         public int? CountryID { get; set; }
         public string? CountryName { get; set; }
         public string? ISDCode { get; set; }

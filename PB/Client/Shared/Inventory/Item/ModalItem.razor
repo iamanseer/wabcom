@@ -633,11 +633,11 @@ else
             return;
         }
 
-        if (string.IsNullOrEmpty(Model.ItemCode))
-        {
-            await JS.ErrorMessage("Please enter Item code for the item");
-            return;
-        }
+        // if (string.IsNullOrEmpty(Model.ItemCode))
+        // {
+        //     await JS.ErrorMessage("Please enter Item code for the item");
+        //     return;
+        // }
 
         if (Model.ItemVariants is null)
         {
@@ -647,11 +647,11 @@ else
                 return;
             }
 
-            if (string.IsNullOrEmpty(Model.UrlCode))
-            {
-                await JS.ErrorMessage("Please choose a unique url code for the first variant");
-                return;
-            }
+            // if (string.IsNullOrEmpty(Model.UrlCode))
+            // {
+            //     await JS.ErrorMessage("Please choose a unique url code for the first variant");
+            //     return;
+            // }
 
             Model.ItemVariants = new();
             ItemVariantModel itemModelView = new()

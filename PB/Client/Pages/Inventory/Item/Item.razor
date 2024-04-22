@@ -652,11 +652,7 @@ else
             return;
         }
 
-        if (string.IsNullOrEmpty(Model.ItemCode))
-        {
-            await JS.ErrorMessage("Please enter Item code for the item");
-            return;
-        }
+     
 
         if (Model.ItemVariants is null)
         {
