@@ -76,7 +76,7 @@
                                     </td>
 
                                     <td>
-                                        @(entry.AddedOn.HasValue ? entry.AddedOn.Value.ToString("dd/MM/yyy") : "--:--:----")
+                                        @(entry.AddedOn.HasValue ? entry.AddedOn.Value.ToString("dd/MM/yyyy h:mm tt") : "--:--:----")
                                     </td>
 
                                     <td>
@@ -84,7 +84,7 @@
                                     </td>
 
                                     <td>
-                                        @(entry.ExpireOn.HasValue ? entry.ExpireOn.Value.ToString("dd/MM/yyy") : "--:--:----")
+                                        @(entry.ExpireOn.HasValue ? entry.ExpireOn.Value.ToString("dd/MM/yyyy h:mm tt") : "--:--:----")
                                     </td>
 
                                     <td>

@@ -122,7 +122,7 @@
 
                                                                 <div class="row">
                                                                     <label class=" text-muted items-label col-md-5 col-auto">Date</label>
-                                                                    <label class="col-md-7 col-auto">@(EnquiryViewData.Date.HasValue ? EnquiryViewData.Date.Value.ToString("dd/MM/yyyy") : "")</label>
+                                                                    <label class="col-md-7 col-auto">@(EnquiryViewData.Date.HasValue ? EnquiryViewData.Date.Value.ToString("dd/MM/yyyy h:mm tt") : "")</label>
                                                                 </div>
 
                                                                 <div class="row">
@@ -277,7 +277,7 @@
                                                                 <tr>
 
                                                                     <td class="text-muted" style="font-size: 12px;">
-                                                                        @(historyItem.FollowUpDate == null ? "" : historyItem.FollowUpDate.Value.ToString("dd/MM/yyy"))
+                                                                        @(historyItem.FollowUpDate == null ? "" : historyItem.FollowUpDate.Value.ToString("dd/MM/yyyy h:mm tt"))
                                                                     </td>
 
                                                                     <td class="text-muted" style="font-size: 12px;">
