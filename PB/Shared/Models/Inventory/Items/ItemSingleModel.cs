@@ -68,7 +68,7 @@ namespace PB.Shared.Models.Inventory.Items
         public string? UrlCode { get; set; }
         //[RequiredIf(nameof(HasMultipleModels), false, ErrorMessage = "Please choose the unit for the item")]
         public int? PackingTypeID { get; set; } = (int)PackingTypes.Piece;
-        public string? PackingTypeName { get; set; }
+        public string? PackingTypeName { get; set; } = PackingTypes.Piece.ToString();
         //[RequiredIf(nameof(HasMultipleModels), false, ErrorMessage = "Please provide um unit for the item variant")]
         //[Range(1, int.MaxValue, ErrorMessage = "Please enter number of unit for the item")]
         public int UMUnit { get; set; } = 1;

@@ -1,4 +1,5 @@
 ﻿using PB.Model;
+using PB.Shared.Enum.Inventory;
 using PB.Shared.Models.Inventory.Items;
 using PB.Shared.Tables.Inventory.Items;
 using System;
@@ -19,7 +20,7 @@ namespace PB.Shared.Models.Inventory.Item
         [RegularExpression("^[a-z0-9\\-]+$", ErrorMessage = "Please use only lowercase letters, numbers and hyphens.")]
         public string? UrlCode { get; set; }
         [Required(ErrorMessage = "Please choose the unit for the item")]
-        public int? PackingTypeID { get; set; }
+        public int? PackingTypeID { get; set; } = (int)PackingTypes.Piece;
         [Range(1, int.MaxValue, ErrorMessage = "Please enter number of unit for the item")]
         public int UMUnit { get; set; } = 1;
         [Required(ErrorMessage = "Please enter the selling price for the item")]
@@ -27,7 +28,7 @@ namespace PB.Shared.Models.Inventory.Item
         public decimal? Cost { get; set; }
         public int? SizeID { get; set; }
         public string? Size { get; set; }
-        public string? PackingTypeName { get; set; }
+        public string? PackingTypeName { get; set; } = PackingTypes.Piece.ToString();
         public int? ColorID { get; set; }
         public string? ColorName { get; set; }
         public int TaxPreferenceTypeID { get; set; }
