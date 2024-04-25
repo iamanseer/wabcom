@@ -91,7 +91,7 @@
                                         </td>
 
                                         <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
-                                            @(followUpItem.NextFollowupDate.HasValue ? followUpItem.NextFollowupDate.Value.ToString("dd/MM/yyyy") : "--:--:----")
+                                            @(followUpItem.NextFollowupDate.HasValue ? followUpItem.NextFollowupDate.Value.ToString("dd/MM/yyyy h:mm tt") : "--:--:----")
                                         </td>
 
                                         @if (FollowupList.UserTypeID == (int)UserTypes.Client)

@@ -71,7 +71,7 @@
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label class="form-label mt-0 me-1">Next Followup Date :</label>
-                                        <input type="date" class="form-control" @bind="Model.NextFollowUpDate" id="invoice-date-picker">
+                                        <input type="datetime-local" class="form-control" @bind="Model.NextFollowUpDate" id="invoice-date-picker">
                                         <ValidationMessage For="() => Model.NextFollowUpDate" />
                                     </div>
                                 </div>
