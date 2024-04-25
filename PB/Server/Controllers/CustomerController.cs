@@ -50,19 +50,19 @@ namespace PB.Server.Controllers
         //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
         public async Task<IActionResult> SaveCustomer(CustomerModelNew customerModel)
         {
-            var phone = await _dbContext.GetByQueryAsync<string>(@$"Select Phone 
-                                                                            from Entity
-                                                                            where Phone=@Phone and EntityID<>{Convert.ToInt32(customerModel.EntityID)} and ClientID={CurrentClientID} and IsDeleted=0", customerModel);
+            //var phone = await _dbContext.GetByQueryAsync<string>(@$"Select Phone 
+            //                                                                from Entity
+            //                                                                where Phone=@Phone and EntityID<>{Convert.ToInt32(customerModel.EntityID)} and ClientID={CurrentClientID} and IsDeleted=0", customerModel);
 
-            if (!string.IsNullOrEmpty(phone))
-            {
-                return BadRequest(new BaseErrorResponse()
-                {
-                    ErrorCode = 0,
-                    ResponseTitle = "Invalidsubmission",
-                    ResponseMessage = "PhoneNumberExist"
-                });
-            }
+            //if (!string.IsNullOrEmpty(phone))
+            //{
+            //    return BadRequest(new BaseErrorResponse()
+            //    {
+            //        ErrorCode = 0,
+            //        ResponseTitle = "Invalidsubmission",
+            //        ResponseMessage = "PhoneNumberExist"
+            //    });
+            //}
 
             var email = await _dbContext.GetByQueryAsync<string>(@$"Select EmailAddress 
                                                                             from Entity
@@ -150,19 +150,19 @@ namespace PB.Server.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Customer")]
         public async Task<IActionResult> SaveCustomerNew(CustomerModelNew customerModel)
         {
-            var phone = await _dbContext.GetByQueryAsync<string>(@$"Select Phone 
-                                                                            from Entity
-                                                                            where Phone=@Phone and EntityID<>{Convert.ToInt32(customerModel.EntityID)} and ClientID={CurrentClientID} and IsDeleted=0", customerModel);
+            //var phone = await _dbContext.GetByQueryAsync<string>(@$"Select Phone 
+            //                                                                from Entity
+            //                                                                where Phone=@Phone and EntityID<>{Convert.ToInt32(customerModel.EntityID)} and ClientID={CurrentClientID} and IsDeleted=0", customerModel);
 
-            if (!string.IsNullOrEmpty(phone))
-            {
-                return BadRequest(new BaseErrorResponse()
-                {
-                    ErrorCode = 0,
-                    ResponseTitle = "Invalidsubmission",
-                    ResponseMessage = "PhoneNumberExist"
-                });
-            }
+            //if (!string.IsNullOrEmpty(phone))
+            //{
+            //    return BadRequest(new BaseErrorResponse()
+            //    {
+            //        ErrorCode = 0,
+            //        ResponseTitle = "Invalidsubmission",
+            //        ResponseMessage = "PhoneNumberExist"
+            //    });
+            //}
 
             var email = await _dbContext.GetByQueryAsync<string>(@$"Select EmailAddress 
                                                                             from Entity
@@ -278,12 +278,9 @@ namespace PB.Server.Controllers
         {
             var customer = await _dbContext.GetByQueryAsync<CustomerModelNew>($@"
                                                     Select 
-                                                    Case
-                                                        When Type={(int)CustomerTypes.Business} Then EI.Name 
-                                                        Else EP.FirstName 
-                                                        End as Name,
                                                     EP.EntityPersonalInfoID,E.EntityTypeID,E.EmailAddress,E.Phone,E.MediaID,E.EntityID,C.EntityID,
-                                                    C.Status,C.Type,C.Remarks,C.CustomerID,EntityInstituteInfoID,WC.ContactID,E.CountryID,CT.CountryName,CT.ISDCode,C.TaxNumber
+                                                    C.Status,C.Type,C.Remarks,C.CustomerID,EntityInstituteInfoID,WC.ContactID,E.CountryID,CT.CountryName,
+                                                    CT.ISDCode,C.TaxNumber,EI.Name as CompanyName,EP.FirstName as Name
                                                     From Customer C
                                                     Left Join EntityPersonalInfo EP ON EP.EntityID=C.EntityID and EP.IsDeleted=0
                                                     Left Join Entity E ON E.EntityID=C.EntityID and E.IsDeleted=0 

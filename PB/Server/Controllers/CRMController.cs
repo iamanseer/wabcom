@@ -62,17 +62,20 @@ namespace PB.Server.Controllers
         public async Task<IActionResult> GetEnquiryList(PagedListPostModelWithFilter searchModel)
         {
             PagedListQueryModel query = searchModel;
-            query.Select = $@"Select EnquiryNo,Date,V.Name AS CustomerName,
+            query.Select = $@"Select EnquiryNo,Date,
                                 Case When VE.EntityID is null then 'System' else  VE.Name end AS AddedBy,
                                 LeadQuality,E.EnquiryID,E.LeadThroughID,CurrentFollowupNature,EAS.Assignee,LT.Name AS LeadThroughName
+                                ,Case When Type={(int)CustomerTypes.Individual} Then EP.FirstName else EI.Name end as CustomerName
                                 From Enquiry E 
-                                JOIN viEntity V on E.CustomerEntityID=V.EntityID
+                                Join Customer C on C.EntityID=E.CustomerEntityID and C.IsDeleted=0
+                                Left Join EntityPersonalInfo EP ON EP.EntityID=C.EntityID and EP.IsDeleted=0
+		                                Left Join EntityInstituteInfo EI on EI.EntityID=C.EntityID and EI.IsDeleted=0
                                 Left Join LeadThrough LT ON LT.LeadThroughID=E.LeadThroughID AND LT.IsDeleted=0
                                 LEFT JOIN (
                                             Select STRING_AGG(E.Name, ',') AS Assignee,EA.EnquiryID
                                             From EnquiryAssignee EA
                                             Join viEntity E ON E.EntityID=EA.EntityID
-											Where EA.IsDeleted=0
+			                                Where EA.IsDeleted=0
                                             Group By EA.EnquiryID
                                             ) EAS ON E.EnquiryID=EAS.EnquiryID
                                 LEFT JOIN viEntity VE on VE.EntityID=E.UserEntityID";
@@ -834,10 +837,13 @@ namespace PB.Server.Controllers
         public async Task<IActionResult> GetQuotationPagedList(PagedListPostModelWithFilter searchModel)
         {
             PagedListQueryModel query = searchModel;
-            query.Select = $@"Select QuotationID,Date As AddedOn,QuotationNo,vE.Name As CustomerName,uE.Name As Username,CurrentFollowupNature,ExpiryDate As ExpireOn
-                                            From Quotation Q
-                                            Join viEntity vE ON vE.EntityID=Q.CustomerEntityID
-                                            Join viEntity uE ON uE.EntityID=Q.UserEntityID";
+            query.Select = $@"Select QuotationID,Date As AddedOn,QuotationNo,Case When Type={(int)CustomerTypes.Individual} Then EP.FirstName else EI.Name end as CustomerName,
+                                    uE.Name As Username,CurrentFollowupNature,ExpiryDate As ExpireOn
+                                    From Quotation Q
+                                    Join Customer C on C.EntityID=Q.CustomerEntityID and C.IsDeleted=0
+                                    Left Join EntityPersonalInfo EP ON EP.EntityID=C.EntityID and EP.IsDeleted=0
+                                    Left Join EntityInstituteInfo EI on EI.EntityID=C.EntityID and EI.IsDeleted=0
+                                    Left Join viEntity uE ON uE.EntityID=Q.UserEntityID";
 
             query.WhereCondition = $"Q.IsDeleted=0 and Q.BranchID={CurrentBranchID}";
             query.OrderByFieldName = searchModel.OrderByFieldName;

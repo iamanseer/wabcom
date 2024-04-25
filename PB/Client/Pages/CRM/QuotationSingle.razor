@@ -388,7 +388,7 @@
                                 <div class="col-md-7 ">
                                     <div class="form-group">
                                         <label class="form-label mt-0 me-1"> Date :</label>
-                                        <input type="datetime-local" class="form-control" @bind="Model.Date" id="invoice-date-picker">
+                                        <input type="date" class="form-control" @bind="Model.Date" id="invoice-date-picker">
                                         <ValidationMessage For="()=>Model.Date" />
                                     </div>
                                 </div>
@@ -398,7 +398,7 @@
                                 <div class="col-md-7">
                                     <div class="form-group">
                                         <label class="form-label mt-0 me-1">Expiry Date :</label>
-                                        <input type="datetime-local" class="form-control" @bind="Model.ExpiryDate" id="invoice-date-picker">
+                                        <input type="date" class="form-control" @bind="Model.ExpiryDate" id="invoice-date-picker">
                                         <ValidationMessage For="()=>Model.ExpiryDate" />
                                     </div>
                                 </div>

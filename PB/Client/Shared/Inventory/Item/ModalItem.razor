@@ -45,7 +45,7 @@
                         <div class="row">
                             <InputTextBox Label="Item Code:" @bind-Value="Model.ItemCode"
                                           DivClass="col-md-12"
-                                          IsRequired="true"
+                                          IsRequired="false"
                                           PlaceHolder="Unique item code" id="item-code-text-box" />
                         </div>
 
@@ -88,7 +88,7 @@
                                 <DropdownSelect DivClass="col-md-12"
                                                 DropdownID="item-category-drop-down"
                                                 Label="Item Category :"
-                                                IsRequired="true"
+                                                IsRequired="false"
                                                 Mode="(int)DropdownModes.ItemCategory"
                                                 ModeGroup="(int)DropdownModes.CommonSearch"
                                                 ReadDataOnSearch="true"
@@ -167,7 +167,7 @@
                             <DropdownSelect DivClass="col-md-12" @ref="@TaxPreferenceDropdown"
                                             DropdownID="@TaxPreferenceDropdownID"
                                             Label="Tax Preference :"
-                                            IsRequired="true"
+                                            IsRequired="false"
                                             ReadDataOnSearch="false"
                                             Mode="(int)DropdownModes.TaxPreference"
                                             ModeGroup="(int)DropdownModes.CommonSearch"
@@ -197,7 +197,7 @@
                                                 Label="Intra Tax Category :"
                                                 ReadDataOnSearch="false"
                                                 IsAddOptionNeed="true"
-                                                IsRequired="true"
+                                                IsRequired="false"
                                                 Mode="(int)DropdownModes.IntraTaxCategory"
                                                 ModeGroup="(int)DropdownModes.CommonSearch"
                                                 ItemSelected="HandleIntraTaxCategorySelected"
@@ -215,7 +215,7 @@
                                                 Label="Inter Tax Category :"
                                                 ReadDataOnSearch="false"
                                                 IsAddOptionNeed="true"
-                                                IsRequired="true"
+                                                IsRequired="false"
                                                 Mode="(int)DropdownModes.InterTaxCategory"
                                                 ModeGroup="(int)DropdownModes.CommonSearch"
                                                 ItemSelected="HandleInterTaxCategorySelected"
@@ -233,14 +233,14 @@
                             <div class="row">
                                 <InputTextBox Label="Url Code:" @bind-Value="Model.UrlCode"
                                               DivClass="col-md-12"
-                                              IsRequired="true"
+                                              IsRequired="false"
                                               PlaceHolder="Unique url code" id="item-url-code-text-box" />
                             </div>
 
                             <div class="row position-relative pb-3">
                                 <DropdownSelect DivClass="col-md-12" @ref="@PackingTypeDrowpdownSelect"
                                                 Label="Packing Type:"
-                                                IsRequired="true"
+                                                IsRequired="false"
                                                 IsAddOptionNeed="true"
                                                 ReadDataOnSearch="false"
                                                 Mode="(int)DropdownModes.ItemPackingType"
@@ -259,7 +259,7 @@
                                     <div class="form-group">
                                         <label class="form-label mt-0 me-1" style="text-align:left;">
                                             UM Unit :
-                                            <span class="ms-1" style="color:red">*</span>
+                                           @*  <span class="ms-1" style="color:red">*</span> *@
                                         </label>
                                         <input class="form-control " @bind="Model.UMUnit" id="item-um-unit-box">
                                         @* <ValidationMessage For="() => Model.UMUnit" /> *@

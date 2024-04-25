@@ -14,7 +14,7 @@ namespace PB.Shared.Tables.CRM
         public int FollowUpID { get; set; }
         public int? EnquiryID { get; set; }
         [Required(ErrorMessage = "Please choose the date of followup")]
-        public DateTime? FollowUpDate { get; set; } = DateTime.UtcNow;
+        public DateTime? FollowUpDate { get; set; } = DateTime.Today;
         [Required(ErrorMessage = "Please a choose a followup status")]
         public int? FollowUpStatusID { get; set; }
         public int? EntityID { get; set; }

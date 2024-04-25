@@ -197,7 +197,7 @@
                                                                         Added On
                                                                     </label>
                                                                     <label class="col-7 col-auto">
-                                                                        @(QuotationFollowupData.Date.HasValue ? QuotationFollowupData.Date.Value.ToString("dd/MM/yyyy h:mm tt") : "--:--:----")
+                                                                        @(QuotationFollowupData.Date.HasValue ? QuotationFollowupData.Date.Value.ToString("dd/MM/yyyy") : "--:--:----")
                                                                     </label>
                                                                 </div>
 
@@ -235,7 +235,7 @@
                                                                             Expiry Date
                                                                         </label>
                                                                         <label class="col-md-7 col-auto">
-                                                                            @QuotationFollowupData.ExpiryDate.Value.ToString("dd/MM/yyyy h:mm tt")
+                                                                            @QuotationFollowupData.ExpiryDate.Value.ToString("dd/MM/yyyy")
                                                                         </label>
                                                                     </div>
                                                                 }
