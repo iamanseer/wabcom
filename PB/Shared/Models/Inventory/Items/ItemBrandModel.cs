@@ -12,7 +12,7 @@ namespace PB.Shared.Models.Inventory.Items
         public int BrandID { get; set; }
         [Required(ErrorMessage = "Please provide brand name")]
         public string? BrandName { get; set; }
-        [Required(ErrorMessage = "Please provide brand logo")]
+       // [Required(ErrorMessage = "Please provide brand logo")]
         public int? MediaID { get; set; }
         public string? FileName { get; set; }
         public int? ClientID { get; set; } 

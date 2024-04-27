@@ -22,7 +22,7 @@
                     <h1 class="page-title">@(EnquiryViewData.EnquiryNo + " - " + EnquiryViewData.CustomerName)</h1>
                     <div class="btn-toolbar float-right mr-7">
 
-                        @if (EnquiryViewData.CurrentFollowupNature != (int)FollowUpNatures.Cancelled)
+                        @if (EnquiryViewData.CurrentFollowupNature != (int)FollowUpNatures.Dropped)
                         {
                             @if (EnquiryViewData.QuotationID == null)
                             {
@@ -49,7 +49,7 @@
                             </a>
                         }
                         
-                        @if (EnquiryViewData.CurrentFollowupNature == (int)FollowUpNatures.New || EnquiryViewData.CurrentFollowupNature == (int)FollowUpNatures.Cancelled)
+                        @if (EnquiryViewData.CurrentFollowupNature == (int)FollowUpNatures.New || EnquiryViewData.CurrentFollowupNature == (int)FollowUpNatures.Dropped)
                         {
                             <a class="btn btn-white btn-md me-2" @onclick="(async()=>await DeleteEnquiry(EnquiryId))">
                                 <i class="fa fa-trash" style="color:red"></i>

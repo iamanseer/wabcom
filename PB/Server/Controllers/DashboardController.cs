@@ -42,14 +42,14 @@ namespace PB.Server.Controllers
             int pendingQuotationCount = await _dbContext.GetByQueryAsync<int>($"Select Count(QuotationID) from Quotation Where CurrentFollowupNature={(int)FollowUpNatures.Followup} and IsDeleted=0 and BranchID={CurrentBranchID}", null);
 
             
-            int closedEnquiryCount = await _dbContext.GetByQueryAsync<int>($"Select Count(EnquiryID) from Enquiry Where CurrentFollowupNature={(int)FollowUpNatures.Cancelled} and IsDeleted=0 and BranchID={CurrentBranchID}", null);
-            int closedQuotationCount = await _dbContext.GetByQueryAsync<int>($"Select Count(QuotationID) from Quotation Where CurrentFollowupNature={(int)FollowUpNatures.Cancelled} and IsDeleted=0 and BranchID={CurrentBranchID}", null);
+            int closedEnquiryCount = await _dbContext.GetByQueryAsync<int>($"Select Count(EnquiryID) from Enquiry Where CurrentFollowupNature={(int)FollowUpNatures.Dropped} and IsDeleted=0 and BranchID={CurrentBranchID}", null);
+            int closedQuotationCount = await _dbContext.GetByQueryAsync<int>($"Select Count(QuotationID) from Quotation Where CurrentFollowupNature={(int)FollowUpNatures.Dropped} and IsDeleted=0 and BranchID={CurrentBranchID}", null);
 
             var res = new DashboardCountModel
             {
                 NewEnquiries = await _dbContext.GetByQueryAsync<int>($"Select Count(EnquiryID) from Enquiry Where CurrentFollowupNature = {(int)FollowUpNatures.New} and IsDeleted=0 and BranchID={CurrentBranchID}", null),
                 Followups = pendingEnquiryCount + pendingQuotationCount,
-                Interested = await _dbContext.GetByQueryAsync<int>($"Select Count(EnquiryID) from Enquiry Where CurrentFollowupNature={(int)FollowUpNatures.Converted} and IsDeleted=0 and BranchID={CurrentBranchID}", null),
+                Interested = await _dbContext.GetByQueryAsync<int>($"Select Count(EnquiryID) from Enquiry Where CurrentFollowupNature={(int)FollowUpNatures.Interested} and IsDeleted=0 and BranchID={CurrentBranchID}", null),
                 Closed = closedEnquiryCount + closedQuotationCount,
                 TotalEnquiry = await _dbContext.GetByQueryAsync<int>($"Select Count(EnquiryID) from Enquiry Where IsDeleted=0 and BranchID={CurrentBranchID}", null),
             };
@@ -262,8 +262,8 @@ namespace PB.Server.Controllers
                         string monthName = new DateTime(DateTime.Now.Year, monthList[i], 1).ToString("MMMM");
                         int newCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == 0).First().Count;
                         int followUpCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == (int)FollowUpNatures.Followup).First().Count;
-                        int businessCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == (int)FollowUpNatures.Converted).First().Count;
-                        int closedCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == (int)FollowUpNatures.Cancelled).First().Count;
+                        int businessCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == (int)FollowUpNatures.Interested).First().Count;
+                        int closedCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == (int)FollowUpNatures.Dropped).First().Count;
                         int totalCount = newCount + followUpCount + businessCount + closedCount;
                         barCartModel.Months.Add(monthName);
                         barCartModel.NewEnquiryCounts.Add(newCount);

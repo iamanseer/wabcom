@@ -48,8 +48,9 @@
                             <select class="form-control form-select" id="address-type-select" @bind="Model.Nature">
                                 <option value="0" selected>Choose</option>
                                 <option value="@((int)FollowUpNatures.Followup)">FollowUp</option>
-                                <option value="@((int)FollowUpNatures.Converted)">Interested</option>
-                                <option value="@((int)FollowUpNatures.Cancelled)">Closed</option>
+                                <option value="@((int)FollowUpNatures.Interested)">Interested</option>
+                                <option value="@((int)FollowUpNatures.Dropped)">Dropped</option>
+                                <option value="@((int)FollowUpNatures.ClosedWon)">Closed won</option>
                             </select>
                             <ValidationMessage For="() => Model.Nature" />
                         </div>

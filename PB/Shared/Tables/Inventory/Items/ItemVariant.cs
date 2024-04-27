@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using PB.Shared.Enum;
+using PB.Shared.Enum.Inventory;
 
 namespace PB.Shared.Tables.Inventory.Items
 {
@@ -14,8 +15,8 @@ namespace PB.Shared.Tables.Inventory.Items
         [PrimaryKey]
         public int ItemVariantID { get; set; }
         public int? ItemID { get; set; }
-        [Required(ErrorMessage = "Please choose the unit for the item")]
-        public int? PackingTypeID { get; set; }
+        //[Required(ErrorMessage = "Please choose the unit for the item")]
+        public int? PackingTypeID { get; set; } = (int)PackingTypes.Piece;
         // [Required(ErrorMessage = "Please enter number of unit for the item")]
         // [RequiredIf("UMUnit", targetValue: 0, ErrorMessage = "Unit never set to 0")]
         [Range(1, int.MaxValue, ErrorMessage = "Please enter number of unit for the item")]

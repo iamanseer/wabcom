@@ -164,10 +164,10 @@
                     ListPageSearchModel.CurrentFollowupNature = (int)FollowUpNatures.New;
                     break;
                 case "interested":
-                    ListPageSearchModel.CurrentFollowupNature = (int)FollowUpNatures.Converted;
+                    ListPageSearchModel.CurrentFollowupNature = (int)FollowUpNatures.Interested;
                     break;
                 case "closed":
-                    ListPageSearchModel.CurrentFollowupNature = (int)FollowUpNatures.Cancelled;
+                    ListPageSearchModel.CurrentFollowupNature = (int)FollowUpNatures.Dropped;
                     break;
             }
         }
@@ -207,7 +207,7 @@
         {
             FiledName = "CurrentFollowupNature",
             DisplayName = "Status",
-            EnumObject = FollowUpNatures.Converted
+            EnumObject = FollowUpNatures.Interested
         },
         new()
         {

@@ -25,7 +25,7 @@ namespace PB.Shared.Models.Inventory.Items
         public bool IsGoods { get; set; } = true;
 
        // [Required(ErrorMessage = "Please choose a tax preference for the item")]
-        public int? TaxPreferenceTypeID { get; set; } = (int)TaxPreferences.Taxable;
+        public int? TaxPreferenceTypeID { get; set; } 
         //[RequiredIf(nameof(TaxPreferenceTypeID), (int)TaxPreferences.Taxable, ErrorMessage = "Please choose an Intra tax category")]
         public int? IntraTaxCategoryID { get; set; }
        // [RequiredIf(nameof(TaxPreferenceTypeID), (int)TaxPreferences.Taxable, ErrorMessage = "Please choose an Inter tax category")]

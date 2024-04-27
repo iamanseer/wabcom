@@ -16,8 +16,8 @@ namespace PB.Shared.Models.Inventory.Item
         public int ItemVariantID { get; set; }
         public int? ItemID { get; set; }
         public string? ItemModelName { get; set; }
-        [Required(ErrorMessage = "Please enter the unieque url code for the item")]
-        [RegularExpression("^[a-z0-9\\-]+$", ErrorMessage = "Please use only lowercase letters, numbers and hyphens.")]
+        //[Required(ErrorMessage = "Please enter the unieque url code for the item")]
+        //[RegularExpression("^[a-z0-9\\-]+$", ErrorMessage = "Please use only lowercase letters, numbers and hyphens.")]
         public string? UrlCode { get; set; }
         [Required(ErrorMessage = "Please choose the unit for the item")]
         public int? PackingTypeID { get; set; } = (int)PackingTypes.Piece;

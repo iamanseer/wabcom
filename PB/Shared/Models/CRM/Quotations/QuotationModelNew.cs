@@ -37,7 +37,7 @@ namespace PB.Shared.Models.CRM
         public int? CurrentFollowupNature { get; set; } = (int)FollowUpNatures.New;
         public int? MediaID { get; set; }
         public int? BranchID { get; set; }
-        [Required(ErrorMessage = "Please choose a currency for this quotation")]
+        //[Required(ErrorMessage = "Please choose a currency for this quotation")]
         public int? CurrencyID { get; set; }
        // [Required(ErrorMessage = "Please choose a currency for this quotation")]
         public int? PlaceOfSupplyID { get; set; }

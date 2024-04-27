@@ -82,9 +82,9 @@ namespace PB.Shared.Models.CRM.Enquiry
                         return "text-black";
                     case (int)FollowUpNatures.Followup:
                         return "text-info";
-                    case (int)FollowUpNatures.Cancelled:
+                    case (int)FollowUpNatures.Dropped:
                         return "text-danger";
-                    case (int)FollowUpNatures.Converted:
+                    case (int)FollowUpNatures.Interested:
                         return "text-success";
                 }
                 return "";

@@ -360,7 +360,7 @@ namespace PB.Server.Controllers
         public async Task<IActionResult> DeleteEnquiry(int Id)
         {
             int currentNature = await _dbContext.GetFieldsAsync<Enquiry, int>("CurrentFollowupNature", $"EnquiryID={Id} and IsDeleted=0 and ClientID={CurrentClientID}", null);
-            if (currentNature == (int)FollowUpNatures.Converted || currentNature == (int)FollowUpNatures.Followup)
+            if (currentNature == (int)FollowUpNatures.Interested || currentNature == (int)FollowUpNatures.Followup)
             {
                 return BadRequest(new BaseErrorResponse()
                 {
@@ -577,7 +577,7 @@ namespace PB.Server.Controllers
                     {
                         FollowUpModel followUpModel = new()
                         {
-                            FollowUpStatusID = await _dbContext.GetByQueryAsync<int?>("Select Top 1 FollowUpStatusID From FollowUpStatus Where Nature=@Nature And Type=@Type And (ClientID=@ClientID Or IsNull(ClientID,0)=0) And IsDeleted=0", new { Nature = (int)FollowUpNatures.Converted, Type = (int)FollowUpTypes.Enquiry, ClientID = CurrentClientID }, tran),
+                            FollowUpStatusID = await _dbContext.GetByQueryAsync<int?>("Select Top 1 FollowUpStatusID From FollowUpStatus Where Nature=@Nature And Type=@Type And (ClientID=@ClientID Or IsNull(ClientID,0)=0) And IsDeleted=0", new { Nature = (int)FollowUpNatures.Interested, Type = (int)FollowUpTypes.Enquiry, ClientID = CurrentClientID }, tran),
                             EntityID = CurrentEntityID,
                             FollowUpType = (int)FollowUpTypes.Enquiry,
                             EnquiryID = model.EnquiryID.Value,
@@ -678,7 +678,7 @@ namespace PB.Server.Controllers
         public async Task<IActionResult> DeleteQuotation(int Id)
         {
             int currentNature = await _dbContext.GetFieldsAsync<Quotation, int>("CurrentFollowupNature", $"QuotationID={Id} and IsDeleted=0 and ClientID={CurrentClientID}", null);
-            if (currentNature == (int)FollowUpNatures.Converted || currentNature == (int)FollowUpNatures.Followup)
+            if (currentNature == (int)FollowUpNatures.Interested || currentNature == (int)FollowUpNatures.Followup)
             {
                 return BadRequest(new BaseErrorResponse()
                 {
@@ -886,7 +886,7 @@ namespace PB.Server.Controllers
 			                                Where QA.IsDeleted=0
                                             Group By QA.QuotationID
                                             ) QAS ON vF.QuotationID=QAS.QuotationID";
-            query.WhereCondition = $"vF.BranchID={CurrentBranchID} AND vF.CurrentFollowupNature NOT IN({(int)FollowUpNatures.Converted},{(int)FollowUpNatures.Cancelled})";
+            query.WhereCondition = $"vF.BranchID={CurrentBranchID} AND vF.CurrentFollowupNature NOT IN({(int)FollowUpNatures.Interested},{(int)FollowUpNatures.Dropped})";
             query.OrderByFieldName = searchModel.OrderByFieldName;
             if (CurrentUserTypeID > (int)UserTypes.Client)
             {
@@ -1016,19 +1016,19 @@ namespace PB.Server.Controllers
             var followupNotifications = await _dbContext.GetListByQueryAsync<HeaderNotifyCountModel>(@$"
                                                 Select Count(*) AS NotifyCount, 'Pending' AS NotifyValue, -1 AS Nature
                                                 From viFollowup F
-                                                Where F.Days < 0 AND F.BranchID={CurrentBranchID} AND CurrentFollowupNature Not in ({(int)FollowUpNatures.Cancelled},{(int)FollowUpNatures.Converted})
+                                                Where F.Days < 0 AND F.BranchID={CurrentBranchID} AND CurrentFollowupNature Not in ({(int)FollowUpNatures.Dropped},{(int)FollowUpNatures.Interested})
 
                                                 UNION ALL
 
                                                 Select Count(*) AS NotifyCount, 'Todays' AS NotifyValue, 0 AS Nature
                                                 From viFollowup F
-                                                Where F.Days = 0 AND F.BranchID={CurrentBranchID} AND CurrentFollowupNature Not in ({(int)FollowUpNatures.Cancelled},{(int)FollowUpNatures.Converted})
+                                                Where F.Days = 0 AND F.BranchID={CurrentBranchID} AND CurrentFollowupNature Not in ({(int)FollowUpNatures.Dropped},{(int)FollowUpNatures.Interested})
 
                                                 UNION ALL
 
                                                 Select Count(*) AS NotifyCount, 'Upcoming' AS NotifyValue, 1 AS Nature
                                                 From viFollowup F
-                                                Where F.Days > 0 AND F.BranchID={CurrentBranchID} AND CurrentFollowupNature Not in ({(int)FollowUpNatures.Cancelled},{(int)FollowUpNatures.Converted})
+                                                Where F.Days > 0 AND F.BranchID={CurrentBranchID} AND CurrentFollowupNature Not in ({(int)FollowUpNatures.Dropped},{(int)FollowUpNatures.Interested})
             ", null);
             return Ok(followupNotifications);
         }

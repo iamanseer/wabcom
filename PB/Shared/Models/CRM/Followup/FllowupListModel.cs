@@ -31,9 +31,9 @@ namespace PB.Model.Models
                         return "badge bg-success";
                     case (int)FollowUpNatures.Followup:
                         return "badge bg-info";
-                    case (int)FollowUpNatures.Cancelled:
+                    case (int)FollowUpNatures.Dropped:
                         return "badge bg-danger";
-                    case (int)FollowUpNatures.Converted:
+                    case (int)FollowUpNatures.Interested:
                         return "badge bg-warning";
                 }
                 return "";

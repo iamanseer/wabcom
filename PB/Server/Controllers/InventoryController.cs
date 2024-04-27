@@ -306,7 +306,7 @@ namespace PB.Server.Controllers
                 {
                     FollowUpModel followUpModel = new()
                     {
-                        FollowUpStatusID = await _dbContext.GetByQueryAsync<int?>("Select Top 1 FollowUpStatusID From FollowUpStatus Where Nature=@Nature And Type=@Type And (ClientID=@ClientID Or IsNull(ClientID,0)=0) And IsDeleted=0", new { Nature = (int)FollowUpNatures.Converted, Type = (int)FollowUpTypes.Quotation, ClientID = CurrentClientID }, tran),
+                        FollowUpStatusID = await _dbContext.GetByQueryAsync<int?>("Select Top 1 FollowUpStatusID From FollowUpStatus Where Nature=@Nature And Type=@Type And (ClientID=@ClientID Or IsNull(ClientID,0)=0) And IsDeleted=0", new { Nature = (int)FollowUpNatures.Interested, Type = (int)FollowUpTypes.Quotation, ClientID = CurrentClientID }, tran),
                         EntityID = CurrentEntityID,
                         FollowUpType = (int)FollowUpTypes.Quotation,
                         QuotationID = model.QuotationID.Value,

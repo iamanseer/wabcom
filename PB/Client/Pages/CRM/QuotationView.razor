@@ -67,7 +67,7 @@
                                 break;
 
                             <!--Invoice section-->
-                            case not (int)FollowUpNatures.Cancelled:
+                            case not (int)FollowUpNatures.Dropped:
                                 @if (QuotationFollowupData.InvoiceID == null)
                                 {
                                     <a class="btn btn-white btn-md me-2" @onclick="ConvertToInvoice">

@@ -366,7 +366,7 @@
                                                     ModeGroup="(int)DropdownModes.CommonSearch"
                                                     SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.CurrencyID, Value=Model.CurrencyName})"
                                                     ItemSelected="(DropdownItemSelectedCallbackModel customer) =>  HandleCurrencySelected(customer)" />
-                                    <ValidationMessage For="()=>Model.CurrencyID" />
+                                   @*  <ValidationMessage For="()=>Model.CurrencyID" /> *@
                                 </div>
 
                                 <div class="row">
@@ -1703,12 +1703,7 @@
         //     await JS.ErrorMessage("Please choose place of supply for the quotation");
         //     return;
         // }
-        if (Model.CurrencyID is null)
-        {
-            await JS.ErrorMessage("Please choose a currency for the quotation");
-            return;
-        }
-
+      
         if (Model.QuotationItems.Count > 0)
         {
             QuotationItemModelNew? existingItem = null;
@@ -2032,16 +2027,7 @@
             await JS.ErrorMessage("Please add items for the quotation");
             return;
         }
-        else if (Model.PlaceOfSupplyID == null)
-        {
-            await JS.ErrorMessage("Please choose place of supply for the quotation");
-            return;
-        }
-        else if (Model.CurrencyID == null)
-        {
-            await JS.ErrorMessage("Please choose a currency for this quotation");
-            return;
-        }
+        
 
         if (await JS.Confirm("Confirm", "Would you like to proceed with generating the quotation PDF now, or would you prefer to do so later?", SweetAlertMessageType.question, "Generate now", "Later"))
         {

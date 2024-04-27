@@ -28,15 +28,15 @@ namespace PB.Shared.Tables.CRM
         public string? Subject { get; set; }
         public string? CustomerNote { get; set; }
         public string? TermsandCondition { get; set; }
-        [Required(ErrorMessage = "Please choose a billing address for the quotation")]
+       // [Required(ErrorMessage = "Please choose a billing address for the quotation")]
         public int? BillingAddressID { get; set; }
         public int? ShippingAddressID { get; set; }
         public int? CurrentFollowupNature { get; set; } = (int)FollowUpNatures.New;
         public int? MediaID { get; set; } 
         public int? BranchID { get; set; }
-        [Required(ErrorMessage = "Please choose a currency for this quotation")]
+       // [Required(ErrorMessage = "Please choose a currency for this quotation")]
         public int? CurrencyID { get; set; }
-        [Required(ErrorMessage = "Please choose a currency for this quotation")]
+        //[Required(ErrorMessage = "Please choose a currency for this quotation")]
         public int? PlaceOfSupplyID { get; set; }
     }
 }
