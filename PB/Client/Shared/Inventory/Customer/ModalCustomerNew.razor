@@ -3,7 +3,7 @@
 @using PB.Shared.Models.Common
 
 <div class="modal fade" id="customer-add-modal">
-    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document" style="overflow-y: scroll;">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document" style="">
         <div class="modal-content modal-content-demo">
             <EditForm Model="Model" OnValidSubmit="SaveCustomer" autocomplete="off">
                 <DataAnnotationsValidator />
@@ -31,7 +31,7 @@
                         <div class="row">
                             <InputTextBox Label="Company Name : "
                                           IsRequired="true"
-                                          ValidationFor="() => Model.Name"
+                                          ValidationFor="() => Model.CompanyName"
                                           DivClass="col-md-7"
                                           @bind-Value="Model.CompanyName"
                                           id="cst-name-box" />
