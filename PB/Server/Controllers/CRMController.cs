@@ -30,6 +30,8 @@ using PB.Shared.Models.CRM.Quotation;
 using PB.Shared.Enum.Inventory;
 using PB.Shared.Tables.Inventory.Invoices;
 using PB.Shared.Models.CRM.Followup;
+using PB.Shared.Models.CRM.Quotations;
+using PB.Shared.Tables.Accounts.JournalMaster;
 
 namespace PB.Server.Controllers
 {
@@ -549,20 +551,20 @@ namespace PB.Server.Controllers
                     ResponseMessage = "Not a valid quotation number"
                 });
             }
-            int QuotationNo = await _dbContext.GetByQueryAsync<int>(@$"
-                                       Select IsNull(Count(QuotationNo),0) QuotationNo
-                                       From Quotation
-                                       Where QuotationNo={model.QuotationNo} and QuotationID<>{model.QuotationID} and  BranchID={CurrentBranchID}   and IsDeleted=0",null);
+            //int QuotationNo = await _dbContext.GetByQueryAsync<int>(@$"
+            //                           Select IsNull(Count(QuotationNo),0) QuotationNo
+            //                           From Quotation
+            //                           Where QuotationNo={model.QuotationNo} and QuotationID<>{model.QuotationID} and  BranchID={CurrentBranchID}   and IsDeleted=0",null);
 
-            if (QuotationNo != 0)
-            {
-                return BadRequest(new BaseErrorResponse()
-                {
-                    ErrorCode = 0,
-                    ResponseTitle = "Duplication not allowed",
-                    ResponseMessage = "Quotation number already exist,try different quotation numner"
-                });
-            }
+            //if (QuotationNo != 0)
+            //{
+            //    return BadRequest(new BaseErrorResponse()
+            //    {
+            //        ErrorCode = 0,
+            //        ResponseTitle = "Duplication not allowed",
+            //        ResponseMessage = "Quotation number already exist,try different quotation numner"
+            //    });
+            //}
             model.BranchID = CurrentBranchID;
             model.ClientID = CurrentClientID;
             model.UserEntityID = model.UserEntityID == null ? CurrentEntityID : model.UserEntityID;
@@ -587,17 +589,17 @@ namespace PB.Server.Controllers
 
                     #endregion
 
-                   // #region Quotation Number
+                    #region Quotation Number
 
-                    //if (model.QuotationID == 0 || model.QuotationNo == 0)
-                    //{
-                    //    model.QuotationNo = await _dbContext.GetByQueryAsync<int>($@"
-                    //                                            Select isnull(max(QuotationNo)+1,1) AS QuotationNo
-                    //                                            From Quotation
-                    //                                            Where BranchID={CurrentBranchID} and IsDeleted=0", null, tran);
-                    //}
+                    if (model.QuotationID == 0 || model.QuotationNo == 0)
+                    {
+                        model.QuotationNo = await _dbContext.GetByQueryAsync<int>($@"
+                                                                Select isnull(max(QuotationNo)+1,1) AS QuotationNo
+                                                                From Quotation
+                                                                Where BranchID={CurrentBranchID} and IsDeleted=0", null, tran);
+                    }
 
-                    //#endregion
+                    #endregion
 
                     #region Quotation
 
@@ -653,7 +655,8 @@ namespace PB.Server.Controllers
 
                     if (model.GenerateQuotationPdf)
                     {
-                        await _cRMRepository.GenerateQuotationPdf(quotation.QuotationID, CurrentBranchID, CurrentClientID);
+                        //await _cRMRepository.GenerateQuotationPdf(quotation.QuotationID, CurrentBranchID, CurrentClientID);
+                        await _cRMRepository.GenerateNewQuotationPdf(quotation.QuotationID, CurrentBranchID, CurrentClientID);
                         MailDetailsModel quotationMailDetails = await _common.GetQuotationPdfMailDetails(quotation.QuotationID, CurrentBranchID);
                         quotationMailDetails.ID = quotation.QuotationID;
                         return Ok(quotationMailDetails);
@@ -857,6 +860,15 @@ namespace PB.Server.Controllers
             return Ok(await _dbContext.GetPagedList<QuotationListModel>(query, null));
         }
 
+
+        [HttpGet("get-staff-phone-number/{entityID}")]
+        public async Task<IActionResult>GetStaffNo(int entityID)
+        {
+            var res = await _dbContext.GetByQueryAsync<IdnValuePair>($@"Select EntityID as ID,Phone as Value
+                                                                                    From viEntity
+                                                                                    Where EntityID={entityID}", null);
+            return Ok(res??new());
+        }
         #endregion
 
         #region Follow-up
@@ -1164,6 +1176,104 @@ namespace PB.Server.Controllers
         public async Task<IActionResult> GetFollowupStatusNature(int followupStatusID)
         {
             return Ok(await _dbContext.GetFieldsAsync<FollowupStatus, int>("Nature", $"FollowUpStatusID={followupStatusID}", null));
+        }
+
+        #endregion
+
+        #region Business Type
+
+
+        [HttpGet("get-business-type-list")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ClientSetting")]
+        public async Task<IActionResult> GetBusinessType()
+        {
+            var result = await _dbContext.GetListByQueryAsync<BusinessTypeModel>($@"Select * 
+                                                                                        From BusinessType 
+                                                                                        Where (ClientID={CurrentClientID} OR ClientID IS NULL) and IsDeleted=0", null);
+            return Ok(result);
+        }
+
+
+
+        [HttpPost("save-business-type")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ClientSetting")]
+        public async Task<IActionResult> SaveBusinessType(BusinessTypeModel model)
+        {
+            var Count = await _dbContext.GetByQueryAsync<int>(@$"Select Count(*) 
+                                                                    from BusinessType
+                                                                    where LOWER(TRIM(BusinessTypeName)) =LOWER(TRIM(@BusinessTypeName))
+                                                                        and BusinessTypeID<>@BusinessTypeID 
+                                                                        and (ClientID={CurrentClientID} OR ClientID IS NULL)
+                                                                        and IsDeleted=0", model);
+            if (Count != 0)
+            {
+                return BadRequest(new BaseErrorResponse()
+                {
+                    ErrorCode = 0,
+                    ResponseTitle = "Business type already exist",
+                    ResponseMessage = "The business type already exist,try different one"
+                });
+            }
+            try
+            {
+                var businessType = _mapper.Map<BusinessType>(model);
+                businessType.ClientID = CurrentClientID;
+                businessType.BusinessTypeID = await _dbContext.SaveAsync(businessType);
+                return Ok(new BusinessTypeAddResultModel() { BusinessTypeID = businessType.BusinessTypeID, BusinessTypeName = model.BusinessTypeName });
+            }
+            catch (Exception err)
+            {
+
+                return BadRequest(new BaseErrorResponse()
+                {
+                    ErrorCode = 0,
+                    ResponseTitle = "Something went wrong",
+                    ResponseMessage = err.Message
+                });
+            }
+
+        }
+
+
+        [HttpGet("get-business-type/{businessTypeID}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> GetBusinessTypes(int businessTypeID)
+        {
+            var result = await _dbContext.GetByQueryAsync<BusinessTypeModel>($@"Select * 
+                                                                            From BusinessType 
+                                                                            Where BusinessTypeID={businessTypeID} and IsDeleted=0", null);
+            return Ok(result);
+        }
+
+
+        #endregion
+
+
+
+
+        #region New Quotation Pdf
+
+        [HttpGet("view-quotation-pdf/{quotationID}")]
+        public async Task<IActionResult>ViewPdf(int quotationID)
+        {
+
+            StringModel htmlContent = new();
+            htmlContent.Value = await _pdf.GenerateAllQuotationContent(quotationID, CurrentBranchID,null);
+            return Ok(htmlContent);
+        }
+
+
+
+        [HttpGet("generate-new-quotation-pdf/{quotationID}")]
+        public async Task<IActionResult> GenerateNewQuotationPdf(int quotationID)
+        {
+            PdfGeneratedResponseModel pdfGeneratedResponseModel = new()
+            {
+                MediaID = await _cRMRepository.GenerateNewQuotationPdf(quotationID, CurrentBranchID, CurrentClientID),
+                MailDetails = await _common.GetQuotationPdfMailDetails(quotationID, CurrentBranchID),
+            };
+            pdfGeneratedResponseModel.MailDetails.ID = quotationID;
+            return Ok(pdfGeneratedResponseModel);
         }
 
         #endregion

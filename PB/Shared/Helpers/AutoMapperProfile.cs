@@ -43,6 +43,7 @@ using PB.Shared.Tables.eCommerce.SEO;
 using PB.Shared.Models.eCommerce.SEO;
 using PB.Shared.Models.eCommerce.Product;
 using PB.Shared.Tables.eCommerce.Products;
+using PB.Shared.Models.CRM.Quotations;
 
 namespace PB.Shared.Helpers
 {
@@ -132,6 +133,7 @@ namespace PB.Shared.Helpers
 
             CreateMap<PromotionModel, Promotion>();
             CreateMap<PromotionItemListViewModel, PromotionItem>();
+            CreateMap<BusinessTypeModel, BusinessType>();
 
             //CourtClient
             CreateMap<HallModel, Hall>();

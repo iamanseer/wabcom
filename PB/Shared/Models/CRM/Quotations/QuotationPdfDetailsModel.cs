@@ -55,6 +55,15 @@ namespace PB.Model.Models
         public string? MainSuffix { get; set; }
         public string? SubSuffix { get; set; } 
         public string? TaxNumber { get; set; }
+        public int? BusinessTypeID { get; set; }
+        public string? Description { get; set; }
+        public int? QuotationCreatedFor { get; set; }
+        public string? StaffPhoneNo { get; set; }
+        public string? StaffName { get; set; }
+        public string? StaffPhone2 { get; set; }
+        public string? BusinessTypeName { get; set; }
+        public List<string> TermsList { get; set; } = new();
+        public List<string> CustomerNoteList { get; set; } = new();
 
     }
 
@@ -72,5 +81,7 @@ namespace PB.Model.Models
         public decimal NetAmount { get; set; }
         public decimal GrossAmount { get; set; }
         public decimal TaxAmount { get; set; } 
+        public string? ItemDescription { get; set; }
+        public List<string> ItemDescriptionList { get; set; } = new();
     }
 } 

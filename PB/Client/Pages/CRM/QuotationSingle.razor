@@ -366,7 +366,7 @@
                                                     ModeGroup="(int)DropdownModes.CommonSearch"
                                                     SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.CurrencyID, Value=Model.CurrencyName})"
                                                     ItemSelected="(DropdownItemSelectedCallbackModel customer) =>  HandleCurrencySelected(customer)" />
-                                   @*  <ValidationMessage For="()=>Model.CurrencyID" /> *@
+                                    @*  <ValidationMessage For="()=>Model.CurrencyID" /> *@
                                 </div>
 
                                 <div class="row">
@@ -380,7 +380,7 @@
                                                     CommonSearch="@(new CommonSearchModel(){ ID = QuotationSettings.CountryID })"
                                                     SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.PlaceOfSupplyID, Value=Model.PlaceOfSupplyName})"
                                                     ItemSelected="async (DropdownItemSelectedCallbackModel customer) => await HandlePlaceOfSupplySelected(customer)" />
-                                   @*  <ValidationMessage For="()=>Model.PlaceOfSupplyID" /> *@
+                                    @*  <ValidationMessage For="()=>Model.PlaceOfSupplyID" /> *@
                                 </div>
                             }
 
@@ -405,7 +405,83 @@
                             </div>
 
                             <div class="row">
-                               @*  @if (Model.QuotationID == 0)
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">
+                                            Business Type :
+                                            <span class="ms-1" style="color:red">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <DropdownSelect @ref="@BusinessTypeDropdown"
+                                                            DropdownID="@BusinessTypeDropdownID"
+                                                            DivClass="col-md-12 px-0"
+                                                            IsRequired="true"
+                                                            ReadDataOnSearch="true"
+                                                            IsAddOptionNeed="true"
+                                                            Mode="(int)DropdownModes.BusinessType"
+                                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                                            SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.BusinessTypeID, Value=Model.BusinessTypeName})"
+                                                            ItemSelected="async (DropdownItemSelectedCallbackModel business) => await HandleBusinessTypeSelected(business)"
+                                                            NewButtonClicked="async (int dropdownMode) => await HandelAddNewBusinessTypeButtonClick(dropdownMode)"
+                                                            NewButtonText="Add Business Type" />
+
+                                        </div>
+                                        <ValidationMessage For="() => Model.BusinessTypeID" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Description :</label>
+                                        <input type="text" class="form-control" @bind="Model.Description" id="description-id">
+                                        <ValidationMessage For="()=>Model.Description" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">
+                                            Quotation Created For :
+                                            <span class="ms-1" style="color:red">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <DropdownSelect @ref="@CreatedForDropdown"
+                                                            DropdownID="@CreatedForDropdownID"
+                                                            DivClass="col-md-12 px-0"
+                                                            IsRequired="true"
+                                                            ReadDataOnSearch="true"
+                                                            IsAddOptionNeed="false"
+                                                            Mode="(int)DropdownModes.QuotationCreatedStaff"
+                                                            ModeGroup="(int)DropdownModes.CommonSearch"
+                                                            SelectedItem="@(new DropdownSelectedItemModel(){ID = Model.QuotationCreatedFor, Value=Model.StaffName})"
+                                                            ItemSelected="async (DropdownItemSelectedCallbackModel staff) => await HandleCretedForSelected(staff)" />
+
+                                        </div>
+                                        <ValidationMessage For="() => Model.QuotationCreatedFor" />
+                                    </div>
+
+                                </div>
+                            </div>
+                            @if (Model.QuotationCreatedFor != null)
+                            {
+                                <div class="row">
+                                    <div class="col-md-7">
+                                        <div class="form-group">
+                                            <label class="form-label mt-0 me-1">Staff Phone No :</label>
+                                            <input type="text" class="form-control" @bind="Model.StaffPhoneNo" id="staff-id">
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+
+
+                            <div class="row">
+                                @if (Model.QuotationID == 0)
                                 {
                                     <div class="col-md-7">
                                         <div class="form-group">
@@ -414,13 +490,13 @@
                                                 <span class="input-group-text" style="background-color:var(--primary-bg-color);">
                                                     @("QT")
                                                 </span>
-                                                <input type="text" class="form-control" value="New Quotation" style="pointer-events:none" >
+                                                <input type="text" class="form-control" value="New Quotation" style="pointer-events:none">
                                             </div>
                                         </div>
                                     </div>
                                 }
                                 else
-                                { *@
+                                {
                                     <div class="col-md-7">
                                         <div class="form-group">
                                             <label class="form-label mt-0 me-1">Quotation Number :</label>
@@ -428,12 +504,12 @@
                                                 <span class="input-group-text" style="background-color:var(--primary-bg-color);">
                                                     @("QT")
                                                 </span>
-                                                <input type="number" class="form-control" @bind="Model.QuotationNo" >
+                                                <input type="number" class="form-control" @bind="Model.QuotationNo" disabled>
                                             </div>
                                             <ValidationMessage For="() => Model.QuotationNo" />
                                         </div>
                                     </div>
-                                @* } *@
+                                }
                             </div>
 
                             <div class="row">
@@ -1227,9 +1303,11 @@
 <ModalItem @ref="childItemModal" Saved="(Func<IdnValuePair, Task>)HandleNewItemAdded" />
 @if (Model.CustomerEntityID is not null)
 {
-    <ModalPdfSendConfirmation @ref="modalPdfSendConfirmation" CustomerEntityID="Model.CustomerEntityID.Value" NavBackToUrl="quotation-view" GetPdfApiPath="crm/get-quotation-pdf" />
+    @* <ModalPdfSendConfirmation @ref="modalPdfSendConfirmation" CustomerEntityID="Model.CustomerEntityID.Value" NavBackToUrl="quotation-view" GetPdfApiPath="crm/get-quotation-pdf" /> *@
+    <ModalPdfSendConfirmation @ref="modalPdfSendConfirmation" CustomerEntityID="Model.CustomerEntityID.Value" NavBackToUrl="quotation-view" GetPdfApiPath="view-quotation-pdf" />
 }
 <ModalTaxCategory @ref="@childTaxCategory" />
+<ModalBusinessType @ref="@childBusinessTypeModal" Saved="(Func<IdnValuePair, Task>)HandleNewBusinessTypeAdded" />
 
 @code {
 
@@ -1251,6 +1329,8 @@
     private DropdownSelect RowTaxCategoryDropdown = new();
     private DropdownSelect FooterTaxCategoryDropdown = new();
     private DropdownSelect PlaceOfSupplyDropdown = new();
+    private DropdownSelect BusinessTypeDropdown = new();
+    private DropdownSelect CreatedForDropdown = new();
 
     private ModalCustomerNew childCustomerModal = new();
     private ModalItem childItemModal = new();
@@ -1261,6 +1341,8 @@
     private string QuotationNumberBoxID = "quotation-number-box";
     private string QuotationCurrecyDropdownID = "quotation-currency-dropdown";
     private string PlaceOfSupplyDropdownID = "quotation-place-of-supply-dropdown";
+    private string BusinessTypeDropdownID = "business-type-dropdown";
+    private string CreatedForDropdownID = "created-for-dropdown";
 
     private string RowItemDropdownID = "quotation-item-drop-down-";
     private string RowItemQuantityBoxID = "quotation-item-quantity-box-";
@@ -1703,7 +1785,7 @@
         //     await JS.ErrorMessage("Please choose place of supply for the quotation");
         //     return;
         // }
-      
+
         if (Model.QuotationItems.Count > 0)
         {
             QuotationItemModelNew? existingItem = null;
@@ -2027,7 +2109,7 @@
             await JS.ErrorMessage("Please add items for the quotation");
             return;
         }
-        
+
 
         if (await JS.Confirm("Confirm", "Would you like to proceed with generating the quotation PDF now, or would you prefer to do so later?", SweetAlertMessageType.question, "Generate now", "Later"))
         {
@@ -2110,5 +2192,39 @@
         }
     }
 
+    #endregion
+
+    #region Business Type
+
+    private ModalBusinessType childBusinessTypeModal = new();
+    private async Task HandleBusinessTypeSelected(DropdownItemSelectedCallbackModel business)
+    {
+        Model.BusinessTypeID = business.ID;
+        Model.BusinessTypeName = business.Value;
+    }
+    private async Task HandelAddNewBusinessTypeButtonClick(int dropdownMode)
+    {
+        await childBusinessTypeModal.OpenBusinessTypeModal();
+    }
+
+    private async Task HandleNewBusinessTypeAdded(IdnValuePair business)
+    {
+        Model.BusinessTypeID = business.ID;
+        Model.BusinessTypeName = business.Value;
+    }
+    #endregion
+
+    #region Created For
+
+    private async Task HandleCretedForSelected(DropdownItemSelectedCallbackModel staff)
+    {
+        Model.QuotationCreatedFor = staff.ID;
+        Model.StaffName = staff.Value;
+        var phoneNo = await API.GetAsync<IdnValuePair>($"crm/get-staff-phone-number/{staff.ID}");
+        if (phoneNo != null)
+        {
+            Model.StaffPhoneNo = phoneNo.Value;
+        }
+    }
     #endregion
 }

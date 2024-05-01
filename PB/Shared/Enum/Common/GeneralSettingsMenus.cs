@@ -25,5 +25,6 @@ namespace PB.Shared.Enum.Common
         ClientSetting,
         PaymentTerm,
         Promotion,
+        BusinessType,
     }
 }

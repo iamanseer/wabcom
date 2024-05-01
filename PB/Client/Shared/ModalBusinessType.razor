@@ -1,0 +1,69 @@
+﻿@using PB.Shared.Models.CRM.Quotations
+@using PB.Shared.Models.Common
+
+<div class="modal fade" id="business-type-modal">
+
+    <EditForm Model="Model" autocomplete="off" OnValidSubmit="SaveBusinessType">
+        <DataAnnotationsValidator />
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    <h6 class="modal-title">
+                        <strong>Business Type</strong>
+                    </h6>
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await CloseModal()">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+
+
+                    <div class="row">
+                        <InputTextBox Label="@Localizer["Business Type Name"]" DivClass="col-md-12" ValidationFor="() => Model.BusinessTypeName" @bind-Value="Model.BusinessTypeName" />
+
+                      
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">@(Model.BusinessTypeID == 0 ? "Save" : "Update")</button>
+                    <button type="button" class="btn btn-danger" @onclick="async() => await CloseModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+    private BusinessTypeModel Model = new();
+
+
+    public async Task OpenBusinessTypeModal(int businessTypeID = 0)
+    {
+        if (businessTypeID != 0)
+            Model = await API.GetAsync<BusinessTypeModel>($"crm/get-business-type/{businessTypeID}", true);
+        await OpenModal();
+    }
+    private async Task SaveBusinessType()
+    {
+        var res = await API.PostAsync<BusinessTypeAddResultModel, BusinessTypeModel>("crm/save-business-type", Model);
+        if (res != null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair()
+                {
+                    ID = res.BusinessTypeID,
+                    Value = res.BusinessTypeName
+                });
+            await CloseModal();
+        }
+    }
+    private async Task CloseModal()
+    {
+        Model = new();
+        await JS.InvokeVoidAsync("HideModal", "business-type-modal");
+    }
+    private async Task OpenModal()
+    {
+        await JS.InvokeVoidAsync("ShowModal", "business-type-modal");
+    }
+}

@@ -224,4 +224,11 @@ namespace PB.Shared.Models.Common
         public int PromotionID { get; set; }
         public string? PromotionName { get; set; }
     }
+
+
+    public class BusinessTypeAddResultModel : Success
+    {
+        public int BusinessTypeID { get; set; }
+        public string? BusinessTypeName { get; set; }
+    }
 }

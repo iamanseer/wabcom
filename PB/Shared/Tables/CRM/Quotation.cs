@@ -38,5 +38,9 @@ namespace PB.Shared.Tables.CRM
         public int? CurrencyID { get; set; }
         //[Required(ErrorMessage = "Please choose a currency for this quotation")]
         public int? PlaceOfSupplyID { get; set; }
+        public int? BusinessTypeID { get; set; }
+        public string? Description { get; set; }
+        public int? QuotationCreatedFor { get; set; }
+        public string? StaffPhoneNo { get; set; }
     }
 }

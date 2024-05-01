@@ -24,6 +24,7 @@ using PB.Shared.Tables.Tax;
 using PB.Shared.Enum.Accounts;
 using PB.Shared.Tables.Common;
 using PB.Shared.Models.Inventory.Items;
+using PB.Shared.Models.CRM.Quotations;
 
 namespace PB.Server.Controllers
 {
@@ -263,31 +264,31 @@ namespace PB.Server.Controllers
             List<TaxCategoryItem> TaxCategoryItems = _mapper.Map<List<TaxCategoryItem>>(model.TaxCategoryItems);
             if (TaxCategoryItems.Count > 0)
             {
-                int? accountGroupID = await _dbContext.GetByQueryAsync<int?>(@$"
-                                                        Select Top 1 AccountGroupID 
-                                                        From AccAccountGroup
-                                                        Where GroupTypeID=@GroupTypeID AND ClientID=@ClientID", new { GroupTypeID = (int)AccountGroupTypes.DutiesAndTaxes, ClientID = CurrentClientID });
+                //int? accountGroupID = await _dbContext.GetByQueryAsync<int?>(@$"
+                //                                        Select Top 1 AccountGroupID 
+                //                                        From AccAccountGroup
+                //                                        Where GroupTypeID=@GroupTypeID AND ClientID=@ClientID", new { GroupTypeID = (int)AccountGroupTypes.DutiesAndTaxes, ClientID = CurrentClientID });
 
                 foreach (var item in TaxCategoryItems)
                 {
-                    AccLedger taxCategoryLedger = new()
-                    {
-                        LedgerID = item.LedgerID.Value,
-                        LedgerName = item.TaxCategoryItemName + " " + item.Percentage.ToString(),
-                        AccountGroupID = accountGroupID,
-                        ClientID = CurrentClientID,
-                        BranchID = CurrentBranchID
-                    };
-                    taxCategoryLedger.LedgerName = item.TaxCategoryItemName;
-                    if (!taxCategoryLedger.LedgerName.Contains($"{(int)Math.Floor(item.Percentage)}"))
-                        taxCategoryLedger.LedgerName += "-" + (int)Math.Floor(item.Percentage);
-                    taxCategoryLedger.LedgerCode = item.TaxCategoryItemName.Replace(' ', '-');
-                    if (!taxCategoryLedger.LedgerCode.Contains($"{(int)Math.Floor(item.Percentage)}"))
-                        taxCategoryLedger.LedgerCode += "-" + (int)Math.Floor(item.Percentage);
+                    //AccLedger taxCategoryLedger = new()
+                    //{
+                    //    LedgerID = item.LedgerID.Value,
+                    //    LedgerName = item.TaxCategoryItemName + " " + item.Percentage.ToString(),
+                    //    AccountGroupID = accountGroupID,
+                    //    ClientID = CurrentClientID,
+                    //    BranchID = CurrentBranchID
+                    //};
+                    //taxCategoryLedger.LedgerName = item.TaxCategoryItemName;
+                    //if (!taxCategoryLedger.LedgerName.Contains($"{(int)Math.Floor(item.Percentage)}"))
+                    //    taxCategoryLedger.LedgerName += "-" + (int)Math.Floor(item.Percentage);
+                    //taxCategoryLedger.LedgerCode = item.TaxCategoryItemName.Replace(' ', '-');
+                    //if (!taxCategoryLedger.LedgerCode.Contains($"{(int)Math.Floor(item.Percentage)}"))
+                    //    taxCategoryLedger.LedgerCode += "-" + (int)Math.Floor(item.Percentage);
                     
-                    taxCategoryLedger.LedgerID = await _dbContext.SaveAsync(taxCategoryLedger);
+                    //taxCategoryLedger.LedgerID = await _dbContext.SaveAsync(taxCategoryLedger);
                     TaxCategoryItem TaxCategoryItem = _mapper.Map<TaxCategoryItem>(item);
-                    TaxCategoryItem.LedgerID = taxCategoryLedger.LedgerID;
+                    //TaxCategoryItem.LedgerID = taxCategoryLedger.LedgerID;
                     TaxCategoryItem.TaxCategoryID = TaxCategory.TaxCategoryID;
                     await _dbContext.SaveAsync(TaxCategoryItem);
                 }
@@ -729,6 +730,52 @@ namespace PB.Server.Controllers
             await _dbContext.DeleteAsync<Promotion>(Id, null, logSummaryID);
             return Ok(true);
         }
+        #endregion
+
+
+
+        #region Business Type
+
+        [HttpGet("delete-business-type")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ClientSetting")]
+        public async Task<IActionResult> DeleteBusinessType(int Id)
+        {
+
+
+            int quotationCount = await _dbContext.GetByQueryAsync<int>($@"SELECT Count(*) AS DataCount 
+                                                                           from BusinessType F
+                                                                            LEFT JOIN Quotation E ON E.BusinessTypeID=F.BusinessTypeID
+                                                                            WHERE E.IsDeleted =0 and F.IsDeleted=0 and BusinessTypeID={Id}
+                                                                            GROUP BY BusinessTypeID", null);
+
+            if (quotationCount > 0)
+            {
+                return BadRequest(new BaseErrorResponse()
+                {
+                    ErrorCode = 0,
+                    ResponseTitle = "Invalid operation",
+                    ResponseMessage = "Quotation entry exist with the business type you are trying to remove"
+                });
+            }
+            await _dbContext.ExecuteAsync($"UPDATE BusinessType SET IsDeleted=1 Where BusinessTypeID={Id}");
+            return Ok(true);
+        }
+
+        [HttpPost("get-business-type-paged-list")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "ClientSetting")]
+        public async Task<IActionResult> GetBusinessList(PagedListPostModel model)
+        {
+            PagedListQueryModel query = model;
+            query.Select = $@"Select *
+								From BusinessType";
+            query.WhereCondition = $"IsDeleted=0 and (ClientID={CurrentClientID} OR ClientID IS NULL)";
+            query.OrderByFieldName = model.OrderByFieldName;
+            query.SearchString = model.SearchString;
+            query.SearchLikeColumnNames = new() { "BusinessTypeName" };
+            var res = await _dbContext.GetPagedList<BusinessTypeModel>(query, null);
+            return Ok(res);
+        }
+
         #endregion
 
     }

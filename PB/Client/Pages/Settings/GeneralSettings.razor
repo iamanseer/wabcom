@@ -4,6 +4,7 @@
 @using PB.Model.Models
 @using PB.Shared.Enum.Common
 @using PB.Shared.Models.CRM.Followup
+@using PB.Shared.Models.CRM.Quotations
 @using PB.Shared.Models.Common
 @using PB.Shared.Models.Inventory.Items
 @using PB.Shared.Models.SuperAdmin.Client
@@ -11,7 +12,6 @@
 
 @page "/general-settings"
 @page "/general-settings/{SelectedMenuType:int}"
-l
 <PageLayoutNew>
     <div class="main-container container-fluid">
         <!--Page Header-->
@@ -171,6 +171,18 @@ l
                                     <i class="mdi mdi-account-network fs-18 me-2 text-success p-2"></i>
                                     <div class=" d-flex flex-column">
                                         <span>Lead Through</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            
+                            <!--Business Type Settings-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.BusinessType)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.BusinessType)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-money fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Business Type</span>
 
                                     </div>
                                 </a>
@@ -1289,6 +1301,63 @@ l
                                         </div>
                                     }
                                     break;
+
+                                case (int)GeneralSettingsMenus.BusinessType:
+                                    @if (IsBusinessTypeSettingIsReady && BusinessListPageModel is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnAddButtonClick="async () => await OpenBusinessTypeModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Sl No</th>
+                                                                <th>
+                                                                    Business Type
+                                                                </th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+
+
+                                                            @foreach (var item in BusinessListPageModel.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((BusinessListPageModel.PageIndex - 1) * BusinessListPageModel.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.BusinessTypeName
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        @if (item.data.ClientID != null)
+                                                                        {
+                                                                            <div class="d-flex justify-content-center align-items-center">
+                                                                                <ActionEdit Clicked="async () =>await OpenBusinessTypeModal(item.data.BusinessTypeID)" />
+                                                                                <ActionDelete Clicked="async () =>await HandleRemoveBusinessTypeButtonClick(item.data.BusinessTypeID)" />
+                                                                            </div>
+                                                                        }
+
+                                                                    </td>
+                                                                </tr>
+
+                                                            }
+
+                                                        </tbody>
+                                                    </table>
+
+                                                </div>
+
+                                                <PaginationCustom PageSize="BusinessListPageModel.PageSize" TotalCount="BusinessListPageModel.TotalCount" TotalPages="BusinessListPageModel.TotalPages" PageIndex="BusinessListPageModel.PageIndex" LoadPageIndex="HandleBusinessTypePageIndexEventCallback" />
+
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
                             }
                         </div>
                     </div>
@@ -1371,6 +1440,12 @@ l
         @if (modalLeadThrough is not null && IsLeadThroughSettingIsReady)
         {
             <ModalLeadThrough @ref="@modalLeadThrough" Saved="async () => await HandleLeadThroughAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.BusinessType:
+        @if (modalBusinessType is not null && IsBusinessTypeSettingIsReady)
+        {
+            <ModalBusinessType @ref="@modalBusinessType" Saved="async () => await HandleBusinessTypeAdded()" />
         }
         break;
 
@@ -1468,6 +1543,9 @@ l
 
             case (int)GeneralSettingsMenus.ItemPackingType:
                 await HandleItemPackingTypeMenuSelected();
+                break;
+            case (int)GeneralSettingsMenus.BusinessType:
+                await HandleBusinessTypeMenuSelected();
                 break;
         }
         SelectedMenuType = selectedMenuType;
@@ -2316,6 +2394,59 @@ l
 
 
 
+
+    #endregion
+
+
+    
+    #region Business Type
+
+    private PagedList<BusinessTypeModel>? BusinessListPageModel;
+    private BusinessTypeModel? BusinessTypeModel;
+    private PagedListPostModel? BusinessTypePostModel;
+    private ModalBusinessType? modalBusinessType;
+    private bool IsBusinessTypeSettingIsReady = false;
+
+    private async Task HandleBusinessTypeMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Business Types"
+            };
+        modalBusinessType = new();
+        BusinessTypeModel = new();
+        BusinessTypePostModel = new();
+        await LoadBusinessTypeData();
+        IsBusinessTypeSettingIsReady = true;
+    }
+    private async Task LoadBusinessTypeData()
+    {
+        BusinessTypePostModel = BusinessTypePostModel ?? new();
+        BusinessListPageModel = await API.PostAsync<PagedList<BusinessTypeModel>, PagedListPostModel>("settings/get-business-type-paged-list", BusinessTypePostModel);
+    }
+    private async Task OpenBusinessTypeModal(int businessTypeID = 0)
+    {
+        modalBusinessType = modalBusinessType ?? new();
+        await modalBusinessType.OpenBusinessTypeModal(businessTypeID);
+    }
+    private async Task HandleRemoveBusinessTypeButtonClick(int businessTypeID)
+    {
+        if (await API.DeleteAsync("settings/delete-business-type", businessTypeID, true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadBusinessTypeData();
+        }
+    }
+    private async Task HandleBusinessTypeAdded()
+    {
+        await LoadBusinessTypeData();
+    }
+    private async Task HandleBusinessTypePageIndexEventCallback(int pageIndex)
+    {
+        BusinessTypePostModel = BusinessTypePostModel ?? new();
+        BusinessTypePostModel.PageIndex = pageIndex;
+        await LoadBusinessTypeData();
+    }
 
     #endregion
 }

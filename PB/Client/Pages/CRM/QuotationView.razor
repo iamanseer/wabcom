@@ -32,7 +32,11 @@
 
                         @if (QuotationFollowupData.MediaID is not null)
                         {
-                            <a class="btn btn-white btn-md me-2" @onclick="async () => await ViewQuotationPDF()">
+
+                            @* <a class="btn btn-white btn-md me-2" @onclick="async () => await ViewQuotationPDF()">
+                                <i class="fa fa-eye" style="color:var(--primary-bg-color)"></i>View New Pdf
+                            </a> *@
+                            <a class="btn btn-white btn-md me-2" @onclick="async () => await ViewNewQuotationPDF()">
                                 <i class="fa fa-eye" style="color:var(--primary-bg-color)"></i>
                             </a>
                             <a class="btn btn-white btn-md me-2" href="@QuotationFollowupData.FileName" download="@QuotationFollowupData.FileName" target="_blank">
@@ -159,7 +163,7 @@
                                                                         @QuotationFollowupData.CustomerName
                                                                     </label>
                                                                 </div>
-                                                                @if(!string.IsNullOrEmpty(QuotationFollowupData.TaxNumber))
+                                                                @if (!string.IsNullOrEmpty(QuotationFollowupData.TaxNumber))
                                                                 {
                                                                     <div class="row">
                                                                         <label class="col-5 col-auto items-label text-muted">
@@ -170,7 +174,7 @@
                                                                         </label>
                                                                     </div>
                                                                 }
-                                                                
+
                                                                 <div class="row">
                                                                     <label class="col-5 col-auto items-label text-muted">
                                                                         Mobile Number
@@ -621,5 +625,16 @@
         Nav.NavigateTo($"invoice/0/{QuotationFollowupData.QuotationID}");
     }
 
+    #endregion
+
+
+    #region New Pdf
+
+    private async Task ViewNewQuotationPDF()
+    {
+        var htmlContent = await API.GetAsync<StringModel>($"crm/view-quotation-pdf/{QuotationFollowupData.QuotationID}", true);
+        if (htmlContent is not null && !string.IsNullOrEmpty(htmlContent.Value))
+            await JS.InvokeVoidAsync("PrintPdfDocument", htmlContent.Value);
+    }
     #endregion
 }

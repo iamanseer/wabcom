@@ -498,6 +498,12 @@
             case (int)DropdownModes.PaymentTerms:
                 Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-payment-terms", CommonSearch);
                 break;
+            case (int)DropdownModes.BusinessType:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-business-type", CommonSearch);
+                break;
+            case (int)DropdownModes.QuotationCreatedStaff:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-quotation-staff", CommonSearch);
+                break;
 
             case (int)DropdownModes.None:
                 break;

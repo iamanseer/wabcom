@@ -673,6 +673,61 @@ namespace PB.Server.Controllers
             return Ok(result);
         }
 
+        [HttpPost("get-list-of-business-type")]
+        public async Task<IActionResult> GetListOfBusinessType(CommonSearchModel model)
+        {
+            string select = "";
+            string whereCondition = "";
+
+            if (model.ReadDataOnSearch)
+            {
+                select = string.IsNullOrEmpty(model.SearchString) ? "SELECT TOP 20 " : "";
+            }
+
+            select = string.IsNullOrEmpty(select) ?
+                @"Select BusinessTypeID as ID,BusinessTypeName as Value 
+                    From BusinessType" :
+                select += @"BusinessTypeID as ID,BusinessTypeName as Value 
+                    From BusinessType";
+
+            whereCondition = !string.IsNullOrEmpty(model.SearchString) ?
+                $"Where (ClientID={CurrentClientID} OR ClientID IS NULL) and IsDeleted=0 and BusinessTypeName like '{model.SearchString}%'" :
+                $"Where (ClientID={CurrentClientID} OR ClientID IS NULL) and IsDeleted=0";
+
+            string query = select + " " + whereCondition;
+            var result = await _dbContext.GetListByQueryAsync<IdnValuePair>(query, null);
+            return Ok(result);
+        }
+
+
+        [HttpPost("get-list-of-quotation-staff")]
+        public async Task<IActionResult> GetListOfCreatedFor(CommonSearchModel model)
+        {
+            string select = "";
+            string whereCondition = "";
+
+            if (model.ReadDataOnSearch)
+            {
+                select = string.IsNullOrEmpty(model.SearchString) ? "SELECT TOP 20 " : "";
+            }
+
+            select = string.IsNullOrEmpty(select) ?
+                @"Select V.EntityID as ID,Name as Value
+                        From Users U
+                        Left Join viEntity V on V.EntityID=U.EntityID" :
+                select += @" V.EntityID as ID,Name as Value
+                                From Users U
+                                Left Join viEntity V on V.EntityID=U.EntityID";
+
+            whereCondition = !string.IsNullOrEmpty(model.SearchString) ?
+                $"Where (V.ClientID={CurrentClientID} OR V.ClientID IS NULL) and U.IsDeleted=0 and U.UserTypeID={(int)UserTypes.Staff} and Name like '{model.SearchString}%'" :
+                $"Where (V.ClientID={CurrentClientID} OR V.ClientID IS NULL) and U.IsDeleted=0 and U.UserTypeID={(int)UserTypes.Staff}";
+
+            string query = select + " " + whereCondition;
+            var result = await _dbContext.GetListByQueryAsync<IdnValuePair>(query, null);
+            return Ok(result);
+        }
+
         [HttpPost("get-list-of-followup-status")]
         public async Task<IActionResult> GetListOfFollowupStatus(CommonSearchModel model)
         {

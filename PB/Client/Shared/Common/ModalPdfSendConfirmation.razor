@@ -112,7 +112,11 @@
     }
     public async Task PrintPDF(int quotationID, string loadingDivID = "")
     {
-        var htmlContent = await API.GetAsync<StringModel>($"{GetPdfApiPath}/{SendDocumentModel.ID}", true);
+        // var htmlContent = await API.GetAsync<StringModel>($"{GetPdfApiPath}/{SendDocumentModel.ID}", true);
+        // if (htmlContent is not null && !string.IsNullOrEmpty(htmlContent.Value))
+        //     await JS.InvokeVoidAsync("PrintPdfDocument", htmlContent.Value);
+
+        var htmlContent = await API.GetAsync<StringModel>($"crm/{GetPdfApiPath}/{SendDocumentModel.ID}", true);
         if (htmlContent is not null && !string.IsNullOrEmpty(htmlContent.Value))
             await JS.InvokeVoidAsync("PrintPdfDocument", htmlContent.Value);
     }

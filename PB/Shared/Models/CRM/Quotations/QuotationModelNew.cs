@@ -19,8 +19,8 @@ namespace PB.Shared.Models.CRM
         public int? CustomerEntityID { get; set; }
         public int? ClientID { get; set; }
 
-        [Required(ErrorMessage = "Please enter quotation number")]
-        [Range(1, int.MaxValue, ErrorMessage = "Please enter quotation number")]
+        //[Required(ErrorMessage = "Please enter quotation number")]
+        //[Range(1, int.MaxValue, ErrorMessage = "Please enter quotation number")]
         public int QuotationNo { get; set; }
         public int? UserEntityID { get; set; }
         public int? EnquiryID { get; set; }
@@ -55,7 +55,16 @@ namespace PB.Shared.Models.CRM
         public decimal NetAmount { get; set; }
         public decimal TaxAmount { get; set; }
         public decimal GrossAmount { get; set; }
-        public bool GenerateQuotationPdf { get; set; } = false; 
+        public bool GenerateQuotationPdf { get; set; } = false;
+        [Required (ErrorMessage ="Please choose business type name")]
+        public int? BusinessTypeID { get; set; }
+        public string? BusinessTypeName { get; set; }
+        [Required(ErrorMessage = "Please enter description")]
+        public string? Description { get; set; }
+        [Required(ErrorMessage = "Please choose created for")]
+        public int? QuotationCreatedFor { get; set; }
+        public string? StaffName { get; set; }
+        public string? StaffPhoneNo { get; set; }
         public List<QuotationItemModelNew> QuotationItems { get; set; } = new();
         public List<QuotationAssignee>? QuotationAssignees { get; set; }
         public List<QuotationMailRecipient>? MailReciepients { get; set; }

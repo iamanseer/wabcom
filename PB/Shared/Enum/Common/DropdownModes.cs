@@ -28,6 +28,8 @@ namespace PB.CRM.Model.Enum
         IntraTaxCategory,
         InterTaxCategory,
         PaymentTerms,
+        BusinessType,
+        QuotationCreatedStaff,
 
         //CourtManagement
         GameMaster,

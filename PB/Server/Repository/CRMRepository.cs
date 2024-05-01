@@ -39,6 +39,11 @@ namespace PB.Server.Repository
         Task<int> SaveFollowup(FollowUpModel followUpModel, IDbTransaction? tran = null);
 
         #endregion
+
+
+
+
+        Task<int> GenerateNewQuotationPdf(int quotationID, int branchID, int clientID);
     }
     public class CRMRepository : ICRMRepository
     {
@@ -75,19 +80,21 @@ namespace PB.Server.Repository
         public async Task<QuotationModelNew> GetQuotationById(int quotationID, int currenttBranchID)
         {
             var result = await _dbContext.GetByQueryAsync<QuotationModelNew>($@"
-                                                                Select Q.*,vE.Name As CustomerName,Cust.TaxNumber,vE.Phone As MobileNumber,
-                                                                WC.ContactID,vE.EmailAddress,vE.Phone AS MobileNumber,M.MediaID,M.FileName,CST.StateName As PlaceOfSupplyName,CZ.CountryID,
-                                                                Concat(C.CurrencyName,' ( ',C.Symbol,' )') AS CurrencyName
-                                                                From Quotation Q
-                                                                Left Join viEntity vE On vE.EntityID=Q.CustomerEntityID
-                                                                Left Join Customer Cust ON Cust.EntityID = Q.CustomerEntityID
-																Left Join WhatsappContact WC ON WC.EntityID=Q.CustomerEntityID and WC.IsDeleted=0
-                                                                Left Join Media M ON M.MediaID=Q.MediaID AND M.IsDeleted=0
-                                                                Left Join Currency C ON C.CurrencyID=Q.CurrencyID AND C.IsDeleted=0
-                                                                Left Join CountryState CST ON CST.StateID=Q.PlaceOfSupplyID AND CST.IsDeleted=0
-                                                                Left Join viBranch B ON B.BranchID=Q.BranchID
-                                                                Left Join CountryZone CZ ON CZ.ZoneID=B.ZoneID AND CZ.IsDeleted=0
-                                                                Where Q.QuotationID={quotationID} and Q.BranchID={currenttBranchID} and Q.IsDeleted=0", null);
+                                                                 Select Q.*,vE.Name As CustomerName,Cust.TaxNumber,vE.Phone As MobileNumber,
+                                                                 WC.ContactID,vE.EmailAddress,vE.Phone AS MobileNumber,M.MediaID,M.FileName,CST.StateName As PlaceOfSupplyName,
+                                                                 CZ.CountryID, Concat(C.CurrencyName,' ( ',C.Symbol,' )') AS CurrencyName,BusinessTypeName,cV.Name as StaffName
+                                                                 From Quotation Q
+                                                                 Left Join viEntity vE On vE.EntityID=Q.CustomerEntityID
+                                                                 Left Join Customer Cust ON Cust.EntityID = Q.CustomerEntityID
+	                                                             Left Join WhatsappContact WC ON WC.EntityID=Q.CustomerEntityID and WC.IsDeleted=0
+                                                                 Left Join Media M ON M.MediaID=Q.MediaID AND M.IsDeleted=0
+                                                                 Left Join Currency C ON C.CurrencyID=Q.CurrencyID AND C.IsDeleted=0
+                                                                 Left Join CountryState CST ON CST.StateID=Q.PlaceOfSupplyID AND CST.IsDeleted=0
+                                                                 Left Join viBranch B ON B.BranchID=Q.BranchID
+                                                                 Left Join CountryZone CZ ON CZ.ZoneID=B.ZoneID AND CZ.IsDeleted=0
+                                                                 Left Join BusinessType BT on BT.BusinessTypeID=Q.BusinessTypeID and BT.IsDeleted=0
+                                                                 Left Join viEntity cV on cV.EntityID=Q.QuotationCreatedFor
+                                                                 Where Q.QuotationID={quotationID} and Q.BranchID={currenttBranchID} and Q.IsDeleted=0", null);
 
             result.QuotationItems = await _dbContext.GetListByQueryAsync<QuotationItemModelNew>($@"
                                                                 Select I.ItemName,QI.*,T.TaxCategoryName,I.TaxPreferenceTypeID,I.TaxPreferenceName
@@ -210,7 +217,19 @@ namespace PB.Server.Repository
         #endregion
 
 
+        #region New Quotation Pdf
+        public async Task<int> GenerateNewQuotationPdf(int quotationID, int branchID, int clientID)
+        {
+            Random random = new Random();
+            int randomNumber = random.Next(0, 100);
+            var quotationNumber = await _dbContext.GetByQueryAsync<int>($"Select QuotationNo From Quotation Where QuotationID={quotationID}", null);
+            string pdfName = "pdf_quotation_" + branchID + '_' + quotationNumber + '_' + randomNumber;
+            int invoiceMediaID = await _pdf.GenerateBasicQuotationPdf(quotationID, branchID, pdfName);
+            //await RemoveQuotationPdfFiles(quotationID, branchID, quotationNumber);
+            return invoiceMediaID;
+        }
+        #endregion
 
 
-	}
+    }
 }
