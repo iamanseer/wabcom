@@ -28,7 +28,7 @@ namespace PB.Model.Models
                         return "badge bg-dark";
                     case (int)FollowUpNatures.Followup:
                         return "badge bg-info";
-                    case (int)FollowUpNatures.Dropped:
+                    case (int)FollowUpNatures.ClosedWon:
                         return "badge bg-danger";
                     case (int)FollowUpNatures.Interested:
                         return "badge bg-success";

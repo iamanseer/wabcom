@@ -116,7 +116,7 @@ namespace PB.Server.Controllers
                                                                                 Group By EA.EnquiryID
                                                                                 ) EAS ON E.EnquiryID=EAS.EnquiryID 
                                                                     LEFT JOIN viEntity VE on VE.EntityID=E.UserEntityID
-                                                                    Where CurrentFollowupNature={(int)FollowUpNatures.Interested} and IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition}", null),
+                                                                    Where CurrentFollowupNature={(int)FollowUpNatures.ClosedWon} and IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition}", null),
                 Closed = closedEnquiryCount + closedQuotationCount,
                 TotalEnquiry = await _dbContext.GetByQueryAsync<int>($@"Select Count(E.EnquiryID) 
                                                                         from Enquiry E
@@ -338,7 +338,7 @@ namespace PB.Server.Controllers
                         string monthName = new DateTime(DateTime.Now.Year, monthList[i], 1).ToString("MMMM");
                         int newCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == 0).First().Count;
                         int followUpCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == (int)FollowUpNatures.Followup).First().Count;
-                        int businessCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == (int)FollowUpNatures.Interested).First().Count;
+                        int businessCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == (int)FollowUpNatures.ClosedWon).First().Count;
                         int closedCount = res.Where(r => r.Month == monthList[i] && r.CurrentFollowupNature == (int)FollowUpNatures.Dropped).First().Count;
                         int totalCount = newCount + followUpCount + businessCount + closedCount;
                         barCartModel.Months.Add(monthName);

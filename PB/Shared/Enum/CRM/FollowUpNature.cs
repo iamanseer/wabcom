@@ -11,8 +11,13 @@ namespace PB.Shared.Enum.CRM
         New=0,
         Followup,
         Dropped,
-        Interested,
-        ClosedWon
+        ClosedWon,
+        Interested
 
+
+        //New = 0,
+        //Followup,
+        //Cancelled,-->Droped
+        //Converted-->ClosedWon
     }
 }

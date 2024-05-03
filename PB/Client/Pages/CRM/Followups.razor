@@ -182,7 +182,7 @@
                     EnumObject = FollowUpNatures.New,
                     AvoidEnumValues = new List<int>()
                     {
-                        (int)FollowUpNatures.Interested,
+                        (int)FollowUpNatures.ClosedWon,
                         (int)FollowUpNatures.Dropped
                     }
                 },
@@ -223,14 +223,12 @@
                     {
                         (int)FollowUpNatures.New,
                         (int)FollowUpNatures.Followup,
-                        // (int)FollowUpNatures.Dropped,
-                        // (int)FollowUpNatures.Interested,
-                        // (int)FollowUpNatures.ClosedWon
                     },
                     AvoidEnumValues = new List<int>()
                     {
-                        (int)FollowUpNatures.Interested,
-                        (int)FollowUpNatures.Dropped
+                        (int)FollowUpNatures.ClosedWon,
+                        (int)FollowUpNatures.Dropped,
+                        (int)FollowUpNatures.Interested
                     }
                 },
 

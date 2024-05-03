@@ -744,16 +744,16 @@ namespace PB.Server.Controllers
                                     Case
                                         When FS.Nature={(int)FollowUpNatures.Followup} Then Concat(FS.StatusName,' (Followup)')
                                         When FS.Nature={(int)FollowUpNatures.Dropped} Then Concat(FS.StatusName,' (Dropped)')
-                                        When FS.Nature={(int)FollowUpNatures.Interested} Then Concat(FS.StatusName,' (Interested)')
                                         When FS.Nature={(int)FollowUpNatures.ClosedWon} Then Concat(FS.StatusName,' (Closed won)')
+                                        When FS.Nature={(int)FollowUpNatures.Interested} Then Concat(FS.StatusName,' (Interested)')
                                         End As Value
                                     From FollowUpStatus FS" :
                 select += @$"FS.FollowUpStatusID as ID,
                                     Case
                                         When FS.Nature={(int)FollowUpNatures.Followup} Then Concat(FS.StatusName,' (Followup)')
                                         When FS.Nature={(int)FollowUpNatures.Dropped} Then Concat(FS.StatusName,' (Dropped)')
-                                        When FS.Nature={(int)FollowUpNatures.Interested} Then Concat(FS.StatusName,' (Interested)')
                                         When FS.Nature={(int)FollowUpNatures.ClosedWon} Then Concat(FS.StatusName,' (Closed won)')
+                                        When FS.Nature={(int)FollowUpNatures.Interested} Then Concat(FS.StatusName,' (Interested)')
                                         End As Value
                                     From FollowUpStatus FS";
 

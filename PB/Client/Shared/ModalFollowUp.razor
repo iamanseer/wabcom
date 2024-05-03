@@ -205,7 +205,7 @@ else
                 if(Model.FollowUpStatusID != null)
                 {
                     var natureId = await API.GetAsync<int>($"crm/get-followup-status-nature/{Model.FollowUpStatusID}");
-                    if ((natureId == (int)FollowUpNatures.Dropped) || (natureId == (int)FollowUpNatures.Interested))
+                    if ((natureId == (int)FollowUpNatures.Dropped) || (natureId == (int)FollowUpNatures.ClosedWon))
                     {
                         FollowupStatusNatureFlag = false;
                         Model.NextFollowUpDate = DateTime.UtcNow;
