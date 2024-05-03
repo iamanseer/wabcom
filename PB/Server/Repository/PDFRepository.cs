@@ -3585,7 +3585,7 @@ namespace PB.Server.Repository
                                     <td>NRAKAEAK</td>
                                     </tr>
                                 </table>
-                                <p>Make all cheques payable to <b>WAHAT AL BUSTAN COMPUTER TR</b> </p> <h4>Features of Tally Software Subscription</h4>
+                                <p>Make all cheques payable to <b>WAHAT AL BUSTAN COMPUTER TR</b> </p> <h4>Customer Notes</h4>
                                 <ul>");
             if(quotation.CustomerNoteList.Count>0)
             {
