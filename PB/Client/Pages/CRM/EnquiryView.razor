@@ -5,7 +5,7 @@
 @using PB.Shared.Enum.CRM;
 @using PB.Shared.Models.CRM.Enquiry;
 
-@attribute [Authorize(Roles = "Enquiry")]
+@attribute [Authorize(Roles = "Enquiry,Quotation")]
 
 
 <PageLayoutNew>
@@ -21,22 +21,25 @@
                 <div class="page-header">
                     <h1 class="page-title">@(EnquiryViewData.EnquiryNo + " - " + EnquiryViewData.CustomerName)</h1>
                     <div class="btn-toolbar float-right mr-7">
+                        <AuthorizeView Roles="Quotation">
 
-                        @if (EnquiryViewData.CurrentFollowupNature != (int)FollowUpNatures.Dropped)
-                        {
-                            @if (EnquiryViewData.QuotationID == null)
+                            @if (EnquiryViewData.CurrentFollowupNature != (int)FollowUpNatures.ClosedWon)
                             {
-                                <a class="btn btn-white btn-md me-2" @onclick="ConvertToQuotation">
-                                    Quotation<i class="fe fe-file-plus mb-0 ms-2" style="font-size: 15px;color:var(--primary-bg-color)"></i>
-                                </a>
+                                @if (EnquiryViewData.QuotationID == null)
+                                {
+                                    <a class="btn btn-white btn-md me-2" @onclick="ConvertToQuotation">
+                                        Quotation<i class="fe fe-file-plus mb-0 ms-2" style="font-size: 15px;color:var(--primary-bg-color)"></i>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-white btn-md me-2" @onclick="NavigateToQuotation">
+                                        Quotation<i class="fa fa-mail-reply mb-0 ms-2" style="font-size: 15px;color:var(--primary-bg-color)"></i>
+                                    </a>
+                                }
                             }
-                            else
-                            {
-                                <a class="btn btn-white btn-md me-2" @onclick="NavigateToQuotation">
-                                    Quotation<i class="fa fa-mail-reply mb-0 ms-2" style="font-size: 15px;color:var(--primary-bg-color)"></i>
-                                </a>
-                            }
-                        }
+                        </AuthorizeView>
+
 
                         @if (EnquiryViewData.CurrentFollowupNature == (int)FollowUpNatures.Followup || EnquiryViewData.CurrentFollowupNature == (int)FollowUpNatures.New)
                         {

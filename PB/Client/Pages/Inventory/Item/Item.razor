@@ -26,7 +26,7 @@
                         <div class="card-body">
                             @if (itemModelEditContext != null)
                             {
-                                <div class="row">
+                             @*    <div class="row">
                                     <div class="col-md-7">
                                         <div class="my-4 d-flex gap-3">
                                             <label class="custom-control custom-radio">
@@ -39,7 +39,7 @@
                                             </label>
                                         </div>
                                     </div>
-                                </div>
+                                </div> *@
 
                                 <div class="row">
                                     <InputTextBox Label="Item Name:" @bind-Value="Model.ItemName"
@@ -238,13 +238,13 @@
 
                                 @if (!Model.HasMultipleModels)
                                 {
-                                    <div class="row">
+                                    @* <div class="row">
                                         <InputTextBox Label="Url Code:" @bind-Value="Model.UrlCode"
                                                       DivClass="col-md-10"
                                                       IsRequired="false"
                                                       PlaceHolder="Unique url code"/>
 
-                                    </div>
+                                    </div> *@
 
                                     <div class="row">
                                         <DropdownSelect DivClass="col-md-5" @ref="@PackingTypeDrowpdownSelect"

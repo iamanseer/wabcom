@@ -15,69 +15,72 @@
                     <ListPageHeader Settings="CustomerFilterSettings" OnFilterButtonClick="FilterListPageTo" />
                 </div>
                 <div class="card-body">
-                    <table class="table border text-nowrap text-md-nowrap table-hover ">
-                        <thead>
-                            <tr>
-                                <th>
-                                    Sl No.
-                                </th>
-                                <th>
-                                    Name
-                                </th>
-                                <th>
-                                    Mobile
-                                </th>
-                                <th>
-                                    Email
-                                </th>
-                                <th>
-                                    Type
-                                </th>
-                                <th>
-                                    Status
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in CustomerListModel.Data.Select((value, i) => new { i, value }))
-                            {
-                                var entry = item.value;
-                                var index = item.i;
-                                <tr @onclick="@(()=>Nav.NavigateTo($"customers-view/{entry.EntityID}"))" style="cursor:pointer">
-                                    <td>
-                                        @if (CustomerListModel.PageIndex == 1)
-                                        {
-                                            @(index + 1)
-                                        }
-                                        else
-                                        {
-                                            @((CustomerListModel.PageIndex * CustomerListModel.PageSize) + (index + 1 )-10)
-                                        }
-                                    </td>
+                    <div class="table-responsive">
 
-                                    <td>
-                                        @entry.Name
-                                    </td>
-
-                                    <td>
-                                        @entry.Phone
-                                    </td>
-
-                                    <td>
-                                        @entry.EmailAddress
-                                    </td>
-
-                                    <td>
-                                        @(((CustomerTypes)entry.Type).ToString())
-                                    </td>
-
-                                    <td>
-                                        @(((CustomerStatus)entry.Status).ToString())
-                                    </td>
+                        <table class="table border text-wrap text-md-nowrap table-hover ">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Sl No.
+                                    </th>
+                                    <th>
+                                        Name
+                                    </th>
+                                    <th>
+                                        Mobile
+                                    </th>
+                                    <th>
+                                        Email
+                                    </th>
+                                    <th>
+                                        Type
+                                    </th>
+                                    <th>
+                                        Status
+                                    </th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in CustomerListModel.Data.Select((value, i) => new { i, value }))
+                                {
+                                    var entry = item.value;
+                                    var index = item.i;
+                                    <tr @onclick="@(()=>Nav.NavigateTo($"customers-view/{entry.EntityID}"))" style="cursor:pointer">
+                                        <td>
+                                            @if (CustomerListModel.PageIndex == 1)
+                                            {
+                                                @(index + 1)
+                                            }
+                                            else
+                                            {
+                                                @((CustomerListModel.PageIndex * CustomerListModel.PageSize) + (index + 1) - 10)
+                                            }
+                                        </td>
+
+                                        <td>
+                                            @entry.Name
+                                        </td>
+
+                                        <td>
+                                            @entry.Phone
+                                        </td>
+
+                                        <td>
+                                            @entry.EmailAddress
+                                        </td>
+
+                                        <td>
+                                            @(((CustomerTypes)entry.Type).ToString())
+                                        </td>
+
+                                        <td>
+                                            @(((CustomerStatus)entry.Status).ToString())
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                     <PaginationCustom PageSize="CustomerListModel.PageSize" TotalCount="CustomerListModel.TotalCount" TotalPages="CustomerListModel.TotalPages" PageIndex="CustomerListModel.PageIndex" LoadPageIndex="PageIndex" />
                 </div>
             </div>

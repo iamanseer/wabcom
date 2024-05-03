@@ -19,106 +19,109 @@
                 <div class="card-body">
                     @if (FollowupList != null)
                     {
-                        <table class="table border text-nowrap text-md-nowrap table-hover ">
-                            <thead>
-                                <tr>
-                                    <th>
-                                        Sl No.
-                                    </th>
-                                    <th>
-                                        Customer Name
-                                    </th>
+                    <div class="table-responsive">
 
-                                    <th>
-                                        Type
-                                    </th>
-
-                                    <th>
-                                        Follow-up By
-                                    </th>
-
-                                    <th>
-                                        Last Follow-up Date
-                                    </th>
-
-                                    <th>
-                                        Next Follow-up Date
-                                    </th>
-                                    @if (FollowupList.UserTypeID == (int)UserTypes.Client)
-                                    {
+                            <table class="table border text-wrap text-md-nowrap table-hover ">
+                                <thead>
+                                    <tr>
                                         <th>
-                                            Assignee
+                                            Sl No.
                                         </th>
-                                    }
-                                    <th>
-                                        Status
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in FollowupList.FollowupList.Data.Select((value, i) => new { i, value }))
-                                {
-                                    var followUpItem = item.value;
-                                    var index = item.i;
+                                        <th>
+                                            Customer Name
+                                        </th>
 
-                                    <tr style="cursor:pointer" class="@followUpItem.RowBgClass" @onclick="() => HandleFollowupRowItemSelect(followUpItem)">
+                                        <th>
+                                            Type
+                                        </th>
 
-                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
-                                            @if (FollowupList.FollowupList.PageIndex == 1)
-                                            {
-                                                @(index + 1)
-                                            }
-                                            else
-                                            {
-                                                @(((FollowupList.FollowupList.PageIndex * FollowupList.FollowupList.PageSize) + (index + 1)) - 10)
-                                            }
-                                        </td>
+                                        <th>
+                                            Follow-up By
+                                        </th>
 
-                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
-                                            @followUpItem.CustomerName
-                                        </td>
+                                        <th>
+                                            Last Follow-up Date
+                                        </th>
 
-                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
-                                            @(((FollowUpTypes)followUpItem.Type).ToString())
-                                        </td>
-
-                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
-                                            @followUpItem.FollowupBy
-                                        </td>
-
-                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
-                                            @(followUpItem.FollowupDate.HasValue ? followUpItem.FollowupDate.Value.ToString("dd/MM/yyyy") : "--:--:----")
-                                        </td>
-
-                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
-                                            @(followUpItem.NextFollowupDate.HasValue ? followUpItem.NextFollowupDate.Value.ToString("dd/MM/yyyy h:mm tt") : "--:--:----")
-                                        </td>
-
+                                        <th>
+                                            Next Follow-up Date
+                                        </th>
                                         @if (FollowupList.UserTypeID == (int)UserTypes.Client)
                                         {
-                                            <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
-                                                @followUpItem.AssigneeName
-                                            </td>
+                                            <th>
+                                                Assignee
+                                            </th>
                                         }
+                                        <th>
+                                            Status
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in FollowupList.FollowupList.Data.Select((value, i) => new { i, value }))
+                                    {
+                                        var followUpItem = item.value;
+                                        var index = item.i;
 
-                                        <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
-                                            <span class="@followUpItem.NatureBadgeClass">
-                                                @if (followUpItem.CurrentFollowupNature == (int)FollowUpNatures.New)
+                                        <tr style="cursor:pointer" class="@followUpItem.RowBgClass" @onclick="() => HandleFollowupRowItemSelect(followUpItem)">
+
+                                            <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                                @if (FollowupList.FollowupList.PageIndex == 1)
                                                 {
-                                                    @(followUpItem.Type == 1 ? "New Enquiry" : "New Quotation")
-                                                    ;
+                                                    @(index + 1)
                                                 }
                                                 else
                                                 {
-                                                    @(((FollowUpNatures)followUpItem.CurrentFollowupNature).ToString())
+                                                    @(((FollowupList.FollowupList.PageIndex * FollowupList.FollowupList.PageSize) + (index + 1)) - 10)
                                                 }
-                                            </span>
-                                        </td>
+                                            </td>
 
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                                            <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                                @followUpItem.CustomerName
+                                            </td>
+
+                                            <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                                @(((FollowUpTypes)followUpItem.Type).ToString())
+                                            </td>
+
+                                            <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                                @followUpItem.FollowupBy
+                                            </td>
+
+                                            <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                                @(followUpItem.FollowupDate.HasValue ? followUpItem.FollowupDate.Value.ToString("dd/MM/yyyy") : "--:--:----")
+                                            </td>
+
+                                            <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                                @(followUpItem.NextFollowupDate.HasValue ? followUpItem.NextFollowupDate.Value.ToString("dd/MM/yyyy h:mm tt") : "--:--:----")
+                                            </td>
+
+                                            @if (FollowupList.UserTypeID == (int)UserTypes.Client)
+                                            {
+                                                <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                                    @followUpItem.AssigneeName
+                                                </td>
+                                            }
+
+                                            <td class="@(!string.IsNullOrEmpty(followUpItem.RowBgClass) ? "td-border-white" : "")">
+                                                <span class="@followUpItem.NatureBadgeClass">
+                                                    @if (followUpItem.CurrentFollowupNature == (int)FollowUpNatures.New)
+                                                    {
+                                                        @(followUpItem.Type == 1 ? "New Enquiry" : "New Quotation")
+                                                        ;
+                                                    }
+                                                    else
+                                                    {
+                                                        @(((FollowUpNatures)followUpItem.CurrentFollowupNature).ToString())
+                                                    }
+                                                </span>
+                                            </td>
+
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                    </div>
                         <PaginationCustom PageSize="FollowupList.FollowupList.PageSize" TotalCount="FollowupList.FollowupList.TotalCount" TotalPages="FollowupList.FollowupList.TotalPages" PageIndex="FollowupList.FollowupList.PageIndex" LoadPageIndex="SetPageIndex" />
                     }
                 </div>
@@ -219,7 +222,10 @@
                     SelectedEnumValues = new List<int>()
                     {
                         (int)FollowUpNatures.New,
-                        (int)FollowUpNatures.Followup
+                        (int)FollowUpNatures.Followup,
+                        // (int)FollowUpNatures.Dropped,
+                        // (int)FollowUpNatures.Interested,
+                        // (int)FollowUpNatures.ClosedWon
                     },
                     AvoidEnumValues = new List<int>()
                     {

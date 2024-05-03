@@ -85,7 +85,9 @@
                                             ItemSelected="ItemSelectedPageEventCallBack"
                                             IsRequired="true"
                                             ReadDataOnSearch="true"
+                                            PlaceHolder="Choose"
                                             SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})" />
+                            <ValidationMessage For="() => Model.CountryID" />
                         </div>
 
                         <div class="row">

@@ -128,7 +128,7 @@
                                                                             <label class="col-md-4 col-auto items-label text-muted">UM Unit</label>
                                                                             <label class="col-md-8 col-auto">@DefaultItemModel.UMUnit</label>
                                                                         </div>
-                                                                        @if (DefaultItemModel.SizeID != null)
+                                                                 @*        @if (DefaultItemModel.SizeID != null)
                                                                         {
                                                                             <div class="row">
                                                                                 <label class="col-md-4 col-auto items-label text-muted">Size</label>
@@ -138,7 +138,7 @@
                                                                         <div class="row">
                                                                             <label class="col-md-4 col-auto items-label text-muted">Unique url code</label>
                                                                             <label class="col-md-8 col-auto">@DefaultItemModel.UrlCode</label>
-                                                                        </div>
+                                                                        </div> *@
                                                                         <div class="row">
                                                                             <label class="col-md-4 col-auto items-label text-muted">Purchase Cost</label>
                                                                             <label class="col-md-8 col-auto">@DefaultItemModel.Cost</label>
@@ -147,13 +147,13 @@
                                                                             <label class="col-md-4 col-auto items-label text-muted">Selling Price</label>
                                                                             <label class="col-md-8 col-auto">@DefaultItemModel.Price</label>
                                                                         </div>
-                                                                        @if (DefaultItemModel.ColorID != null)
+                                                                     @*    @if (DefaultItemModel.ColorID != null)
                                                                         {
                                                                             <div class="row">
                                                                                 <label class="col-md-4 col-auto items-label text-muted">Color</label>
                                                                                 <label class="col-md-8 col-auto">@DefaultItemModel.ColorName</label>
                                                                             </div>
-                                                                        }
+                                                                        } *@
                                                                     }
                                                                     else if(ItemViewModel.ItemVariants is not null)
                                                                     {

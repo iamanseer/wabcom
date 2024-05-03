@@ -51,6 +51,7 @@ namespace PB.Server.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult> GetAllNotifications(NotificationSearchModel model)
         {
+
             if (model.TimeOffset == 0)
                 model.TimeOffset = TimeOffset;
             PagedListQueryModel searchData = model;
@@ -60,7 +61,7 @@ namespace PB.Server.Controllers
             var result = await _dbContext.GetPagedList<ViNotificationCustom>(searchData, null);
             await _dbContext.ExecuteAsync($"Update Notification set IsRead=1,ReadOn=@Date where EntityID={CurrentEntityID} and ReadOn is null", new { Date = DateTime.UtcNow });
             await _dbContext.ExecuteAsync(@"Update Users set NotificationReadOn=@Date Where UserID=@UserID", new { Date = DateTime.UtcNow, UserID = CurrentUserID });
-            return Ok(result);
+            return Ok(result ?? new());
         }
 
 

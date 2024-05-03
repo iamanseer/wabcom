@@ -5,7 +5,7 @@
 @using PB.Shared.Models.Common;
 
 <div class="modal fade" id="tax-category-modal">
-    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document" style="overflow-y: scroll;">
+    <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
         <EditForm Model="Model" OnValidSubmit="async () => await SaveTaxCategory()">
             <DataAnnotationsValidator />
             <div class="modal-content modal-content-demo">
@@ -151,7 +151,7 @@
                         </div>
                     </div>
 
-                    <div class="row">
+                  @*   <div class="row">
                         <DropdownSelect DivClass="col-md-12" @ref="@TaxCategoryItemLedgerDrowpdownSelect"
                                         DropdownID="@TaxCategoryLedgerDropdownID"
                                         Label="Ledger :"
@@ -165,7 +165,7 @@
                                         SelectedItem="@(new DropdownSelectedItemModel(){ID = TaxCategoryItem.LedgerID,Value=TaxCategoryItem.LedgerName})">
                             <ValidationMessage For="() => TaxCategoryItem.LedgerID" />
                         </DropdownSelect>
-                    </div>
+                    </div> *@
 
                 </div>
 

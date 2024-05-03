@@ -16,94 +16,97 @@
                     <ListPageHeader Settings="QuotationFilterSettings" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)FilterListPageTo" />
                 </div>
                 <div class="card-body">
-                    <table class="table border text-nowrap text-md-nowrap table-hover ">
-                        <thead>
-                            <tr>
-                                <th>
-                                    Sl No.
-                                </th>
+                    <div class="table-responsive">
 
-                                <th>
-                                    Quotation No
-                                </th>
+                        <table class="table border text-wrap text-md-nowrap table-hover ">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Sl No.
+                                    </th>
 
-                                <th>
-                                    Customer Name
-                                </th>
+                                    <th>
+                                        Quotation No
+                                    </th>
 
-                                <th>
-                                    Added On
-                                </th>
+                                    <th>
+                                        Customer Name
+                                    </th>
 
-                                <th>
-                                    Added By
-                                </th>
+                                    <th>
+                                        Added On
+                                    </th>
 
-                                <th>
-                                    Expire On
-                                </th>
+                                    <th>
+                                        Added By
+                                    </th>
 
-                                <th>
-                                    Status
-                                </th>
+                                    <th>
+                                        Expire On
+                                    </th>
 
-                            </tr>
-                        </thead>
-                        <tbody>
+                                    <th>
+                                        Status
+                                    </th>
 
-                            @foreach (var item in QuotationList.Data.Select((value, i) => new { i, value }))
-                            {
-                                var entry = item.value;
-                                var index = item.i;
-                                <tr @onclick="@(()=>Nav.NavigateTo($"quotation-view/{entry.QuotationID}"))" style="cursor:pointer">
-                                    <td>
-                                        @if (QuotationList.PageIndex == 1)
-                                        {
-                                            @(index + 1)
-                                        }
-                                        else
-                                        {
-                                            @(((QuotationList.PageIndex * QuotationList.PageSize) + (index + 1)) - 10)
-                                        }
-                                    </td>
+                                </tr>
+                            </thead>
+                            <tbody>
 
-                                    <td>
-                                        @entry.QuotationNo
-                                    </td>
-
-                                    <td>
-                                        @entry.CustomerName
-                                    </td>
-
-                                    <td>
-                                        @(entry.AddedOn.HasValue ? entry.AddedOn.Value.ToString("dd/MM/yyyy") : "--:--:----")
-                                    </td>
-
-                                    <td>
-                                        @entry.Username
-                                    </td>
-
-                                    <td>
-                                        @(entry.ExpireOn.HasValue ? entry.ExpireOn.Value.ToString("dd/MM/yyyy") : "--:--:----")
-                                    </td>
-
-                                    <td>
-                                        <div>
-                                            @if (entry.CurrentFollowupNature == 0)
+                                @foreach (var item in QuotationList.Data.Select((value, i) => new { i, value }))
+                                {
+                                    var entry = item.value;
+                                    var index = item.i;
+                                    <tr @onclick="@(()=>Nav.NavigateTo($"quotation-view/{entry.QuotationID}"))" style="cursor:pointer">
+                                        <td>
+                                            @if (QuotationList.PageIndex == 1)
                                             {
-                                                <span class="@entry.NatureBadgeClass p-1">Quotaion Created</span>
+                                                @(index + 1)
                                             }
                                             else
                                             {
-                                                <span class="@entry.NatureBadgeClass p-1">@(((FollowUpNatures)entry.CurrentFollowupNature).ToString())</span>
+                                                @(((QuotationList.PageIndex * QuotationList.PageSize) + (index + 1)) - 10)
                                             }
-                                        </div>
-                                    </td>
+                                        </td>
 
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                                        <td>
+                                            @entry.QuotationNo
+                                        </td>
+
+                                        <td>
+                                            @entry.CustomerName
+                                        </td>
+
+                                        <td>
+                                            @(entry.AddedOn.HasValue ? entry.AddedOn.Value.ToString("dd/MM/yyyy") : "--:--:----")
+                                        </td>
+
+                                        <td>
+                                            @entry.Username
+                                        </td>
+
+                                        <td>
+                                            @(entry.ExpireOn.HasValue ? entry.ExpireOn.Value.ToString("dd/MM/yyyy") : "--:--:----")
+                                        </td>
+
+                                        <td>
+                                            <div>
+                                                @if (entry.CurrentFollowupNature == 0)
+                                                {
+                                                    <span class="@entry.NatureBadgeClass p-1">Quotaion Created</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="@entry.NatureBadgeClass p-1">@(((FollowUpNatures)entry.CurrentFollowupNature).ToString())</span>
+                                                }
+                                            </div>
+                                        </td>
+
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                     <PaginationCustom PageSize="QuotationList.PageSize" TotalCount="QuotationList.TotalCount" TotalPages="QuotationList.TotalPages" PageIndex="QuotationList.PageIndex" LoadPageIndex="LoadPageIndex" />
                 </div>
             </div>

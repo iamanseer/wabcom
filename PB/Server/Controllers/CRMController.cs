@@ -243,7 +243,7 @@ namespace PB.Server.Controllers
 
             //Notification
             if (model.EnquiryID is 0)
-                await _common.SendEnquiryPushAndNotification(CurrentClientID, enquiry.EnquiryID, null);
+                await _common.SendEnquiryPushAndNotification(CurrentClientID, enquiry.EnquiryID,CurrentEntityID, null);
             return Ok(new EnquiryAddResultModel() { EnquiryID = enquiry.EnquiryID });
         }
 

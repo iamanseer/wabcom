@@ -14,9 +14,5 @@ namespace PB.Shared.Enum.CRM
         Interested,
         ClosedWon
 
-        //Follow up
-        //Dropped
-        //Interested
-        //ClosedWon
     }
 }

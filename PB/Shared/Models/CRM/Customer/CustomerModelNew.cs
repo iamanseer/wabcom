@@ -36,8 +36,8 @@ namespace PB.Shared.Models.CRM.Customer
         public int? MediaID { get; set; }
         public bool? AllowType { get; set; }
         public int? ContactID { get; set; }
-       // [Required(ErrorMessage = "Please choose a country")]
-        public int? CountryID { get; set; }
+        // [Required(ErrorMessage = "Please choose a country")]
+        public int? CountryID { get; set; } 
         public string? CountryName { get; set; }
         public string? ISDCode { get; set; }
         public List<AddressView> Addresses { get; set; } = new();

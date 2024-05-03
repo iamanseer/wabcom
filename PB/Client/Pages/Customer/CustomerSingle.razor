@@ -74,6 +74,7 @@
                                                     ItemSelected="HandleItemSelected"
                                                     IsRequired="true"
                                                     ReadDataOnSearch="true"
+                                                    PlaceHolder="Choose"
                                                     SelectedItem="@(new DropdownSelectedItemModel(){ID=CustomerModel.CountryID,Value=CustomerModel.CountryName})">
                                       
                                         <ValidationMessage For="() => CustomerModel.CountryID" />

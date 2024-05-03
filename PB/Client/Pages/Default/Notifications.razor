@@ -1,17 +1,32 @@
 ﻿@page "/notifications"
 @attribute [Authorize]
 
-<PageLayoutOld Menu="Dashboard" PageName="Notifications">
-	<div class="row">
+<PageLayoutNew>
+    <div class="main-container container-fluid">
+        <div class="row page-header ">
+            <div class="col-12">
+                <div class="card" style="min-height: 76vh;">
+                    <div class="card-header">
+                        <h6>
+                            Notifications
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
 
-		<div class="col-lg-8">
-			<div class="notification-list-view">
-				<NotificationComponent Data="Data"/>
-			</div>
-		</div>
+                            <div class="col-lg-8">
+                                <div class="notification-list-view">
+                                    <NotificationComponent Data="Data" />
+                                </div>
+                            </div>
 
-	</div>
-</PageLayoutOld>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</PageLayoutNew>
 
 @code
 {

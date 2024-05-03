@@ -63,8 +63,9 @@
                                         ItemSelected="HandleCustomerCountrySelected"
                                         IsRequired="false"
                                         ReadDataOnSearch="true"
+                                        PlaceHolder="Choose"
                                         SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})">
-                          @*   <ValidationMessage For="()=>Model.CountryID" /> *@
+                            <ValidationMessage For="()=>Model.CountryID" />
                         </DropdownSelect>
                     </div>
 

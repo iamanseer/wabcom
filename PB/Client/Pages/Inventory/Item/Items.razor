@@ -41,7 +41,7 @@
                     }
                     <div class="row mt-2">
                         <div class="table-responsive">
-                            <table class="table border text-nowrap text-md-nowrap table-hover mb-0 mt-2 ">
+                            <table class="table border text-wrap text-md-nowrap table-hover mb-0 mt-2 ">
                                 <thead>
                                     <tr>
                                         <th>
@@ -56,7 +56,7 @@
                                         <th>
                                             Type
                                         </th>
-                                        <th>
+                                     @*    <th>
                                             SAC
                                         </th>
                                         @if (ClientItemQrCodeState)
@@ -64,7 +64,7 @@
                                             <th>
                                                 QR Code
                                             </th>
-                                        }
+                                        } *@
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -93,7 +93,7 @@
                                             <td>
                                                 @(entry.IsGoods ? "Goods" : "Service")
                                             </td>
-                                            <td>
+                                          @*   <td>
                                                 @entry.HSNSAC
                                             </td>
                                             <td>
@@ -101,7 +101,7 @@
                                                 {
                                                     <img src="@entry.QrCodeFileName" style="width:45px" alt="QR Code">
                                                 }
-                                            </td>
+                                            </td> *@
 
 
                                         </tr>
@@ -211,7 +211,7 @@
     {
         ItemHeaderSettings.SortMenuItems = stage1SortMenuItems;
         ItemHeaderSettings.BooleanFilters = ItemBooleanFilterList;
-        ItemHeaderSettings.NeedFilterOption = true;
+        ItemHeaderSettings.NeedFilterOption = false;
         ItemHeaderSettings.DateFilters = null;
         ItemHeaderSettings.Heading = "Items";
         ItemHeaderSettings.SinglePageURL = "item";
@@ -263,7 +263,7 @@
 
     HeaderSettingsModel ItemHeaderSettings = new()
         {
-            SearchPlaceHolder = "Search by service name..",
+            SearchPlaceHolder = "Search by item name..",
             NeedSortOption = true,
         };
 

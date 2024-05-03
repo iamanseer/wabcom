@@ -91,7 +91,7 @@
                                         ReadDataOnSearch="true"
                                         SelectedItem="@(new DropdownSelectedItemModel(){ID=Model.CountryID,Value=Model.CountryName})"
                                         />
-
+                        <ValidationMessage For="() => Model.CountryID" />
                     </div>
 
                     <div class="row" style="@StatePointerEvent">

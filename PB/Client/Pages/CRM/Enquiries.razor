@@ -29,100 +29,103 @@
                             </div>
                         </div>
                     }
-                    <table class="table border text-nowrap text-md-nowrap table-hover ">
-                        <thead>
-                            <tr>
-                                <th>
-                                    Sl No.
-                                </th>
-                                <th>
-                                    Customer Name
-                                </th>
-                                <th>
-                                    EnquiryNo
-                                </th>
+                    <div class="table-responsive">
+                        <table class="table border text-wrap text-md-nowrap table-hover ">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        Sl No.
+                                    </th>
+                                    <th>
+                                        Customer Name
+                                    </th>
+                                    <th>
+                                        Enquiry No
+                                    </th>
 
-                                <th>
-                                    Date
-                                </th>
-                                <th>
-                                    Added By
-                                </th>
-                                <th>
-                                    Assign To
-                                </th>
-                                <th>
-                                    Lead Through
-                                </th>
-                                <th>
-                                    Lead Quality
-                                </th>
-                                <th>
-                                    Status
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in EnquiryListPageModel.Data.Select((value, i) => new { i, value }))
-                            {
-                                var entry = item.value;
-                                var index = item.i;
-                                <tr @onclick="@(()=>Nav.NavigateTo($"enquiry-view/{entry.EnquiryID}"))" style="cursor:pointer">
-                                    <td>
-                                        @if (EnquiryListPageModel.PageIndex == 1)
-                                        {
-                                            @(index + 1)
-                                        }
-                                        else
-                                        {
-                                            @(((EnquiryListPageModel.PageIndex * EnquiryListPageModel.PageSize) + (index + 1)) - 10)
-                                        }
-                                    </td>
-
-                                    <td>
-                                        @entry.CustomerName
-                                    </td>
-
-                                    <td>
-                                        @entry.EnquiryNo
-                                    </td>
-
-                                    <td>
-                                        @(entry.Date.HasValue ? entry.Date.Value.ToString("dd/MM/yyyy") : "--/--/----")
-                                    </td>
-
-                                    <td>
-                                        @entry.AddedBy
-                                    </td>
-
-                                    <td>
-                                        @entry.Assignee
-                                    </td>
-
-                                    <td>
-                                        @(entry.LeadThroughName)
-                                    </td>
-
-                                    <td>
-                                        @(entry.LeadQuality > 0 ? ((LeadQualities)entry.LeadQuality).ToString() : "")
-                                    </td>
-
-                                    <td>
-                                        @if (entry.CurrentFollowupNature == (int)FollowUpNatures.New)
-                                        {
-                                            <span class="@entry.NatureBadgeClass">Enquiry Created</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="@entry.NatureBadgeClass">@(((FollowUpNatures)entry.CurrentFollowupNature).ToString())</span>
-                                        }
-
-                                    </td>
-
+                                    <th>
+                                        Date
+                                    </th>
+                                    <th>
+                                        Added By
+                                    </th>
+                                    <th>
+                                        Assign To
+                                    </th>
+                                    <th>
+                                        Lead Through
+                                    </th>
+                                    <th>
+                                        Lead Quality
+                                    </th>
+                                    <th>
+                                        Status
+                                    </th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in EnquiryListPageModel.Data.Select((value, i) => new { i, value }))
+                                {
+                                    var entry = item.value;
+                                    var index = item.i;
+                                    <tr @onclick="@(()=>Nav.NavigateTo($"enquiry-view/{entry.EnquiryID}"))" style="cursor:pointer">
+                                        <td>
+                                            @if (EnquiryListPageModel.PageIndex == 1)
+                                            {
+                                                @(index + 1)
+                                            }
+                                            else
+                                            {
+                                                @(((EnquiryListPageModel.PageIndex * EnquiryListPageModel.PageSize) + (index + 1)) - 10)
+                                            }
+                                        </td>
+
+                                        <td>
+                                            @entry.CustomerName
+                                        </td>
+
+                                        <td>
+                                            @entry.EnquiryNo
+                                        </td>
+
+                                        <td>
+                                            @(entry.Date.HasValue ? entry.Date.Value.ToString("dd/MM/yyyy") : "--/--/----")
+                                        </td>
+
+                                        <td>
+                                            @entry.AddedBy
+                                        </td>
+
+                                        <td>
+                                            @entry.Assignee
+                                        </td>
+
+                                        <td>
+                                            @(entry.LeadThroughName)
+                                        </td>
+
+                                        <td>
+                                            @(entry.LeadQuality > 0 ? ((LeadQualities)entry.LeadQuality).ToString() : "")
+                                        </td>
+
+                                        <td>
+                                            @if (entry.CurrentFollowupNature == (int)FollowUpNatures.New)
+                                            {
+                                                <span class="@entry.NatureBadgeClass">Enquiry Created</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="@entry.NatureBadgeClass">@(((FollowUpNatures)entry.CurrentFollowupNature).ToString())</span>
+                                            }
+
+                                        </td>
+
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+
+                    </div>
                     <PaginationCustom PageSize="EnquiryListPageModel.PageSize" TotalCount="EnquiryListPageModel.TotalCount" TotalPages="EnquiryListPageModel.TotalPages" PageIndex="EnquiryListPageModel.PageIndex" LoadPageIndex="PageIndex" />
                 </div>
             </div>

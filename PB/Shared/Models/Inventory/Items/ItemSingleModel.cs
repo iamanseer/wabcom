@@ -22,7 +22,7 @@ namespace PB.Shared.Models.Inventory.Items
         public int? HsnID { get; set; }
         //[RequiredIf(nameof(IsGoods), false, ErrorMessage = "Please provide SAC code for the item")]
         public int? SacID { get; set; }
-        public bool IsGoods { get; set; } = true;
+        public bool IsGoods { get; set; } = false;
 
        // [Required(ErrorMessage = "Please choose a tax preference for the item")]
         public int? TaxPreferenceTypeID { get; set; } 

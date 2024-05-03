@@ -24,6 +24,7 @@ using PB.Shared.Enum.Reports;
 using PB.Shared.Models.Reports;
 using PB.Shared.Models.eCommerce.SEO;
 using static NPOI.HSSF.Util.HSSFColor;
+using PB.Shared.Enum;
 
 namespace PB.Server.Repository
 {
@@ -49,7 +50,7 @@ namespace PB.Server.Repository
 
         Task<List<string>> GetRoles(int userID, int clientID, int userTypeID, int branchID = 0);
         string GeneratePagedListFilterWhereCondition(PagedListPostModelWithFilter searchModel, string searchLikeFieldName = "");
-        Task SendEnquiryPushAndNotification(int clientID, int enquiryID, IDbTransaction? tran = null);
+        Task SendEnquiryPushAndNotification(int clientID, int enquiryID, int currentEntityID, IDbTransaction? tran = null);
         Task SendPdfDocument(MailDetailsModel model, IDbTransaction? tran = null);
 
         #endregion
@@ -431,7 +432,7 @@ Best regards,
 
             return query;
         }
-        public async Task SendEnquiryPushAndNotification(int clientID, int enquiryID, IDbTransaction? tran = null)
+        public async Task SendEnquiryPushAndNotification(int clientID, int enquiryID,int currentEntityID, IDbTransaction? tran = null)
         {
             List<int> UserEntities = await _dbContext.GetListByQueryAsync<int>($@"Select EntityID From Users Where ClientID=@ClientID AND IsDeleted=0 AND LoginStatus=1", new { ClientID = clientID }, tran);
             if (UserEntities.Count > 0)
@@ -448,6 +449,16 @@ Best regards,
 
                 foreach (int entityID in UserEntities)
                 {
+                    Notification notification = new()
+                    {
+                        NotificationText = message,
+                        NotificationTypeID = (int)NotificationTypes.Enquiry,
+                        EntityID = entityID,
+                        AddedBy = currentEntityID,
+                        AddedOn = DateTime.UtcNow,
+                        RefID = enquiryID
+                    };
+                    await _dbContext.SaveAsync(notification);
                     await _notification.SendPush(entityID, message, tittle, "enquiry", 1, enquiryID.ToString());
                     await _notification.SendSignalRPush(entityID, tittle + message);
                 }

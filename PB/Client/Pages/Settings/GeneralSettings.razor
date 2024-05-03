@@ -47,8 +47,8 @@
                             </div>
 
                             <!--Quotation Followup Status-->
-                            <div class="mb-2 menu" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.QuotationFollowStatus)">
-                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.QuotationFollowStatus)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                            <div class="mb-2 " @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.QuotationFollowStatus)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.QuotationFollowStatus)" class="menu list-group-item d-flex align-items-center px-0 border-top">
                                     <i class="fa fa-clipboard fs-18 me-2 text-success p-2"></i>
                                     <div class=" d-flex flex-column">
                                         <span>Quotation Followup Status</span>
@@ -68,14 +68,14 @@
                             </div>
 
                             <!--Invoice Preferences-->
-                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.InvoicePreference)">
+                         @*    <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.InvoicePreference)">
                                 <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.InvoicePreference)" class="menu list-group-item d-flex align-items-center px-0 border-top">
                                     <i class="fa fa-file-text-o fs-18 me-2 text-success p-2"></i>
                                     <div class=" d-flex flex-column">
                                         <span>Invoice Preference </span>
                                     </div>
                                 </a>
-                            </div>
+                            </div> *@
 
                         </div>
 
@@ -94,8 +94,51 @@
                                 </a>
                             </div>
 
+                            <!--Lead Through-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.LeadThrough)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.LeadThrough)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="mdi mdi-account-network fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Lead Through</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+
+                            <!--Business Type Settings-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.BusinessType)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.BusinessType)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-money fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Business Type</span>
+
+                                    </div>
+                                </a>
+                            </div>
+                            <!--Tax Categories-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.TaxCategory)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.TaxCategory)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Tax Categories</span>
+
+                                    </div>
+                                </a>
+                            </div>
+                            <!--Mail Settings-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.MailSetting)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.MailSetting)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-envelope fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Mail Settings</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
                             <!--Item Size-->
-                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.ItemSize)">
+                            @* <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.ItemSize)">
                                 <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.ItemSize)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
                                     <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
                                     <div class=" d-flex flex-column">
@@ -147,12 +190,12 @@
 
                                     </div>
                                 </a>
-                            </div>
+                            </div> *@
 
                         </div>
 
                         <!--General Settings-->
-                        <div class="list-group list-group-transparent mb-0 file-manager file-manager-border">
+                        @* <div class="list-group list-group-transparent mb-0 file-manager file-manager-border">
                             <h6 class="my-2">General Settings</h6>
 
                             <!--Client Setting-->
@@ -244,7 +287,7 @@
                                     </div>
                                 </a>
                             </div>
-                        </div>
+                        </div> *@
                     </div>
                 </div>
             </div>
@@ -1473,9 +1516,11 @@
         switch (selectedMenuType)
         {
             case (int)GeneralSettingsMenus.EnquiryFollowupStatus:
+                SelectedMenuType = selectedMenuType;
                 await HandleFollowupStatusMenuSelected();
                 break;
             case (int)GeneralSettingsMenus.QuotationFollowStatus:
+                 SelectedMenuType =selectedMenuType;
                 await HandleFollowupStatusMenuSelected();
                 break;
 
@@ -1567,7 +1612,8 @@
 
     private async Task HandleFollowupStatusMenuSelected()
     {
-        //modalFollowUpStatus = new();
+        modalFollowUpStatus = new();
+        FollowupStatusPostModel = new();
         if (SelectedMenuType == (int)GeneralSettingsMenus.EnquiryFollowupStatus)
         {
             FollowupStatusPostModel = new() { StatusTypeID = (int)FollowUpTypes.Enquiry };
@@ -1576,7 +1622,7 @@
                     Heading = "Enquiry Followup Statuses"
                 };
         }
-        if (SelectedMenuType == (int)GeneralSettingsMenus.QuotationFollowStatus)
+        if(SelectedMenuType == (int)GeneralSettingsMenus.QuotationFollowStatus)
         {
             FollowupStatusPostModel = new() { StatusTypeID = (int)FollowUpTypes.Quotation };
             ListPagesHeaderSetting = new()
@@ -1584,12 +1630,14 @@
                     Heading = "Quotation Followup Statuses"
                 };
         }
-        await LoadFollowupStatus();
+
+        FollowupStatusPagedList = new();
+       await LoadFollowupStatus();
         IsFollowupStatusReady = true;
     }
     private async Task LoadFollowupStatus()
     {
-        FollowupStatusPagedList = FollowupStatusPagedList ?? new();
+        FollowupStatusPagedList = new();
         FollowupStatusPagedList = await API.PostAsync<PagedList<FollowupStatusListViewModel>, FollowupStatusPostModel>("crm/get-followup-status-paged-list", FollowupStatusPostModel ?? new());
     }
     private async Task OpenFollowupStatusModal(int followupStatusID = 0)
@@ -2168,6 +2216,10 @@
 
     private async Task HandleQuotationOrInvoicePrefereencesOrClientSettingSelected()
     {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Quotation Preference"
+            };
         ClientSetting ??= new();
         await GetClientSetting();
         IsClientSettingReady = true;
