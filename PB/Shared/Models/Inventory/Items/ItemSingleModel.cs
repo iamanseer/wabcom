@@ -44,7 +44,7 @@ namespace PB.Shared.Models.Inventory.Items
         public int? AddedBy { get; set; }
         public bool HasMultipleModels { get; set; } = false;
         public int? QrCodeMediaID { get; set; }
-        public string? TaxPreferenceName { get; set; } = TaxPreferences.Taxable.ToString();
+        public string? TaxPreferenceName { get; set; }
         public string? HsnCode { get; set; }
         public string? SacCode { get; set; }
         public string? IntraTaxCategoryName { get; set; }

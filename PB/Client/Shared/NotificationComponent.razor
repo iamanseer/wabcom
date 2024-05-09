@@ -12,7 +12,7 @@ else
 {
 	@foreach (var item in Data)
 	{
-		<a class="dropdown-item d-flex @item.Active">
+		<a class="dropdown-item d-flex @item.Active" @onclick="(async() =>await GoToNotification(item.NotificationTypeID,item.Link,item.RefID))">
             <div class="me-3 notifyimg bg-pink brround box-shadow-pink">
 				<i class="fe @item.Icon"></i>
             </div>
@@ -37,4 +37,14 @@ else
 
 @code {
 	[Parameter] public List<ViNotificationCustom> Data { get; set; }
+	private async Task GoToNotification(int notificationTypeId, string link, int? refId)
+	{
+		if (notificationTypeId == (int)NotificationTypes.Enquiry)
+			Nav.NavigateTo($"redirect/{link}/{refId}");
+		if (notificationTypeId == (int)NotificationTypes.Quotation)
+			Nav.NavigateTo($"redirect/{link}/{refId}");
+		if (notificationTypeId == (int)NotificationTypes.Followup)
+			Nav.NavigateTo($"redirect/{link}/{refId}");
+
+	}
 }

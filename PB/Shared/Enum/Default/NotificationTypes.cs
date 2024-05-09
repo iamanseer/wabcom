@@ -13,7 +13,8 @@ namespace PB.Shared.Enum
         MessageBroadCast,
         EmailBroadCast,
         Invoice,
-        Order
+        Order,
+        Quotation
 
     }
 }

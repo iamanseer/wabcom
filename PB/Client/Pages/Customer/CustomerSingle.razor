@@ -405,6 +405,8 @@
                                                 IsRequired="true"
                                                 ReadDataOnSearch="true"
                                                 SelectedItem="@(new DropdownSelectedItemModel(){ID=AddressModel.CountryID,Value=AddressModel.CountryName})" />
+                                <ValidationMessage For="() => AddressModel.CountryID" />
+
 
                             </div>
                             <div class="row" style="@StatePointerEvent">

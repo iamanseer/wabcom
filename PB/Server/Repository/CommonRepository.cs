@@ -51,6 +51,8 @@ namespace PB.Server.Repository
         Task<List<string>> GetRoles(int userID, int clientID, int userTypeID, int branchID = 0);
         string GeneratePagedListFilterWhereCondition(PagedListPostModelWithFilter searchModel, string searchLikeFieldName = "");
         Task SendEnquiryPushAndNotification(int clientID, int enquiryID, int currentEntityID, IDbTransaction? tran = null);
+        Task SendQuotationPushAndNotification(int clientID, int quotationId, int currentEntityID, IDbTransaction? tran = null);
+        Task SendFollowupPushAndNotification(int clientID, int followupID, int currentEntityID, IDbTransaction? tran = null);
         Task SendPdfDocument(MailDetailsModel model, IDbTransaction? tran = null);
 
         #endregion
@@ -434,7 +436,7 @@ Best regards,
         }
         public async Task SendEnquiryPushAndNotification(int clientID, int enquiryID,int currentEntityID, IDbTransaction? tran = null)
         {
-            List<int> UserEntities = await _dbContext.GetListByQueryAsync<int>($@"Select EntityID From Users Where ClientID=@ClientID AND IsDeleted=0 AND LoginStatus=1", new { ClientID = clientID }, tran);
+            List<int> UserEntities = await _dbContext.GetListByQueryAsync<int>($@"Select EntityID From Users Where ClientID=@ClientID AND IsDeleted=0 AND LoginStatus=1 AND EntityID<>@CurrentEntityID", new { ClientID = clientID,CurrentEntityID= currentEntityID }, tran);
             if (UserEntities.Count > 0)
             {
                 IdnValuePair Data = await _dbContext.GetByQueryAsync<IdnValuePair>($@"
@@ -464,6 +466,72 @@ Best regards,
                 }
             }
         }
+
+        public async Task SendQuotationPushAndNotification(int clientID, int quotationId, int currentEntityID, IDbTransaction? tran = null)
+        {
+            List<int> UserEntities = await _dbContext.GetListByQueryAsync<int>($@"Select EntityID From Users Where ClientID=@ClientID AND IsDeleted=0 AND LoginStatus=1 AND EntityID<>@CurrentEntityID", new { ClientID = clientID, CurrentEntityID = currentEntityID }, tran);
+            if (UserEntities.Count > 0)
+            {
+                IdnValuePair Data = await _dbContext.GetByQueryAsync<IdnValuePair>($@"
+                                                                    Select Q.QuotationNo  AS ID,vE.Name AS Value
+                                                                From Quotation Q
+                                                                left Join viEntity vE on vE.EntityID=Q.UserEntityID
+                                                                Where Q.QuotationID={quotationId} ", null);
+
+                string? tittle = "Quotation(#" + Data.ID + ") ";
+                string? message = "created by " + Data.Value;
+
+                foreach (int entityID in UserEntities)
+                {
+                    Notification notification = new()
+                    {
+                        NotificationText = message,
+                        NotificationTypeID = (int)NotificationTypes.Quotation,
+                        EntityID = entityID,
+                        AddedBy = currentEntityID,
+                        AddedOn = DateTime.UtcNow,
+                        RefID = quotationId
+                    };
+                    await _dbContext.SaveAsync(notification);
+                    await _notification.SendPush(entityID, message, tittle, "Quotation", 1, quotationId.ToString());
+                    await _notification.SendSignalRPush(entityID, tittle + message);
+                }
+            }
+        }
+
+
+        public async Task SendFollowupPushAndNotification(int clientID, int followupID, int currentEntityID, IDbTransaction? tran = null)
+        {
+            List<int> UserEntities = await _dbContext.GetListByQueryAsync<int>($@"Select EntityID From Users Where ClientID=@ClientID AND IsDeleted=0 AND LoginStatus=1 AND EntityID<>@CurrentEntityID", new { ClientID = clientID, CurrentEntityID = currentEntityID }, tran);
+            if (UserEntities.Count > 0)
+            {
+                IdnValuePair Data = await _dbContext.GetByQueryAsync<IdnValuePair>($@"
+                                                                  Select F.FollowUpID  AS ID,vE.Name AS Value 
+                                                                    From Followup F
+                                                                    left Join viEntity vE on vE.EntityID=F.EntityID
+                                                                    Where F.FollowUpID={followupID} ", null);
+
+                string? tittle = "New Followup ";
+                string? message = "created by " + Data.Value;
+
+                foreach (int entityID in UserEntities)
+                {
+                    Notification notification = new()
+                    {
+                        NotificationText = message,
+                        NotificationTypeID = (int)NotificationTypes.Followup,
+                        EntityID = entityID,
+                        AddedBy = currentEntityID,
+                        AddedOn = DateTime.UtcNow,
+                        RefID = followupID
+                    };
+                    await _dbContext.SaveAsync(notification);
+                    await _notification.SendPush(entityID, message, tittle, "Quotation", 1, followupID.ToString());
+                    await _notification.SendSignalRPush(entityID, tittle + message);
+                }
+            }
+        }
+
         public async Task SendPdfDocument(MailDetailsModel model, IDbTransaction? tran = null)
         {
 

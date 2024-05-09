@@ -663,6 +663,9 @@ namespace PB.Server.Controllers
                     }
                     else
                     {
+                        //Notification
+                        if (model.QuotationID is 0)
+                            await _common.SendQuotationPushAndNotification(CurrentClientID, quotation.QuotationID, CurrentEntityID, null);
                         return Ok(new QuotationSuccessModel() { QuotationID = quotation.QuotationID });
                     }
                 }
@@ -960,6 +963,10 @@ namespace PB.Server.Controllers
             var followUp = _mapper.Map<FollowUp>(model);
             followUp.EntityID = CurrentEntityID;
             followUp.FollowUpID = await _dbContext.SaveAsync(followUp);
+
+            //Notification
+            if (model.FollowUpID is 0)
+                await _common.SendQuotationPushAndNotification(CurrentClientID, followUp.FollowUpID, CurrentEntityID, null);
             return Ok(new FollowupAddResultModel() { FollowupID = followUp.FollowUpID });
         }
 

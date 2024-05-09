@@ -367,6 +367,7 @@
 
                                                     <div class="row">
                                                         <InputTextBox Label="Quotation Subject :" @bind-Value="ClientSetting.QuotationSubject" DivClass="col-md-12" />
+                                                        <ValidationMessage For="() => ClientSetting.QuotationSubject" />
                                                     </div>
 
                                                     <div class="row">
@@ -376,6 +377,7 @@
                                                                 <textarea name="" class="textarea form-control" cols="2" rows="6" @bind="ClientSetting.QuotationCustomerNote" placeholder="Let your customer know what this quotation for.."></textarea>
                                                             </div>
                                                         </div>
+                                                        <ValidationMessage For="() => ClientSetting.QuotationCustomerNote" />
                                                     </div>
 
                                                     <div class="row">
@@ -385,6 +387,7 @@
                                                                 <textarea name="" class="textarea form-control" cols="2" rows="6" @bind="ClientSetting.QuotationTermsAndCondition" placeholder="Let your customer know what this quotation for.."></textarea>
                                                             </div>
                                                         </div>
+                                                        <ValidationMessage For="() => ClientSetting.QuotationTermsAndCondition" />
                                                     </div>
 
                                                     <div class="row">

@@ -100,7 +100,7 @@
     protected override async Task OnInitializedAsync()
     {
         CustomerFilterSettings.SortMenuItems = stage1SortMenuItems;
-        CustomerFilterSettings.IdnValueFilters = CustomerEnumFilterList;
+        //CustomerFilterSettings.IdnValueFilters = CustomerEnumFilterList;
         CustomerFilterSettings.DateFilters = null;
         CustomerFilterSettings.Heading = "Customers";
         CustomerFilterSettings.SinglePageURL = "customer";
@@ -165,7 +165,7 @@
         {
             SearchPlaceHolder = "Search by customer name..",
             NeedSortOption = true,
-            NeedFilterOption = true,
+            NeedFilterOption = false,
         };
 
     private async Task FilterListPageTo(PagedListPostModelWithFilter? filterModel)
@@ -174,17 +174,17 @@
         await LoadStage1Data();
     }
 
-    List<FilterIdnValueInputModel> CustomerEnumFilterList = new()
-    {
-        new()
-        {
-            FiledName = "C.Status",
-            DisplayName = "Status",
-            EnumObject = CustomerStatus.Active
-        },
+    // List<FilterIdnValueInputModel> CustomerEnumFilterList = new()
+    // {
+    //     new()
+    //     {
+    //         FiledName = "C.Status",
+    //         DisplayName = "Status",
+    //         EnumObject = CustomerStatus.Active
+    //     },
 
 
-    };
+    // };
 
     #endregion
 

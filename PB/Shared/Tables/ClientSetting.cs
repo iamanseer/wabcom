@@ -12,8 +12,11 @@ namespace PB.Shared.Tables
     {
         [PrimaryKey]
         public int SettingID { get; set; }
+		[Required (ErrorMessage ="Please enter quotation subject")]
         public string? QuotationSubject { get; set; }
-        public string? QuotationCustomerNote { get; set; } 
+        [Required(ErrorMessage = "Please enter customer notes")]
+        public string? QuotationCustomerNote { get; set; }
+        [Required(ErrorMessage = "Please enter terms and condition")]
         public string? QuotationTermsAndCondition { get; set; } 
         public bool QuotationNeedShippingAddress { get; set; }
 		public string? InvoiceSubject { get; set; }

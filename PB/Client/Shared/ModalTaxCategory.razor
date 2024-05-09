@@ -36,12 +36,12 @@
                                         <th>
                                             Percentage
                                         </th>
-                                        @if (Model.TaxCategoryID != 0)
+                                       @*  @if (Model.TaxCategoryID != 0)
                                         {
                                             <th>
                                                 Ledger
                                             </th>
-                                        }
+                                        } *@
                                         <th>
                                             Action
                                         </th>
@@ -60,12 +60,12 @@
                                                 <td>
                                                     @taxCategoryItem.Percentage
                                                 </td>
-                                                @if (Model.TaxCategoryID != 0)
+                                               @*  @if (Model.TaxCategoryID != 0)
                                                 {
                                                     <td>
                                                         @taxCategoryItem.LedgerName
                                                     </td>
-                                                }
+                                                } *@
                                                 <td style="width:80px;">
                                                     <div class="d-flex justify-content-evenly">
                                                         <ActionEdit Clicked="async () => await EditTaxCategoryItem(taxCategoryItem)" />

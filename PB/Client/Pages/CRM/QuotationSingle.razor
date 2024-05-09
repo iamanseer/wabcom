@@ -18,7 +18,7 @@
 @attribute [Authorize(Roles = "Quotation")]
 
 <PageLayoutNew>
-    <EditForm Model="Model" OnValidSubmit="async () => await SaveQuotation()" OnInvalidSubmit="ShowErrorMessage">
+    <EditForm Model="Model" OnValidSubmit="async () => await SaveQuotation()">    @*  OnInvalidSubmit="ShowErrorMessage" *@
         <DataAnnotationsValidator />
         <div class="main-container container-fluid">
             <div class="row page-header ">
