@@ -2446,7 +2446,7 @@ namespace PB.Server.Repository
 
         public async Task<int> GenerateBasicQuotationPdf(int quotationID, int branchID, string fileName, IDbTransaction? tran = null)
         {
-            string htmlCoverContent = "", htmlBasicContent = "", htmlAwardContent = "", htmlProductContent = "", htmlItemContent = "", htmlTermContent = "";
+            string htmlCoverContent = "", htmlBasicContent = "", htmlAwardContent = "", htmlProductContent = "", htmlProduct2Content, htmlItemContent = "", htmlTermContent = "";
             int? mediaID = null;
 
             string folderName = "gallery/" + PDFType.Quotation.ToString().ToLower();
@@ -2501,18 +2501,6 @@ namespace PB.Server.Repository
                 WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
             };
 
-
-            // Html product content
-
-            htmlProductContent = await GetQuotationProductPdfHtmlContentAndData(quotationID, branchID, tran);
-
-            var objectProductSettings = new ObjectSettings
-            {
-                HtmlContent = htmlProductContent,
-                WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
-            };
-
-
             // Html item content
 
 
@@ -2524,7 +2512,6 @@ namespace PB.Server.Repository
                 WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
             };
 
-
             // Html terms content
 
             htmlTermContent = await GetQuotationTermsPdfHtmlContentAndData(quotationID, branchID, tran);
@@ -2535,11 +2522,30 @@ namespace PB.Server.Repository
                 WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
             };
 
+            // Html product content
+
+            htmlProductContent = await GetQuotationProductPdfHtmlContentAndData(quotationID, branchID, tran);
+
+            var objectProductSettings = new ObjectSettings
+            {
+                HtmlContent = htmlProductContent,
+                WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
+            };
+
+            // Html product2 content
+
+            htmlProduct2Content = await GetQuotationProduct2PdfHtmlContentAndData(quotationID, branchID, tran);
+
+            var objectProduct2Settings = new ObjectSettings
+            {
+                HtmlContent = htmlProduct2Content,
+                WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
+            };
 
             var pdf = new HtmlToPdfDocument()
             {
                 GlobalSettings = globalSettings,
-                Objects = { objectCoverSettings, objectBasicSettings, objectAwardSettings, objectProductSettings, objectItemSettings, objectTermSettings }
+                Objects = { objectCoverSettings, objectBasicSettings, objectAwardSettings, objectItemSettings, objectTermSettings, objectProductSettings, objectProduct2Settings }
             };
             _converter.Convert(pdf);
 
@@ -2559,170 +2565,139 @@ namespace PB.Server.Repository
 
             return mediaID.Value;
         }
-
-
         public async Task<string> GetQuotationCoverPdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
         {
             string? DomainUrl = _config.GetValue<string>("ServerURL");
+            var quotation = await GetQuotationPdfDetailsModel(quotationID, branchID, tran);
             var pdfHtmlContent = new StringBuilder();
             pdfHtmlContent.Append($@"
-                <!DOCTYPE html>
-                        <html>
-                        <head>
-                        <title>WABCOM</title>
-                        <link rel='stylesheet' type='text/css' href='styles.css'>
-                        <style>
-                        body {{
-                        font-family: Arial, sans-serif;
-                        margin: 0;
-                        padding: 0;
-                        }}
-                        .container {{
-                        width: 21cm;
-                        height: 29.7cm;
-                        page-break-after: always;
-                        margin: 0 auto;
-                        padding: 20px;
-                        }}
-                        .main{{
-                        border: 2px solid #000;
-                        padding: 30px 20px 10px 20px;
-                        background-image: url('{DomainUrl}/assets/images/wabcom/logo-bg.png');
-                        background-position: center;
-                        background-repeat: no-repeat;
-                        position: relative;
-                        height: 28.7cm;
-                        }}
-                        h4{{
-                        color: #000;
-                        }}
-                        .footer-img{{
-                        display: flex;
-                        justify-content: space-between;
-                        }}
-                        .header {{
-                        display: flex;
-                        justify-content: space-between;
-                        margin-bottom: 20px;
-                        }}
-                        .header img {{
-                        height: 50px;
-                        margin: 0 10px;
-                        }}
-                        .content {{
-                        line-height: 1.3;
-                        text-align: justify;
+                            <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>WABCOM</title>
+                                <link rel='stylesheet' type='text/css' href='styles.css'>
 
-                        }}
-                        .content p{{
-                        margin: 5px;
-                        font-size: 15px;
-                        }}
-                        .content h2 {{
-                        color: #000;
-                        font-size: 18px;
-                        text-transform: uppercase;
-                        margin-bottom: 0;
-                        font-weight: 600;
-                        }}
-                        h3{{
-                        color: #000;
-                        }}
-                        .footer {{
-                        position: absolute;
-                        bottom: 10px;
-                        text-align: center;
-                        margin-top: 20px;
-                        font-size: 12px;
-                        color: #666;
-                        left: 32%;
-                        transform: translateX(-23%)
-                        }}
-                        .footer img {{
-                        height: 50px;
-                        margin: 0 5px;
-                        }}
-                        .style ul{{
-                        padding: 0;
-                        margin: 0;
-                        }}
-                        .style ul li{{
-                        list-style: none;
-                        line-height: 26px;
-                        }}
-                        table {{
-                            border-collapse: collapse;
-                            border-spacing: 0;
-                        }}
-                        td, th {{
-    	                        border: 1px solid #000;
-    	                        text-align: left;
-    	                        padding: 8px;
+                                <style>
+                                    body {{
+                                font-family: Arial, sans-serif;
+                                margin: 0;
+                                padding: 0;
                             }}
-                        .second-table th{{
-                            background-color: #03aad4;
-                        }}
-                        table td p{{
-                            font-size: 14px !important;
-                        }}
-                        table li, li{{
-                            font-size: 14px;
-                        }}
-                        table ul{{
-                            padding: 0 27px;
-                        margin:  0;
-                        font-weight: 400;
-                        }}
-                        .custom-list {{
-                            list-style-type: none; 
-                            padding-left: 10px; 
-                            font-weight: normal;
-                        }}
-                        .custom-list li::before {{
-                            content: '\27A3'; 
-                            color: #000000; 
-                            margin-right: 5px; 
-                        }}
-                        .style-2 h4{{
-                            margin-bottom: 0;
-                        }}
-                        .style-2 th, .style-2 td{{
-                            font-size: 14px;
-                            padding: 3px;
-                        }}
-                        </style>
-                        </head>");
+
+                            .container-co {{
+                                width: 21cm;
+                                height: 29.7cm;
+                                page-break-after: always;
+                                margin: 0 auto;
+                                padding: 20px;
+                                background-image: url('{DomainUrl}/assets/images/wabcom/cover-image.png');
+                                background-size: cover;
+                                position: relative;
+                            }}
+
+                            h4{{
+                                color: #000;
+                            }}
+                            .footer-img{{
+                                display: flex;
+                                justify-content: space-between;
+                            }}
+                            .details{{
+                                display: flex;
+                                position: absolute;
+                                top: 100px;
+                                left: 220px;
+                            gap: 200px;
+                            }}
+                            .from p, .to p{{
+                                margin-top: 0;
+                                margin-bottom: 5px;
+                            }}
+                            .from h4, .to h4{{
+                                margin-bottom: 10px;
+                            }}
+                            .subject h1{{
+                                position: absolute;
+                                left: 370px;
+                                top: 270px;
+                                font-size: 52px;
+                            }}
+                            .subject span{{
+                                font-weight: 200;
+                                margin-left: 150px;
+                            }}
+                            .for{{
+                                position: absolute;
+                                top: 800px;
+                                left: 100px;
+                            }}
+                            .for h2{{
+                                color: #fff;
+                                font-size: 48px;
+                                font-weight: 300;
+                                margin-bottom: 0;
+                            }}
+                            .for h3{{
+                                color: #fff;
+                                font-size: 42px;
+                                font-weight: 300;
+                                margin-top: 0;
+                            }}
+                                </style>
+                            </head>");
             pdfHtmlContent.Append($@"<body>
-                        <div class='container'>
-                        <div class='main'>
-                        <div class='header'>
-                            <img src='{DomainUrl}/assets/images/wabcom/logo.png' alt='WABCOM'>
-                            <img src='{DomainUrl}/assets/images/wabcom/partner.png' alt='Gold Partner'>
-                        </div>
-                        <div class='content'>
-                            <p>COVER Form.</p>
-                        </div>
-                        <div class='footer'>
-                            <div class='footer-top'>
-                            <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
-                            <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
-                            <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href='www.wabcom.ae'>www.wabcom.ae</a></p>
-                            <div class='footer-img'>
-                            <img src='{DomainUrl}/assets/images/wabcom/greythr.png' alt='GreyMatrix'>
-                            <img src='{DomainUrl}/assets/images/wabcom/dummy-logo.png' alt='Tally' >
+                       <div class='container-co style'>
+                          <div class='details'>
+                            <div class='from'>
+                              <h4>PREPARED BY</h4>
+                              <p>Ayesha</p>
+                              <p>Team Business Center</p>
+                              <p>Al Samar Street</p>
+                              <p>P.O.Box: 83274</p>
+                              <p>Sharjah, UAE</p>
                             </div>
-                            </div>
+                            
+                            <di class='to'>
+                              <h4>PREPARED TO</h4>
+                              <p>{quotation.CustomerName}</p>
+                              <p>{quotation.BillingAddressLine1}</p>");
+                                if(quotation.BillingAddressLine2!=null)
+                                {
+                                    pdfHtmlContent.Append($@" < p >{quotation.BillingAddressLine2}</p>");
+                                }
+                                if (quotation.BillingAddressLine3 != null)
+                                {
+                                    pdfHtmlContent.Append($@" <p>{quotation.BillingAddressLine3}</p>");
+                                }
+                                if (quotation.BillingState != null)
+                                {
+                                    pdfHtmlContent.Append($@" <p>{quotation.BillingState}</p>");
+                                }
+                                if (quotation.BillingCountry != null)
+                                {
+                                    pdfHtmlContent.Append($@" <p>{quotation.BillingCountry}</p>");
+                                }
+                                if (quotation.BillingPinCode != null)
+                                {
+                                    pdfHtmlContent.Append($@"<p>{quotation.BillingPinCode}</p>");
+                                }
+            pdfHtmlContent.Append($@"</div>
+                          </div>
+                          <div class='subject'>
+                            <h1>MARKETING <br><span>PROPOSAL</span></h1>
+                          </div>
+
+                          <div class='for'>
+                            <h2>FOR <br>BUSSINESS <br>SOLUTION</h2>
+                            <h3>9/05/2024</h3>
+                          </div>
                         </div>
-                        </div>
-                        </div>
-   
                         </body>
                         </html> ");
 
 
             return pdfHtmlContent.ToString();
         }
-
         public async Task<string> GetQuotationBasicPdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
         {
             string? DomainUrl = _config.GetValue<string>("ServerURL");
@@ -2917,7 +2892,7 @@ namespace PB.Server.Repository
                             <div class='footer-top'>
                             <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
                             <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
-                            <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href='www.wabcom.ae'>www.wabcom.ae</a></p>
+                            <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
                             <div class='footer-img'>
                             <img src='{DomainUrl}/assets/images/wabcom/greythr.png' alt='GreyMatrix'>
                             <img src='{DomainUrl}/assets/images/wabcom/dummy-logo.png' alt='Tally'>
@@ -2933,7 +2908,6 @@ namespace PB.Server.Repository
 
             return pdfHtmlContent.ToString();
         }
-
         public async Task<string> GetQuotationAwardPdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
         {
             string? DomainUrl = _config.GetValue<string>("ServerURL");
@@ -3134,7 +3108,7 @@ namespace PB.Server.Repository
                                     <div class='footer-top'>
                                     <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
                                     <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
-                                    <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href='www.wabcom.ae'>www.wabcom.ae</a></p>
+                                    <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
                                     <div class='footer-img'>
                                     <img src='{DomainUrl}/assets/images/wabcom/greythr.png' alt='GreyMatrix'>
                                     <img src='{DomainUrl}/assets/images/wabcom/dummy-logo.png' alt='Tally'>
@@ -3150,181 +3124,6 @@ namespace PB.Server.Repository
 
             return pdfHtmlContent.ToString();
         }
-
-        public async Task<string> GetQuotationProductPdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
-        {
-            string? DomainUrl = _config.GetValue<string>("ServerURL");
-            var pdfHtmlContent = new StringBuilder();
-            pdfHtmlContent.Append($@"
-                    <!DOCTYPE html>
-                            <html>
-                            <head>
-                            <title>WABCOM</title>
-                            <link rel='stylesheet' type='text/css' href='styles.css'>
-
-                            <style>
-                            body {{
-                            font-family: Arial, sans-serif;
-                            margin: 0;
-                            padding: 0;
-                            }}
-
-                            .container {{
-                            width: 21cm;
-                            height: 29.7cm;
-                            page-break-after: always;
-                            margin: 0 auto;
-                            padding: 20px;
-                            }}
-                            .main{{
-                            border: 2px solid #000;
-                            padding: 30px 20px 10px 20px;
-                            background-image: url('{DomainUrl}/assets/images/wabcom/logo-bg.png');
-                            background-position: center;
-                            background-repeat: no-repeat;
-                            position: relative;
-                            height: 28.7cm;
-
-                            }}
-                            h4{{
-                            color: #000;
-                            }}
-                            .footer-img{{
-                            display: flex;
-                            justify-content: space-between;
-                            }}
-
-
-                            .header {{
-                            display: flex;
-                            justify-content: space-between;
-                            margin-bottom: 20px;
-                            }}
-
-                            .header img {{
-                            height: 50px;
-                            margin: 0 10px;
-                            }}
-
-                            .content {{
-                            line-height: 1.3;
-                            text-align: justify;
-
-                            }}
-                            .content p{{
-                            margin: 5px;
-                            font-size: 15px;
-                            }}
-
-                            .content h2 {{
-                            color: #000;
-                            font-size: 18px;
-                            text-transform: uppercase;
-                            margin-bottom: 0;
-                            font-weight: 600;
-                            }}
-                            h3{{
-                            color: #000;
-                            }}
-
-                            .footer {{
-                            position: absolute;
-                            bottom: 10px;
-                            text-align: center;
-                            margin-top: 20px;
-                            font-size: 12px;
-                            color: #666;
-                            left: 32%;
-                            transform: translateX(-23%)
-                            }}
-
-                            .footer img {{
-                            height: 50px;
-                            margin: 0 5px;
-                            }}
-                            .style ul{{
-                            padding: 0;
-                            margin: 0;
-                            }}
-                            .style ul li{{
-                            list-style: none;
-                            line-height: 26px;
-                            }}
-                            table {{
-                                border-collapse: collapse;
-                                border-spacing: 0;
-                            }}
-
-                            td, th {{
-    	                            border: 1px solid #000;
-    	                            text-align: left;
-    	                            padding: 8px;
-                                }}
-                            .second-table th{{
-                                background-color: #03aad4;
-                            }}
-                            table td p{{
-                                font-size: 14px !important;
-                            }}
-                            table li, li{{
-                                font-size: 14px;
-                            }}
-                            table ul{{
-                                padding: 0 27px;
-                            margin:  0;
-                            font-weight: 400;
-                            }}
-                            .custom-list {{
-                                list-style-type: none; 
-                                padding-left: 10px; 
-                                font-weight: normal;
-                            }}
-                            .custom-list li::before {{
-                                content: '\27A3'; 
-                                color: #000000; 
-                                margin-right: 5px; 
-                            }}
-                            .style-2 h4{{
-                                margin-bottom: 0;
-                            }}
-                            .style-2 th, .style-2 td{{
-                                font-size: 14px;
-                                padding: 3px;
-                            }}
-                            </style>
-                            </head>
-                            <body>
-                            <div class='container style'>
-                            <div class='main'>
-                            <div class='header'>
-                                <img src='{DomainUrl}/assets/images/wabcom/logo.png' alt='WABCOM'>
-                                <img src='{DomainUrl}/assets/images/wabcom/partner.png' alt='Gold Partner'>
-                            </div>
-                            <div class='content'>
-                                <p>Product Description.</p>
-                            </div>
-                            <div class='footer'>
-                                <div class='footer-top'>
-                                <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
-                                <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
-                                <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href='www.wabcom.ae'>www.wabcom.ae</a></p>
-                                <div class='footer-img'>
-                                <img src='{DomainUrl}/assets/images/wabcom/greythr.png' alt='GreyMatrix'>
-                                <img src='{DomainUrl}/assets/images/wabcom/dummy-logo.png' alt='Tally'>
-                                </div>
-                                </div>
-                            </div>
-                            </div>
-                            </div>
-   
-                            </body>
-                            </html> ");
-
-
-            return pdfHtmlContent.ToString();
-        }
-
-
         public async Task<string> GetQuotationItemPdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
         {
             string dateFormat = "dd/MM/yyyy";
@@ -3510,7 +3309,7 @@ namespace PB.Server.Repository
                                     <th>Qty </th>
                                     <th>Amount(AED) </th>
                                     </tr>");
-            if(quotation.Items.Count>0)
+            if (quotation.Items.Count > 0)
             {
                 foreach (var item in quotation.Items)
                 {
@@ -3532,35 +3331,35 @@ namespace PB.Server.Repository
                 }
             }
             var allTaxCategoryItems = quotation.Items.SelectMany(item => item.TaxCategoryItems).ToList();
-                    var groupedTaxCategoryItems = allTaxCategoryItems
-                    .GroupBy(item => item.TaxCategoryItemID)
-                    .Select(group => new QuotationItemTaxCategoryItemsModel
-                    {
-                        TaxCategoryItemID = group.Key,
-                        TaxCategoryItemName = group.First().TaxCategoryItemName,
-                        Percentage = group.First().Percentage,
-                        Amount = group.Sum(item => item.Amount)
-                    }).ToList();
+            var groupedTaxCategoryItems = allTaxCategoryItems
+            .GroupBy(item => item.TaxCategoryItemID)
+            .Select(group => new QuotationItemTaxCategoryItemsModel
+            {
+                TaxCategoryItemID = group.Key,
+                TaxCategoryItemName = group.First().TaxCategoryItemName,
+                Percentage = group.First().Percentage,
+                Amount = group.Sum(item => item.Amount)
+            }).ToList();
 
-                    pdfHtmlContent.Append($@" <tr>
+            pdfHtmlContent.Append($@" <tr>
                                     <td colspan='3' style='text-align: right;'><b>SUB TOTAL</b></td>
                                     <td><b>{quotation.Items.Sum(item => item.TotalAmount)}</b></td>
                                     </tr>");
-                    foreach (var tax in groupedTaxCategoryItems)
-                    {
+            foreach (var tax in groupedTaxCategoryItems)
+            {
 
-                        pdfHtmlContent.Append($@"<tr>
+                pdfHtmlContent.Append($@"<tr>
                                     <td colspan='3' style='text-align: right;'><b>{tax.TaxCategoryItemName}</b></td>
                                     <td><b>{tax.Amount}</b></td>
                                     </tr>");
 
-                    }
-                    pdfHtmlContent.Append($@"<tr>
+            }
+            pdfHtmlContent.Append($@"<tr>
                                     <td colspan='3' style='text-align: right;'><b>TOTAL</b></td>
                                     <td><b>{quotation.CurrencySymbol} {(quotation.Items.Sum(item => item.GrossAmount))}</b></td>
                                     </tr>");
-                
-           
+
+
             pdfHtmlContent.Append(@"</table>
                                     <h4>Our Bank Details: </h4>
                                 <table style='width: 100%;'>
@@ -3587,9 +3386,9 @@ namespace PB.Server.Repository
                                 </table>
                                 <p>Make all cheques payable to <b>WAHAT AL BUSTAN COMPUTER TR</b> </p> <h4>Customer Notes</h4>
                                 <ul>");
-            if(quotation.CustomerNoteList.Count>0)
+            if (quotation.CustomerNoteList.Count > 0)
             {
-                foreach(var notes in quotation.CustomerNoteList)
+                foreach (var notes in quotation.CustomerNoteList)
                 {
                     pdfHtmlContent.Append($@" 
                                     <li>{notes}</li>
@@ -3602,7 +3401,7 @@ namespace PB.Server.Repository
                                 <div class='footer-top'>
                                 <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
                                 <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
-                                <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href='www.wabcom.ae'>www.wabcom.ae</a></p>
+                                <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
                                 <div class='footer-img'>
                                 <img src='{quotation.DomainUrl}/assets/images/wabcom/greythr.png' alt='GreyMatrix'>
                                 <img src='{quotation.DomainUrl}/assets/images/wabcom/dummy-logo.png' alt='Tally'>
@@ -3618,8 +3417,6 @@ namespace PB.Server.Repository
 
             return pdfHtmlContent.ToString();
         }
-
-
         public async Task<string> GetQuotationTermsPdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
         {
 
@@ -3774,9 +3571,9 @@ namespace PB.Server.Repository
                                     <div class='content'>
            
                                        <h4>Terms and Conditions: </h4>  <ul class='custom-list'>");
-            if(quotation.TermsList.Count>0)
+            if (quotation.TermsList.Count > 0)
             {
-                foreach(var terms in quotation.TermsList)
+                foreach (var terms in quotation.TermsList)
                 {
                     pdfHtmlContent.Append($@"
                                         <li>{terms}</li>");
@@ -3788,10 +3585,11 @@ namespace PB.Server.Repository
                                         <h4 style=""text-align: center;"">We thank you in advance and please call us if you have any questions. </h4>
                                         <p>Regards,
                                         </p>
-                                        <p>{quotation.StaffName}
                                         </p>
-                                        <p>Mobile No- {quotation.StaffPhoneNo}</p>
-                                        <p>Phone No- +971 6 5343120</p>
+                                        <p>Ayesha
+                                        </p>
+                                        <p>Mobile No- 0503505233</p>
+                                        <p>Phone No- +971 65343120</p>
                                         <p>Website- <a href='www.wabcom.ae'>www.wabcom.ae</a></p>
              
              
@@ -3800,7 +3598,7 @@ namespace PB.Server.Repository
                                       <div class='footer-top'>
                                         <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
                                         <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
-                                        <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href='www.wabcom.ae'>www.wabcom.ae</a></p>
+                                        <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
                                         <div class='footer-img'>
                                         <img src='{quotation.DomainUrl}/assets/images/wabcom/greythr.png' alt='GreyMatrix'>
                                         <img src='{quotation.DomainUrl}/assets/images/wabcom/dummy-logo.png' alt='Tally'>
@@ -3815,6 +3613,651 @@ namespace PB.Server.Repository
 
             return pdfHtmlContent.ToString();
         }
+        public async Task<string> GetQuotationProductPdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
+        {
+            string? DomainUrl = _config.GetValue<string>("ServerURL");
+            var pdfHtmlContent = new StringBuilder();
+            pdfHtmlContent.Append($@"
+                   <!DOCTYPE html>
+                            <html>
+                            <head>
+                                <title>WABCOM</title>
+                                <link rel=""stylesheet"" type=""text/css"" href=""styles.css"">
+
+                                <style>
+                                    body {{
+                                font-family: Arial, sans-serif;
+                                margin: 0;
+                                padding: 0;
+                            }}
+
+                            .container {{
+                                width: 21cm;
+                                height: 29.7cm;
+                                page-break-after: always;
+                                margin: 0 auto;
+                                padding: 20px;
+                            }}
+                            .main{{
+                                border: 2px solid #000;
+                                padding: 30px 20px 10px 20px;
+                                background-image: url(""{DomainUrl}/assets/images/wabcom/logo-bg.png"");
+                                background-position: center;
+                                background-repeat: no-repeat;
+                                position: relative;
+                                height: 28.7cm;
+
+                            }}
+                            h4{{
+                                color: #000;
+                            }}
+                            .footer-img{{
+                                display: flex;
+                                justify-content: space-between;
+                            }}
+
+
+                            .header {{
+                                display: flex;
+                                justify-content: space-between;
+                                margin-bottom: 20px;
+                            }}
+
+                            .header img {{
+                                height: 50px;
+                                margin: 0 10px;
+                            }}
+
+                            .content {{
+                                line-height: 1.3;
+                                text-align: justify;
+
+                            }}
+                            .content p{{
+                                margin: 5px;
+                                font-size: 15px;
+                            }}
+
+                            .content h2 {{
+                                color: #000;
+                                font-size: 18px;
+                                text-transform: uppercase;
+                                margin-bottom: 0;
+                                font-weight: 600;
+                            }}
+                            h3{{
+                                color: #000;
+                            }}
+
+                            .footer {{
+                                position: absolute;
+                                bottom: 10px;
+                                text-align: center;
+                                margin-top: 20px;
+                                font-size: 12px;
+                                color: #666;
+                                left: 32%;
+                                transform: translateX(-23%)
+                            }}
+
+                            .footer img {{
+                                height: 50px;
+                                margin: 0 5px;
+                            }}
+                            .style ul{{
+                                padding: 0;
+                                margin: 0;
+                            }}
+                            .style ul li{{
+                                list-style: none;
+                                line-height: 26px;
+                            }}
+                            table {{
+                                        border-collapse: collapse;
+                                        border-spacing: 0;
+                                    }}
+
+                            td, th {{
+    		                                border: 1px solid #000;
+    		                                text-align: left;
+    		                                padding: 8px;
+                                        vertical-align: baseline;
+                                        width: 50%;
+    		                            }}
+                                    .second-table th{{
+                                        background-color: #03aad4;
+                                    }}
+                                    table td p{{
+                                        font-size: 14px !important;
+                                    }}
+                                    table li, li{{
+                                        font-size: 14px;
+                                    }}
+                                    table ul{{
+                                        padding: 0 27px;
+                                margin:  0;
+                                font-weight: 400;
+                                    }}
+                                    .custom-list {{
+           
+                                        padding-left: 10px; 
+                                        font-weight: normal;
+                                    }}
+                                    .custom-list li::before {{
+                                        content: ""\27A3""; 
+                                        color: #000000; 
+                                        margin-right: 5px; 
+                                    }}
+                                    .style-2 h4{{
+                                        margin-bottom: 0;
+                                        margin-top: 0;
+                                        font-size: 16px;
+                                    }}
+                                    .style-2 th, .style-2 td{{
+                                        font-size: 14px;
+                                        padding: 3px;
+                                    }}
+                                </style>
+                            </head>
+                            <body>
+    
+                                <div class=""container style-2"">
+                                    <div class=""main"">
+                                    <div class=""header"">
+                                        <img src=""{DomainUrl}/assets/images/wabcom/logo.png"" alt=""WABCOM"">
+                                        <img src=""{DomainUrl}/assets/images/wabcom/partner.png"" alt=""Gold Partner"">
+                                    </div>
+                                    <div class=""content"">
+            
+              
+                                        <h3>Tally Features</h3>
+                                        <table style=""width:100%"" >
+                                            <tr>
+                                            <td>
+                                                <h4>Simple Accounting Management</h4>
+                                                <ul>
+                                                <li>Pre-defined and flexible Chart of Accounts</li>
+                                                <li>Groups and Ledgers management</li>
+                                                <li>Multi –currency support</li>
+                                                <li>Manage Multiple companies in same license</li>
+                                                <li>Group company/consolidation of companies</li>
+                                                <li>Record Post-dated transactions</li>
+                                                <li>Flexible Voucher numbering</li>
+                                                </ul>
+                                            </td>
+                                            <td>
+                                                <h4>Credit and Cash Flow Management</h4>
+                                                <ul>
+                                                <li>Receivables & Payables Management</li>
+                                                <li>Multiple bill settlement</li>
+                                                <li>Credit Control Utilities</li>
+                                                <li>Cash and funds flow & projections</li>
+                                                <li>Cash flow projection</li>
+                                                <li>Interest calculation</li>
+                                                <li>Payment performance of debtors & ageing
+                                                    analysis</li>
+                                                </ul>
+                                            </td>
+                                            </tr>
+                                            <tr>
+                                            <td>
+                                                <h4>Flexible Purchase & Sales Management</h4>
+                                                <ul>
+                                                <li>VAT compliant invoices</li>
+                                                <li>Multiple billing formats</li>
+                                                <li>Multiple price list & discount management</li>
+                                                <li>Multiple mailing address</li>
+                                                <li>Sales & purchase orders processing</li>
+                                                <li>Complete track of receipt(GRN) and Delivery 
+                                                    note(DC)</li>
+                                                </ul>
+                                            </td>
+                                            <td>
+                                                <h4>Banking</h4>
+                                                <ul>
+                                                <li>Auto configured cheque printing</li>
+                                                <li>Chequebook management</li>
+                                                <li>Auto Bank Reconciliation(Auto BRS)</li>
+                                                <li>Post-dated cheque management</li>
+                    
+                                                </ul>
+                                            </td>
+                                            </tr>
+                                            <tr>
+                                            <td>
+                                                <h4>Inventory Management</h4>
+                                                <ul>
+                                                <li>Unlimited stock groups and categorization</li>
+                                                <li>Multi-location/godowns and batch management</li>
+                                                <li>Flexible units of measurement </li>
+                                                <li> Physical stock verification </li>
+                                                <li>Manufacture and expiry date management</li>
+                                                <li>Flexible units of measure </li>
+                                                <li>Job costing & Item cost tracking</li>
+                                                <li>
+                                                    Re-order level
+                                                </li>
+                                                <li>Multiple stock valuation</li>
+                                                </ul>
+                                            </td>
+                                            <td>
+                                                <h4>Payroll Capabilities</h4>
+                                                <ul>
+                                                <li>Multi pay Slip printing and e-mailing </li>
+                                                <li>Employee Category/group wise pay sheet</li>
+                                                <li>Employee profile management</li>
+                                                <li>Attendance recording & pay process </li>
+                                                <li>Payroll accounting</li>
+                                                <li>Payroll exception report</li>
+                                                <li>Payment advice</li>
+                                                <li>Payroll statutory summary </li>
+                                                </ul>
+                                            </td>
+                                            </tr>
+                                            <tr>
+                                            <td>
+                                                <h4>Statutory Capabilities</h4>
+                                                <ul>
+                                                <li>VAT compliance for UAE,KSA,Bahrain and Oman
+                                                </li>
+                                                <li>Bilingual POS and Tax invoices</li>
+                                                <li>e-invoicing for KSA</li>
+                                                <li>Multiple mailing address</li>
+                                                <li>Generate VAT returns & audit file for UAE</li>
+                  
+                                                </ul>
+                                            </td>
+                                            <td>
+                                                <h4>Manufacturing & Job Work </h4>
+                                                <ul>
+                                                <li>Multi bill of material(BOM) </li>
+                                                <li>Manufacturing journal</li>
+                                                <li>Job order & Job work processing</li>
+                  
+                    
+                                                </ul>
+                                            </td>
+                                            </tr>
+                                            <tr>
+                                            <td>
+                                                <h4>Data Security Capabilities</h4>
+                                                <ul>
+                                                <li>Data backup & restore</li>
+                                                <li>Multiple security controls</li>
+                                                <li>Password policy management </li>
+                                                <li>Tally Vault</li>
+                                                <li>Tally Audit </li>
+                    
+                                                </ul>
+                                            </td>
+                                            <td>
+                                                <h4>Other Business Capabilities</h4>
+                                                <ul>
+                                                <li>Logo printing</li>
+                                                <li>Date based reporting</li>
+                                                <li>Flexible financial periods
+                                                </li>
+                                                <li>Split financial year</li>
+                                                <li>Percentage based reporting</li>
+                                                <li>Multi account reporting</li>
+                                                <li>Context sensitive help
+                                                </li>
+                                                </ul>
+                                            </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class=""footer"">
+                                        <div class=""footer-top"">
+                                        <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
+                                        <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
+                                        <p>mail to: <a href=""mailto:info@wabcomdubai.com"">info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
+                                        <div class=""footer-img"">
+                                        <img src=""{DomainUrl}/assets/images/wabcom/greythr.png"" alt=""GreyMatrix"">
+                                        <img src=""{DomainUrl}/assets/images/wabcom/dummy-logo.png"" alt=""Tally"">
+                                        </div>
+                                        </div>
+                                    </div>
+                                    </div>
+                                </div>
+    
+                            </body>
+                            </html> ");
+
+
+            return pdfHtmlContent.ToString();
+        }
+        public async Task<string> GetQuotationProduct2PdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
+        {
+            string? DomainUrl = _config.GetValue<string>("ServerURL");
+            var pdfHtmlContent = new StringBuilder();
+            pdfHtmlContent.Append($@"
+                   <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>WABCOM</title>
+                    <link rel=""stylesheet"" type=""text/css"" href=""styles.css"">
+
+                    <style>
+                        body {{
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                }}
+
+                .container {{
+                    width: 21cm;
+                    height: 29.7cm;
+                    page-break-after: always;
+                    margin: 0 auto;
+                    padding: 20px;
+                }}
+                .main{{
+                    border: 2px solid #000;
+                    padding: 30px 20px 10px 20px;
+                    background-image: url(""{DomainUrl}/assets/images/wabcom/logo-bg.png"");
+                    background-position: center;
+                    background-repeat: no-repeat;
+                    position: relative;
+                    height: 28.7cm;
+
+                }}
+                h4{{
+                    color: #000;
+                }}
+                .footer-img{{
+                    display: flex;
+                    justify-content: space-between;
+                }}
+
+
+                .header {{
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 20px;
+                }}
+
+                .header img {{
+                    height: 50px;
+                    margin: 0 10px;
+                }}
+
+                .content {{
+                    line-height: 1.3;
+                    text-align: justify;
+
+                }}
+                .content p{{
+                    margin: 5px;
+                    font-size: 15px;
+                }}
+
+                .content h2 {{
+                    color: #000;
+                    font-size: 18px;
+                    text-transform: uppercase;
+                    margin-bottom: 0;
+                    font-weight: 600;
+                }}
+                h3{{
+                    color: #000;
+                }}
+
+                .footer {{
+                    position: absolute;
+                    bottom: 10px;
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 12px;
+                    color: #666;
+                    left: 32%;
+                    transform: translateX(-23%)
+                }}
+
+                .footer img {{
+                    height: 50px;
+                    margin: 0 5px;
+                }}
+                .style ul{{
+                    padding: 0;
+                    margin: 0;
+                }}
+                .style ul li{{
+                    list-style: none;
+                    line-height: 26px;
+                }}
+                table {{
+                            border-collapse: collapse;
+                            border-spacing: 0;
+                        }}
+
+                td, th {{
+    		                    border: 1px solid #000;
+    		                    text-align: left;
+    		                    padding: 8px;
+                            vertical-align: baseline;
+                            width: 50%;
+    		                }}
+                        .second-table th{{
+                            background-color: #03aad4;
+                        }}
+                        table td p{{
+                            font-size: 14px !important;
+                        }}
+                        table li, li{{
+                            font-size: 14px;
+                        }}
+                        table ul{{
+                            padding: 0 27px;
+                    margin:  0;
+                    font-weight: 400;
+                        }}
+                        .custom-list {{
+           
+                            padding-left: 10px; 
+                            font-weight: normal;
+                        }}
+                        .custom-list li::before {{
+                            content: ""\27A3""; 
+                            color: #000000; 
+                            margin-right: 5px; 
+                        }}
+                        .style-2 h4{{
+                            margin-bottom: 0;
+                            margin-top: 0;
+                            font-size: 16px;
+                        }}
+                        .style-2 th, .style-2 td{{
+                            font-size: 14px;
+                            padding: 3px;
+                        }}
+                    </style>
+                </head>
+                <body>
+    
+                    <div class=""container style-2"">
+                        <div class=""main"">
+                        <div class=""header"">
+                            <img src=""{DomainUrl}/assets/images/wabcom/logo.png"" alt=""WABCOM"">
+                            <img src=""{DomainUrl}/assets/images/wabcom/partner.png"" alt=""Gold Partner"">
+                        </div>
+                        <div class=""content"">
+            
+              
+           
+                            <table style=""width:100%"" >
+                                <tr>
+                                <td>
+                                    <h4>Accounting Report </h4>
+                                    <ul>
+                                    <li>Ledger Report & Cash/bank books</li>
+                                    <li>Purchase/sales register(columnar)</li>
+                                    <li>Bills receivables & bills Payable
+                                    </li>
+                    
+                                    </ul>
+                                </td>
+                                <td>
+                                    <h4>Financial Reports </h4>
+                                    <ul>
+                                    <li>Balance sheet</li>
+                                    <li>Profit & Loss A/c</li>
+                                    <li>Trail Balance</li>
+                                    <li>Ratio Analysis</li>
+                    
+                                    </ul>
+                                </td>
+                                </tr>
+                                <tr>
+                                <td>
+                                    <h4>Inventory Reports</h4>
+                                    <ul>
+                                    <li>Stock & stock order summary</li>
+                                    <li>Stock aging analysis, Movement analysis</li>
+                                    <li>Stock transfers with location/godown summary
+                                    </li>
+                                    <li>Stock item cost analysis</li>
+                                    <li>Stock item-wise profitability</li>
+                                    <li>Batch summary(Mfg & Exp.date)</li>
+                                    </ul>
+                                </td>
+                                <td>
+                                    <h4>Data Exchange Capabilities</h4>
+                                    <ul>
+                                    <li>On demand data synchronization</li>
+                                    <li>Export reports in different like MS Excel,, 
+                                        PDF,JPEG and HTML</li>
+                                    <li>Export & import of data through XML</li>
+                                    <li>Tally ODBC
+                                    </li>
+                                    <li>Upload data to HTTP webserver</li>
+                    
+                                    </ul>
+                                </td>
+                                </tr>
+                                <tr>
+                                <td>
+                                    <h4>Business Report </h4>
+                                    <ul>
+                                    <li>Discover easily, do more with GoTo/Switch To</li>
+                                    <li>Tailor-made reports with Change View, Basis of 
+                                        values and Exceptional reports, Save view</li>
+                                    <li>Adaptive & intuitive filter modes for versatile 
+                                        search options</li>
+                                    <li>Cost centre & cost category</li>
+                                    <li>Budget & scenario management</li>
+                                    <li>Cash flow report & projection </li>
+                                    <li>Comparative reports with enhanced data 
+                                        analysis</li>
+                                    </ul>
+                                </td>
+                                <td>
+                                    <h4>Comprehensive Dashboard</h4>
+                                    <ul>
+                                    <li>Visual data analysis via graphs</li>
+                                    <li>Seamlessly add or hide multiple reports</li>
+                                    <li>Create,organize,and save dashboards in any 
+                                        file format in a single click</li>
+                                    <li>Manage unlimited mobile numbers for 
+                                        customers/suppliers</li>
+                                    <li>Send payment link/QR code for easier 
+                                        payment</li>
+                                    <li>Ready to use templates for messages</li>
+                    
+                                    </ul>
+                                </td>
+                                </tr>
+                                <tr>
+                                <td>
+                                    <h4>Cost Control and Cost Analysis</h4>
+                                    <ul>
+                                    <li>Cost centre and profit centre management</li>
+                                    <li>Set budgets and track variance</li>
+                                    <li>Business forecasting using scenario management</li>
+                   
+                                    </ul>
+                                </td>
+                                <td>
+                                    <h4>Effortless Data Migration</h4>
+                                    <ul>
+                                    <li>Easily import masters & transactions from 
+                                        Excel
+                                        </li>
+                                    <li>Flexibility to choose default templates
+                                    </li>
+                                    <li>Map data from any excel workbook to fields</li>
+                                    <li>Identify errors with logs while importing data</li>
+                    
+                                    </ul>
+                                </td>
+                                </tr>
+                                <tr>
+                                <td>
+                                    <h4>Internet-based Capabilities</h4>
+                                    <ul>
+                                    <li>Tally reports on browser</li>
+                                    <li>Secure remote access</li>
+                                    <li>E-mailing of invoices and reports</li>
+                                    <li>Help & support</li>
+                                    <li>License and user management
+                                    </li>
+                                    <li>Integrated WhatsApp for Business</li>
+                    
+                                    </ul>
+                                </td>
+                                <td>
+                                    <h4>Other Business Capabilities</h4>
+                                    <ul>
+                                    <li>Logo printing</li>
+                                    <li>Date based reporting</li>
+                                    <li>Flexible financial periods
+                                    </li>
+                                    <li>Split financial year</li>
+                                    <li>Percentage based reporting</li>
+                                    <li>Multi account reporting</li>
+                                    <li>Context sensitive help</li>
+                   
+                                    </ul>
+                                </td>
+                                </tr>
+                                <tr>
+                                <td colspan=""2"">
+                                    <h4>Edit Log</h4>
+                                    <ul>
+                                    <li>Track creation,alteration,deletion for transactions & masters</li>
+                                    <li>Get to know when and who made the changes </li>
+                                    <li>Compare and know the version difference </li>
+                                    <li>Manage Multiple companies in same license</li>
+                                    <li> Filter the edited or deleted transactions
+                                    </li>
+                    
+                                    </ul>
+                                </td>
+                
+                                </tr>
+                            </table>
+                        </div>
+                        <div class=""footer"">
+                            <div class=""footer-top"">
+                            <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
+                            <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 65343120</p>
+                            <p>mail to: <a href=""mailto:info@wabcomdubai.com"">info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
+                            <div class=""footer-img"">
+                            <img src=""{DomainUrl}/assets/images/wabcom/greythr.png"" alt=""GreyMatrix"">
+                            <img src=""{DomainUrl}/assets/images/wabcom/dummy-logo.png"" alt=""Tally"">
+                            </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+    
+                </body>
+                </html>");
+
+
+            return pdfHtmlContent.ToString();
+        }
+
         #endregion
 
         public async Task<string> GenerateAllQuotationContent(int quotationID, int branchID, IDbTransaction? tran = null)
@@ -3822,10 +4265,12 @@ namespace PB.Server.Repository
             string string1 = await GetQuotationCoverPdfHtmlContentAndData(quotationID, branchID, tran);
             string string2 = await GetQuotationBasicPdfHtmlContentAndData(quotationID, branchID, tran);
             string string3 = await GetQuotationAwardPdfHtmlContentAndData(quotationID, branchID, tran);
-            string string4 = await GetQuotationProductPdfHtmlContentAndData(quotationID, branchID, tran);
-            string string5 = await GetQuotationItemPdfHtmlContentAndData(quotationID, branchID, tran);
-            string string6 = await GetQuotationTermsPdfHtmlContentAndData(quotationID, branchID, tran);
-            string mergedString = string1 + string2 + string3 + string4 + string5 + string6;
+            string string4 = await GetQuotationItemPdfHtmlContentAndData(quotationID, branchID, tran);
+            string string5 = await GetQuotationTermsPdfHtmlContentAndData(quotationID, branchID, tran);
+            string string6 = await GetQuotationProductPdfHtmlContentAndData(quotationID, branchID, tran);
+            string string7 = await GetQuotationProduct2PdfHtmlContentAndData(quotationID, branchID, tran);
+
+            string mergedString = string1 + string2 + string3 + string4 + string5 + string6+ string7;
 
             return mergedString;
         }
