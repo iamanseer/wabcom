@@ -77,6 +77,8 @@
     {
         if (followUpStatusID != 0)
             Model = await API.GetAsync<FollowupStatus>($"crm/get-followup-status/{followUpStatusID}", true);
+        await JS.InvokeVoidAsync("FixedModal", "new-followup-status-modal");
+        StateHasChanged();
         await OpenModal();
     }
     private async Task SaveFollowupStatus()

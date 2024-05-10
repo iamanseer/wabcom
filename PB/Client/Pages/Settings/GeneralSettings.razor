@@ -373,7 +373,7 @@
                                                     <div class="row">
                                                         <div class="col-md-12">
                                                             <div class="form-group">
-                                                                <label class="form-label mt-0 me-1">Quotation Customer Note :</label>
+                                                                <label class="form-label mt-0 me-1">Quotation Customer Note : <br /><span style="color:#8f8f8f;font-size: 12px;">(For getting bullet points use '#' in the beginning)</span></label>
                                                                 <textarea name="" class="textarea form-control" cols="2" rows="6" @bind="ClientSetting.QuotationCustomerNote" placeholder="Let your customer know what this quotation for.."></textarea>
                                                             </div>
                                                         </div>
@@ -383,7 +383,7 @@
                                                     <div class="row">
                                                         <div class="col-md-12">
                                                             <div class="form-group">
-                                                                <label class="form-label mt-0 me-1">Quotation Terms And Condition :</label>
+                                                                <label class="form-label mt-0 me-1">Quotation Terms And Condition : <br /><span style="color:#8f8f8f;font-size: 12px;">(For getting bullet points use '#' in the beginning)</span></label>
                                                                 <textarea name="" class="textarea form-control" cols="2" rows="6" @bind="ClientSetting.QuotationTermsAndCondition" placeholder="Let your customer know what this quotation for.."></textarea>
                                                             </div>
                                                         </div>
@@ -641,7 +641,7 @@
                                                                     </td>
                                                                     <td style="width:100px;">
                                                                         <ActionEdit Clicked="async () =>await OpenItemCategoryModal(item.data.CategoryID)" />
-                                                                        <ActionDelete Clicked="async () =>await HandleItemColorRemoveButtonClick(item.data.CategoryID)" />
+                                                                        <ActionDelete Clicked="async () =>await HandleRemoveCategoryButtonClick(item.data.CategoryID)" />
                                                                     </td>
                                                                 </tr>
                                                             }
@@ -1081,18 +1081,6 @@
                                     }
 
                                     break;
-
-
-
-
-
-
-
-
-
-
-
-
 
 
                                 case (int)GeneralSettingsMenus.PayamentGateway:
@@ -1717,9 +1705,9 @@
     private async Task HandleRemovTaxCategoryButtonClick(int taxCategoryID)
     {
         if (await JS.Confirm("Confirm", "Are you sure you want to remove the tax category..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel")
-        && await API.GetAsync<bool>($"item/delete-tax-category/{taxCategoryID}", true))
+        && await API.GetAsync<bool>($"settings/delete-tax-category/{taxCategoryID}", true))
         {
-            await JS.SuccessMessage("Group deleted successfully");
+            await JS.SuccessMessage("Tax category deleted successfully");
             await LoadTaxCategoriesData();
         }
     }

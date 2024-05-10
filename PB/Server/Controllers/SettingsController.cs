@@ -200,7 +200,7 @@ namespace PB.Server.Controllers
         public async Task<IActionResult> GetQuotationDefaultSettings()
         {
             var quotationSettings = await _dbContext.GetByQueryAsync<QuotationInvoiceDefaultSettingsModel>(@$"
-																				Select B.BranchID,CR.CurrencyID,Concat(CR.CurrencyName,' ( ',CR.Symbol,' )') AS CurrencyName,CS.QuotationSubject As Subject,CS.QuotationCustomerNote As CustomerNote,CS.QuotationTermsAndCondition As TermsAndCondition,CS.QuotationNeedShippingAddress As NeedShippingAddress,C.CountryID,C.CountryName,C.ISDCode,B.StateID As PlaceOfSupplyID,CST.StateName As PlaceOfSupplyName
+																				Select B.BranchID,CR.CurrencyID,Concat(CR.CurrencyName,' ( ',CR.Symbol,' )') AS CurrencyName,CS.QuotationSubject As Subject,CS.QuotationCustomerNote As CustomerNote,CS.QuotationTermsAndCondition As TermsAndConditions,CS.QuotationNeedShippingAddress As NeedShippingAddress,C.CountryID,C.CountryName,C.ISDCode,B.StateID As PlaceOfSupplyID,CST.StateName As PlaceOfSupplyName
                                                                                 From viBranch B
                                                                                 Left Join CountryZone Z ON Z.ZoneID=B.ZoneID AND Z.IsDeleted=0
                                                                                 Left Join Country C ON C.CountryID=Z.CountryID AND C.IsDeleted=0
@@ -216,7 +216,7 @@ namespace PB.Server.Controllers
         public async Task<IActionResult> GetInvoiceDefaultSettings()
         {
             var invoiceSettings = await _dbContext.GetByQueryAsync<QuotationInvoiceDefaultSettingsModel>(@$"
-																				Select B.BranchID,CR.CurrencyID,Concat(CR.CurrencyName,' ( ',CR.Symbol,' )') AS CurrencyName,CS.InvoiceSubject As Subject,CS.InvoiceCustomerNote As CustomerNote,CS.InvoiceTermsAndCondition As TermsAndCondition,CS.InvoiceNeedShippingAddress As NeedShippingAddress,C.CountryID,C.CountryName,C.ISDCode,B.StateID As PlaceOfSupplyID,CST.StateName As PlaceOfSupplyName
+																				Select B.BranchID,CR.CurrencyID,Concat(CR.CurrencyName,' ( ',CR.Symbol,' )') AS CurrencyName,CS.InvoiceSubject As Subject,CS.InvoiceCustomerNote As CustomerNote,CS.InvoiceTermsAndCondition As TermsAndConditions,CS.InvoiceNeedShippingAddress As NeedShippingAddress,C.CountryID,C.CountryName,C.ISDCode,B.StateID As PlaceOfSupplyID,CST.StateName As PlaceOfSupplyName
 																				From viBranch B
                                                                                 Left Join CountryZone Z ON Z.ZoneID=B.ZoneID AND Z.IsDeleted=0
                                                                                 Left Join Country C ON C.CountryID=Z.CountryID AND C.IsDeleted=0
@@ -315,7 +315,7 @@ namespace PB.Server.Controllers
             return Ok(TaxCategory ?? new());
         }
 
-        [HttpGet("delete-tax-category")]
+        [HttpGet("delete-tax-category/{Id}")]
         public async Task<IActionResult> DeleteTaxCategory(int Id)
         {
             int count = await _dbContext.GetByQueryAsync<int>(@$"Select Count(*) 

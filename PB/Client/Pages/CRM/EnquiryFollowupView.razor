@@ -167,7 +167,7 @@
 
                                                                 <div class="row">
                                                                     <label class="col-5 col-auto items-label text-muted">Added On</label>
-                                                                    <label class="col-7 col-auto">@EnquiryFollowupData.Date.Value.ToString("dd/MM/yyyy h:mm tt")</label>
+                                                                    <label class="col-7 col-auto">@EnquiryFollowupData.Date.Value.ToString("dd/MM/yyyy")</label>
                                                                 </div>
 
                                                                 <div class="row">
@@ -217,7 +217,7 @@
                                                                 {
                                                                     <div class="row">
                                                                         <label class=" text-muted items-label col-md-5 col-auto">First Followup Date</label>
-                                                                        <label class="col-md-7 col-auto">@EnquiryFollowupData.FirstFollowUpDate.Value.ToString("dd/MM/yyyy h:mm tt")</label>
+                                                                        <label class="col-md-7 col-auto">@EnquiryFollowupData.FirstFollowUpDate.Value.ToString("dd/MM/yyyy")</label>
                                                                     </div>
                                                                 }
 
@@ -341,7 +341,7 @@
                                                                         </span>
                                                                     </div>
                                                                     <div class="fw-500 fs-16">
-                                                                        @(LatestFollowup.NextFollowUpDate.HasValue ? LatestFollowup.NextFollowUpDate.Value.ToString("dd/MM/yyyy") : "--:--:----")
+                                                                        @(LatestFollowup.NextFollowUpDate.HasValue ? LatestFollowup.NextFollowUpDate.Value.ToString("dd/MM/yyyy  h:mm tt") : "--:--:----")
                                                                     </div>
                                                                 </div>
 

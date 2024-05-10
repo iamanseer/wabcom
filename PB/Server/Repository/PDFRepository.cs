@@ -2663,19 +2663,19 @@ namespace PB.Server.Repository
                               <p>{quotation.BillingAddressLine1}</p>");
                                 if(quotation.BillingAddressLine2!=null)
                                 {
-                                    pdfHtmlContent.Append($@" < p >{quotation.BillingAddressLine2}</p>");
+                                    pdfHtmlContent.Append($@"<p>{quotation.BillingAddressLine2}</p>");
                                 }
                                 if (quotation.BillingAddressLine3 != null)
                                 {
-                                    pdfHtmlContent.Append($@" <p>{quotation.BillingAddressLine3}</p>");
+                                    pdfHtmlContent.Append($@"<p>{quotation.BillingAddressLine3}</p>");
                                 }
                                 if (quotation.BillingState != null)
                                 {
-                                    pdfHtmlContent.Append($@" <p>{quotation.BillingState}</p>");
+                                    pdfHtmlContent.Append($@"<p>{quotation.BillingState}</p>");
                                 }
                                 if (quotation.BillingCountry != null)
                                 {
-                                    pdfHtmlContent.Append($@" <p>{quotation.BillingCountry}</p>");
+                                    pdfHtmlContent.Append($@"<p>{quotation.BillingCountry}</p>");
                                 }
                                 if (quotation.BillingPinCode != null)
                                 {

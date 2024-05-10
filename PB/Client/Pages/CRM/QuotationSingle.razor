@@ -543,7 +543,7 @@
                                                     Item Name
                                                 </th>
                                                 <th>
-                                                    Description
+                                                    Description <br /><span style="color:#8f8f8f;font-size: 12px;">(For getting bullet points use '#' in the beginning)</span>
                                                 </th>
                                                 <th>
                                                     Quantity
@@ -649,7 +649,9 @@
                                                                                 NewButtonClicked="@(async (int dropdownMode) => await HandleAddNewQuotationItemButtonClick(dropdownMode, index))" />
                                                             </td>
                                                             <td class="px-0">
-                                                                <input type="text" class="form-control form-control-custom" @bind="quotationItem.Description" />
+                                                               @*  <input type="text" class="form-control form-control-custom" @bind="quotationItem.Description" /> *@
+
+                                                                <textarea class="form-control" rows="2" @bind="quotationItem.Description"></textarea>
                                                             </td>
                                                             <td class="px-0">
                                                                 @if (quotationItem.ItemVariantID == null)
@@ -755,7 +757,9 @@
                                                                     NewButtonClicked="@(async (int dropdownMode) => await HandleAddNewQuotationItemButtonClick(dropdownMode))" />
                                                 </td>
                                                 <td class="px-0">
-                                                    <input type="text" class="form-control form-control-custom" @bind="@Footer.Description" />
+                                                    @* <input type="text" class="form-control form-control-custom" @bind="@Footer.Description" /> *@
+                                                         <textarea  class="form-control" rows="2" @bind="Footer.Description"></textarea>
+
                                                 </td>
                                                 <td class="px-0">
                                                     @if (Footer.ItemVariantID == null)
@@ -847,17 +851,17 @@
 
                             <!--Terms and Conditions-->
                             <div class="row mt-4">
-                                <div class="col-md-6 col-12">
+                                <div class="col-md-12">
                                     <div class="form-group mt-2">
                                         <label class="form-label mt-0 me-1">Terms & Conditions :  <br /><span style="color:#8f8f8f;font-size: 12px;">(For getting bullet points use '#' in the beginning)</span></label>
                                         <textarea placeholder="Enter the terms and conditions of your business to be displayed in your transaction" class="form-control" rows="4" @bind="Model.TermsandCondition"></textarea> <br>
                                     </div>
                                 </div>
-                                <div class="col-md-6 col-12">
+                                @* <div class="col-md-6 col-12">
                                     <label class="form-label">Attach File(s) to Estimate</label>
                                     <input id="demo" type="file" name="files" accept=".jpg, .png, image/jpeg, image/png" multiple="" class="ff_fileupload_hidden"><div class="ff_fileupload_wrap"><div class="ff_fileupload_dropzone_wrap"><button class="ff_fileupload_dropzone" type="button" aria-label="Browse, drag-and-drop, or paste files to upload"></button></div><table class="ff_fileupload_uploads"></table></div>
                                     <p style="font-size: 11px !important;">You can upload a maximum of 5 files, 5MB each</p>
-                                </div>
+                                </div> *@
                             </div>
 
                         </div>

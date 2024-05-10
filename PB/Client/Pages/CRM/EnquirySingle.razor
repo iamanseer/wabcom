@@ -754,16 +754,19 @@
             }
         }
 
+        var enquiryItem = await API.GetAsync<EnquiryItemModelNew>($"crm/get-enquiry-item-details/{item.ID}");
         if (currentRowIndex == -1)
         {
             Footer.ItemVariantID = item.ID;
             Footer.ItemName = item.Value;
+            Footer.Description = enquiryItem.Description != null ? enquiryItem.Description : null;
             await FocusElement(FooterItemQuantityBoxID);
         }
         else
         {
             Model.EnquiryItem[currentRowIndex].ItemVariantID = item.ID;
             Model.EnquiryItem[currentRowIndex].ItemName = item.Value;
+            Model.EnquiryItem[currentRowIndex].Description = enquiryItem.Description != null ? enquiryItem.Description : null;
             await FocusElement(RowItemQuantityBoxID + (currentRowIndex + 1));
         }
     }

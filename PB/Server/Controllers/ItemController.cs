@@ -1255,7 +1255,7 @@ namespace PB.Server.Controllers
             return Ok(itemCategorySuccessModel);
         }
 
-        [HttpGet("delete-item-category/{categoryID}")]
+        [HttpGet("delete-item-category")]
         public async Task<IActionResult> DeleteItemCategory(int categoryID)
         {
             int enquiryCount = await _dbContext.GetByQueryAsync<int>($@"Select Count(CategoryID)

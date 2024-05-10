@@ -462,6 +462,16 @@ namespace PB.Server.Controllers
             return Ok(fileContents);
         }
 
+
+        [HttpGet("get-enquiry-item-details/{Id}")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Enquiry")]
+        public async Task<IActionResult> GetEnquiryItemDetails(int Id)
+        {
+            EnquiryItemModelNew result = await _dbContext.GetByQueryAsync<EnquiryItemModelNew>(@$"Select IM.ItemVariantID,IM.ItemName,IM.Description,IM.Price,IM.TaxPreferenceTypeID,IM.TaxPreferenceName,IM.CurrentStock,IM.IsGoods
+                                                                                            From viItem IM 
+                                                                                            Where IM.ItemVariantID={Id}", null);
+            return Ok(result??new());
+        }
         #endregion
 
         #region Quotation
