@@ -1558,7 +1558,7 @@ namespace PB.Server.Repository
                     <meta name='description' content=''>
                     <meta name='author' content=''>
                     <meta name='keywords' content=''>
-                    <link rel='shortcut icon' type='image/png' href='/assets/images/brand/fevicon.png' />
+                    <link rel='shortcut icon' type='image/png' href='/assets/images/brand/logo-1.png' />
                     <title></title>
 
                     <style>
@@ -1789,7 +1789,7 @@ namespace PB.Server.Repository
                     <meta name='description' content=''>
                     <meta name='author' content=''>
                     <meta name='keywords' content=''>
-                    <link rel='shortcut icon' type='image/png' href='/assets/images/brand/fevicon.png' />
+                    <link rel='shortcut icon' type='image/png' href='/assets/images/brand/logo-1.png' />
                     <title></title>
 
                     <style>
