@@ -75295,3 +75295,8 @@ body *::-webkit-scrollbar {
 .modal-dialog-scrollable .modal-body {
     overflow-y: auto !important;
 }
+
+.dark-mode .side-header .header-brand-img.desktop-logo {
+    display: block !important;
+    width:200px !important;
+}
