@@ -75300,3 +75300,8 @@ body *::-webkit-scrollbar {
     display: block !important;
     width:200px !important;
 }
+
+.side-header .header-brand-img.light-logo1 {
+    display: block !important;
+    width: 200px !important;
+}

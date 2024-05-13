@@ -28,6 +28,7 @@ namespace PB.Shared.Models.CRM
         public DateTime? FirstFollowUpDate { get; set; } = DateTime.Now.AddDays(1);
         [Required(ErrorMessage = "Please choose expiry date")]
         public DateTime? ExpiryDate { get; set; } = DateTime.Now.AddDays(8);
+        [Required(ErrorMessage = "Please enter subject")]
         public string? Subject { get; set; }
         public string? CustomerNote { get; set; }
         public string? TermsandCondition { get; set; }

@@ -308,14 +308,14 @@ namespace PB.Server.Controllers
             string selectQuery = @$"Select Top 20 C.EntityID As ID,E.Name As Value
                     From Customer C
                     Left Join viEntity E ON E.EntityID=C.EntityID
-                    Where C.ClientID={CurrentClientID}"; 
+                    Where C.ClientID={CurrentClientID} and C.IsDeleted=0"; 
 
             if (!model.ReadDataOnSearch)
             {
                 selectQuery = @$"Select C.EntityID As ID,E.Name As Value
                     From Customer C
                     Left Join viEntity E ON E.EntityID=C.EntityID
-                    Where C.ClientID={CurrentClientID}";
+                    Where C.ClientID={CurrentClientID}  and C.IsDeleted=0";
             }
 
             if (model.ReadDataOnSearch && !string.IsNullOrEmpty(model.SearchString))

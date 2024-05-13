@@ -185,7 +185,8 @@
                                                     </th>
 
                                                     <th>
-                                                        Description
+                                                        Description<br /><span style="color:#8f8f8f;font-size: 12px;">(For getting bullet points use '#' in the beginning)</span>
+                                                   
                                                     </th>
 
                                                     <th>
@@ -217,7 +218,8 @@
                                                                 </td>
 
                                                                 <td>
-                                                                    @item.Description
+                                                                    @* @item.Description *@
+                                                                   <textarea  class="form-control" rows="2" @bind="item.Description" disabled></textarea>
                                                                 </td>
 
                                                                 <td style="width:100px;">
@@ -264,7 +266,8 @@
                                                                 </td>
 
                                                                 <td class="px-1">
-                                                                    <input type="text" class="form-control" @bind-value="item.Description">
+                                                                    @* <input type="text" class="form-control" @bind-value="item.Description"> *@
+                                                                    <textarea class="form-control" rows="2" @bind="item.Description"></textarea>
                                                                 </td>
 
                                                                 <td style="width:100px;" class="px-1">
@@ -313,7 +316,8 @@
                                                     </td>
 
                                                     <td class="px-1">
-                                                        <input type="text" class="form-control" @bind-value="Footer.Description">
+                                                        @* <input type="text" class="form-control" @bind-value="Footer.Description"> *@
+                                                        <textarea class="form-control" rows="2" @bind="Footer.Description"></textarea>
                                                     </td>
 
                                                     <td style="width:100px;" class="px-1">

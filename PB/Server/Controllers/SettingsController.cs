@@ -745,8 +745,8 @@ namespace PB.Server.Controllers
             int quotationCount = await _dbContext.GetByQueryAsync<int>($@"SELECT Count(*) AS DataCount 
                                                                            from BusinessType F
                                                                             LEFT JOIN Quotation E ON E.BusinessTypeID=F.BusinessTypeID
-                                                                            WHERE E.IsDeleted =0 and F.IsDeleted=0 and BusinessTypeID={Id}
-                                                                            GROUP BY BusinessTypeID", null);
+                                                                            WHERE E.IsDeleted =0 and F.IsDeleted=0 and F.BusinessTypeID={Id}
+                                                                            GROUP BY F.BusinessTypeID", null);
 
             if (quotationCount > 0)
             {

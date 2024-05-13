@@ -87,7 +87,8 @@ namespace PB.Server.Controllers
             if (CurrentUserTypeID > (int)UserTypes.Client && !string.IsNullOrEmpty(enquiryIDs))
                 query.WhereCondition += $" and E.EnquiryID IN ({enquiryIDs})";
             query.OrderByFieldName = searchModel.OrderByFieldName;
-            query.WhereCondition += _common.GeneratePagedListFilterWhereCondition(searchModel, "V.Name");
+            query.SearchLikeColumnNames = new() { "EI.Name", "EP.FirstName" , "VE.Name" };
+            query.WhereCondition += _common.GeneratePagedListFilterWhereCondition(searchModel);
             return Ok(await _dbContext.GetPagedList<EnquiryListModel>(query, null));
         }
 
@@ -869,7 +870,8 @@ namespace PB.Server.Controllers
                 if (!string.IsNullOrEmpty(quotationIdList))
                     query.WhereCondition += $" and Q.QuotationID IN ({quotationIdList})";
             }
-            query.WhereCondition += _common.GeneratePagedListFilterWhereCondition(searchModel, "vE.Name");
+            query.SearchLikeColumnNames = new() { "EI.Name", "EP.FirstName", "uE.Name" };
+            query.WhereCondition += _common.GeneratePagedListFilterWhereCondition(searchModel);
             return Ok(await _dbContext.GetPagedList<QuotationListModel>(query, null));
         }
 
@@ -975,8 +977,7 @@ namespace PB.Server.Controllers
             followUp.FollowUpID = await _dbContext.SaveAsync(followUp);
 
             //Notification
-            if (model.FollowUpID is 0)
-                await _common.SendQuotationPushAndNotification(CurrentClientID, followUp.FollowUpID, CurrentEntityID, null);
+            await _common.SendFollowupPushAndNotification(CurrentClientID, followUp.FollowUpID, CurrentEntityID, null);
             return Ok(new FollowupAddResultModel() { FollowupID = followUp.FollowUpID });
         }
 

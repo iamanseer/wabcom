@@ -42,6 +42,9 @@
     {
         if (businessTypeID != 0)
             Model = await API.GetAsync<BusinessTypeModel>($"crm/get-business-type/{businessTypeID}", true);
+        await JS.InvokeVoidAsync("FixedModal", "business-type-modal");
+        StateHasChanged();
+
         await OpenModal();
     }
     private async Task SaveBusinessType()

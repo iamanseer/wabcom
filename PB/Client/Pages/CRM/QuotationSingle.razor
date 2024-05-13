@@ -519,6 +519,7 @@
                                     <div class="form-group">
                                         <label class="form-label mt-0 me-1">Subject :</label>
                                         <textarea name="" class="textarea form-control" cols="2" rows="2" @bind="Model.Subject" placeholder="Let your customer know what this quotation for.."></textarea>
+                                        <ValidationMessage For="() => Model.Subject" />
                                     </div>
                                 </div>
                             </div>
@@ -579,19 +580,20 @@
                                                                     </div>
                                                                 </div>
                                                             </td>
-                                                            <td>
-                                                                @quotationItem.Description
+                                                            <td class="px-0">
+                                                                 <textarea  class="form-control" rows="2" @bind="quotationItem.Description" disabled></textarea>
+                                                                @* @quotationItem.Description *@
                                                             </td>
-                                                            <td>
+                                                            <td class="px-0">
                                                                 @quotationItem.Quantity
                                                             </td>
-                                                            <td>
+                                                            <td class="px-0">
                                                                 @quotationItem.Rate
                                                             </td>
-                                                            <td>
+                                                            <td class="px-0">
                                                                 @quotationItem.Discount
                                                             </td>
-                                                            <td>
+                                                            <td class="px-0">
                                                                 @if (quotationItem.TaxPreferenceTypeID == (int)TaxPreferences.NonTaxable)
                                                                 {
                                                                     @("Non taxable")
@@ -609,7 +611,7 @@
                                                                     @quotationItem.TaxCategoryName
                                                                 }
                                                             </td>
-                                                            <td>
+                                                            <td class="px-0">
                                                                 @quotationItem.TotalAmount
                                                             </td>
                                                         </tr>

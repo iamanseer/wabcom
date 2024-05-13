@@ -2684,11 +2684,11 @@ namespace PB.Server.Repository
             pdfHtmlContent.Append($@"</div>
                           </div>
                           <div class='subject'>
-                            <h1>MARKETING <br><span>PROPOSAL</span></h1>
+                            <h1>PROPOSAL</h1>
                           </div>
 
                           <div class='for'>
-                            <h2>FOR <br>BUSSINESS <br>SOLUTION</h2>
+                            <h2>{quotation.Subject}</h2>
                             <h3>9/05/2024</h3>
                           </div>
                         </div>
@@ -4265,12 +4265,12 @@ namespace PB.Server.Repository
             string string1 = await GetQuotationCoverPdfHtmlContentAndData(quotationID, branchID, tran);
             string string2 = await GetQuotationBasicPdfHtmlContentAndData(quotationID, branchID, tran);
             string string3 = await GetQuotationAwardPdfHtmlContentAndData(quotationID, branchID, tran);
-            string string4 = await GetQuotationItemPdfHtmlContentAndData(quotationID, branchID, tran);
-            string string5 = await GetQuotationTermsPdfHtmlContentAndData(quotationID, branchID, tran);
-            string string6 = await GetQuotationProductPdfHtmlContentAndData(quotationID, branchID, tran);
-            string string7 = await GetQuotationProduct2PdfHtmlContentAndData(quotationID, branchID, tran);
+            string string4 = await GetQuotationProductPdfHtmlContentAndData(quotationID, branchID, tran);
+            string string5 = await GetQuotationProduct2PdfHtmlContentAndData(quotationID, branchID, tran);
+            string string6 = await GetQuotationItemPdfHtmlContentAndData(quotationID, branchID, tran);
+            string string7 = await GetQuotationTermsPdfHtmlContentAndData(quotationID, branchID, tran);
 
-            string mergedString = string1 + string2 + string3 + string4 + string5 + string6+ string7;
+            string mergedString = string1 + string2 + string3  + string4+ string5 + string6 + string7;
 
             return mergedString;
         }
