@@ -44,6 +44,7 @@ using PB.Shared.Models.eCommerce.SEO;
 using PB.Shared.Models.eCommerce.Product;
 using PB.Shared.Tables.eCommerce.Products;
 using PB.Shared.Models.CRM.Quotations;
+using PB.Shared.Models.CRM.Customer;
 
 namespace PB.Shared.Helpers
 {
@@ -191,6 +192,10 @@ namespace PB.Shared.Helpers
             CreateMap<SupplierModel, Supplier>();
             CreateMap<SupplierContactPersonModel, EntityCustom>();
             CreateMap<SupplierContactPersonModel, SupplierContactPerson>();
+
+            // Customer
+            CreateMap<CustomerCategoryModel, CustomerCategory>();
+            CreateMap<CustomerSubscriptionModel, CustomerSubscription>();
 
 
 

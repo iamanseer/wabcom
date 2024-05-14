@@ -1,8 +1,10 @@
 ﻿@using PB.CRM.Model.Enum
+@using PB.Client.Shared.Inventory.Customer
 @using PB.Client.Shared.Inventory.Item
 @using PB.Client.Shared.Common
 @using PB.Model.Models
 @using PB.Shared.Enum.Common
+@using PB.Shared.Models.CRM.Customer
 @using PB.Shared.Models.CRM.Followup
 @using PB.Shared.Models.CRM.Quotations
 @using PB.Shared.Models.Common
@@ -136,6 +138,32 @@
                                     </div>
                                 </a>
                             </div>
+
+                            
+                            <!--Customer Category-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.CustomerCategory)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.CustomerCategory)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Customer Category</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+                            <!--Customer Subscription-->
+                            <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.CustomerSubscription)">
+                                <a href="javascript:void(0);" id="@("menu-item-"+(int)GeneralSettingsMenus.CustomerSubscription)" class="menu list-group-item  d-flex align-items-center px-0 border-top">
+                                    <i class="fa fa-cubes fs-18 me-2 text-success p-2"></i>
+                                    <div class=" d-flex flex-column">
+                                        <span>Customer Subscription</span>
+
+                                    </div>
+                                </a>
+                            </div>
+
+
+
 
                             <!--Item Size-->
                             @* <div class="mb-2" @onclick=" async () => await HandleMenuSelected((int)GeneralSettingsMenus.ItemSize)">
@@ -962,8 +990,6 @@
                                     }
 
                                     break;
-
-
                                 case (int)GeneralSettingsMenus.PaymentTerm:
                                     @if (IsPaymentTermReady && PaymentTermList is not null)
                                     {
@@ -1021,9 +1047,6 @@
                                     }
 
                                     break;
-
-
-
                                 case (int)GeneralSettingsMenus.Promotion:
                                     @if (IsPromotionReady && PromotionList is not null)
                                     {
@@ -1081,8 +1104,6 @@
                                     }
 
                                     break;
-
-
                                 case (int)GeneralSettingsMenus.PayamentGateway:
                                     @if (IsPaymentGatewayReady && GatewayCredentialDetail is not null && PaymentGateways is not null && ChosenPaymentGatewaySettings is not null)
                                     {
@@ -1335,7 +1356,6 @@
                                         </div>
                                     }
                                     break;
-
                                 case (int)GeneralSettingsMenus.BusinessType:
                                     @if (IsBusinessTypeSettingIsReady && BusinessListPageModel is not null)
                                     {
@@ -1388,6 +1408,92 @@
 
                                                 <PaginationCustom PageSize="BusinessListPageModel.PageSize" TotalCount="BusinessListPageModel.TotalCount" TotalPages="BusinessListPageModel.TotalPages" PageIndex="BusinessListPageModel.PageIndex" LoadPageIndex="HandleBusinessTypePageIndexEventCallback" />
 
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.CustomerCategory:
+                                    @if (IsCustomerCategorySettingsReady && CustomerCategoryPagedList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleCustomerCategoryListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenCustomerCategoryModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Sl No</th>
+                                                                <th>
+                                                                    Category Name
+                                                                </th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in CustomerCategoryPagedList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((CustomerCategoryPagedList.PageIndex - 1) * CustomerCategoryPagedList.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.CategoryName
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        <ActionEdit Clicked="async () =>await OpenCustomerCategoryModal(item.data.CategoryID)" />
+                                                                        <ActionDelete Clicked="async () =>await HandleToRemoveCustomerCategoryButtonClick(item.data.CategoryID)" />
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <PaginationCustom PageSize="CustomerCategoryPagedList.PageSize" TotalCount="CustomerCategoryPagedList.TotalCount" TotalPages="CustomerCategoryPagedList.TotalPages" PageIndex="CustomerCategoryPagedList.PageIndex" LoadPageIndex="HandleCustomerCategoryPageIndexEventCallback" />
+                                            </div>
+                                        </div>
+                                    }
+                                    break;
+                                case (int)GeneralSettingsMenus.CustomerSubscription:
+                                    @if (IsCustomerSubscriptionSettingsReady && SubscriptionPagedList is not null)
+                                    {
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between">
+                                                <ListPageHeader Settings="ListPagesHeaderSetting" OnFilterButtonClick="(Func<PagedListPostModelWithFilter, Task>)HandleCustomerSubscriptionListPageHeaderEventCallback" OnAddButtonClick="async () => await OpenCustomerSubscriptionModal()" />
+                                            </div>
+                                            <div class="card-body basic-setting-card">
+                                                <div class="table-responsive">
+                                                    <table class="table border text-nowrap text-md-nowrap table-hover mb-0">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Sl No</th>
+                                                                <th>
+                                                                    Subscription Name
+                                                                </th>
+                                                                <th>Actions</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var item in SubscriptionPagedList.Data.Select((data, index) => new { index, data }))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        @((SubscriptionPagedList.PageIndex - 1) * SubscriptionPagedList.PageSize + 1 + item.index)
+                                                                    </td>
+                                                                    <td>
+                                                                        @item.data.SubscriptionName
+                                                                    </td>
+                                                                    <td style="width:100px;">
+                                                                        <ActionEdit Clicked="async () =>await OpenCustomerSubscriptionModal(item.data.SubscriptionID)" />
+                                                                        <ActionDelete Clicked="async () =>await HandleToRemoveCustomerSubscriptionButtonClick(item.data.SubscriptionID)" />
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                                <PaginationCustom PageSize="SubscriptionPagedList.PageSize" TotalCount="SubscriptionPagedList.TotalCount" TotalPages="SubscriptionPagedList.TotalPages" PageIndex="SubscriptionPagedList.PageIndex" LoadPageIndex="HandleCustomerSubscriptionPageIndexEventCallback" />
                                             </div>
                                         </div>
                                     }
@@ -1482,7 +1588,19 @@
             <ModalBusinessType @ref="@modalBusinessType" Saved="async () => await HandleBusinessTypeAdded()" />
         }
         break;
-
+        
+    case (int)GeneralSettingsMenus.CustomerCategory:
+        @if (modalCustomerCategory is not null && IsCustomerCategorySettingsReady)
+        {
+            <ModalCustomerCategory @ref="@modalCustomerCategory" Saved="async () => await HandleCustomerCategoryAdded()" />
+        }
+        break;
+    case (int)GeneralSettingsMenus.CustomerSubscription:
+        @if (modalCustomerSubscription is not null && IsCustomerSubscriptionSettingsReady)
+        {
+            <ModalCustomerSubscription @ref="@modalCustomerSubscription" Saved="async () => await HandleCustomerSubscriptionAdded()" />
+        }
+        break;
 }
 
 
@@ -1583,6 +1701,15 @@
             case (int)GeneralSettingsMenus.BusinessType:
                 await HandleBusinessTypeMenuSelected();
                 break;
+            case (int)GeneralSettingsMenus.CustomerCategory:
+                await HandleCustomerCategoryMenuSelected();
+                break;
+            case (int)GeneralSettingsMenus.CustomerSubscription:
+                await HandleCustomerSubscriptionMenuSelected();
+                break;
+
+
+                
         }
         SelectedMenuType = selectedMenuType;
         selectedMenuDivID = "menu-item-" + selectedMenuType;
@@ -2487,6 +2614,116 @@
         BusinessTypePostModel = BusinessTypePostModel ?? new();
         BusinessTypePostModel.PageIndex = pageIndex;
         await LoadBusinessTypeData();
+    }
+
+    #endregion
+
+    #region Customer Category
+
+    private PagedList<CustomerCategoryModel>? CustomerCategoryPagedList;
+    private PagedListPostModel? CustomerCategoryPostModel;
+    private ModalCustomerCategory? modalCustomerCategory;
+    private bool IsCustomerCategorySettingsReady = false;
+
+    private async Task HandleCustomerCategoryMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Customer Categories"
+            };
+        modalCustomerCategory = new();
+        CustomerCategoryPostModel = new();
+        await LoadCustomerCategoryData();
+        IsCustomerCategorySettingsReady = true;
+    }
+    private async Task LoadCustomerCategoryData()
+    {
+        CustomerCategoryPagedList = await API.PostAsync<PagedList<CustomerCategoryModel>, PagedListPostModel>("customer/get-customer-category-paged-list", CustomerCategoryPostModel ?? new());
+    }
+    private async Task OpenCustomerCategoryModal(int categoryID = 0)
+    {
+        modalCustomerCategory = modalCustomerCategory ?? new();
+        await modalCustomerCategory.OpenCustomerCategoryModal(categoryID);
+    }
+    private async Task HandleCustomerCategoryAdded()
+    {
+        await LoadCustomerCategoryData();
+    }
+    private async Task HandleCustomerCategoryPageIndexEventCallback(int pageIndex)
+    {
+        CustomerCategoryPostModel = CustomerCategoryPostModel ?? new();
+        CustomerCategoryPostModel.PageIndex = pageIndex;
+        await LoadCustomerCategoryData();
+    }
+    private async Task HandleToRemoveCustomerCategoryButtonClick(int categoryID)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the category..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel")
+        && await API.GetAsync<bool>($"customer/delete-customer-category/{categoryID}", true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadCustomerCategoryData();
+        }
+    }
+    private async Task HandleCustomerCategoryListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        ItemCategoryPostModel ??= new();
+        ItemCategoryPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadCustomerCategoryData();
+    }
+
+    #endregion
+    
+    #region Customer Subscription
+
+    private PagedList<CustomerSubscriptionModel>? SubscriptionPagedList;
+    private PagedListPostModel? CustomerSubscriptionPostModel;
+    private ModalCustomerSubscription? modalCustomerSubscription;
+    private bool IsCustomerSubscriptionSettingsReady = false;
+
+    private async Task HandleCustomerSubscriptionMenuSelected()
+    {
+        ListPagesHeaderSetting = new()
+            {
+                Heading = "Customer Subscriptions"
+            };
+        modalCustomerSubscription = new();
+        CustomerSubscriptionPostModel = new();
+        await LoadCustomerSubscriptionData();
+        IsCustomerSubscriptionSettingsReady = true;
+    }
+    private async Task LoadCustomerSubscriptionData()
+    {
+        SubscriptionPagedList = await API.PostAsync<PagedList<CustomerSubscriptionModel>, PagedListPostModel>("customer/get-customer-subscription-paged-list", CustomerSubscriptionPostModel ?? new());
+    }
+    private async Task OpenCustomerSubscriptionModal(int subscriptionID = 0)
+    {
+        modalCustomerSubscription = modalCustomerSubscription ?? new();
+        await modalCustomerSubscription.OpenCustomerSubscriptionModal(subscriptionID);
+    }
+    private async Task HandleCustomerSubscriptionAdded()
+    {
+        await LoadCustomerSubscriptionData();
+    }
+    private async Task HandleCustomerSubscriptionPageIndexEventCallback(int pageIndex)
+    {
+        CustomerSubscriptionPostModel = CustomerSubscriptionPostModel ?? new();
+        CustomerSubscriptionPostModel.PageIndex = pageIndex;
+        await LoadCustomerSubscriptionData();
+    }
+    private async Task HandleToRemoveCustomerSubscriptionButtonClick(int subscriptionID)
+    {
+        if (await JS.Confirm("Confirm", "Are you sure you want to remove the subscription..?", SweetAlertMessageType.question, "Yes, Remove", "No, Cancel")
+        && await API.GetAsync<bool>($"customer/delete-customer-subscription/{subscriptionID}", true))
+        {
+            await JS.SuccessMessage("Deleted Successfully");
+            await LoadCustomerSubscriptionData();
+        }
+    }
+    private async Task HandleCustomerSubscriptionListPageHeaderEventCallback(PagedListPostModelWithFilter pagedListPostModelWithFilter)
+    {
+        CustomerSubscriptionPostModel ??= new();
+        CustomerSubscriptionPostModel.SearchString = pagedListPostModelWithFilter.SearchString;
+        await LoadCustomerSubscriptionData();
     }
 
     #endregion

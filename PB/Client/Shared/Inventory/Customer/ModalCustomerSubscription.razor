@@ -1,0 +1,83 @@
+﻿@using PB.Shared.Models.CRM.Customer
+@using PB.Shared.Models.Common
+
+<div class="modal fade" id="customer-subscription-modal">
+    <div class="modal-dialog modal-dialog-scrollable modal-md" role="document">
+        <EditForm Model="Model" autocomplete="off" OnValidSubmit="SaveCustomerSubscription">
+            <DataAnnotationsValidator />
+            <div class="modal-content modal-content-demo">
+                <div class="modal-header">
+                    @if (Model.SubscriptionID != 0)
+                    {
+                        <h6 class="modal-title">@Model.SubscriptionName</h6>
+                    }
+                    else
+                    {
+                        <h6 class="modal-title">New Customer Subscription</h6>
+                    }
+                    <button type="button" aria-label="Close" class="btn-close" @onclick="async() => await HideCustomerSubscriptionModal()"><span aria-hidden="true">&times;</span></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="row">
+
+                        <InputTextBox Label="Subscription name:"
+                                      DivClass="col-md-12"
+                                      IsRequired="true"
+                                      PlaceHolder="Subscription name"
+                                      ValidationFor="() => Model.SubscriptionName"
+                                      @bind-Value="Model.SubscriptionName"
+                                      id="item-category-name-box" />
+
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    @if (Model.SubscriptionID == 0)
+                    {
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideCustomerSubscriptionModal()">Close</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="btn btn-primary">Update</button>
+                        <button type="button" class="btn btn-danger" @onclick="async() => await HideCustomerSubscriptionModal()">Close</button>
+                    }
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<IdnValuePair> Saved { get; set; }
+
+    private CustomerSubscriptionModel Model = new();
+
+    public async Task OpenCustomerSubscriptionModal(int subscriptionID = 0)
+    {
+        Model = new();
+        if (subscriptionID != 0)
+        {
+            Model = await API.GetAsync<CustomerSubscriptionModel>($"customer/get-customer-subscription/{subscriptionID}", true);
+        }
+        await JS.InvokeVoidAsync("ShowModal", "customer-subscription-modal");
+    }
+    private async Task HideCustomerSubscriptionModal()
+    {
+        await JS.InvokeVoidAsync("HideModal", "customer-subscription-modal");
+    }
+    private async Task SaveCustomerSubscription()
+    {
+        var result = await API.PostAsync<CustomerSubscriptionSuccessModel, CustomerSubscriptionModel>("customer/save-customer-subscription", Model);
+        if (result is not null)
+        {
+            await Saved.InvokeAsync(new IdnValuePair()
+                {
+                    ID = result.SubscriptionID,
+                    Value = result.SubscriptionName
+                });
+            await HideCustomerSubscriptionModal();
+        }
+    }
+}

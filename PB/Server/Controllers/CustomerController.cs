@@ -22,6 +22,8 @@ using System.Net.Mail;
 using PB.Server.Repository;
 using PB.Shared.Models.Inventory.Supplier;
 using PB.Shared.Models.Inventory.Invoices;
+using PB.Shared.Models.Inventory.Items;
+using PB.Shared.Tables.Inventory.Items;
 
 namespace PB.Server.Controllers
 {
@@ -647,6 +649,162 @@ namespace PB.Server.Controllers
                 });
             }
         }
+
+        #endregion
+
+        #region Customer Category
+
+
+        [HttpPost("save-customer-category")]
+        public async Task<IActionResult> SaveCustomerCategory(CustomerCategoryModel model)
+        {
+            var customerCategoryCount = await _dbContext.GetByQueryAsync<int>(@$"Select Count(*) 
+                                                                            from CustomerCategory
+                                                                            where LOWER(CategoryName)=LOWER(@CategoryName) and CategoryID<>@CategoryID and ClientID={CurrentClientID} and IsDeleted=0", model);
+            if (customerCategoryCount != 0)
+            {
+                return BadRequest(new BaseErrorResponse()
+                {
+                    ErrorCode = 0,
+                    ResponseTitle = "InvalidSubmission",
+                    ResponseMessage = "Customer category is already exist"
+                });
+            }
+
+            CustomerCategory category = _mapper.Map<CustomerCategory>(model);
+            category.ClientID = CurrentClientID;
+            category.CategoryID = await _dbContext.SaveAsync(category);
+            CustomerCategorySuccessModel customerCategorySuccessModel = new()
+            {
+                CategoryID = category.CategoryID,
+                CategoryName = model.CategoryName
+            };
+            return Ok(customerCategorySuccessModel);
+        }
+
+        [HttpGet("delete-customer-category/{categoryID}")]
+        public async Task<IActionResult> DeleteCustomerCategory(int categoryID)
+        {
+            int customerCount = await _dbContext.GetByQueryAsync<int>($@"Select Count(C.CategoryID)
+                                                                        From Customer C
+                                                                        Left Join CustomerCategory CC on CC.CategoryID=C.CategoryID and CC.IsDeleted=0
+                                                                        Where C.IsDeleted=0 and C.CategoryID={categoryID}", null);
+
+            if (customerCount > 0)
+            {
+                return BadRequest(new BaseErrorResponse()
+                {
+                    ErrorCode = 0,
+                    ResponseTitle = "InvalidSubmission",
+                    ResponseMessage = "Customer category in use"
+                });
+            }
+
+            await _dbContext.DeleteAsync<CustomerCategory>(categoryID, null);
+            // await _dbContext.ExecuteAsync($"Update CustomerCategory Set IsDeleted=1 Where CategoryID={categoryID}", null);
+            return Ok(true);
+        }
+
+        [HttpGet("get-customer-category/{categoryID}")]
+        public async Task<IActionResult> GetCustomerCategory(int categoryID)
+        {
+            return Ok(await _dbContext.GetByQueryAsync<CustomerCategoryModel>($"Select * From CustomerCategory Where CategoryID={categoryID} and IsDeleted=0", null));
+        }
+
+        [HttpPost("get-customer-category-paged-list")]
+        public async Task<IActionResult> GetCustomerCategoryPagedList(PagedListPostModel pagedListPostModel)
+        {
+            PagedListQueryModel queryModel = new();
+            queryModel.Select = @"Select CategoryID, CategoryName
+                                            From CustomerCategory ";
+            queryModel.WhereCondition = $"ClientID={CurrentClientID} and IsDeleted=0";
+            queryModel.OrderByFieldName = pagedListPostModel.OrderByFieldName;
+            queryModel.SearchLikeColumnNames = new() { "CategoryName" };
+            queryModel.SearchString = pagedListPostModel.SearchString;
+            var itemCategoryList = await _dbContext.GetPagedList<CustomerCategoryModel>(queryModel, null);
+            return Ok(itemCategoryList ?? new());
+        }
+
+
+        #endregion
+
+
+
+
+
+        #region Customer Subscription
+
+
+        [HttpPost("save-customer-subscription")]
+        public async Task<IActionResult> SaveCustomerSubscription(CustomerSubscriptionModel model)
+        {
+            var customerCategoryCount = await _dbContext.GetByQueryAsync<int>(@$"Select Count(*) 
+                                                                            from CustomerSubscription
+                                                                            where LOWER(SubscriptionName)=LOWER(@SubscriptionName) and SubscriptionID<>@SubscriptionID and ClientID={CurrentClientID} and IsDeleted=0", model);
+            if (customerCategoryCount != 0)
+            {
+                return BadRequest(new BaseErrorResponse()
+                {
+                    ErrorCode = 0,
+                    ResponseTitle = "InvalidSubmission",
+                    ResponseMessage = "Customer subscription is already exist"
+                });
+            }
+
+            CustomerSubscription subscription = _mapper.Map<CustomerSubscription>(model);
+            subscription.ClientID = CurrentClientID;
+            subscription.SubscriptionID = await _dbContext.SaveAsync(subscription);
+            CustomerSubscriptionSuccessModel customerCategorySuccessModel = new()
+            {
+                SubscriptionID = subscription.SubscriptionID,
+                SubscriptionName = model.SubscriptionName
+            };
+            return Ok(customerCategorySuccessModel);
+        }
+
+        [HttpGet("delete-customer-subscription/{subscriptionID}")]
+        public async Task<IActionResult> DeleteCustomerSubscription(int subscriptionID)
+        {
+            int customerCount = await _dbContext.GetByQueryAsync<int>($@"Select Count(C.SubscriptionID)
+                                                                        From Customer C
+                                                                        Left Join CustomerSubscription CC on CC.SubscriptionID=C.SubscriptionID and CC.IsDeleted=0
+                                                                        Where C.IsDeleted=0 and C.SubscriptionID={subscriptionID}", null);
+
+            if (customerCount > 0)
+            {
+                return BadRequest(new BaseErrorResponse()
+                {
+                    ErrorCode = 0,
+                    ResponseTitle = "InvalidSubmission",
+                    ResponseMessage = "Customer subscription in use"
+                });
+            }
+
+           // await _dbContext.DeleteAsync<CustomerSubscription>(subscriptionID, null);
+            await _dbContext.ExecuteAsync($"Update CustomerSubscription Set IsDeleted=1 Where SubscriptionID={subscriptionID}", null);
+            return Ok(true);
+        }
+
+        [HttpGet("get-customer-subscription/{subscriptionID}")]
+        public async Task<IActionResult> GetCustomerSubscription(int subscriptionID)
+        {
+            return Ok(await _dbContext.GetByQueryAsync<CustomerSubscriptionModel>($"Select * From CustomerSubscription Where SubscriptionID={subscriptionID} and IsDeleted=0", null));
+        }
+
+        [HttpPost("get-customer-subscription-paged-list")]
+        public async Task<IActionResult> GetCustomerSubscriptionPagedList(PagedListPostModel pagedListPostModel)
+        {
+            PagedListQueryModel queryModel = new();
+            queryModel.Select = @"Select SubscriptionID, SubscriptionName
+                                            From CustomerSubscription ";
+            queryModel.WhereCondition = $"ClientID={CurrentClientID} and IsDeleted=0";
+            queryModel.OrderByFieldName = pagedListPostModel.OrderByFieldName;
+            queryModel.SearchLikeColumnNames = new() { "SubscriptionName" };
+            queryModel.SearchString = pagedListPostModel.SearchString;
+            var subscriptionList = await _dbContext.GetPagedList<CustomerSubscriptionModel>(queryModel, null);
+            return Ok(subscriptionList ?? new());
+        }
+
 
         #endregion
     }

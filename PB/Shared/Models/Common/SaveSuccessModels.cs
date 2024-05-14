@@ -231,4 +231,16 @@ namespace PB.Shared.Models.Common
         public int BusinessTypeID { get; set; }
         public string? BusinessTypeName { get; set; }
     }
+
+    public class CustomerCategorySuccessModel : Success
+    {
+        public int CategoryID { get; set; }
+        public string? CategoryName { get; set; }
+    }
+
+    public class CustomerSubscriptionSuccessModel : Success
+    {
+        public int SubscriptionID { get; set; }
+        public string? SubscriptionName { get; set; }
+    }
 }

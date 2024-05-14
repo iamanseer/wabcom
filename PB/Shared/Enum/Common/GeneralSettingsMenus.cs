@@ -26,5 +26,7 @@ namespace PB.Shared.Enum.Common
         PaymentTerm,
         Promotion,
         BusinessType,
+        CustomerCategory,
+        CustomerSubscription,
     }
 }
