@@ -22,9 +22,6 @@ namespace PB.Shared.Tables.Common
         public int? CategoryID { get; set; }
         public int? BusinessTypeID { get; set; }
         public string? TallyEmailID { get; set; }
-        public string? TallySerialNo { get; set; }
-        public string? TallySerialNo2 { get; set; }
-        public string? TallySerialNo3 { get; set; }
         public int? CustomerPriority { get; set; }
         public int? OwnedBy { get; set; }
         public string? BusinessGivenInValue { get; set; }
@@ -38,7 +35,8 @@ namespace PB.Shared.Tables.Common
         public DateTime? SubscriptionExpiry { get; set; }
         public decimal? Lat { get; set; }
         public decimal? Long { get; set; }
-
+        public string? AccountantContactNo { get; set; }
+        public string? AccountantEmailID { get; set; }
 
     }
 }

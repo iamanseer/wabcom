@@ -15,6 +15,7 @@ namespace PB.Server.Repository
         Task<AddressView> GetAddressView(int addressID, IDbTransaction? tran = null); 
         AddressView GetEntityAddressView(AddressModel addressModel);
         Task<object?> GetEntityContactPersons(int entityID, IDbTransaction? tran = null);
+        Task<List<CustomerServiceModel>> GetCustomerServiceList(int customerEntityID, IDbTransaction? tran = null);
     }
 
     public class EntityRepository : IEntityRepository
@@ -90,6 +91,15 @@ namespace PB.Server.Repository
                                                                 Where SCP.SupplierEntityID={entityID} and SCP.IsDeleted=0", null, tran);
             }
             return null;
+        }
+
+        public async Task<List<CustomerServiceModel>> GetCustomerServiceList(int customerEntityID, IDbTransaction? tran = null)
+        {
+            return await _dbContext.GetListByQueryAsync<CustomerServiceModel>($@"
+                                                               Select Row_Number() Over(Order By S.ServiceID) As RowIndex,S.*,ItemName as ServiceName,IsSubscription
+                                                                From CustomerServices S
+                                                                Left Join Item I on I.ItemID=S.ItemID and I.IsDeleted=0
+                                                                Where S.CustomerEntityID={customerEntityID} and S.IsDeleted=0", null, tran);
         }
     }
 }

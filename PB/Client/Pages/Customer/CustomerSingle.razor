@@ -3,6 +3,7 @@
 
 @attribute [Authorize(Roles = "Customer")]
 
+@using PB.Client.Shared.Inventory.Customer
 @using PB.Shared.Models;
 @using PB.CRM.Model.Enum;
 @using PB.Model.Models;
@@ -49,15 +50,15 @@
                                                       id="cst-name-box" />
                                     </div>
                                 }
-                                    <div class="row">
-                                        <InputTextBox Label="Name : " @bind-Value="CustomerModel.Name"
-                                                      IsRequired="true"
-                                                      ValidationFor="() => CustomerModel.Name"
-                                                      DivClass="col-md-7" id="cst-name-box" />
+                                <div class="row">
+                                    <InputTextBox Label="Name : " @bind-Value="CustomerModel.Name"
+                                                  IsRequired="true"
+                                                  ValidationFor="() => CustomerModel.Name"
+                                                  DivClass="col-md-7" id="cst-name-box" />
 
 
-                                    </div>
-                                
+                                </div>
+
                                 <div class="row">
                                     <InputTextBox Label="Tax Number : "
                                                   IsRequired="false"
@@ -76,7 +77,7 @@
                                                     ReadDataOnSearch="true"
                                                     PlaceHolder="Choose"
                                                     SelectedItem="@(new DropdownSelectedItemModel(){ID=CustomerModel.CountryID,Value=CustomerModel.CountryName})">
-                                      
+
                                         <ValidationMessage For="() => CustomerModel.CountryID" />
                                     </DropdownSelect>
                                 </div>
@@ -95,7 +96,7 @@
                                         <div class="form-group">
                                             <label class="form-label mt-0 me-1" style="text-align:left;">
                                                 Phone :
-                                               @*  <span class="ms-1" style="color:red">*</span> *@
+                                                @*  <span class="ms-1" style="color:red">*</span> *@
                                             </label>
                                             <div class="input-group">
                                                 <span class="input-group-text" style="min-width:40px;">
@@ -125,7 +126,7 @@
                                     </div>
                                 </div>
 
-
+                                <!-- Aditional Content End-->
                                 @if (Stage == 2)
                                 {
                                     <div class="row">
@@ -569,6 +570,8 @@
 
 }
 
+<ModalBusinessType @ref="@childBusinessTypeModal" Saved="(Func<IdnValuePair, Task>)HandleNewBusinessTypeAdded" />
+<ModalCustomerCategory @ref="@childCustomerCategoryModal" Saved="(Func<IdnValuePair, Task>)HandleNewCustomerCategoryAdded" />
 
 
 @code {
@@ -606,6 +609,7 @@
             CustomerModel.CountryID = CountryModel.CountryID;
             CustomerModel.CountryName = CountryModel.CountryName;
             CustomerModel.ISDCode = CountryModel.ISDCode;
+            CustomerModel.AccountantISDCode = CountryModel.ISDCode;
             //StatePointerEvent ="pointer-events:point";
         }
         CanShowPage = true;
@@ -885,4 +889,63 @@
         AddressModel.City = res.Value;
     }
     #endregion City
+
+    #region Business Type
+
+    private DropdownSelect BusinessTypeDropdown = new();
+    private string BusinessTypeDropdownID = "business-type-dropdown";
+
+    private ModalBusinessType childBusinessTypeModal = new();
+    private async Task HandleBusinessTypeSelected(DropdownItemSelectedCallbackModel business)
+    {
+        CustomerModel.BusinessTypeID = business.ID;
+        CustomerModel.BusinessTypeName = business.Value;
+    }
+    private async Task HandelAddNewBusinessTypeButtonClick(int dropdownMode)
+    {
+        await childBusinessTypeModal.OpenBusinessTypeModal();
+    }
+
+    private async Task HandleNewBusinessTypeAdded(IdnValuePair business)
+    {
+        CustomerModel.BusinessTypeID = business.ID;
+        CustomerModel.BusinessTypeName = business.Value;
+    }
+
+    #endregion
+
+    #region Customer Category
+
+    private DropdownSelect CustomerCategoryDropdown = new();
+    private string CustomerCategoryDropdownID = "customer-category-dropdown";
+    private ModalCustomerCategory childCustomerCategoryModal = new();
+
+    private async Task HandleCustomerCategorySelected(DropdownItemSelectedCallbackModel business)
+    {
+        CustomerModel.CategoryID = business.ID;
+        CustomerModel.CategoryName = business.Value;
+    }
+    private async Task HandelAddNewCustomerCategoryButtonClick(int dropdownMode)
+    {
+        await childCustomerCategoryModal.OpenCustomerCategoryModal();
+    }
+
+    private async Task HandleNewCustomerCategoryAdded(IdnValuePair business)
+    {
+        CustomerModel.CategoryID = business.ID;
+        CustomerModel.CategoryName = business.Value;
+    }
+
+    #endregion
+
+    #region Created For
+    private DropdownSelect CustomerOwnedDropdown = new();
+    private string CustomerOwnedDropdownID = "customer-owned-dropdown";
+    private async Task HandleCustomerOwnedSelected(DropdownItemSelectedCallbackModel customer)
+    {
+        CustomerModel.OwnedBy = customer.ID;
+        CustomerModel.StaffName = customer.Value;
+    }
+    #endregion
+
 }

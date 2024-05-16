@@ -2,8 +2,11 @@
 -- 12/05/2024 Added By Dinsha
 
 Alter Table Customer Add JoinedOn date,CategoryID int,FOREIGN KEY(CategoryID) REFERENCES CustomerCategory(CategoryID),
-BusinessTypeID int,FOREIGN KEY(BusinessTypeID) REFERENCES BusinessType(BusinessTypeID),TallySerialNo nvarchar(9),TallySerialNo2 nvarchar(9),
-TallySerialNo3 nvarchar(9),TallyEmailID nvarchar(50),CustomerPriority int,OwnedBy int,BusinessGivenInValue nvarchar(Max),
+BusinessTypeID int,FOREIGN KEY(BusinessTypeID) REFERENCES BusinessType(BusinessTypeID), AccountantEmailID nvarchar(50),AccountantContactNo nvarchar(15),
+TallyEmailID nvarchar(50),CustomerPriority int,OwnedBy int,BusinessGivenInValue nvarchar(Max),
 BusinessGivenInNos int,LastBusinessDate date,LastBusinessAmount decimal(18,2),LastBusinessType int,FOREIGN KEY(LastBusinessType) REFERENCES BusinessType(BusinessTypeID),
 AMCStatus int,AMCExpiry date,SubscriptionID int,FOREIGN KEY(SubscriptionID) REFERENCES CustomerSubscription(SubscriptionID),
 SubscriptionExpiry date,Lat numeric(18,15),Long numeric(18,15)
+
+
+Alter Table Item Add IsSubscription bit

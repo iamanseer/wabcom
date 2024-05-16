@@ -39,6 +39,12 @@ namespace PB.Shared.Models.CRM.Customer
         public List<AddressModel> Addresses { get; set; } = new();
         public List<CustomerContactPersonModel> ContactPersons { get; set; } = new();
 
+        public string? AccountantISDCode { get; set; }
+        public CustomerSerialNoModel TallyNos { get; set; } = new();
+        public string? CategoryName { get; set; }
+        public string? BusinessTypeName { get; set; }
+        public string? StaffName { get; set; }
+        public List<CustomerServiceModel> CustomerServices { get; set; } = new();
     }
 
 }

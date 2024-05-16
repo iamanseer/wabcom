@@ -1,5 +1,6 @@
 ﻿using PB.Model;
 using PB.Shared.Enum;
+using PB.Shared.Tables.Common;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -40,7 +41,50 @@ namespace PB.Shared.Models.CRM.Customer
         public int? CountryID { get; set; } 
         public string? CountryName { get; set; }
         public string? ISDCode { get; set; }
+        public DateTime? JoinedOn { get; set; } = DateTime.UtcNow;
+        public int? CategoryID { get; set; }
+        public string? CategoryName { get; set; }
+        public int? BusinessTypeID { get; set; }
+        public string? BusinessTypeName { get; set; }
+        public string? TallyEmailID { get; set; }
+        public int? CustomerPriority { get; set; }
+        public int? OwnedBy { get; set; }
+        public string? StaffName { get; set; }
+        public string? BusinessGivenInValue { get; set; }
+        public int? BusinessGivenInNos { get; set; }
+        public DateTime? LastBusinessDate { get; set; }
+        public decimal? LastBusinessAmount { get; set; }
+        public int? LastBusinessType { get; set; }
+        public int? AMCStatus { get; set; }
+        public DateTime? AMCExpiry { get; set; }
+        public int? SubscriptionID { get; set; }
+        public DateTime? SubscriptionExpiry { get; set; }
+        public decimal? Lat { get; set; }
+        public decimal? Long { get; set; }
+        public string? AccountantISDCode { get; set; }
+        public string? AccountantContactNo { get; set; }
+        public string? AccountantEmailID { get; set; }
+        public CustomerSerialNoModel TallyNos { get; set; } = new();
         public List<AddressView> Addresses { get; set; } = new();
         public List<CustomerContactPersonModel> ContactPersons { get; set; } = new();
+        public List<CustomerServiceModel> CustomerServices { get; set; } = new();
+
+
+    }
+
+    public class CustomerSerialNoModel
+    {
+        public int ID { get; set; }
+        [Required(ErrorMessage = "Please add tally serial no")]
+        [StringLength(maximumLength: 9, ErrorMessage = "Length must be between 0 and 9 characters")]
+        [RegularExpression(@"^[a-z0-9-]+$", ErrorMessage = "tally serial no field should only contain white spaces,small letters,numbers and hyphens")]
+        public string? TallySerialNo { get; set; } = "0";
+        [StringLength(maximumLength: 9, ErrorMessage = "Length must be between 0 and 9 characters")]
+        [RegularExpression(@"^[a-z0-9-]+$", ErrorMessage = "tally serial no2 field should only contain white spaces,small letters,numbers and hyphens")]
+        public string? TallySerialNo2 { get; set; } = "0";
+        [StringLength(maximumLength: 9, ErrorMessage = "Length must be between 0 and 9 characters")]
+        [RegularExpression(@"^[a-z0-9-]+$", ErrorMessage = "tally serial no3 field should only contain white spaces,small letters,numbers and hyphens")]
+        public string? TallySerialNo3 { get; set; } = "0";
+        public int? CustomerID { get; set; }
     }
 }

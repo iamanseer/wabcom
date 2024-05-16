@@ -46,5 +46,6 @@ namespace PB.Shared.Tables.Inventory.Items
         public int? AddedBy { get; set; }
         public bool HasMultipleModels { get; set; } = false;
         public int? QrCodeMediaID { get; set; }
+        public bool IsSubscription { get; set; } 
     }
 }

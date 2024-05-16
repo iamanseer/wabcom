@@ -504,6 +504,12 @@
             case (int)DropdownModes.QuotationCreatedStaff:
                 Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-quotation-staff", CommonSearch);
                 break;
+            case (int)DropdownModes.CustomerCategory:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-all-customer-category", CommonSearch);
+                break;
+            case (int)DropdownModes.CustomerSubscription:
+                Data = Temp = await API.PostAsync<List<IdnValuePair>?, CommonSearchModel>($"common/get-list-of-all-customer-subscription", CommonSearch);
+                break;
 
             case (int)DropdownModes.None:
                 break;

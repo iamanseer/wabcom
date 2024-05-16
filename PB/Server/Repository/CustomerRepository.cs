@@ -12,6 +12,7 @@ namespace PB.Server.Repository
         Task<AddressView> GetAddressView(int addressID, IDbTransaction? tran = null);
         AddressView GetCustomerAddressViewModel(AddressModel addressModel);
         Task<List<CustomerContactPersonModel>> GetCustomerCotactPersons(int customerEnttityID, IDbTransaction? tran = null);
+
     }
 
     public class CustomerRepository : ICustomerRepository
@@ -76,5 +77,7 @@ namespace PB.Server.Repository
                                                                 Left Join Entity E ON E.EntityID=CCP.EntityID and E.IsDeleted=0
                                                                 Where CCP.CustomerEntityID={customerEnttityID} and CCP.IsDeleted=0", null, tran);
         }
+
+       
     }
 }

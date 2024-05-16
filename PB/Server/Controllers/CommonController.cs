@@ -1804,5 +1804,67 @@ namespace PB.Server.Controllers
 
         #endregion
 
+
+        #region Customer Dropdown api
+
+        [HttpPost("get-list-of-all-customer-category")]
+        public async Task<IActionResult> GetListOfAllCustomerCategory(CommonSearchModel model)
+        {
+            string select = "";
+            string whereCondition = "";
+
+            if (model.ReadDataOnSearch && string.IsNullOrEmpty(model.SearchString))
+            {
+                select = "SELECT TOP 20 ";
+            }
+
+            select = string.IsNullOrEmpty(select) ?
+                @" Select CategoryID as ID,CategoryName as Value
+                    From CustomerCategory" :
+            select += @"CategoryID as ID,CategoryName as Value
+                    From CustomerCategory";
+
+            whereCondition = !string.IsNullOrEmpty(model.SearchString) ?
+                $"Where ClientID={CurrentClientID} AND IsDeleted=0  AND CategoryName like '{model.SearchString}%'" :
+                $"Where ClientID={CurrentClientID} AND IsDeleted=0  ";
+
+            string query = select + " " + whereCondition;
+
+            var result = await _dbContext.GetListByQueryAsync<IdnValuePair>(query, null);
+            return Ok(result);
+        }
+
+        [HttpPost("get-list-of-all-customer-subscription")]
+        public async Task<IActionResult> GetListOfAllCustomerSubscription(CommonSearchModel model)
+        {
+            string select = "";
+            string whereCondition = "";
+
+            if (model.ReadDataOnSearch && string.IsNullOrEmpty(model.SearchString))
+            {
+                select = "SELECT TOP 20 ";
+            }
+
+            select = string.IsNullOrEmpty(select) ?
+                @" Select SubscriptionID as ID,SubscriptionName as Value
+                    From CustomerSubscription" :
+            select += @" SubscriptionID as ID,SubscriptionName as Value
+                            From CustomerSubscription";
+
+            whereCondition = !string.IsNullOrEmpty(model.SearchString) ?
+                $"Where ClientID={CurrentClientID} AND IsDeleted=0  AND SubscriptionName like '{model.SearchString}%'" :
+                $"Where ClientID={CurrentClientID} AND IsDeleted=0  ";
+
+            string query = select + " " + whereCondition;
+
+            var result = await _dbContext.GetListByQueryAsync<IdnValuePair>(query, null);
+            return Ok(result);
+        }
+
+
+
+
+        #endregion
+
     }
 }

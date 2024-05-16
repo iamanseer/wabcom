@@ -45,6 +45,7 @@
                                             <!-- Tabs -->
                                             <ul class="nav panel-tabs">
                                                 <li><a href="#customerPageOverView" class="active" data-bs-toggle="tab">Details</a></li>
+                                                <li><a href="#customerAdditionalDetails" data-bs-toggle="tab">Additional Details</a></li>
                                                 @if (CustomerStage2Data.Addresses.Count > 0)
                                                 {
                                                     <li><a href="#customerPageAddress" data-bs-toggle="tab">Addresses</a></li>
@@ -52,6 +53,10 @@
                                                 @if (CustomerStage2Data.ContactPersons.Count > 0)
                                                 {
                                                     <li><a href="#customerPageContactPersons" data-bs-toggle="tab">Contact Persons</a></li>
+                                                }
+                                                @if (CustomerStage2Data.CustomerServices.Count > 0)
+                                                {
+                                                    <li><a href="#customerPageServices" data-bs-toggle="tab">Customer Services</a></li>
                                                 }
                                             </ul>
                                         </div>
@@ -111,6 +116,57 @@
                                                                     </label>
                                                                 </div>
 
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="tab-pane" id="customerAdditionalDetails">
+                                                <div class="item-details-page">
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-12">
+                                                            <div class="group pb-3">
+                                                                <div class="row">
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Customer Since </label>
+                                                                    <label class="col-md-7 col-auto ">@((CustomerStage2Data.JoinedOn != null ? CustomerStage2Data.JoinedOn.Value.ToString("dd/MM/yyyy") : ""))</label>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Category </label>
+                                                                    <label class="col-md-7 col-auto ">@CustomerStage2Data.CategoryName</label>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Business Type </label>
+                                                                    <label class="col-md-7 col-auto ">@CustomerStage2Data.BusinessTypeName</label>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Accountant Email </label>
+                                                                    <label class="col-md-7 col-auto ">@CustomerStage2Data.AccountantEmailID</label>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Accountant Contact </label>
+                                                                    <label class="col-md-7 col-auto ">@CustomerStage2Data.AccountantContactNo</label>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Tally Serial No </label>
+                                                                        @if (CustomerStage2Data.TallyNos.TallySerialNo != null)
+                                                                        {
+                                                                            <label class="col-md-7 col-auto ">@((CustomerStage2Data.TallyNos.TallySerialNo != "0")) @((CustomerStage2Data.TallyNos.TallySerialNo2 != "0" ? "  |  " + CustomerStage2Data.TallyNos.TallySerialNo2 : "")) @((CustomerStage2Data.TallyNos.TallySerialNo3 != "0" ? "  |  " + CustomerStage2Data.TallyNos.TallySerialNo3 : "")) </label>
+                                                                        }
+                                                                 </div>
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Tally Email </label>
+                                                                    <label class="col-md-7 col-auto ">@CustomerStage2Data.TallyEmailID</label>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Customer Priority </label>
+                                                                    <label class="col-md-7 col-auto ">@CustomerStage2Data.CustomerPriority</label>
+                                                                </div>
+                                                                <div class="row">
+                                                                    <label class="col-md-5 col-auto items-label text-muted">Owned By </label>
+                                                                    <label class="col-md-7 col-auto ">@CustomerStage2Data.StaffName</label>
+                                                                </div>
                                                                 <div class="row">
                                                                     <label class="col-md-5 col-auto items-label text-muted">Remarks</label>
                                                                     <label class="col-md-7 col-auto">
@@ -121,6 +177,7 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                            </div>
                                             </div>
 
                                             @if (CustomerStage2Data.Addresses.Count > 0)
@@ -240,6 +297,68 @@
                                                                             <td colspan="5" class="text-center p-5" style="min-height:150px;pointer-events:none;">
                                                                                 <label>
                                                                                     @("contact person's lis is empty")
+                                                                                </label>
+                                                                            </td>
+                                                                        </tr>
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+
+                                            @if (CustomerStage2Data.CustomerServices.Count > 0)
+                                            {
+                                                <!--Customer Services-->
+                                                <div class="tab-pane" id="customerPageServices">
+                                                    <div class="item-details-page">
+                                                        <div class="row">
+                                                            <table class="table border text-wrap text-nowrap table-bordered table-responsive mb-0 ">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Sl No</th>
+                                                                        <th>Service Name</th>
+                                                                        <th>Date</th>
+                                                                        <th>Quantity</th>
+                                                                        <th>Amount</th>
+                                                                        <th>Expiry Date</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @if (CustomerStage2Data.CustomerServices.Count > 0)
+                                                                    {
+                                                                        @foreach (var services in CustomerStage2Data.CustomerServices)
+                                                                        {
+                                                                            <tr>
+                                                                                <td>
+                                                                                    @services.RowIndex
+                                                                                </td>
+                                                                                <td>
+                                                                                    @services.ServiceName
+                                                                                </td>
+                                                                                <td>
+                                                                                    @((services.Date != null ? services.Date.Value.ToString("dd/MM/yyyy"):"--/--/----"))
+                                                                                </td>
+                                                                                <td>
+                                                                                    @services.Quantity
+                                                                                </td>
+                                                                                <td>
+                                                                                    @services.Amount
+                                                                                </td>
+                                                                                <td>
+                                                                                    @((services.ExpiryDate != null ? services.ExpiryDate.Value.ToString("dd/MM/yyyy") : "--/--/----"))
+                                                                                    
+                                                                                </td>
+                                                                            </tr>
+                                                                        }
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <tr>
+                                                                            <td colspan="6" class="text-center p-5" style="min-height:150px;pointer-events:none;">
+                                                                                <label>
+                                                                                    @("customer service list is empty")
                                                                                 </label>
                                                                             </td>
                                                                         </tr>

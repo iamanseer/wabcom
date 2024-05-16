@@ -243,4 +243,10 @@ namespace PB.Shared.Models.Common
         public int SubscriptionID { get; set; }
         public string? SubscriptionName { get; set; }
     }
+
+    public class CustomerServiceSuccessModel : Success
+    {
+        public int ServiceID { get; set; }
+        public string? ServiceName { get; set; }
+    }
 }

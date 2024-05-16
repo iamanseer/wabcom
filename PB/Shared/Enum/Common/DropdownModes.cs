@@ -76,12 +76,17 @@ namespace PB.CRM.Model.Enum
         ItemSize,
         ItemBrand,
 
+        // Customer
+        CustomerCategory,
+        CustomerSubscription,
+
         //Mode Groups
         CustomData = 101,
         CommonSearch,
         CommonSearchWithID,
         CommonSearchForSignup,
         AccountsSearch, 
+
 
 
     }

@@ -58,6 +58,7 @@ namespace PB.Shared.Models.Inventory.Items
         public string? CategoryName { get; set; }
         public string? GroupName { get; set; }
         public string? BrandName { get; set; }
+        public bool IsSubscription { get; set; }
 
 
         //Default Item variant

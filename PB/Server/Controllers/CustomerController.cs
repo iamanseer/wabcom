@@ -24,6 +24,7 @@ using PB.Shared.Models.Inventory.Supplier;
 using PB.Shared.Models.Inventory.Invoices;
 using PB.Shared.Models.Inventory.Items;
 using PB.Shared.Tables.Inventory.Items;
+using PB.Shared.Models.Inventory.Item;
 
 namespace PB.Server.Controllers
 {
@@ -37,7 +38,7 @@ namespace PB.Server.Controllers
         private readonly IMapper _mapper;
         private readonly IEntityRepository _entity;
         private readonly IAccountRepository _accounts;
-        public CustomerController(IDbContext dbContext, IDbConnection cn, IMapper mapper, ICustomerRepository customer, IEntityRepository entity, IAccountRepository accounts)
+        public CustomerController(IDbContext dbContext, IDbConnection cn, IMapper mapper, IEntityRepository entity, IAccountRepository accounts)
         {
             _cn = cn;
             _dbContext = dbContext;
@@ -65,7 +66,6 @@ namespace PB.Server.Controllers
             //        ResponseMessage = "PhoneNumberExist"
             //    });
             //}
-
             var email = await _dbContext.GetByQueryAsync<string>(@$"Select EmailAddress 
                                                                             from Entity
                                                                             where EmailAddress=@EmailAddress and EntityID<>{Convert.ToInt32(customerModel.EntityID)} and EntityTypeID in({(int)EntityType.Client},{(int)EntityType.Branch},{(int)EntityType.User},{(int)EntityType.Customer}) and ClientID={CurrentClientID} and IsDeleted=0", customerModel);
@@ -138,10 +138,30 @@ namespace PB.Server.Controllers
                     Type = customerModel.Type,
                     Remarks = customerModel.Remarks,
                     ClientID = CurrentClientID,
-                    TaxNumber = customerModel.TaxNumber
+                    TaxNumber = customerModel.TaxNumber,
+                    JoinedOn=customerModel.JoinedOn,
+                    CategoryID=customerModel.CategoryID,
+                    BusinessTypeID= customerModel.BusinessTypeID,
+                    AccountantEmailID= customerModel.AccountantEmailID,
+                    AccountantContactNo= customerModel.AccountantContactNo,
+                    TallyEmailID= customerModel.TallyEmailID,
+                    CustomerPriority= customerModel.CustomerPriority,
+                    OwnedBy= customerModel.OwnedBy,
+
                 };
 
                 customerModel.CustomerID = await _dbContext.SaveAsync(customer, tran, logSummaryID: logSummaryID);
+
+                CustomerSerialNumbers tallySerialNo = new()
+                {
+                    ID= customerModel.TallyNos.ID,
+                    TallySerialNo= customerModel.TallyNos.TallySerialNo,
+                    TallySerialNo2= customerModel.TallyNos.TallySerialNo2,
+                    TallySerialNo3= customerModel.TallyNos.TallySerialNo3,
+                    CustomerID= customerModel.CustomerID
+                };
+                customerModel.CustomerID = await _dbContext.SaveAsync(tallySerialNo, tran);
+
                 CustomerAddResultModel returnObject = new() { EntityID = customerEntity.EntityID, Name = customerModel.Name };
                 tran.Commit();
                 return Ok(returnObject);
@@ -259,14 +279,24 @@ namespace PB.Server.Controllers
                                                         Else EP.FirstName 
                                                         End as Name,
                                                     EP.EntityPersonalInfoID,E.EntityTypeID,E.EmailAddress,E.Phone,E.MediaID,E.EntityID,C.EntityID,
-                                                    C.Status,C.Type,C.Remarks,C.CustomerID,EntityInstituteInfoID,WC.ContactID,E.CountryID,CT.CountryName,CT.ISDCode,C.TaxNumber
+                                                    C.Status,C.Type,C.Remarks,C.CustomerID,EntityInstituteInfoID,WC.ContactID,E.CountryID,CT.CountryName,CT.ISDCode,C.TaxNumber,
+                                                    JoinedOn,C.CategoryID,CategoryName,C.BusinessTypeID,BusinessTypeName,TallyEmailID,CustomerPriority,OwnedBy,BusinessGivenInNos,
+                                                    BusinessGivenInNos,LastBusinessType,AMCStatus,AMCExpiry,SubscriptionExpiry,AccountantEmailID,AccountantContactNo,V.Name as StaffName
                                                     From Customer C
                                                     Left Join EntityPersonalInfo EP ON EP.EntityID=C.EntityID and EP.IsDeleted=0
                                                     Left Join Entity E ON E.EntityID=C.EntityID and E.IsDeleted=0 
                                                     Left Join Country CT on CT.CountryID=E.CountryID and CT.IsDeleted=0
-													Left Join EntityInstituteInfo EI on EI.EntityID=E.EntityID and EI.IsDeleted=0
+                                                    Left Join EntityInstituteInfo EI on EI.EntityID=E.EntityID and EI.IsDeleted=0
                                                     Left Join WhatsappContact WC ON C.EntityID=WC.EntityID AND WC.IsDeleted=0
+                                                    Left Join CustomerCategory CC on CC.CategoryID=C.CategoryID and CC.IsDeleted=0
+                                                    Left Join BusinessType BT on BT.BusinessTypeID=C.BusinessTypeID and BT.IsDeleted=0
+                                                    Left Join viEntity V on V.EntityID=C.OwnedBy 
                                                     Where C.EntityID={customerEntityID} and C.ClientID={CurrentClientID} and C.IsDeleted=0", null);
+            var numbers = await _dbContext.GetByQueryAsync<CustomerSerialNoModel>($@" Select * From CustomerSerialNumbers
+                                                                                            Where IsDeleted=0 and CustomerID={customer.CustomerID}", null);
+            if (numbers is not null)
+                customer.TallyNos = numbers;
+            customer.CustomerServices = await _entity.GetCustomerServiceList(customerEntityID, null);
             customer.Addresses = await _entity.GetListOfEntityAddress(customerEntityID, null);
             var contactPerson = await _entity.GetEntityContactPersons(customerEntityID, null);
             if (contactPerson is not null)
@@ -282,14 +312,25 @@ namespace PB.Server.Controllers
                                                     Select 
                                                     EP.EntityPersonalInfoID,E.EntityTypeID,E.EmailAddress,E.Phone,E.MediaID,E.EntityID,C.EntityID,
                                                     C.Status,C.Type,C.Remarks,C.CustomerID,EntityInstituteInfoID,WC.ContactID,E.CountryID,CT.CountryName,
-                                                    CT.ISDCode,C.TaxNumber,EI.Name as CompanyName,EP.FirstName as Name
+                                                    CT.ISDCode,C.TaxNumber,EI.Name as CompanyName,EP.FirstName as Name,
+                                                    JoinedOn,C.CategoryID,CategoryName,C.BusinessTypeID,BusinessTypeName,TallyEmailID,CustomerPriority,OwnedBy,BusinessGivenInNos,
+                                                    BusinessGivenInNos,LastBusinessType,AMCStatus,AMCExpiry,SubscriptionExpiry,AccountantEmailID,AccountantContactNo,V.Name as StaffName
                                                     From Customer C
                                                     Left Join EntityPersonalInfo EP ON EP.EntityID=C.EntityID and EP.IsDeleted=0
                                                     Left Join Entity E ON E.EntityID=C.EntityID and E.IsDeleted=0 
                                                     Left Join Country CT on CT.CountryID=E.CountryID and CT.IsDeleted=0
 													Left Join EntityInstituteInfo EI on EI.EntityID=E.EntityID and EI.IsDeleted=0
                                                     Left Join WhatsappContact WC ON C.EntityID=WC.EntityID AND WC.IsDeleted=0
+                                                    Left Join CustomerCategory CC on CC.CategoryID=C.CategoryID and CC.IsDeleted=0
+                                                    Left Join BusinessType BT on BT.BusinessTypeID=C.BusinessTypeID and BT.IsDeleted=0
+                                                    Left Join viEntity V on V.EntityID=C.OwnedBy 
                                                     Where C.EntityID={customerEntityID} and C.ClientID={CurrentClientID} and C.IsDeleted=0", null);
+            var numbers = await _dbContext.GetByQueryAsync<CustomerSerialNoModel>($@" Select * From CustomerSerialNumbers
+                                                                                            Where IsDeleted=0 and CustomerID={customer.CustomerID}", null);
+            if (numbers is not null)
+                customer.TallyNos = numbers;
+
+            customer.CustomerServices = await _entity.GetCustomerServiceList(customerEntityID,null);
             var addresses = await _entity.GetListOfEntityAddress(customerEntityID, null);
             foreach (var address in addresses)
             {
@@ -300,6 +341,8 @@ namespace PB.Server.Controllers
             var contactPerson = await _entity.GetEntityContactPersons(customerEntityID, null);
             if (contactPerson is not null)
                 customer.ContactPersons = (List<CustomerContactPersonModel>)contactPerson;
+
+
             return Ok(customer ?? new());
         }
 
@@ -728,10 +771,6 @@ namespace PB.Server.Controllers
 
         #endregion
 
-
-
-
-
         #region Customer Subscription
 
 
@@ -806,6 +845,77 @@ namespace PB.Server.Controllers
         }
 
 
+        #endregion
+
+        #region Customer Service
+
+        [HttpGet("get-customer-service-item-details/{id}")]
+        public async Task<IActionResult>GetServiceItem(int id)
+        {
+            var res = await _dbContext.GetByQueryAsync<ItemListModel>($@"Select  ItemID,ItemName,IsNull(IsSubscription,0) as IsSubscription From Item Where ItemID={id} and IsDeleted=0", null);
+            return Ok(res??new());
+        }
+
+        [HttpGet("get-customer-service/{customerEntityID}")]
+        public async Task<IActionResult> GetServiceCustomer(int customerEntityID)
+        {
+            var res = await _dbContext.GetListByQueryAsync<CustomerServiceModel>($@"Select Row_Number() Over(Order By S.ServiceID) As RowIndex,S.*,ItemName as ServiceName,IsSubscription
+                                                                        From CustomerServices S
+                                                                        Left Join Item I on I.ItemID=S.ItemID and I.IsDeleted=0
+                                                                        Where S.CustomerEntityID={customerEntityID} and S.IsDeleted=0", null);
+            return Ok(res ?? new());
+        }
+
+        [HttpGet("get-customer-service-details/{serviceID}")]
+        public async Task<IActionResult> GetService(int serviceID)
+        {
+            var res = await _dbContext.GetByQueryAsync<CustomerServiceModel>($@"Select S.*,ItemName as ServiceName,IsSubscription
+                                                                        From CustomerServices S
+                                                                        Left Join Item I on I.ItemID=S.ItemID and I.IsDeleted=0
+                                                                        Where S.ServiceID={serviceID} and S.IsDeleted=0", null);
+            return Ok(res??new());
+        }
+
+        [HttpPost("save-customer-service")]
+        public async Task<IActionResult>SaveService(CustomerServiceModel model)
+        {
+
+            //var sameServiceData = await _dbContext.GetByQueryAsync<int>($@"Select Count(*) From CustomerServices 
+            //                                                            Where ItemID=@ItemID and Date=@Date and Quantity=@Quantity and 
+            //                                                            Amount=@Amount and ExpiryDate=@ExpiryDate and 
+            //                                                            CustomerEntityID=@CustomerEntityID and ServiceID<>@ServiceID", model);
+            //if(sameServiceData!=0)
+            //{
+            //    return BadRequest(new BaseErrorResponse()
+            //    {
+            //        ErrorCode = 0,
+            //        ResponseTitle = "Invalid submission",
+            //        ResponseMessage = "This entry is alreaddy exist in same customer"
+            //    });
+            //}
+            CustomerServices service = new()
+            {
+                ServiceID = model.ServiceID,
+                ItemID = model.ItemID,
+                CustomerEntityID = model.CustomerEntityID,
+                Date = model.Date,
+                Quantity = model.Quantity,
+                Amount=model.Amount,
+                PurchaseDate=model.PurchaseDate,
+                ExpiryDate=model.ExpiryDate
+            };
+            service.ServiceID=await _dbContext.SaveAsync(service);
+            CustomerServiceSuccessModel result = new() {ServiceID= service.ServiceID ,ServiceName=model.ServiceName};
+            return Ok(result??new());
+        }
+
+
+        [HttpGet("delete-customer-service/{serviceID}")]
+        public async Task<IActionResult> DeleteCustomerService(int serviceID)
+        {
+            await _dbContext.ExecuteAsync($"Update CustomerServices SET IsDeleted=1 Where ServiceID={serviceID}");
+            return Ok(true);
+        }
         #endregion
     }
 }

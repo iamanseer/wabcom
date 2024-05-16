@@ -16,6 +16,7 @@ namespace PB.Shared.Models.Inventory.Item
         public bool IsGoods { get; set; }
         public string? QrCodeFileName { get; set; } 
         public int? TaxPreferenceTypeID { get; set; }
+        public bool IsSubscription { get; set; }
 
     }
 }

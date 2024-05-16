@@ -26,20 +26,31 @@
                         <div class="card-body">
                             @if (itemModelEditContext != null)
                             {
-                             @*    <div class="row">
-                                    <div class="col-md-7">
-                                        <div class="my-4 d-flex gap-3">
-                                            <label class="custom-control custom-radio">
-                                                <input type="radio" class="custom-control-input" @onchange="@(() => Model.IsGoods = true)" name="example-radios" value="option1" checked="@(Model.IsGoods)">
-                                                <span class="custom-control-label">Goods</span>
-                                            </label>
-                                            <label class="custom-control custom-radio">
-                                                <input type="radio" class="custom-control-input" @onchange="@(() => Model.IsGoods = false)" name="example-radios" value="option1" checked="@(!Model.IsGoods)">
-                                                <span class="custom-control-label">Service</span>
-                                            </label>
+                                @*    <div class="row">
+                            <div class="col-md-7">
+                            <div class="my-4 d-flex gap-3">
+                            <label class="custom-control custom-radio">
+                            <input type="radio" class="custom-control-input" @onchange="@(() => Model.IsGoods = true)" name="example-radios" value="option1" checked="@(Model.IsGoods)">
+                            <span class="custom-control-label">Goods</span>
+                            </label>
+                            <label class="custom-control custom-radio">
+                            <input type="radio" class="custom-control-input" @onchange="@(() => Model.IsGoods = false)" name="example-radios" value="option1" checked="@(!Model.IsGoods)">
+                            <span class="custom-control-label">Service</span>
+                            </label>
+                            </div>
+                            </div>
+                            </div> *@
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <input type="checkbox" @bind-value="Model.IsSubscription" class="form-check-input" style="margin-left:0%;" data-parsley-multiple="groups" data-parsley-mincheck="1" checked="@(Model.IsSubscription==true?"checked":null)">
+
+                                            <label class="form-check-label fw-bold" style="margin-left:24px; margin-bottom:2px;" for="">Is Subscription</label>
+
                                         </div>
+
                                     </div>
-                                </div> *@
+                                </div>
 
                                 <div class="row">
                                     <InputTextBox Label="Item Name:" @bind-Value="Model.ItemName"
@@ -51,7 +62,7 @@
                                     <InputTextBox Label="Item Code:" @bind-Value="Model.ItemCode"
                                                   DivClass="col-md-5"
                                                   IsRequired="false"
-                                                  PlaceHolder="Unique item code"/>
+                                                  PlaceHolder="Unique item code" />
                                 </div>
 
                                 <div class="row">
@@ -66,27 +77,27 @@
                                 @if (Model.IsGoods)
                                 {
                                     <div class="row">
-                                      @*   <div class="col-md-5">
-                                            <div class="form-group">
-                                                <label class="form-label mt-0 me-1" style="text-align:left;">
-                                                    HSN :
-                                                    <span class="ms-1" style="color:red">*</span>
-                                                </label>
-                                                <div class="input-group">
-                                                    <input type="text" class="form-control" @bind="Model.HsnCode" @onclick="async () => await HandleHsnSacTextInputClick()" disabled="@(Model.HsnID != null ? "disabled" : null)" />
-                                                    @if (Model.HsnID != null)
-                                                    {
-                                                        <span>
-                                                            <button class="btn btn-light" type="button" id="button-addon2" @onclick="async () => await HandleHsnSacTextInputClick()">
-                                                                <i class="fa fa-pencil"></i>
-                                                            </button>
-                                                        </span>
+                                        @*   <div class="col-md-5">
+                                <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                HSN :
+                                <span class="ms-1" style="color:red">*</span>
+                                </label>
+                                <div class="input-group">
+                                <input type="text" class="form-control" @bind="Model.HsnCode" @onclick="async () => await HandleHsnSacTextInputClick()" disabled="@(Model.HsnID != null ? "disabled" : null)" />
+                                @if (Model.HsnID != null)
+                                {
+                                <span>
+                                <button class="btn btn-light" type="button" id="button-addon2" @onclick="async () => await HandleHsnSacTextInputClick()">
+                                <i class="fa fa-pencil"></i>
+                                </button>
+                                </span>
 
-                                                    }
-                                                </div>
-                                                <ValidationMessage For="() => Model.HsnID" />
-                                            </div>
-                                        </div> *@
+                                }
+                                </div>
+                                <ValidationMessage For="() => Model.HsnID" />
+                                </div>
+                                </div> *@
                                         <DropdownSelect DivClass="col-md-5"
                                                         DropdownID="item-category-drop-down"
                                                         Label="Item Category :"
@@ -140,7 +151,7 @@
                                                         ModeGroup="(int)DropdownModes.CommonSearch"
                                                         ItemSelected="HandleTaxPreferenceSelected"
                                                         SelectedItem="new DropdownSelectedItemModel(){ID = Model.TaxPreferenceTypeID,Value = Model.TaxPreferenceName}">
-                                          
+
                                         </DropdownSelect>
                                     </div>
                                 }
@@ -148,26 +159,26 @@
                                 {
                                     <div class="row">
 
-                                       @*  <div class="col-md-5">
-                                            <div class="form-group">
-                                                <label class="form-label mt-0 me-1" style="text-align:left;">
-                                                    SAC :
-                                                    <span class="ms-1" style="color:red">*</span>
-                                                </label>
-                                                <div class="input-group">
-                                                    <input type="text" class="form-control" @bind="Model.SacCode" @onclick="async () => await HandleHsnSacTextInputClick()" disabled="@(Model.SacID != null ? "disabled" : null)" />
-                                                    @if (Model.SacID != null)
-                                                    {
-                                                        <span>
-                                                            <button class="btn btn-light" type="button" id="button-addon2" @onclick="async () => await HandleHsnSacTextInputClick()">
-                                                                <i class="fa fa-pencil"></i>
-                                                            </button>
-                                                        </span>
-                                                    }
-                                                </div>
-                                                <ValidationMessage For="() => Model.SacID" />
-                                            </div>
-                                        </div> *@
+                                        @*  <div class="col-md-5">
+                                <div class="form-group">
+                                <label class="form-label mt-0 me-1" style="text-align:left;">
+                                SAC :
+                                <span class="ms-1" style="color:red">*</span>
+                                </label>
+                                <div class="input-group">
+                                <input type="text" class="form-control" @bind="Model.SacCode" @onclick="async () => await HandleHsnSacTextInputClick()" disabled="@(Model.SacID != null ? "disabled" : null)" />
+                                @if (Model.SacID != null)
+                                {
+                                <span>
+                                <button class="btn btn-light" type="button" id="button-addon2" @onclick="async () => await HandleHsnSacTextInputClick()">
+                                <i class="fa fa-pencil"></i>
+                                </button>
+                                </span>
+                                }
+                                </div>
+                                <ValidationMessage For="() => Model.SacID" />
+                                </div>
+                                </div> *@
 
                                         <DropdownSelect DivClass="col-md-5" @ref="@TaxPreferenceDropdown"
                                                         DropdownID="@TaxPreferenceDropdownID"
@@ -178,7 +189,7 @@
                                                         ModeGroup="(int)DropdownModes.CommonSearch"
                                                         ItemSelected="HandleTaxPreferenceSelected"
                                                         SelectedItem="new DropdownSelectedItemModel(){ID = Model.TaxPreferenceTypeID,Value = Model.TaxPreferenceName}">
-                                          
+
                                         </DropdownSelect>
                                     </div>
                                 }
@@ -209,7 +220,7 @@
                                                         SelectedItem="new DropdownSelectedItemModel(){ID = Model.IntraTaxCategoryID,Value = Model.IntraTaxCategoryName}"
                                                         NewButtonText="Add new tax category"
                                                         NewButtonClicked="HandleNewIntraTaxCategoryAddButtonClick">
-                                            
+
                                         </DropdownSelect>
                                         <DropdownSelect DivClass="col-md-7" @ref="@InterTaxCategoryDropdown"
                                                         DropdownID="@InterTaxDropdownID"
@@ -223,7 +234,7 @@
                                                         SelectedItem="new DropdownSelectedItemModel(){ID = Model.InterTaxCategoryID,Value = Model.InterTaxCategoryName}"
                                                         NewButtonText="Add new tax category"
                                                         NewButtonClicked="HandleNewInterTaxCategoryAddButtonClick">
-                                           
+
                                         </DropdownSelect>
                                     </div>
                                 }
@@ -239,12 +250,12 @@
                                 @if (!Model.HasMultipleModels)
                                 {
                                     @* <div class="row">
-                                        <InputTextBox Label="Url Code:" @bind-Value="Model.UrlCode"
-                                                      DivClass="col-md-10"
-                                                      IsRequired="false"
-                                                      PlaceHolder="Unique url code"/>
+                            <InputTextBox Label="Url Code:" @bind-Value="Model.UrlCode"
+                            DivClass="col-md-10"
+                            IsRequired="false"
+                            PlaceHolder="Unique url code"/>
 
-                                    </div> *@
+                            </div> *@
 
                                     <div class="row">
                                         <DropdownSelect DivClass="col-md-5" @ref="@PackingTypeDrowpdownSelect"
@@ -652,7 +663,7 @@ else
             return;
         }
 
-     
+
 
         if (Model.ItemVariants is null)
         {
