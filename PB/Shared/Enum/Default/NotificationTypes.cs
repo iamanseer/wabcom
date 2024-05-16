@@ -9,7 +9,8 @@ namespace PB.Shared.Enum
     public enum NotificationTypes
     {
         Enquiry=1,
-        Followup,
+        EnquiryFollowup,
+        QuotationFollowup,
         MessageBroadCast,
         EmailBroadCast,
         Invoice,

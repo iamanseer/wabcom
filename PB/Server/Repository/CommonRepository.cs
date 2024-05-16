@@ -25,6 +25,7 @@ using PB.Shared.Models.Reports;
 using PB.Shared.Models.eCommerce.SEO;
 using static NPOI.HSSF.Util.HSSFColor;
 using PB.Shared.Enum;
+using PB.CRM.Model.Enum;
 
 namespace PB.Server.Repository
 {
@@ -52,7 +53,7 @@ namespace PB.Server.Repository
         string GeneratePagedListFilterWhereCondition(PagedListPostModelWithFilter searchModel, string searchLikeFieldName = "");
         Task SendEnquiryPushAndNotification(int clientID, int enquiryID, int currentEntityID, IDbTransaction? tran = null);
         Task SendQuotationPushAndNotification(int clientID, int quotationId, int currentEntityID, IDbTransaction? tran = null);
-        Task SendFollowupPushAndNotification(int clientID, int followupID, int currentEntityID, IDbTransaction? tran = null);
+        Task SendFollowupPushAndNotification(FollowUpNotificationPostModel model, int clientID, int followupID, int currentEntityID, IDbTransaction? tran = null);
         Task SendPdfDocument(MailDetailsModel model, IDbTransaction? tran = null);
 
         #endregion
@@ -446,8 +447,12 @@ Best regards,
                                                                     Where E.EnquiryID={enquiryID}
                 ", null);
 
-                string? tittle = "Enquiry(#" + Data.ID + ") ";
-                string? message = "created by " + Data.Value;
+
+                
+                //string ? tittle = "Enquiry ";
+                //string? message = "created by " + Data.Value;
+                 string ? tittle = "New Enquiry Received.";
+                string? message = "Enquiry #" + (Data.ID)+ " has been successfully created by " + Data.Value +".";
 
                 foreach (int entityID in UserEntities)
                 {
@@ -478,8 +483,11 @@ Best regards,
                                                                 left Join viEntity vE on vE.EntityID=Q.UserEntityID
                                                                 Where Q.QuotationID={quotationId} ", null);
 
-                string? tittle = "Quotation(#" + Data.ID + ") ";
-                string? message = "created by " + Data.Value;
+                //string? tittle = "Quotation(#" + Data.ID + ") ";
+                //string? message = "created by " + Data.Value;
+
+                string? tittle = "New Quotation Received.";
+                string? message = "Quotation  #" + (Data.ID) + " has been successfully created by " + Data.Value + ".";
 
                 foreach (int entityID in UserEntities)
                 {
@@ -500,7 +508,7 @@ Best regards,
         }
 
 
-        public async Task SendFollowupPushAndNotification(int clientID, int followupID, int currentEntityID, IDbTransaction? tran = null)
+        public async Task SendFollowupPushAndNotification(FollowUpNotificationPostModel model,int clientID, int followupID, int currentEntityID, IDbTransaction? tran = null)
         {
             List<int> UserEntities = await _dbContext.GetListByQueryAsync<int>($@"Select EntityID From Users Where ClientID=@ClientID AND IsDeleted=0 AND LoginStatus=1 AND EntityID<>@CurrentEntityID", new { ClientID = clientID, CurrentEntityID = currentEntityID }, tran);
             if (UserEntities.Count > 0)
@@ -510,24 +518,38 @@ Best regards,
                                                                     From Followup F
                                                                     left Join viEntity vE on vE.EntityID=F.EntityID
                                                                     Where F.FollowUpID={followupID} ", null);
-
-                string? tittle = "New Followup ";
-                string? message = "created by " + Data.Value;
+                string notificationTypeName = "";
+                if(model.FollowupType==(int)FollowUpTypes.Enquiry)
+                {
+                    int enquiryNo = await _dbContext.GetByQueryAsync<int>($@"Select EnquiryNo From Enquiry Where EnquiryID={model.ID} and IsDeleted=0", null);
+                    model.NotificationType = (int)NotificationTypes.EnquiryFollowup;
+                    notificationTypeName = NotificationTypes.EnquiryFollowup.ToString();
+                    model.Tittle = "New Enquiry Follow-up Received.";
+                    model.Message= "Enquiry  #" + (enquiryNo) + " has been successfully followed up by " + Data.Value + ".";
+                }
+                if (model.FollowupType == (int)FollowUpTypes.Quotation)
+                {
+                    int quotationNo = await _dbContext.GetByQueryAsync<int>($@"Select QuotationNo From Quotation Where QuotationID={model.ID} and IsDeleted=0", null);
+                    model.NotificationType = (int)NotificationTypes.QuotationFollowup;
+                    notificationTypeName = NotificationTypes.QuotationFollowup.ToString();
+                    model.Tittle = "New Quotation Follow-up Received.";
+                    model.Message = "Quotation #" + (quotationNo) + " has been successfully followed up by " + Data.Value + ".";
+                }
 
                 foreach (int entityID in UserEntities)
                 {
                     Notification notification = new()
                     {
-                        NotificationText = message,
-                        NotificationTypeID = (int)NotificationTypes.Followup,
+                        NotificationText = model.Message,
+                        NotificationTypeID = model.NotificationType,
                         EntityID = entityID,
                         AddedBy = currentEntityID,
                         AddedOn = DateTime.UtcNow,
-                        RefID = followupID
+                        RefID = model.ID
                     };
                     await _dbContext.SaveAsync(notification);
-                    await _notification.SendPush(entityID, message, tittle, "Quotation", 1, followupID.ToString());
-                    await _notification.SendSignalRPush(entityID, tittle + message);
+                    await _notification.SendPush(entityID, model.Message, model.Tittle, notificationTypeName, 1, followupID.ToString());
+                    await _notification.SendSignalRPush(entityID, model.Tittle + model.Message);
                 }
             }
         }

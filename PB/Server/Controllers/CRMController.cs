@@ -959,16 +959,27 @@ namespace PB.Server.Controllers
         public async Task<IActionResult> SaveFollowup(FollowUpModel model)
         {
             var folloupNature = await _dbContext.GetAsync<FollowupStatus>(model.FollowUpStatusID.Value);
+            FollowUpNotificationPostModel notificationPostModel = new();
             if (folloupNature != null)
             {
                 if (model.FollowUpType == (int)FollowUpTypes.Enquiry)
                 {
                     await _dbContext.ExecuteAsync("Update Enquiry Set CurrentFollowupNature=@Nature Where EnquiryID=@EnquiryID", new { Nature = folloupNature.Nature, EnquiryID = model.EnquiryID });
+                    notificationPostModel = new()
+                    {
+                        ID=model.EnquiryID,
+                        FollowupType= (int)FollowUpTypes.Enquiry,
+                    };
                 }
 
                 if (model.FollowUpType == (int)FollowUpTypes.Quotation)
                 {
                     await _dbContext.ExecuteAsync("Update Quotation Set CurrentFollowupNature=@Nature Where QuotationID=@QuotationID", new { Nature = folloupNature.Nature, QuotationID = model.QuotationID });
+                    notificationPostModel = new()
+                    {
+                        ID = model.QuotationID,
+                        FollowupType = (int)FollowUpTypes.Quotation,
+                    };
                 }
             }
 
@@ -977,7 +988,7 @@ namespace PB.Server.Controllers
             followUp.FollowUpID = await _dbContext.SaveAsync(followUp);
 
             //Notification
-            await _common.SendFollowupPushAndNotification(CurrentClientID, followUp.FollowUpID, CurrentEntityID, null);
+            await _common.SendFollowupPushAndNotification(notificationPostModel,CurrentClientID, followUp.FollowUpID, CurrentEntityID, null);
             return Ok(new FollowupAddResultModel() { FollowupID = followUp.FollowUpID });
         }
 

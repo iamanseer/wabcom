@@ -20,9 +20,11 @@ namespace PB.Shared.Models
                         return $"enquiry-view";
                     case NotificationTypes.Quotation:
                         return $"quotation-view";
-                    case NotificationTypes.Followup:
-                        return $"follow-ups";
-                    default:
+                    case NotificationTypes.EnquiryFollowup:
+                        return $"enquiry-view";
+					case NotificationTypes.QuotationFollowup:
+						return $"quotation-view";
+					default:
                         return "";
                 }
             }
@@ -37,7 +39,9 @@ namespace PB.Shared.Models
                         return "bg-danger";
 					case NotificationTypes.Quotation:
 						return "bg-danger";
-					case NotificationTypes.Followup:
+					case NotificationTypes.EnquiryFollowup:
+						return "bg-danger";
+					case NotificationTypes.QuotationFollowup:
 						return "bg-danger";
 					default:
                         return "bg-success";
@@ -55,9 +59,11 @@ namespace PB.Shared.Models
                         return "New enquiry received";
                     case NotificationTypes.Quotation:
                         return "New quotation received";
-                    case NotificationTypes.Followup:
-                        return "New followup received";
-                    default:
+                    case NotificationTypes.EnquiryFollowup:
+                        return "New Enquiry Follow-up Received.";
+					case NotificationTypes.QuotationFollowup:
+						return "New Quotation Follow-up Received.";
+					default:
                         return "New inquiry received";
                 }
             }
@@ -73,9 +79,11 @@ namespace PB.Shared.Models
                         return "New enquiry received 2";
                     case NotificationTypes.Quotation:
                         return "New quotation received 2";
-                    case NotificationTypes.Followup:
-                        return "New followup received 2";
-                    default:
+                    case NotificationTypes.EnquiryFollowup:
+                        return "New Enquiry Follow-up Received 2";
+					case NotificationTypes.QuotationFollowup:
+						return "New Quotation Follow-up Received 2";
+					default:
                         return "New inquiry received 2";
                 }
             }
@@ -90,7 +98,9 @@ namespace PB.Shared.Models
                         return "mdi-message-text-outline";
 					case NotificationTypes.Quotation:
 						return "mdi-message-text-outline";
-					case NotificationTypes.Followup:
+					case NotificationTypes.EnquiryFollowup:
+						return "mdi-message-text-outline";
+					case NotificationTypes.QuotationFollowup:
 						return "mdi-message-text-outline";
 					default:
                         return "mdi-message-text-outline";

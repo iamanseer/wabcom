@@ -10,4 +10,13 @@ namespace PB.Model.Models
         public string? Status { get; set; }
 
     }
+
+    public class FollowUpNotificationPostModel
+    {
+        public int? ID { get; set; }
+        public int? FollowupType { get; set; }
+        public string? Message { get; set; }
+        public string? Tittle { get; set; }
+        public int? NotificationType { get; set; }
+    }
 }

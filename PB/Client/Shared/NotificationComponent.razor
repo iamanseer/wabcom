@@ -43,7 +43,9 @@ else
 			Nav.NavigateTo($"redirect/{link}/{refId}");
 		if (notificationTypeId == (int)NotificationTypes.Quotation)
 			Nav.NavigateTo($"redirect/{link}/{refId}");
-		if (notificationTypeId == (int)NotificationTypes.Followup)
+		if (notificationTypeId == (int)NotificationTypes.EnquiryFollowup)
+			Nav.NavigateTo($"redirect/{link}/{refId}");
+		if (notificationTypeId == (int)NotificationTypes.QuotationFollowup)
 			Nav.NavigateTo($"redirect/{link}/{refId}");
 
 	}
