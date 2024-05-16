@@ -2501,26 +2501,6 @@ namespace PB.Server.Repository
                 WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
             };
 
-            // Html item content
-
-
-            htmlItemContent = await GetQuotationItemPdfHtmlContentAndData(quotationID, branchID, tran);
-
-            var objectItemSettings = new ObjectSettings
-            {
-                HtmlContent = htmlItemContent,
-                WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
-            };
-
-            // Html terms content
-
-            htmlTermContent = await GetQuotationTermsPdfHtmlContentAndData(quotationID, branchID, tran);
-
-            var objectTermSettings = new ObjectSettings
-            {
-                HtmlContent = htmlTermContent,
-                WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
-            };
 
             // Html product content
 
@@ -2542,10 +2522,32 @@ namespace PB.Server.Repository
                 WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
             };
 
+
+            // Html item content
+
+
+            htmlItemContent = await GetQuotationItemPdfHtmlContentAndData(quotationID, branchID, tran);
+
+            var objectItemSettings = new ObjectSettings
+            {
+                HtmlContent = htmlItemContent,
+                WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
+            };
+
+            // Html terms content
+
+            htmlTermContent = await GetQuotationTermsPdfHtmlContentAndData(quotationID, branchID, tran);
+
+            var objectTermSettings = new ObjectSettings
+            {
+                HtmlContent = htmlTermContent,
+                WebSettings = { DefaultEncoding = "utf-8", UserStyleSheet = cssfilePath },
+            };
+
             var pdf = new HtmlToPdfDocument()
             {
                 GlobalSettings = globalSettings,
-                Objects = { objectCoverSettings, objectBasicSettings, objectAwardSettings, objectItemSettings, objectTermSettings, objectProductSettings, objectProduct2Settings }
+                Objects = { objectCoverSettings, objectBasicSettings, objectAwardSettings, objectProductSettings, objectProduct2Settings, objectItemSettings, objectTermSettings }
             };
             _converter.Convert(pdf);
 
@@ -2569,132 +2571,81 @@ namespace PB.Server.Repository
         {
             string? DomainUrl = _config.GetValue<string>("ServerURL");
             var quotation = await GetQuotationPdfDetailsModel(quotationID, branchID, tran);
+            List<string> subject = SplitString(quotation.Subject, 20);
+
+            // Function to split string into chunks
+            List<string> SplitString(string input, int subjectSize)
+            {
+                List<string> subject = new List<string>();
+                for (int i = 0; i < input.Length; i += subjectSize)
+                {
+                    int length = Math.Min(subjectSize, input.Length - i);
+                    subject.Add(input.Substring(i, length));
+                }
+                return subject;
+            }
             var pdfHtmlContent = new StringBuilder();
             pdfHtmlContent.Append($@"
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <title>WABCOM</title>
-                                <link rel='stylesheet' type='text/css' href='styles.css'>
+                  <!DOCTYPE html>
+                  <html>
+                  <head>
+                      <title>WABCOM</title>
+                      <link rel='stylesheet' type='text/css' href='styles.css'>
+                  </head>");
+            pdfHtmlContent.Append($@"
+                        <body style='font-family: Arial, sans-serif;margin: 0;padding: 0;'>
 
-                                <style>
-                                    body {{
-                                font-family: Arial, sans-serif;
-                                margin: 0;
-                                padding: 0;
-                            }}
+                          <div class='container-co style' style='width: 21cm; height: 29.7cm;page-break-after: always;margin: 0 auto;padding: 20px;position: relative;background-image: url({DomainUrl}/assets/images/wabcom/cover-image.png);background-size: cover;'>
+                            <div class='details'>
+                              <div style='position: absolute;top: 100px;left: 220px;'>
+                                <h4 style='margin-bottom: 10px;'>PREPARED BY</h4>
+                                <p style='margin-top: 0;margin-bottom: 5px;'>Ayesha</p>
+                                <p style='margin-top: 0;margin-bottom: 5px;'>Team Business Center</p>
+                                <p style='margin-top: 0;margin-bottom: 5px;'>Al Samar Street</p>
+                                <p style='margin-top: 0;margin-bottom: 5px;'>P.O.Box: 83274</p>
+                                <p style='margin-top: 0;margin-bottom: 5px;'>Sharjah, UAE</p>
+                              </div>
+                              <div style='position: absolute;top: 100px;right: 168px;'>
+                                <h4 style='margin-bottom: 10px;'>PREPARED TO</h4>
+                                <p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.CustomerName}</p>
+                                <p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.BillingAddressLine1}</p>");
+            if (quotation.BillingAddressLine2 != null)
+            {
+                pdfHtmlContent.Append($@"<p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.BillingAddressLine2}</p>");
+            }
+            if (quotation.BillingAddressLine3 != null)
+            {
+                pdfHtmlContent.Append($@"<p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.BillingAddressLine3}</p>");
+            }
+            if (quotation.BillingState != null)
+            {
+                pdfHtmlContent.Append($@"<p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.BillingState}</p>");
+            }
+            if (quotation.BillingCountry != null)
+            {
+                pdfHtmlContent.Append($@"<p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.BillingCountry}</p>");
+            }
+            if (quotation.BillingPinCode != null)
+            {
+                pdfHtmlContent.Append($@"<p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.BillingPinCode}</p>");
+            }
 
-                            .container-co {{
-                                width: 21cm;
-                                height: 29.7cm;
-                                page-break-after: always;
-                                margin: 0 auto;
-                                padding: 20px;
-                                background-image: url('{DomainUrl}/assets/images/wabcom/cover-image.png');
-                                background-size: cover;
-                                position: relative;
-                            }}
-
-                            h4{{
-                                color: #000;
-                            }}
-                            .footer-img{{
-                                display: flex;
-                                justify-content: space-between;
-                            }}
-                            .details{{
-                                display: flex;
-                                position: absolute;
-                                top: 100px;
-                                left: 220px;
-                            gap: 200px;
-                            }}
-                            .from p, .to p{{
-                                margin-top: 0;
-                                margin-bottom: 5px;
-                            }}
-                            .from h4, .to h4{{
-                                margin-bottom: 10px;
-                            }}
-                            .subject h1{{
-                                position: absolute;
-                                left: 370px;
-                                top: 270px;
-                                font-size: 52px;
-                            }}
-                            .subject span{{
-                                font-weight: 200;
-                                margin-left: 150px;
-                            }}
-                            .for{{
-                                position: absolute;
-                                top: 800px;
-                                left: 100px;
-                            }}
-                            .for h2{{
-                                color: #fff;
-                                font-size: 48px;
-                                font-weight: 300;
-                                margin-bottom: 0;
-                            }}
-                            .for h3{{
-                                color: #fff;
-                                font-size: 42px;
-                                font-weight: 300;
-                                margin-top: 0;
-                            }}
-                                </style>
-                            </head>");
-            pdfHtmlContent.Append($@"<body>
-                       <div class='container-co style'>
-                          <div class='details'>
-                            <div class='from'>
-                              <h4>PREPARED BY</h4>
-                              <p>Ayesha</p>
-                              <p>Team Business Center</p>
-                              <p>Al Samar Street</p>
-                              <p>P.O.Box: 83274</p>
-                              <p>Sharjah, UAE</p>
+            pdfHtmlContent.Append($@" </div>
                             </div>
-                            
-                            <di class='to'>
-                              <h4>PREPARED TO</h4>
-                              <p>{quotation.CustomerName}</p>
-                              <p>{quotation.BillingAddressLine1}</p>");
-                                if(quotation.BillingAddressLine2!=null)
-                                {
-                                    pdfHtmlContent.Append($@"<p>{quotation.BillingAddressLine2}</p>");
-                                }
-                                if (quotation.BillingAddressLine3 != null)
-                                {
-                                    pdfHtmlContent.Append($@"<p>{quotation.BillingAddressLine3}</p>");
-                                }
-                                if (quotation.BillingState != null)
-                                {
-                                    pdfHtmlContent.Append($@"<p>{quotation.BillingState}</p>");
-                                }
-                                if (quotation.BillingCountry != null)
-                                {
-                                    pdfHtmlContent.Append($@"<p>{quotation.BillingCountry}</p>");
-                                }
-                                if (quotation.BillingPinCode != null)
-                                {
-                                    pdfHtmlContent.Append($@"<p>{quotation.BillingPinCode}</p>");
-                                }
-            pdfHtmlContent.Append($@"</div>
-                          </div>
-                          <div class='subject'>
-                            <h1>PROPOSAL</h1>
-                          </div>
+                            <div class='subject'>
+                              <h1 style='position: absolute;left: 370px;top: 270px;font-size: 52px;'><span stype='font-weight: 200;margin-left: 150px;'>PROPOSAL</span></h1>
+                            </div>
 
-                          <div class='for'>
-                            <h2>{quotation.Subject}</h2>
-                            <h3>9/05/2024</h3>
+                            <div style='position: absolute;top: 800px;left: 100px;'>");
+            foreach (var sub in subject)
+            {
+                pdfHtmlContent.Append($@"<h4 style='color: #fff;font-size: 20px;font-weight: 100;margin-bottom: 0;'>{sub}</h2>");
+            }
+            pdfHtmlContent.Append($@"
+                            </div>
                           </div>
-                        </div>
-                        </body>
-                        </html> ");
-
+                      </body>
+              </html> ");
 
             return pdfHtmlContent.ToString();
         }
@@ -2843,12 +2794,13 @@ namespace PB.Server.Repository
                         <body>
                         <div class='container style'>
                         <div class='main'>
-                        <div class='header'>
-                            <img src='{DomainUrl}/assets/images/wabcom/logo.png' alt='WABCOM'>
-                            <img src='{DomainUrl}/assets/images/wabcom/partner.png' alt='Gold Partner'>
+                        <div class='header' style='position: relative;'>
+                            <img src='{DomainUrl}/assets/images/wabcom/logo.png' style='position: absolute;left: 20px; height: 50px;margin: 0 10px;' alt='WABCOM'>
+                            <img src='{DomainUrl}/assets/images/wabcom/partner.png' style='position: absolute;right: 20px; height: 50px;margin: 0 10px;' alt='Gold Partner'>
                         </div>
-                        <div class='content'>
-                            <p>WABCOM is UAE headquartered business specialized in providing business automation, IT and IT 
+                        <div class='content' style=' line-height: 1.3;text-align: justify;margin-top: 50px;'>
+                            <p style='margin: 5px;font-size: 15px;margin-top: 10%;'>
+                                WABCOM is UAE headquartered business specialized in providing business automation, IT and IT 
                                 enabled services to businesses operating across the world.</p>
                                 <p>For over 10 years we are leading provider of software solutions, services and customization to the 
                                 industries across UAE. We are specialized in ERP Implementation, Training, Support, Customization, Data 
@@ -2888,14 +2840,14 @@ namespace PB.Server.Repository
                                 very simple to learn and easier to use with anywhere, anytime and secure access.
                                 </p>
                         </div>
-                        <div class='footer'>
+                        <div style=' position: absolute;bottom: 10px;text-align: center;margin: 20px auto 0 auto;font-size: 12px;color: #666;left: 120px;'>
                             <div class='footer-top'>
                             <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
                             <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
                             <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
-                            <div class='footer-img'>
-                            <img src='{DomainUrl}/assets/images/wabcom/greythr.png' alt='GreyMatrix'>
-                            <img src='{DomainUrl}/assets/images/wabcom/dummy-logo.png' alt='Tally'>
+                            <div class='footer-img' style='height: 50px;margin: 0 60px;'>
+                            <img src='{DomainUrl}/assets/images/wabcom/greythr.png' style='height: 50px;margin: 0 60px;' alt='GreyMatrix'>
+                            <img src='{DomainUrl}/assets/images/wabcom/dummy-logo.png' style='height: 50px;margin: 0 60px;' alt='Tally'>
                             </div>
                             </div>
                         </div>
@@ -3054,12 +3006,13 @@ namespace PB.Server.Repository
     
                             <div class='container style'>
                                 <div class='main'>
-                                <div class='header'>
-                                    <img src='{DomainUrl}/assets/images/wabcom/logo.png' alt='WABCOM'>
-                                    <img src='{DomainUrl}/assets/images/wabcom/partner.png' alt='Gold Partner'>
+                               
+                                <div class='header' style='position: relative;'>
+                                    <img src='{DomainUrl}/assets/images/wabcom/logo.png' style='position: absolute;left: 20px; height: 50px;margin: 0 10px;' alt='WABCOM'>
+                                    <img src='{DomainUrl}/assets/images/wabcom/partner.png' style='position: absolute;right: 20px; height: 50px;margin: 0 10px;' alt='Gold Partner'>
                                 </div>
-                                <div class='content'>
-                                    <p>Wabcom is using several products from the Tally from their database to the middleware (application 
+                                <div class='content' style=' line-height: 1.3;text-align: justify;margin-top: 50px;'>
+                                    <p style='margin: 5px;font-size: 15px;margin-top: 10%;'>Wabcom is using several products from the Tally from their database to the middleware (application 
                                         server) to some specific applications to provide the underlying structures to its applications.We have 
                                         developed and delivered many vertical solutions on top of Tally which includes retail trading, 
                                         manufacturing process, service industry, insurance brokers, supply chain management, transportation 
@@ -3104,14 +3057,15 @@ namespace PB.Server.Repository
                                         customers.
                                         </p>
                                 </div>
-                                <div class='footer'>
+                                
+                                <div style=' position: absolute;bottom: 10px;text-align: center;margin: 20px auto 0 auto;font-size: 12px;color: #666;left: 120px;'>
                                     <div class='footer-top'>
                                     <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
                                     <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
                                     <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
-                                    <div class='footer-img'>
-                                    <img src='{DomainUrl}/assets/images/wabcom/greythr.png' alt='GreyMatrix'>
-                                    <img src='{DomainUrl}/assets/images/wabcom/dummy-logo.png' alt='Tally'>
+                                    <div class='footer-img' style='height: 50px;margin: 0 60px;'>
+                                    <img src='{DomainUrl}/assets/images/wabcom/greythr.png' style='height: 50px;margin: 0 60px;' alt='GreyMatrix'>
+                                    <img src='{DomainUrl}/assets/images/wabcom/dummy-logo.png' style='height: 50px;margin: 0 60px;' alt='Tally'>
                                     </div>
                                     </div>
                                 </div>
@@ -3273,14 +3227,14 @@ namespace PB.Server.Repository
     
                         <div class='container style-2'>
                             <div class='main'>
-                            <div class='header'>
-                                <img src='{quotation.DomainUrl}/assets/images/wabcom/logo.png' alt='WABCOM'>
-                                <img src='{quotation.DomainUrl}/assets/images/wabcom/partner.png' alt='Gold Partner'>
-                            </div>
-                            <div class='content'>
+                            <div class='header' style='position: relative;'>
+                            <img src='{quotation.DomainUrl}/assets/images/wabcom/logo.png' style='position: absolute;left: 20px; height: 50px;margin: 0 10px;' alt='WABCOM'>
+                            <img src='{quotation.DomainUrl}/assets/images/wabcom/partner.png' style='position: absolute;right: 20px; height: 50px;margin: 0 10px;' alt='Gold Partner'>
+                        </div>
+                        <div class='content' style=' line-height: 1.3;text-align: justify;margin-top: 50px;'>
             
               
-                                <h4>QUOTATION: </h4>
+                                <h4 style='margin: 5px;font-size: 15px;margin-top: 10%;'>QUOTATION: </h4>
                                 <table style='width:100%' >
                                     <tr>
                                     <th>Description </th>
@@ -3397,15 +3351,15 @@ namespace PB.Server.Repository
             }
 
             pdfHtmlContent.Append($@"</ul> </div>
-                            <div class='footer'>
-                                <div class='footer-top'>
-                                <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
-                                <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
-                                <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
-                                <div class='footer-img'>
-                                <img src='{quotation.DomainUrl}/assets/images/wabcom/greythr.png' alt='GreyMatrix'>
-                                <img src='{quotation.DomainUrl}/assets/images/wabcom/dummy-logo.png' alt='Tally'>
-                                </div>
+                        <div style=' position: absolute;bottom: 10px;text-align: center;margin: 20px auto 0 auto;font-size: 12px;color: #666;left: 120px;'>
+                            <div class='footer-top'>
+                            <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
+                            <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
+                            <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
+                            <div class='footer-img' style='height: 50px;margin: 0 60px;'>
+                            <img src='{quotation.DomainUrl}/assets/images/wabcom/greythr.png' style='height: 50px;margin: 0 60px;' alt='GreyMatrix'>
+                            <img src='{quotation.DomainUrl}/assets/images/wabcom/dummy-logo.png' style='height: 50px;margin: 0 60px;' alt='Tally'>
+                            </div>
                                 </div>
                             </div>
                             </div>
@@ -3564,13 +3518,13 @@ namespace PB.Server.Repository
    
                                 <div class='container style'>
                                   <div class='main'>
-                                    <div class='header'>
-                                        <img src='{quotation.DomainUrl}/assets/images/wabcom/logo.png' alt='WABCOM'>
-                                        <img src='{quotation.DomainUrl}/assets/images/wabcom/partner.png' alt='Gold Partner'>
-                                    </div>
-                                    <div class='content'>
+                                    <div class='header' style='position: relative;'>
+                                    <img src='{quotation.DomainUrl}/assets/images/wabcom/logo.png' style='position: absolute;left: 20px; height: 50px;margin: 0 10px;' alt='WABCOM'>
+                                    <img src='{quotation.DomainUrl}/assets/images/wabcom/partner.png' style='position: absolute;right: 20px; height: 50px;margin: 0 10px;' alt='Gold Partner'>
+                                </div>
+                        <div class='content' style=' line-height: 1.3;text-align: justify;margin-top: 50px;'>
            
-                                       <h4>Terms and Conditions: </h4>  <ul class='custom-list'>");
+                                       <h4 style='margin: 5px;font-size: 15px;margin-top: 10%;'>Terms and Conditions: </h4>  <ul class='custom-list'>");
             if (quotation.TermsList.Count > 0)
             {
                 foreach (var terms in quotation.TermsList)
@@ -3594,15 +3548,15 @@ namespace PB.Server.Repository
              
              
                                     </div>
-                                    <div class='footer'>
-                                      <div class='footer-top'>
-                                        <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
-                                        <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
-                                        <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
-                                        <div class='footer-img'>
-                                        <img src='{quotation.DomainUrl}/assets/images/wabcom/greythr.png' alt='GreyMatrix'>
-                                        <img src='{quotation.DomainUrl}/assets/images/wabcom/dummy-logo.png' alt='Tally'>
-                                      </div>
+                                    <div style=' position: absolute;bottom: 10px;text-align: center;margin: 20px auto 0 auto;font-size: 12px;color: #666;left: 120px;'>
+                            <div class='footer-top'>
+                            <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
+                            <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
+                            <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
+                            <div class='footer-img' style='height: 50px;margin: 0 60px;'>
+                            <img src='{quotation.DomainUrl}/assets/images/wabcom/greythr.png' style='height: 50px;margin: 0 60px;' alt='GreyMatrix'>
+                            <img src='{quotation.DomainUrl}/assets/images/wabcom/dummy-logo.png' style='height: 50px;margin: 0 60px;' alt='Tally'>
+                            </div>
                                       </div>
                                     </div>
                                   </div>
@@ -3762,15 +3716,15 @@ namespace PB.Server.Repository
                             <body>
     
                                 <div class=""container style-2"">
-                                    <div class=""main"">
-                                    <div class=""header"">
-                                        <img src=""{DomainUrl}/assets/images/wabcom/logo.png"" alt=""WABCOM"">
-                                        <img src=""{DomainUrl}/assets/images/wabcom/partner.png"" alt=""Gold Partner"">
-                                    </div>
-                                    <div class=""content"">
+                                    <div class='main'>
+                                    <div class='header' style='position: relative;'>
+                                    <img src='{DomainUrl}/assets/images/wabcom/logo.png' style='position: absolute;left: 20px; height: 50px;margin: 0 10px;' alt='WABCOM'>
+                                    <img src='{DomainUrl}/assets/images/wabcom/partner.png' style='position: absolute;right: 20px; height: 50px;margin: 0 10px;' alt='Gold Partner'>
+                                </div>
+                        <div class='content' style=' line-height: 1.3;text-align: justify;margin-top: 50px;'>
             
               
-                                        <h3>Tally Features</h3>
+                                        <h3 style='margin: 5px;font-size: 15px;margin-top: 10%;'>Tally Features</h3>
                                         <table style=""width:100%"" >
                                             <tr>
                                             <td>
@@ -3907,15 +3861,15 @@ namespace PB.Server.Repository
                                             </tr>
                                         </table>
                                     </div>
-                                    <div class=""footer"">
-                                        <div class=""footer-top"">
-                                        <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
-                                        <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
-                                        <p>mail to: <a href=""mailto:info@wabcomdubai.com"">info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
-                                        <div class=""footer-img"">
-                                        <img src=""{DomainUrl}/assets/images/wabcom/greythr.png"" alt=""GreyMatrix"">
-                                        <img src=""{DomainUrl}/assets/images/wabcom/dummy-logo.png"" alt=""Tally"">
-                                        </div>
+                                   <div style=' position: absolute;bottom: 10px;text-align: center;margin: 20px auto 0 auto;font-size: 12px;color: #666;left: 120px;'>
+                            <div class='footer-top'>
+                            <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
+                            <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
+                            <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
+                            <div class='footer-img' style='height: 50px;margin: 0 60px;'>
+                            <img src='{DomainUrl}/assets/images/wabcom/greythr.png' style='height: 50px;margin: 0 60px;' alt='GreyMatrix'>
+                            <img src='{DomainUrl}/assets/images/wabcom/dummy-logo.png' style='height: 50px;margin: 0 60px;' alt='Tally'>
+                            </div>
                                         </div>
                                     </div>
                                     </div>
@@ -4076,16 +4030,17 @@ namespace PB.Server.Repository
                 <body>
     
                     <div class=""container style-2"">
-                        <div class=""main"">
-                        <div class=""header"">
-                            <img src=""{DomainUrl}/assets/images/wabcom/logo.png"" alt=""WABCOM"">
-                            <img src=""{DomainUrl}/assets/images/wabcom/partner.png"" alt=""Gold Partner"">
-                        </div>
-                        <div class=""content"">
+                       
+                       <div class='main'>
+                                    <div class='header' style='position: relative;'>
+                                    <img src='{DomainUrl}/assets/images/wabcom/logo.png' style='position: absolute;left: 20px; height: 50px;margin: 0 10px;' alt='WABCOM'>
+                                    <img src='{DomainUrl}/assets/images/wabcom/partner.png' style='position: absolute;right: 20px; height: 50px;margin: 0 10px;' alt='Gold Partner'>
+                                </div>
+                        <div class='content' style=' line-height: 1.3;text-align: justify;margin-top: 50px;'>
             
               
            
-                            <table style=""width:100%"" >
+                            <table style='width:100%;margin-top: 10%;' >
                                 <tr>
                                 <td>
                                     <h4>Accounting Report </h4>
@@ -4237,14 +4192,14 @@ namespace PB.Server.Repository
                                 </tr>
                             </table>
                         </div>
-                        <div class=""footer"">
-                            <div class=""footer-top"">
+                        <div style=' position: absolute;bottom: 10px;text-align: center;margin: 20px auto 0 auto;font-size: 12px;color: #666;left: 120px;'>
+                            <div class='footer-top'>
                             <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
-                            <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 65343120</p>
-                            <p>mail to: <a href=""mailto:info@wabcomdubai.com"">info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
-                            <div class=""footer-img"">
-                            <img src=""{DomainUrl}/assets/images/wabcom/greythr.png"" alt=""GreyMatrix"">
-                            <img src=""{DomainUrl}/assets/images/wabcom/dummy-logo.png"" alt=""Tally"">
+                            <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
+                            <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
+                            <div class='footer-img' style='height: 50px;margin: 0 60px;'>
+                            <img src='{DomainUrl}/assets/images/wabcom/greythr.png' style='height: 50px;margin: 0 60px;' alt='GreyMatrix'>
+                            <img src='{DomainUrl}/assets/images/wabcom/dummy-logo.png' style='height: 50px;margin: 0 60px;' alt='Tally'>
                             </div>
                             </div>
                         </div>
@@ -4271,7 +4226,7 @@ namespace PB.Server.Repository
             string string7 = await GetQuotationTermsPdfHtmlContentAndData(quotationID, branchID, tran);
 
             string mergedString = string1 + string2 + string3  + string4+ string5 + string6 + string7;
-
+            //string mergedString = string1 + string2;
             return mergedString;
         }
 
