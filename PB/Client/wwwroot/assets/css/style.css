@@ -75305,3 +75305,6 @@ body *::-webkit-scrollbar {
     display: block !important;
     width: 200px !important;
 }
+.service-table {
+    overflow-x: visible !important;
+}

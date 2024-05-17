@@ -537,7 +537,7 @@
                         <div class="card-body">
                             <div class="row mb-2">
                                 <div class="">
-                                    <table class="table border text-nowrap text-md-nowrap table-bordered mb-5">
+                                    <table class="table border text-wrap text-md-nowrap table-bordered mb-5">
                                         <thead>
                                             <tr>
                                                 <th>
@@ -573,14 +573,14 @@
                                                     @if (!quotationItem.IsRowInEditMode)
                                                     {
                                                         <tr>
-                                                            <td>
+                                                            <td style="min-width:100px">
                                                                 <div class="d-flex align-items-center jusify-content-center">
                                                                     <div>
                                                                         @quotationItem.ItemName
                                                                     </div>
                                                                 </div>
                                                             </td>
-                                                            <td class="px-0">
+                                                            <td class="px-0" style="min-width:400px">
                                                                  <textarea  class="form-control" rows="2" @bind="quotationItem.Description" disabled></textarea>
                                                                 @* @quotationItem.Description *@
                                                             </td>
@@ -635,7 +635,7 @@
                                                     else
                                                     {
                                                         <tr>
-                                                            <td class="px-0" style="min-width:200px">
+                                                            <td class="px-0" style="min-width:100px">
                                                                 <DropdownSelect DropdownID="@(RowItemDropdownID+index)" @ref="@RowItemDropdown"
                                                                                 DivClass="col-md-12 px-0"
                                                                                 FormGroupClass="form-group mb-0"
@@ -650,7 +650,7 @@
                                                                                 NewButtonText="New Item"
                                                                                 NewButtonClicked="@(async (int dropdownMode) => await HandleAddNewQuotationItemButtonClick(dropdownMode, index))" />
                                                             </td>
-                                                            <td class="px-0">
+                                                            <td class="px-0" style="min-width:200px">
                                                                @*  <input type="text" class="form-control form-control-custom" @bind="quotationItem.Description" /> *@
 
                                                                 <textarea class="form-control" rows="2" @bind="quotationItem.Description"></textarea>
@@ -744,7 +744,7 @@
                                         </tbody>
                                         <tfoot>
                                             <tr>
-                                                <td class="px-0" style="min-width:200px">
+                                                <td class="px-0" style="min-width:100px">
                                                     <DropdownSelect DropdownID="@(FooterItemDropdownID)" @ref="@FooterItemDropdown"
                                                                     DivClass="col-md-12 px-0"
                                                                     FormGroupClass="form-group mb-0"
@@ -758,7 +758,7 @@
                                                                     NewButtonText="New Item"
                                                                     NewButtonClicked="@(async (int dropdownMode) => await HandleAddNewQuotationItemButtonClick(dropdownMode))" />
                                                 </td>
-                                                <td class="px-0">
+                                                <td class="px-0" style="min-width:200px">
                                                     @* <input type="text" class="form-control form-control-custom" @bind="@Footer.Description" /> *@
                                                          <textarea  class="form-control" rows="2" @bind="Footer.Description"></textarea>
 
