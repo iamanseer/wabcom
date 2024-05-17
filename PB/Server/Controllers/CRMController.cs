@@ -666,6 +666,9 @@ namespace PB.Server.Controllers
 
                     if (model.GenerateQuotationPdf)
                     {
+                        //Notification
+                        if (model.QuotationID is 0)
+                            await _common.SendQuotationPushAndNotification(CurrentClientID, quotation.QuotationID, CurrentEntityID, null);
                         //await _cRMRepository.GenerateQuotationPdf(quotation.QuotationID, CurrentBranchID, CurrentClientID);
                         await _cRMRepository.GenerateNewQuotationPdf(quotation.QuotationID, CurrentBranchID, CurrentClientID);
                         MailDetailsModel quotationMailDetails = await _common.GetQuotationPdfMailDetails(quotation.QuotationID, CurrentBranchID);

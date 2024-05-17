@@ -2571,7 +2571,7 @@ namespace PB.Server.Repository
         {
             string? DomainUrl = _config.GetValue<string>("ServerURL");
             var quotation = await GetQuotationPdfDetailsModel(quotationID, branchID, tran);
-            List<string> subject = SplitString(quotation.Subject, 20);
+            List<string> subject = SplitString(quotation.Subject, 30);
 
             // Function to split string into chunks
             List<string> SplitString(string input, int subjectSize)

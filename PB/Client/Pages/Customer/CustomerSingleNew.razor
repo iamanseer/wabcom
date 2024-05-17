@@ -922,11 +922,6 @@
         }
         if (Footer.IsSubscription)
         {
-            if (Footer.PurchaseDate == null)
-            {
-                await JS.ErrorMessage("Please enter purchase date");
-                return;
-            }
             if (Footer.ExpiryDate == null)
             {
                 await JS.ErrorMessage("Please enter expiry date");

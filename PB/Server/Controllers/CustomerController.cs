@@ -901,7 +901,6 @@ namespace PB.Server.Controllers
                 Date = model.Date,
                 Quantity = model.Quantity,
                 Amount=model.Amount,
-                PurchaseDate=model.PurchaseDate,
                 ExpiryDate=model.ExpiryDate
             };
             service.ServiceID=await _dbContext.SaveAsync(service);
