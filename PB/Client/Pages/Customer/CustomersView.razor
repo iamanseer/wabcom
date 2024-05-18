@@ -152,7 +152,7 @@
                                                                     <label class="col-md-5 col-auto items-label text-muted">Tally Serial No </label>
                                                                         @if (CustomerStage2Data.TallyNos.TallySerialNo != null)
                                                                         {
-                                                                            <label class="col-md-7 col-auto ">@((CustomerStage2Data.TallyNos.TallySerialNo != "0")) @((CustomerStage2Data.TallyNos.TallySerialNo2 != "0" ? "  |  " + CustomerStage2Data.TallyNos.TallySerialNo2 : "")) @((CustomerStage2Data.TallyNos.TallySerialNo3 != "0" ? "  |  " + CustomerStage2Data.TallyNos.TallySerialNo3 : "")) </label>
+                                                                            <label class="col-md-7 col-auto ">@((CustomerStage2Data.TallyNos.TallySerialNo != "0"?CustomerStage2Data.TallyNos.TallySerialNo:"")) @((CustomerStage2Data.TallyNos.TallySerialNo2 != "0" ? "  |  " + CustomerStage2Data.TallyNos.TallySerialNo2 : "")) @((CustomerStage2Data.TallyNos.TallySerialNo3 != "0" ? "  |  " + CustomerStage2Data.TallyNos.TallySerialNo3 : "")) </label>
                                                                         }
                                                                  </div>
                                                                 <div class="row">

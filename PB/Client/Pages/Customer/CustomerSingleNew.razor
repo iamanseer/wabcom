@@ -362,7 +362,7 @@
                                                             <div class="form-group">
                                                                 <label class="form-label mt-0 me-1">Tally Serial No :</label>
                                                                 <input type="text" class="form-control" @bind="CustomerModel.TallyNos.TallySerialNo" id="join-serial-1">
-                                                                <ValidationMessage For="() => CustomerModel.TallyNos.TallySerialNo" />
+                                                               
                                                             </div>
                                                         </div>
                                                         <div class="col-md-4">
@@ -617,7 +617,7 @@
         {
             foreach (var tallySerialNo in new[] { CustomerModel.TallyNos.TallySerialNo, CustomerModel.TallyNos.TallySerialNo2, CustomerModel.TallyNos.TallySerialNo3 })
             {
-                if (tallySerialNo.Length > 10)
+                if (tallySerialNo.Length > 9)
                 {
                     await JS.ErrorMessage($"{tallySerialNo} length cannot exceed 9 characters.");
                     return;
