@@ -19,6 +19,9 @@ using static NPOI.HSSF.Util.HSSFColor;
 using PB.Shared.Enum.CRM;
 using PB.CRM.Model.Enum;
 using PB.EntityFramework;
+using PB.Shared.Models.Reports;
+using PB.Shared.Enum.Reports;
+using PB.Server.Controllers.eCommerce;
 
 namespace PB.Server.Controllers
 {
@@ -38,11 +41,23 @@ namespace PB.Server.Controllers
 
         #region Dashboard
 
-        [HttpGet("get-dashboard-count")]
-        public async Task<IActionResult> GetDashboardCount()
+        [HttpGet("get-dashboard-count/{filterID}")]
+        public async Task<IActionResult> GetDashboardCount(int filterID=0)
         {
-            string WhereCondition = ""; string QWhereCondition = "";
-            if (CurrentUserTypeID > (int)UserTypes.Client)
+            string WhereCondition = ""; string QWhereCondition = ""; string dateEnquiryCondition = ""; string dateQuotationCondition = "";
+            //string dateFollowUpCondition = "";
+            
+
+
+            if (filterID!=0)
+            {
+                var dateContition = await _cRMRepository.GetAllDateFilter(filterID);
+                dateEnquiryCondition = $@" and Convert(date,E.Date) between '{dateContition.FromDate}' and '{dateContition.ToDate}'";
+                dateQuotationCondition = $@" and Convert(date,Q.Date) between '{dateContition.FromDate}' and '{dateContition.ToDate}'";
+                //dateFollowUpCondition = $@" and Convert(date,Q.FollowUpDate) between {From} and {To}";
+            }
+
+             if (CurrentUserTypeID > (int)UserTypes.Client)
             {
                 var enquiryIDs = await _cRMRepository.GetAccessableEnquiriesForUser(CurrentEntityID, CurrentBranchID);
                 if (CurrentUserTypeID > (int)UserTypes.Client && !string.IsNullOrEmpty(enquiryIDs))
@@ -63,14 +78,14 @@ namespace PB.Server.Controllers
                                                                                             Group By EA.EnquiryID
                                                                                             ) EAS ON E.EnquiryID=EAS.EnquiryID 
                                                                                 LEFT JOIN viEntity VE on VE.EntityID=E.UserEntityID
-                                                                                Where CurrentFollowupNature={(int)FollowUpNatures.Followup} and IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition}", null);
+                                                                                Where CurrentFollowupNature={(int)FollowUpNatures.Followup} and IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition} {dateEnquiryCondition}", null);
             int pendingQuotationCount = await _dbContext.GetByQueryAsync<int>($@"Select Count(Q.QuotationID) from Quotation Q
                                                                                 LEFT JOIN ( Select QuotationID,Max(FollowupID) As FollowupID 
                                                                                             From FollowUp 
                                                                                             Where IsDeleted=0 and FollowUpType={(int)FollowUpTypes.Quotation}
                                                                                             Group by QuotationID
                                                                                             ) EF on EF.QuotationID=Q.QuotationID
-                                                                                Where CurrentFollowupNature={(int)FollowUpNatures.Followup} and Q.IsDeleted=0 and BranchID={CurrentBranchID} {QWhereCondition}", null);
+                                                                                Where CurrentFollowupNature={(int)FollowUpNatures.Followup} and Q.IsDeleted=0 and BranchID={CurrentBranchID} {QWhereCondition} {dateQuotationCondition}", null);
 
             
             int closedEnquiryCount = await _dbContext.GetByQueryAsync<int>($@"Select Count(E.EnquiryID) 
@@ -83,14 +98,14 @@ namespace PB.Server.Controllers
                                                                                             Group By EA.EnquiryID
                                                                                             ) EAS ON E.EnquiryID=EAS.EnquiryID 
                                                                                 LEFT JOIN viEntity VE on VE.EntityID=E.UserEntityID 
-                                                                                Where CurrentFollowupNature={(int)FollowUpNatures.Dropped} and IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition} ", null);
+                                                                                Where CurrentFollowupNature={(int)FollowUpNatures.Dropped} and IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition}  {dateEnquiryCondition}", null);
             int closedQuotationCount = await _dbContext.GetByQueryAsync<int>($@"Select Count(Q.QuotationID) from Quotation Q
                                                                                 LEFT JOIN ( Select QuotationID,Max(FollowupID) As FollowupID 
                                                                                             From FollowUp 
                                                                                             Where IsDeleted=0 and FollowUpType={(int)FollowUpTypes.Quotation}
                                                                                             Group by QuotationID
                                                                                             ) EF on EF.QuotationID=Q.QuotationID
-                                                                                Where CurrentFollowupNature={(int)FollowUpNatures.Dropped} and Q.IsDeleted=0 and BranchID={CurrentBranchID} {QWhereCondition}", null);
+                                                                                Where CurrentFollowupNature={(int)FollowUpNatures.Dropped} and Q.IsDeleted=0 and BranchID={CurrentBranchID} {QWhereCondition} {dateQuotationCondition}", null);
 
             var res = new DashboardCountModel
             {
@@ -104,7 +119,7 @@ namespace PB.Server.Controllers
                                                                                     Group By EA.EnquiryID
                                                                                     ) EAS ON E.EnquiryID=EAS.EnquiryID 
                                                                         LEFT JOIN viEntity VE on VE.EntityID=E.UserEntityID
-                                                                        Where CurrentFollowupNature = {(int)FollowUpNatures.New} and IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition} ", null),
+                                                                        Where CurrentFollowupNature = {(int)FollowUpNatures.New} and IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition}  {dateEnquiryCondition}", null),
                 Followups = pendingEnquiryCount + pendingQuotationCount,
                 Interested = await _dbContext.GetByQueryAsync<int>($@"Select Count(E.EnquiryID) 
                                                                     from Enquiry E
@@ -116,7 +131,7 @@ namespace PB.Server.Controllers
                                                                                 Group By EA.EnquiryID
                                                                                 ) EAS ON E.EnquiryID=EAS.EnquiryID 
                                                                     LEFT JOIN viEntity VE on VE.EntityID=E.UserEntityID
-                                                                    Where CurrentFollowupNature={(int)FollowUpNatures.ClosedWon} and IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition}", null),
+                                                                    Where CurrentFollowupNature={(int)FollowUpNatures.ClosedWon} and IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition}  {dateEnquiryCondition}", null),
                 Closed = closedEnquiryCount + closedQuotationCount,
                 TotalEnquiry = await _dbContext.GetByQueryAsync<int>($@"Select Count(E.EnquiryID) 
                                                                         from Enquiry E
@@ -127,7 +142,7 @@ namespace PB.Server.Controllers
 			                                                                        Where EA.IsDeleted=0
                                                                                     Group By EA.EnquiryID
                                                                                     ) EAS ON E.EnquiryID=EAS.EnquiryID 
-                                                                        LEFT JOIN viEntity VE on VE.EntityID=E.UserEntityID Where IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition}", null),
+                                                                        LEFT JOIN viEntity VE on VE.EntityID=E.UserEntityID Where IsDeleted=0 and BranchID={CurrentBranchID} {WhereCondition}  {dateEnquiryCondition}", null),
             };
 
             return Ok(res);

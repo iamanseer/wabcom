@@ -63,6 +63,12 @@ namespace PB.Server.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "Enquiry")]
         public async Task<IActionResult> GetEnquiryList(PagedListPostModelWithFilter searchModel)
         {
+            string dateEnquiryCondition = ""; string dateQuotationCondition = "";
+            if (searchModel.PeriodTypeID != 0)
+            {
+                var dateContition = await _cRMRepository.GetAllDateFilter(searchModel.PeriodTypeID);
+                dateEnquiryCondition = $@" and Convert(date,E.Date) between '{dateContition.FromDate}' and '{dateContition.ToDate}' ";
+            }
             PagedListQueryModel query = searchModel;
             query.Select = $@"Select EnquiryNo,Date,
                                 Case When VE.EntityID is null then 'System' else  VE.Name end AS AddedBy,
@@ -82,7 +88,7 @@ namespace PB.Server.Controllers
                                             ) EAS ON E.EnquiryID=EAS.EnquiryID
                                 LEFT JOIN viEntity VE on VE.EntityID=E.UserEntityID";
 
-            query.WhereCondition = $"E.IsDeleted=0 and E.BranchID={CurrentBranchID} and (ISNULL(E.CurrentFollowupNature,0)={searchModel.CurrentFollowupNature} or {searchModel.CurrentFollowupNature}=-1) and (E.IsInCart=0 or ISNULL(E.IsInCart,0)=0)";
+            query.WhereCondition = $"E.IsDeleted=0 and E.BranchID={CurrentBranchID} and (ISNULL(E.CurrentFollowupNature,0)={searchModel.CurrentFollowupNature} or {searchModel.CurrentFollowupNature}=-1) and (E.IsInCart=0 or ISNULL(E.IsInCart,0)=0) {dateEnquiryCondition}";
             var enquiryIDs = await _cRMRepository.GetAccessableEnquiriesForUser(CurrentEntityID, CurrentBranchID);
             if (CurrentUserTypeID > (int)UserTypes.Client && !string.IsNullOrEmpty(enquiryIDs))
                 query.WhereCondition += $" and E.EnquiryID IN ({enquiryIDs})";

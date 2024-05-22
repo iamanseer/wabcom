@@ -1,5 +1,6 @@
 ﻿@page "/enquiries"
 @page "/enquiries/{Nature}"
+@page "/enquiries/{Nature}/{PeriodTypeID:int}"
 
 @using PB.Shared.Models;
 @using PB.CRM.Model.Enum;
@@ -136,6 +137,8 @@
 
 @code {
     [Parameter] public string? Nature { get; set; }
+    [Parameter] public int PeriodTypeID { get; set; }
+
 
     private PagedList<EnquiryListModel> EnquiryListPageModel = new();
     private PagedListPostModelWithFilter ListPageSearchModel = new();
@@ -161,6 +164,7 @@
 
         if (!string.IsNullOrEmpty(Nature))
         {
+            ListPageSearchModel.PeriodTypeID = PeriodTypeID;
             switch (Nature)
             {
                 case "new-enquiries":

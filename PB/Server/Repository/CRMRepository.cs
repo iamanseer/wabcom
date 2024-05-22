@@ -39,11 +39,13 @@ namespace PB.Server.Repository
         Task<int> SaveFollowup(FollowUpModel followUpModel, IDbTransaction? tran = null);
 
         #endregion
-
-
-
-
         Task<int> GenerateNewQuotationPdf(int quotationID, int branchID, int clientID);
+
+
+        #region  DateFilter
+        Task<DashboardDateFilterModel> GetAllDateFilter(int filterID = 0);
+
+        #endregion
     }
     public class CRMRepository : ICRMRepository
     {
@@ -231,5 +233,47 @@ namespace PB.Server.Repository
         #endregion
 
 
+        #region Date
+        public async Task<DashboardDateFilterModel> GetAllDateFilter(int filterID = 0)
+        {
+            var res = new DashboardDateFilterModel();
+            if (filterID != 0)
+            {
+                DateTime? From = DateTime.UtcNow.Date; DateTime? To = DateTime.UtcNow.Date;
+                switch (filterID)
+                {
+                    case (int)LeadsPeriods.Today:
+                        From = To = DateTime.UtcNow.Date;
+                        break;
+                    case (int)LeadsPeriods.Yesterday:
+                        To = DateTime.UtcNow.Date;
+                        From = DateTime.UtcNow.AddDays(-1).Date;
+                        break;
+                    case (int)LeadsPeriods.ThisWeek:
+                        To = DateTime.UtcNow.Date;
+                        From = To.Value.AddDays(-(int)To.Value.DayOfWeek).Date;
+                        break;
+                    case (int)LeadsPeriods.ThisMonth:
+                        To = DateTime.UtcNow.Date;
+                        From = new DateTime(To.Value.Year, To.Value.Month, 1).Date;
+                        break;
+                    case (int)LeadsPeriods.ThisQuarter:
+                        To = DateTime.UtcNow.Date;
+                        int quarter = (To.Value.Month - 1) / 3 + 1;
+                        From = new DateTime(To.Value.Year, (quarter - 1) * 3 + 1, 1).Date;
+                        break;
+
+                    case (int)LeadsPeriods.ThisYear:
+                        To = DateTime.UtcNow.Date;
+                        From = new DateTime(To.Value.Year, 1, 1).Date;
+                        break;
+                }
+                res.FromDate = From;
+                res.ToDate = To;
+            }
+
+            return res;
+        }
+        #endregion
     }
 }

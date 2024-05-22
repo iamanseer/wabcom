@@ -15,6 +15,7 @@ namespace PB.Shared.Models
         public List<DateFilterModel> FilterByDateOptions { get; set; } = new();
         public List<BooleanFilterModel> FilterByBooleanOptions { get; set; } = new();
         public List<FieldFiltermodel> FilterByFieldOptions { get; set; } = new();
+        public int PeriodTypeID { get; set; } = 0;
     }
 
     public class BroadcastSearchModel : PagedListPostModelWithFilter

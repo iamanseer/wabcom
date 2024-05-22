@@ -32,6 +32,12 @@ namespace PB.Shared.Models
         public int QuotationID { get; set; }
     }
 
+    public class DashboardDateFilterModel
+    {
+        public DateTime? FromDate { get; set; }
+        public DateTime? ToDate { get; set; }
+    }
+
     public class DashboardLeadQualityChartModel
 	{
         public int? DataCount { get; set; }

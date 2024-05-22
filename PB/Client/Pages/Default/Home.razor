@@ -1,5 +1,6 @@
 ﻿@page "/home"
 @using PB.CRM.Model.Enum;
+@using PB.Shared.Enum.CRM
 @using PB.Shared.Models;
 @attribute [Authorize]
 
@@ -46,10 +47,44 @@
 
         </div>
 
+        <!--Filter Option-->
+
+        <div class="row">
+            <div class="col-md-10"></div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <div class="input-group">
+                        <select name="narration-typ" class="form-control form-select" value="@FilterID" @onchange="async (ChangeEventArgs e) => await HandleToFilter(e)">
+                            
+                            @foreach (LeadsPeriods type in Enum.GetValues(typeof(LeadsPeriods)))
+                            {
+                                @if ((int)type == FilterID)
+                                {
+                                    <option value="@((int)type)" selected>@type</option>
+                                }
+                                else
+                                {
+                                    <option value="@((int)type)">@type</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+
+        <!--End Filter Option-->
+
         <!--New Enquiries Card-->
         <div class="row row-cards">
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
-                <div class="card" @onclick="@(()=>Nav.NavigateTo($"enquiries/new-enquiries"))">
+                <div class="card" @onclick="@(()=>Nav.NavigateTo($"enquiries/new-enquiries/{FilterID}"))">
                     <div class="card-header pb-0 border-bottom-0">
                         <h3 class="card-title">New Enquires</h3>
                         <div class="card-options">
@@ -99,7 +134,7 @@
 
             <!--Quotation Sent Card-->
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
-                <div class="card" @onclick="@(()=>Nav.NavigateTo($"enquiries/interested"))">
+                <div class="card" @onclick="@(()=>Nav.NavigateTo($"enquiries/interested/{FilterID}"))">
                     <div class="card-header pb-0 border-bottom-0">
                         <h3 class="card-title">Quotation Sent</h3>
                         <div class="card-options">
@@ -124,7 +159,7 @@
 
             <!--Closed Card-->
             <div class="col-sm-6 col-md-6 col-lg-6 col-xl-3">
-                <div class="card" @onclick="@(()=>Nav.NavigateTo($"enquiries/closed"))">
+                <div class="card" @onclick="@(()=>Nav.NavigateTo($"enquiries/closed/{FilterID}"))">
                     <div class="card-header pb-0 border-bottom-0">
                         <h3 class="card-title">Closed</h3>
                         <div class="card-options">
@@ -432,6 +467,7 @@
 @code
 {
     private List<DashboardFollowUpListModel> followUpList = new();
+    int FilterID = 0;
     private DashboardCountModel Model = new();
     private List<DashboardLeadQualityChartModel> DonutList = new();
     private List<DashboardLeadThroughChartModel> LeadThroughData = new();
@@ -442,7 +478,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Model = await API.GetAsync<DashboardCountModel>("dashboard/get-dashboard-count");
+        await LoadDashboardCount(FilterID);
 
         followUpList = await API.GetAsync<List<DashboardFollowUpListModel>>("dashboard/get-dashboard-follow-up-list");
 
@@ -479,5 +515,16 @@
         //await JS.InvokeVoidAsync("CreateVisitorLineChart", EnquiryLineChart);
     }
 
+
+    private async Task HandleToFilter(ChangeEventArgs e)
+    {
+        FilterID = Convert.ToInt32(e.Value);
+        await LoadDashboardCount(FilterID);
+    }
+
+    private async Task LoadDashboardCount(int filterId)
+    {
+        Model = await API.GetAsync<DashboardCountModel>($@"dashboard/get-dashboard-count/{filterId}");
+    }
 
 }

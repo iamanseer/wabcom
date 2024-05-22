@@ -26,6 +26,7 @@ using PB.Shared.Models.eCommerce.SEO;
 using static NPOI.HSSF.Util.HSSFColor;
 using PB.Shared.Enum;
 using PB.CRM.Model.Enum;
+using PB.Shared.Enum.CRM;
 
 namespace PB.Server.Repository
 {
@@ -57,9 +58,12 @@ namespace PB.Server.Repository
         Task SendPdfDocument(MailDetailsModel model, IDbTransaction? tran = null);
 
         #endregion
+
         #region NewsLetter
         Task SendNewsLetter(NewLetterModel model, int? NewsLetterID);
         #endregion
+
+
     }
 
     public class CommonRepository : ICommonRepository
@@ -580,5 +584,6 @@ Best regards,
 
         }
         #endregion
+
     }
- }
+}
