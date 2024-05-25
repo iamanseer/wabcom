@@ -62,6 +62,9 @@ namespace PB.Model.Models
         public string? StaffName { get; set; }
         public string? StaffPhone2 { get; set; }
         public string? BusinessTypeName { get; set; }
+        public string? Prefix { get; set; }
+        public int? Suffix { get; set; }
+        public string? ProposalFor { get; set; }
         public List<string> TermsList { get; set; } = new();
         public List<string> CustomerNoteList { get; set; } = new();
 

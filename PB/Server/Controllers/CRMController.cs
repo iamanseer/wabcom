@@ -608,13 +608,15 @@ namespace PB.Server.Controllers
 
                     #region Quotation Number
 
-                    if (model.QuotationID == 0 || model.QuotationNo == 0)
-                    {
-                        model.QuotationNo = await _dbContext.GetByQueryAsync<int>($@"
-                                                                Select isnull(max(QuotationNo)+1,1) AS QuotationNo
-                                                                From Quotation
-                                                                Where BranchID={CurrentBranchID} and IsDeleted=0", null, tran);
-                    }
+                    //if (model.QuotationID == 0 || model.QuotationNo == 0)
+                    //{
+                    //    model.QuotationNo = await _dbContext.GetByQueryAsync<int>($@"
+                    //                                            Select isnull(max(QuotationNo)+1,1) AS QuotationNo
+                    //                                            From Quotation
+                    //                                            Where BranchID={CurrentBranchID} and IsDeleted=0", null, tran);
+                    //}
+
+
 
                     #endregion
 
@@ -864,7 +866,7 @@ namespace PB.Server.Controllers
         {
             PagedListQueryModel query = searchModel;
             query.Select = $@"Select QuotationID,Date As AddedOn,QuotationNo,Case When Type={(int)CustomerTypes.Individual} Then EP.FirstName else EI.Name end as CustomerName,
-                                    uE.Name As Username,CurrentFollowupNature,ExpiryDate As ExpireOn
+                                    uE.Name As Username,CurrentFollowupNature,ExpiryDate As ExpireOn,Prefix,Suffix
                                     From Quotation Q
                                     Join Customer C on C.EntityID=Q.CustomerEntityID and C.IsDeleted=0
                                     Left Join EntityPersonalInfo EP ON EP.EntityID=C.EntityID and EP.IsDeleted=0
@@ -1286,9 +1288,6 @@ namespace PB.Server.Controllers
 
         #endregion
 
-
-
-
         #region New Quotation Pdf
 
         [HttpGet("view-quotation-pdf/{quotationID}")]
@@ -1316,5 +1315,22 @@ namespace PB.Server.Controllers
 
         #endregion
 
+        #region Quotation No/Prefix/Suffix
+
+
+        [HttpGet("get-quotation-number")]
+        public async Task<IActionResult> GetInvoiceNo()
+        {
+            int quotationNo = await _dbContext.GetByQueryAsync<int>($@"Select Isnull(Max(QuotationNo)+1,1) AS QuotationNo
+                                                                        From Quotation
+                                                                        Where BranchID={CurrentBranchID} and IsDeleted=0", null);
+            return Ok(quotationNo);
+        }
+
+
+
+
+
+        #endregion
     }
 }

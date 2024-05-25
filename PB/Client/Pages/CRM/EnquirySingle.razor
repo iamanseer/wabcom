@@ -213,7 +213,7 @@
                                                                     @item.ItemName
                                                                 </td>
 
-                                                                <td>
+                                                                <td style="text-align: right;">
                                                                     @item.Quantity
                                                                 </td>
 
@@ -256,11 +256,11 @@
                                                                     <div class="px-0">
                                                                         @if (item.ItemVariantID == null)
                                                                         {
-                                                                            <input type="text" class="form-control" value="0" disabled />
+                                                                            <input type="text" style="text-align: right;" class="form-control" value="0.00" disabled />
                                                                         }
                                                                         else
                                                                         {
-                                                                            <input type="text" class="form-control" id="@(RowItemQuantityBoxID+item.RowIndex)" @bind-value="item.Quantity">
+                                                                            <input type="text" class="form-control" style="text-align: right;" id="@(RowItemQuantityBoxID+item.RowIndex)" @bind-value="item.Quantity">
                                                                         }
                                                                     </div>
                                                                 </td>
@@ -306,11 +306,11 @@
                                                     <td class="px-1" style="width:100px">
                                                         @if (Footer.ItemVariantID == null)
                                                         {
-                                                            <input type="text" class="form-control" value="0" disabled />
+                                                            <input type="text" class="form-control" style="text-align: right;" value="0.00" disabled />
                                                         }
                                                         else
                                                         {
-                                                            <input type="text" class="form-control" id="@FooterItemQuantityBoxID" @bind-value="@Footer.Quantity">
+                                                            <input type="text" class="form-control" style="text-align: right;" id="@FooterItemQuantityBoxID" @bind-value="@Footer.Quantity">
 
                                                         }
                                                     </td>

@@ -18,7 +18,8 @@
 @attribute [Authorize(Roles = "Quotation")]
 
 <PageLayoutNew>
-    <EditForm Model="Model" OnValidSubmit="async () => await SaveQuotation()">    @*  OnInvalidSubmit="ShowErrorMessage" *@
+    <EditForm Model="Model" OnValidSubmit="async () => await SaveQuotation()">
+        @*  OnInvalidSubmit="ShowErrorMessage" *@
         <DataAnnotationsValidator />
         <div class="main-container container-fluid">
             <div class="row page-header ">
@@ -483,35 +484,94 @@
 
 
                             <div class="row">
-                                @if (Model.QuotationID == 0)
-                                {
-                                    <div class="col-md-7">
-                                        <div class="form-group">
-                                            <label class="form-label mt-0 me-1">Quotation Number :</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text" style="background-color:var(--primary-bg-color);">
-                                                    @("QT")
-                                                </span>
-                                                <input type="text" class="form-control" value="New Quotation" style="pointer-events:none">
-                                            </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Prefix :</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" @bind="Model.Prefix">
                                         </div>
+                                        <ValidationMessage For="() => Model.Prefix" />
                                     </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Suffix :</label>
+                                        <div class="input-group">
+                                        <select name="narration-typ" class="form-control form-select" @bind="Model.Suffix">
+                                            @foreach (var type in Years)
+                                            {
+                                                @if (Model.Suffix == type)
+                                                {
+                                                    <option value="@type" selected>@type</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="@type">@type</option>
+                                                }
+                                            }
+                                        </select>
+                                    </div>
+                                        <ValidationMessage For="() => Model.Suffix" />
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Quotation Number :</label>
+                                        <div class="input-group">
+                                            @* <span class="input-group-text" style="background-color:var(--primary-bg-color);">
+                                                @("QT")
+                                            </span> *@
+                                            <input type="number" class="form-control" @bind="Model.QuotationNo" disabled>
+                                        </div>
+                                        <ValidationMessage For="() => Model.QuotationNo" />
+                                    </div>
+                                </div>
+
+
+
+
+
+
+
+
+                                @* @if (Model.QuotationID == 0)
+                                {
+                                <div class="col-md-7">
+                                <div class="form-group">
+                                <label class="form-label mt-0 me-1">Quotation Number :</label>
+                                <div class="input-group">
+                                <span class="input-group-text" style="background-color:var(--primary-bg-color);">
+                                @("QT")
+                                </span>
+                                <input type="text" class="form-control" value="New Quotation" style="pointer-events:none">
+                                </div>
+                                </div>
+                                </div>
                                 }
                                 else
                                 {
-                                    <div class="col-md-7">
-                                        <div class="form-group">
-                                            <label class="form-label mt-0 me-1">Quotation Number :</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text" style="background-color:var(--primary-bg-color);">
-                                                    @("QT")
-                                                </span>
-                                                <input type="number" class="form-control" @bind="Model.QuotationNo" disabled>
-                                            </div>
-                                            <ValidationMessage For="() => Model.QuotationNo" />
-                                        </div>
+                                <div class="col-md-7">
+                                <div class="form-group">
+                                <label class="form-label mt-0 me-1">Quotation Number :</label>
+                                <div class="input-group">
+                                <span class="input-group-text" style="background-color:var(--primary-bg-color);">
+                                @("QT")
+                                </span>
+                                <input type="number" class="form-control" @bind="Model.QuotationNo" disabled>
+                                </div>
+                                <ValidationMessage For="() => Model.QuotationNo" />
+                                </div>
+                                </div>
+                                } *@
+                            </div>
+                            <div class="row">
+                                <div class="col-md-7">
+                                    <div class="form-group">
+                                        <label class="form-label mt-0 me-1">Proporsal For :</label>
+                                        <textarea name="" class="textarea form-control" cols="2" rows="2" @bind="Model.ProposalFor" placeholder="propersal for.."></textarea>
+                                        <ValidationMessage For="() => Model.ProposalFor" />
                                     </div>
-                                }
+                                </div>
                             </div>
 
                             <div class="row">
@@ -581,19 +641,19 @@
                                                                 </div>
                                                             </td>
                                                             <td class="px-0" style="min-width:400px">
-                                                                 <textarea  class="form-control" rows="2" @bind="quotationItem.Description" disabled></textarea>
+                                                                <textarea class="form-control" rows="2" @bind="quotationItem.Description" disabled></textarea>
                                                                 @* @quotationItem.Description *@
                                                             </td>
-                                                            <td class="px-0">
+                                                            <td class="px-0" style="text-align: right;">
                                                                 @quotationItem.Quantity
                                                             </td>
-                                                            <td class="px-0">
+                                                            <td class="px-0" style="text-align: right;">
                                                                 @quotationItem.Rate
                                                             </td>
-                                                            <td class="px-0">
+                                                            <td class="px-0" style="text-align: right;">
                                                                 @quotationItem.Discount
                                                             </td>
-                                                            <td class="px-0">
+                                                            <td class="px-0" style="text-align: right;">
                                                                 @if (quotationItem.TaxPreferenceTypeID == (int)TaxPreferences.NonTaxable)
                                                                 {
                                                                     @("Non taxable")
@@ -611,7 +671,7 @@
                                                                     @quotationItem.TaxCategoryName
                                                                 }
                                                             </td>
-                                                            <td class="px-0">
+                                                            <td class="px-0" style="text-align: right;">
                                                                 @quotationItem.TotalAmount
                                                             </td>
                                                         </tr>
@@ -651,56 +711,56 @@
                                                                                 NewButtonClicked="@(async (int dropdownMode) => await HandleAddNewQuotationItemButtonClick(dropdownMode, index))" />
                                                             </td>
                                                             <td class="px-0" style="min-width:200px">
-                                                               @*  <input type="text" class="form-control form-control-custom" @bind="quotationItem.Description" /> *@
+                                                                @*  <input type="text" class="form-control form-control-custom" @bind="quotationItem.Description" /> *@
 
                                                                 <textarea class="form-control" rows="2" @bind="quotationItem.Description"></textarea>
                                                             </td>
                                                             <td class="px-0">
                                                                 @if (quotationItem.ItemVariantID == null)
                                                                 {
-                                                                    <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                                    <input type="text" class="form-control form-control-custom" style="text-align: right;" value="0.00" disabled />
                                                                 }
                                                                 else
                                                                 {
-                                                                    <input type="number" class="form-control form-control-custom" id="@(RowItemQuantityBoxID+index)" value="@quotationItem.Quantity" @onchange="(ChangeEventArgs e) => HandleQuotationItemQuantityChange(quotationItem, e)">
+                                                                    <input type="number" class="form-control form-control-custom" style="text-align: right;" id="@(RowItemQuantityBoxID+index)" value="@quotationItem.Quantity" @onchange="(ChangeEventArgs e) => HandleQuotationItemQuantityChange(quotationItem, e)">
                                                                 }
                                                             </td>
                                                             <td class="px-0">
                                                                 @if (quotationItem.ItemVariantID == null)
                                                                 {
-                                                                    <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                                    <input type="text" class="form-control form-control-custom" style="text-align: right;"  value="0.00" disabled />
                                                                 }
                                                                 else
                                                                 {
-                                                                    <input type="number" class="form-control form-control-custom" id="@(RowItemRateBoxID+index)" value="@quotationItem.Rate" @onchange="(ChangeEventArgs e) => HandlequotationItemRateChange(quotationItem, e)">
+                                                                    <input type="number" class="form-control form-control-custom" style="text-align: right;" id="@(RowItemRateBoxID+index)" value="@quotationItem.Rate" @onchange="(ChangeEventArgs e) => HandlequotationItemRateChange(quotationItem, e)">
                                                                 }
                                                             </td>
                                                             <td class="px-0">
                                                                 @if (quotationItem.ItemVariantID == null)
                                                                 {
-                                                                    <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                                    <input type="text" class="form-control form-control-custom" style="text-align: right;"  value="0.00" disabled />
                                                                 }
                                                                 else
                                                                 {
-                                                                    <input type="number" class="form-control form-control-custom" id="@(RowItemDiscountBoxID+index)" value="@quotationItem.Discount" @onchange="(ChangeEventArgs e) => HandlequotationItemDiscountChange(quotationItem, e)" />
+                                                                    <input type="number" class="form-control form-control-custom" style="text-align: right;" id="@(RowItemDiscountBoxID+index)" value="@quotationItem.Discount" @onchange="(ChangeEventArgs e) => HandlequotationItemDiscountChange(quotationItem, e)" />
                                                                 }
                                                             </td>
                                                             <td class="px-0" style="min-width:200px">
                                                                 @if (quotationItem.ItemVariantID == null)
                                                                 {
-                                                                    <input type="text" class="form-control form-control-custom" value="choose item" disabled />
+                                                                    <input type="text" class="form-control form-control-custom" style="text-align: right;" value="choose item" disabled />
                                                                 }
                                                                 else if (quotationItem.TaxPreferenceTypeID == (int)TaxPreferences.NonTaxable)
                                                                 {
-                                                                    <input type="text" class="form-control form-control-custom" value="Non Taxable" disabled />
+                                                                    <input type="text" class="form-control form-control-custom" style="text-align: right;"  value="Non Taxable" disabled />
                                                                 }
                                                                 else if (quotationItem.TaxPreferenceTypeID == (int)TaxPreferences.NonGstSupply)
                                                                 {
-                                                                    <input type="text" class="form-control form-control-custom" value="Non-Gst Supply" disabled />
+                                                                    <input type="text" class="form-control form-control-custom" style="text-align: right;" value="Non-Gst Supply" disabled />
                                                                 }
                                                                 else if (quotationItem.TaxPreferenceTypeID == (int)TaxPreferences.OutOfScope)
                                                                 {
-                                                                    <input type="text" class="form-control form-control-custom" value="Out of scope" disabled />
+                                                                    <input type="text" class="form-control form-control-custom" style="text-align: right;" value="Out of scope" disabled />
                                                                 }
                                                                 else
                                                                 {
@@ -719,7 +779,7 @@
                                                                 }
                                                             </td>
                                                             <td class="px-0">
-                                                                <input type="number" class="form-control form-control-custom" @bind="quotationItem.TotalAmount" disabled style="pointer-events:none" />
+                                                                <input type="number" class="form-control form-control-custom" @bind="quotationItem.TotalAmount" disabled style="pointer-events:none;text-align: right;" />
                                                             </td>
                                                         </tr>
                                                         <tr>
@@ -760,37 +820,37 @@
                                                 </td>
                                                 <td class="px-0" style="min-width:200px">
                                                     @* <input type="text" class="form-control form-control-custom" @bind="@Footer.Description" /> *@
-                                                         <textarea  class="form-control" rows="2" @bind="Footer.Description"></textarea>
+                                                    <textarea class="form-control" rows="2" @bind="Footer.Description"></textarea>
 
                                                 </td>
                                                 <td class="px-0">
                                                     @if (Footer.ItemVariantID == null)
                                                     {
-                                                        <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                        <input type="text" class="form-control form-control-custom" style="text-align: right;" value="0.00" disabled />
                                                     }
                                                     else
                                                     {
-                                                        <input type="text" class="form-control form-control-custom" id="@FooterItemQuantityBoxID" value="@Footer.Quantity" @onchange="(ChangeEventArgs e) => HandleQuotationItemQuantityChange(Footer, e)">
+                                                        <input type="text" class="form-control form-control-custom" style="text-align: right;" id="@FooterItemQuantityBoxID" value="@Footer.Quantity" @onchange="(ChangeEventArgs e) => HandleQuotationItemQuantityChange(Footer, e)">
                                                     }
                                                 </td>
                                                 <td class="px-0">
                                                     @if (Footer.ItemVariantID == null)
                                                     {
-                                                        <input type="text" class="form-control form-control-custom" value="0" disabled />
+                                                        <input type="text" class="form-control form-control-custom" style="text-align: right;"  value="0.00" disabled />
                                                     }
                                                     else
                                                     {
-                                                        <input type="text" class="form-control form-control-custom" id="@FooterItemRateBoxID" value="@Footer.Rate" @onchange="(ChangeEventArgs e) => HandlequotationItemRateChange(Footer, e)">
+                                                        <input type="text" class="form-control form-control-custom" style="text-align: right;" id="@FooterItemRateBoxID" value="@Footer.Rate" @onchange="(ChangeEventArgs e) => HandlequotationItemRateChange(Footer, e)">
                                                     }
                                                 </td>
                                                 <td class="px-0">
                                                     @if (Footer.ItemVariantID == null)
                                                     {
-                                                        <input type="number" class="form-control form-control-custom" value="0" disabled />
+                                                        <input type="number" class="form-control form-control-custom" style="text-align: right;"  value="0.00" disabled />
                                                     }
                                                     else
                                                     {
-                                                        <input type="number" class="form-control form-control-custom" value="@Footer.Discount" @onchange="(ChangeEventArgs e) => HandlequotationItemDiscountChange(Footer, e)" />
+                                                        <input type="number" class="form-control form-control-custom" style="text-align: right;" value="@Footer.Discount" @onchange="(ChangeEventArgs e) => HandlequotationItemDiscountChange(Footer, e)" />
                                                     }
                                                 </td>
                                                 <td class="px-0" style="min-width:200px">
@@ -827,7 +887,7 @@
                                                     }
                                                 </td>
                                                 <td class="px-0">
-                                                    <input type="number" class="form-control form-control-custom" @bind="Footer.TotalAmount" disabled style="pointer-events:none" />
+                                                    <input type="number" class="form-control form-control-custom" @bind="Footer.TotalAmount" disabled style="pointer-events:none;text-align: right;" />
                                                 </td>
                                             </tr>
                                             <tr>
@@ -860,9 +920,9 @@
                                     </div>
                                 </div>
                                 @* <div class="col-md-6 col-12">
-                                    <label class="form-label">Attach File(s) to Estimate</label>
-                                    <input id="demo" type="file" name="files" accept=".jpg, .png, image/jpeg, image/png" multiple="" class="ff_fileupload_hidden"><div class="ff_fileupload_wrap"><div class="ff_fileupload_dropzone_wrap"><button class="ff_fileupload_dropzone" type="button" aria-label="Browse, drag-and-drop, or paste files to upload"></button></div><table class="ff_fileupload_uploads"></table></div>
-                                    <p style="font-size: 11px !important;">You can upload a maximum of 5 files, 5MB each</p>
+                                <label class="form-label">Attach File(s) to Estimate</label>
+                                <input id="demo" type="file" name="files" accept=".jpg, .png, image/jpeg, image/png" multiple="" class="ff_fileupload_hidden"><div class="ff_fileupload_wrap"><div class="ff_fileupload_dropzone_wrap"><button class="ff_fileupload_dropzone" type="button" aria-label="Browse, drag-and-drop, or paste files to upload"></button></div><table class="ff_fileupload_uploads"></table></div>
+                                <p style="font-size: 11px !important;">You can upload a maximum of 5 files, 5MB each</p>
                                 </div> *@
                             </div>
 
@@ -1038,54 +1098,54 @@
                                 </div>
                             }
 
-                          @*   @if (CustomerData.MailReceipients != null && CustomerData.MailReceipients.Count > 0)
+                            @*   @if (CustomerData.MailReceipients != null && CustomerData.MailReceipients.Count > 0)
                             { *@
-                                <!--Mail Reciepients-->
-                                <div class="row mt-4">
-                                    <div class="col-12">
-                                        <div class="mt-2 d-flex flex-row flex-wrap gap-2">
-                                            <label class="form-label" style="display: inline;">Mail To | </label>
-                                            <div style="width:100px" class="py-2">
-                                                <input type="checkbox" id="mailRecipientSelectAll" class="d-none" @onchange=" (ChangeEventArgs e) => HandleMailReciepientsSelectAllClicked(e)" />
-                                                @if ((Model.MailReciepients is null || (Model.MailReciepients is not null && Model.MailReciepients.Count != CustomerData.MailReceipients.Count)))
-                                                {
-                                                    <label class="form-label ms-2 text-success" style="display: inline;cursor:pointer;" for="mailRecipientSelectAll">
-                                                        <i class="fa fa-check text-success" aria-hidden="true"></i>
-                                                        Select All
-                                                    </label>
-                                                }
-                                                else if (Model.MailReciepients is not null && Model.MailReciepients.Count == CustomerData.MailReceipients.Count)
-                                                {
-                                                    <label class="form-label ms-2 text-info" style="display: inline;cursor:pointer;" for="mailRecipientSelectAll">
-                                                        <i class="fa fa-times text-danger" aria-hidden="true"></i>
-                                                        Deselect All
-                                                    </label>
-                                                }
-                                            </div>
-                                            <div style="width:200px">
-                                                <button class="btn" type="button" style="color:var(--primary-bg-color)" @onclick="async () => await OpenCustomerContactPersonModal()">
-                                                    <span class="me-2 ms-3" style="color:black">|</span>
-                                                    <i class="fe fe-plus me-1 text-success"></i>
-                                                    Add mail recipient
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="mt-2 border p-1 d-flex flex-row">
-                                            @for (int i = 0; i < CustomerData.MailReceipients.Count; i++)
+                            <!--Mail Reciepients-->
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <div class="mt-2 d-flex flex-row flex-wrap gap-2">
+                                        <label class="form-label" style="display: inline;">Mail To | </label>
+                                        <div style="width:100px" class="py-2">
+                                            <input type="checkbox" id="mailRecipientSelectAll" class="d-none" @onchange=" (ChangeEventArgs e) => HandleMailReciepientsSelectAllClicked(e)" />
+                                            @if ((Model.MailReciepients is null || (Model.MailReciepients is not null && Model.MailReciepients.Count != CustomerData.MailReceipients.Count)))
                                             {
-                                                MailRecipentsModel mailRecipient = CustomerData.MailReceipients[i];
-                                                bool isSelected = Model.MailReciepients is not null && Model.MailReciepients.Where(MR => MR.EntityID == mailRecipient.EntityID).FirstOrDefault() is not null ? true : false;
-                                                <div class="form-check form-check-inline bx-border">
-                                                    <input class="form-check-input" type="checkbox" checked="@(isSelected?"checked":null)" id="@("mail-recipient-"+mailRecipient.EntityID)" @onchange="(ChangeEventArgs e) => HandleMailReciepientSelected(e, mailRecipient)">
-                                                    <img class="ms-2" src="/assets/images/user.svg" style="width: 20px;" alt="">
-                                                    <label class="form-check-label ms-2" for="@("mail-recipient-"+mailRecipient.EntityID)">
-                                                        @mailRecipient.EmailAddress
-                                                    </label>
-                                                </div>
+                                                <label class="form-label ms-2 text-success" style="display: inline;cursor:pointer;" for="mailRecipientSelectAll">
+                                                    <i class="fa fa-check text-success" aria-hidden="true"></i>
+                                                    Select All
+                                                </label>
+                                            }
+                                            else if (Model.MailReciepients is not null && Model.MailReciepients.Count == CustomerData.MailReceipients.Count)
+                                            {
+                                                <label class="form-label ms-2 text-info" style="display: inline;cursor:pointer;" for="mailRecipientSelectAll">
+                                                    <i class="fa fa-times text-danger" aria-hidden="true"></i>
+                                                    Deselect All
+                                                </label>
                                             }
                                         </div>
+                                        <div style="width:200px">
+                                            <button class="btn" type="button" style="color:var(--primary-bg-color)" @onclick="async () => await OpenCustomerContactPersonModal()">
+                                                <span class="me-2 ms-3" style="color:black">|</span>
+                                                <i class="fe fe-plus me-1 text-success"></i>
+                                                Add mail recipient
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 border p-1 d-flex flex-row">
+                                        @for (int i = 0; i < CustomerData.MailReceipients.Count; i++)
+                                        {
+                                            MailRecipentsModel mailRecipient = CustomerData.MailReceipients[i];
+                                            bool isSelected = Model.MailReciepients is not null && Model.MailReciepients.Where(MR => MR.EntityID == mailRecipient.EntityID).FirstOrDefault() is not null ? true : false;
+                                            <div class="form-check form-check-inline bx-border">
+                                                <input class="form-check-input" type="checkbox" checked="@(isSelected?"checked":null)" id="@("mail-recipient-"+mailRecipient.EntityID)" @onchange="(ChangeEventArgs e) => HandleMailReciepientSelected(e, mailRecipient)">
+                                                <img class="ms-2" src="/assets/images/user.svg" style="width: 20px;" alt="">
+                                                <label class="form-check-label ms-2" for="@("mail-recipient-"+mailRecipient.EntityID)">
+                                                    @mailRecipient.EmailAddress
+                                                </label>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
+                            </div>
                             @* } *@
                         </div>
                     </div>
@@ -1368,6 +1428,11 @@
     private string FooterTaxCategoryDropdoownID = "footer-tax-category-drop-down-select";
     private string RowTaxCategoryDropdownID = "row-tax-category-drop-down-select";
 
+    
+    int StartYear = 2000;
+    int CurrentYear = DateTime.UtcNow.Year;
+    private List<int> Years = new();
+
     protected override async Task OnInitializedAsync()
     {
         Users = await API.GetAsync<List<IdnValuePair>>("common/get-client-users", true);
@@ -1376,6 +1441,7 @@
         {
             await ConvertEnquiry();
             HandleWholeQuotationItemsCalculation();
+            await GetQuotation();
         }
         else if (QuotationID > 0)
         {
@@ -1395,10 +1461,25 @@
             Model.CurrencyName = QuotationSettings.CurrencyName;
             Model.PlaceOfSupplyID = QuotationSettings.PlaceOfSupplyID;
             Model.PlaceOfSupplyName = QuotationSettings.PlaceOfSupplyName;
+            await GetQuotation();
         }
         StateHasChanged();
         await Task.Delay(50);
+        await GetYearList();
         await HandlePlaceOfSupplyDataRefreshBasedOnCustomer();
+    }
+
+    private async Task GetQuotation()
+    {
+        Model.QuotationNo = await API.GetAsync<int>($"crm/get-quotation-number");
+    }
+
+    async Task GetYearList()
+    {
+        for (int year = CurrentYear; year >= StartYear; year--)
+        {
+            Years.Add(year);
+        }
     }
 
     #region Customer

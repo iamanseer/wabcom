@@ -260,9 +260,9 @@ namespace PB.Server.Controllers
                     ClientID = CurrentClientID,
                     TaxNumber = customerModel.TaxNumber
                 };
-
+                string? customerName = string.IsNullOrEmpty(customerModel.Name)? customerModel.CompanyName : customerModel.Name;
                 customerModel.CustomerID = await _dbContext.SaveAsync(customer, tran, logSummaryID: logSummaryID);
-                CustomerAddResultModel returnObject = new() { EntityID = customerEntity.EntityID, Name = customerModel.Name };
+                CustomerAddResultModel returnObject = new() { EntityID = customerEntity.EntityID, Name = customerName };
                 tran.Commit();
                 return Ok(returnObject);
             }

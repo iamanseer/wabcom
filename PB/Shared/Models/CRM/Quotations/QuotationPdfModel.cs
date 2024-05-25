@@ -22,7 +22,7 @@ namespace PB.Shared.Models.CRM.Quotations
         public string? CurrencyName { get; set; }
         public string? Symbol { get; set; }
         public string? MainSuffix { get; set; }
-        public string? SubSuffix { get; set; }
+        public int? SubSuffix { get; set; }
         public string? AmountInWords { get; set; }
         public string? TermsandCondition { get; set; }
         public string? CustomerNote { get; set; }

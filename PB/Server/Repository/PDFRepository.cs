@@ -22,6 +22,8 @@ using PB.Shared.Models.Inventory.Invoices;
 using PB.Shared.Helpers;
 using PB.Shared.Tables.Tax;
 using Microsoft.IdentityModel.Tokens;
+using PB.Shared.Models.CRM.Quotations;
+using Microsoft.AspNetCore.Components.Forms;
 
 namespace PB.Server.Repository
 {
@@ -766,7 +768,8 @@ namespace PB.Server.Repository
                                                                      CE.Name as ClientName,CEA.AddressLine1 as ClientAddressLine1,CEA.AddressLine2 as ClientAddressLine2,CEA.AddressLine3 as ClientAddressLine3,
                                                                      S.StateName as ClientState,CEA.PinCode as ClientPinCode,CBC.CountryName as ClientCountry,MM.FileName as ClientImage,MM.MediaID as ClientMediaID,C.GSTNo,
                                                                      Concat(CR.CurrencyName,' ( ',CR.Symbol,' )') AS CurrencyName,CR.Symbol AS CurrencySymbol,CR.MainSuffix,CR.SubSuffix,
-                                                                     BusinessTypeName,cV.Name as StaffName,StaffPhoneNo,Q.BusinessTypeID,Q.QuotationCreatedFor,Description,cV.Phone2 as StaffPhone2
+                                                                     BusinessTypeName,cV.Name as StaffName,StaffPhoneNo,Q.BusinessTypeID,Q.QuotationCreatedFor,Description,cV.Phone2 as StaffPhone2,
+                                                                     Q.Prefix,Q.Suffix,Q.ProposalFor
                                                                      From Quotation Q
                                                                      Left Join viEntity E ON E.EntityID=Q.CustomerEntityID
                                                                      Left Join Customer Cust ON Cust.EntityID = Q.CustomerEntityID
@@ -789,7 +792,7 @@ namespace PB.Server.Repository
                 if (quotation.TermsandCondition != null)
                 {
                     quotation.TermsList = quotation.TermsandCondition.Split('#').ToList();
-                    if(quotation.TermsList.Count>0)
+                    if (quotation.TermsList.Count > 0)
                     {
                         if (string.IsNullOrEmpty(quotation.TermsList[0]))
                         {
@@ -834,9 +837,9 @@ namespace PB.Server.Repository
                 {
                     foreach (var quotationItem in quotation.Items)
                     {
-                        if(quotationItem.ItemDescription!=null)
+                        if (quotationItem.ItemDescription != null)
                         {
-                            quotationItem.ItemDescriptionList= quotationItem.ItemDescription.Split('#').ToList();
+                            quotationItem.ItemDescriptionList = quotationItem.ItemDescription.Split('#').ToList();
                             if (quotationItem.ItemDescriptionList.Count > 0)
                             {
                                 if (string.IsNullOrEmpty(quotationItem.ItemDescriptionList[0]))
@@ -2570,20 +2573,24 @@ namespace PB.Server.Repository
         public async Task<string> GetQuotationCoverPdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
         {
             string? DomainUrl = _config.GetValue<string>("ServerURL");
-            var quotation = await GetQuotationPdfDetailsModel(quotationID, branchID, tran);
-            List<string> subject = SplitString(quotation.Subject, 30);
+            //var quotation = await GetQuotationPdfDetailsModel(quotationID, branchID, tran);
+            var quotation = await GetQuotationPdfCoverPageDetailsModel(quotationID, branchID, tran);
+            //List<string> subject = SplitString(quotation.ProposalFor, 26);
 
-            // Function to split string into chunks
-            List<string> SplitString(string input, int subjectSize)
-            {
-                List<string> subject = new List<string>();
-                for (int i = 0; i < input.Length; i += subjectSize)
-                {
-                    int length = Math.Min(subjectSize, input.Length - i);
-                    subject.Add(input.Substring(i, length));
-                }
-                return subject;
-            }
+            //// Function to split string into chunks
+            //List<string> SplitString(string input, int subjectSize)
+            //{
+            //    List<string> subject = new List<string>();
+            //    for (int i = 0; i < input.Length; i += subjectSize)
+            //    {
+            //        int length = Math.Min(subjectSize, input.Length - i);
+            //        subject.Add(input.Substring(i, length));
+            //    }
+            //    return subject;
+            //}
+            List<string>? Lines = new List<string>();
+            Lines = await SplitIntoLines(quotation.ProposalFor, 26, 100);
+
             var pdfHtmlContent = new StringBuilder();
             pdfHtmlContent.Append($@"
                   <!DOCTYPE html>
@@ -2597,15 +2604,7 @@ namespace PB.Server.Repository
 
                           <div class='container-co style' style='width: 21cm; height: 29.7cm;page-break-after: always;margin: 0 auto;padding: 20px;position: relative;background-image: url({DomainUrl}/assets/images/wabcom/cover-image.png);background-size: cover;'>
                             <div class='details'>
-                              <div style='position: absolute;top: 100px;left: 220px;'>
-                                <h4 style='margin-bottom: 10px;'>PREPARED BY</h4>
-                                <p style='margin-top: 0;margin-bottom: 5px;'>Ayesha</p>
-                                <p style='margin-top: 0;margin-bottom: 5px;'>Team Business Center</p>
-                                <p style='margin-top: 0;margin-bottom: 5px;'>Al Samar Street</p>
-                                <p style='margin-top: 0;margin-bottom: 5px;'>P.O.Box: 83274</p>
-                                <p style='margin-top: 0;margin-bottom: 5px;'>Sharjah, UAE</p>
-                              </div>
-                              <div style='position: absolute;top: 100px;right: 168px;'>
+                              <div style='position: absolute;top: 100px;right: 150px;'>
                                 <h4 style='margin-bottom: 10px;'>PREPARED TO</h4>
                                 <p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.CustomerName}</p>
                                 <p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.BillingAddressLine1}</p>");
@@ -2629,18 +2628,41 @@ namespace PB.Server.Repository
             {
                 pdfHtmlContent.Append($@"<p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.BillingPinCode}</p>");
             }
+            if (quotation.ContactName != null)
+            {
+                pdfHtmlContent.Append($@"<p style=' margin-top: 0;margin-bottom: 5px;'>Contact Name : {quotation.ContactName}</p>");
+            }
+            if (quotation.CustomerPhone != null)
+            {
+                pdfHtmlContent.Append($@"<p style=' margin-top: 0;margin-bottom: 5px;'>Contact No : {quotation.CustomerPhone}</p>");
+            }
 
             pdfHtmlContent.Append($@" </div>
                             </div>
                             <div class='subject'>
-                              <h1 style='position: absolute;left: 370px;top: 270px;font-size: 52px;'><span stype='font-weight: 200;margin-left: 150px;'>PROPOSAL</span></h1>
-                            </div>
+                              <h1 style='position: absolute;left: 344px;top: 297px;font-size: 22px;'> PROPOSAL For ");
 
-                            <div style='position: absolute;top: 800px;left: 100px;'>");
-            foreach (var sub in subject)
+            //pdfHtmlContent.Append($@"<span style='font-weight: 44;margin-left: 0px;font-size: 17px;'> {quotation.ProposalFor}</span>");
+            foreach (var line in Lines)
             {
-                pdfHtmlContent.Append($@"<h4 style='color: #fff;font-size: 20px;font-weight: 100;margin-bottom: 0;'>{sub}</h2>");
+                pdfHtmlContent.Append($@"<span style='font-weight: 44;margin-left: 0px;font-size: 17px;'> {line}</span>");
             }
+
+            pdfHtmlContent.Append($@"</h1>
+                                        </div>");
+
+            pdfHtmlContent.Append($@"<div style='position: absolute;top: 800px;left: 100px;'>
+                                            <h5 style='margin-bottom: 10px;color: #ffffff;'>PREPARED BY</h5>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff; font-size: 130%;>{quotation.ClientName}</p>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>Team Business Center</p>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>Al Samar Street</p>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>P.O.Box: 83274</p>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>Sharjah, UAE</p>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>Email: {quotation.ClientEmail}</p>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>{quotation.StaffName}</p>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>{quotation.StaffPhoneNo}</p>
+                                          </div>");
+
             pdfHtmlContent.Append($@"
                             </div>
                           </div>
@@ -3081,8 +3103,8 @@ namespace PB.Server.Repository
         public async Task<string> GetQuotationItemPdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
         {
             string dateFormat = "dd/MM/yyyy";
-            var quotation = await GetQuotationPdfDetailsModel(quotationID, branchID, tran);
-
+            //var quotation = await GetQuotationPdfDetailsModel(quotationID, branchID, tran);  
+            var quotation = await GetQuotationPdfItemDetailsModel(quotationID, branchID, tran);
             decimal totalAmount = quotation.Items.Sum(i => i.TotalAmount);
             var pdfHtmlContent = new StringBuilder();
             pdfHtmlContent.Append($@"
@@ -3234,23 +3256,23 @@ namespace PB.Server.Repository
                         <div class='content' style=' line-height: 1.3;text-align: justify;margin-top: 50px;'>
             
               
-                                <h4 style='margin: 5px;font-size: 15px;margin-top: 10%;'>QUOTATION: </h4>
+                                <h4 style='margin: 5px;font-size: 15px;margin-top: 10%;text-align: center;'>QUOTATION: </h4>
                                 <table style='width:100%' >
                                     <tr>
-                                    <th>Description </th>
-                                    <td>{quotation.Description}</td>
-                                    <th>Date </th>
-                                    <td>{(quotation.Date.HasValue ? quotation.Date.Value.ToString(dateFormat) : string.Empty)}</td>
+                                    <th style='width:14%;'>Description </th>
+                                    <td style='width:57%;'>{quotation.Description}</td>
+                                    <th style='width:10%;'>Date </th>
+                                    <td style='width:59%;'>{(quotation.Date.HasValue ? quotation.Date.Value.ToString(dateFormat) : string.Empty)}</td>
                                     </tr>
                                     <tr>
-                                    <th>Type </th>
-                                    <td>{quotation.BusinessTypeName}</td>
-                                    <th>Our Ref</th>
-                                    <td> WQ/{quotation.QuotationNo}/{(quotation.Date.HasValue ? quotation.Date.Value.ToString("yyyy") : string.Empty)}</td>
+                                    <th style='width:14%;'>Type </th>
+                                    <td style='width:57%;'>{quotation.BusinessTypeName}</td>
+                                    <th style='width:10%;'>Our Ref</th>
+                                    <td style='width: 59%;'> {quotation.Prefix}-{quotation.Suffix}/{quotation.QuotationNo}</td>
                                     </tr>
                                     <tr>
-                                    <th>Party</th>
-                                    <td colspan=""3"">{quotation.CustomerName}</td>
+                                    <th style='width:14%;'>Party</th>
+                                    <td colspan='3'>{quotation.CustomerName}</td>
                 
                                     </tr>
                                 </table>
@@ -3258,7 +3280,7 @@ namespace PB.Server.Repository
 
             pdfHtmlContent.Append(@" <table style='width:100%' class='second-table'>
                                     <tr>
-                                    <th>Particulars </th>
+                                    <th style='width:60%;'>Particulars </th>
                                     <th>Rate </th>
                                     <th>Qty </th>
                                     <th>Amount(AED) </th>
@@ -3268,7 +3290,7 @@ namespace PB.Server.Repository
                 foreach (var item in quotation.Items)
                 {
                     pdfHtmlContent.Append($@"  <tr>
-                                    <td>
+                                    <td style='width:60%;'>
                                         <p><b>{item.ItemName}</p>  <ul>");
                     foreach (var description in item.ItemDescriptionList)
                     {
@@ -3277,9 +3299,9 @@ namespace PB.Server.Repository
                                     ");
                     }
                     pdfHtmlContent.Append($@"</ul> </td>
-                                    <td><b>{item.Rate}</b></td>
-                                    <td><b>{item.Quantity}</b></td>
-                                    <td><b>{item.TotalAmount}</b></td>
+                                    <td style='text-align:right;'><b>{item.Rate}</b></td>
+                                    <td style='text-align:right;'><b>{item.Quantity}</b></td>
+                                    <td style='text-align:right;'><b>{item.TotalAmount}</b></td>
                 
                                     </tr>");
                 }
@@ -3296,21 +3318,21 @@ namespace PB.Server.Repository
             }).ToList();
 
             pdfHtmlContent.Append($@" <tr>
-                                    <td colspan='3' style='text-align: right;'><b>SUB TOTAL</b></td>
-                                    <td><b>{quotation.Items.Sum(item => item.TotalAmount)}</b></td>
+                                    <td colspan='3' style='text-align:right;'><b>SUB TOTAL</b></td>
+                                    <td style='text-align:right;'><b>{quotation.Items.Sum(item => item.TotalAmount)}</b></td>
                                     </tr>");
             foreach (var tax in groupedTaxCategoryItems)
             {
 
                 pdfHtmlContent.Append($@"<tr>
-                                    <td colspan='3' style='text-align: right;'><b>{tax.TaxCategoryItemName}</b></td>
-                                    <td><b>{tax.Amount}</b></td>
+                                    <td colspan='3' style='text-align:right;'><b>{tax.TaxCategoryItemName}</b></td>
+                                    <td style='text-align:right;'><b>{tax.Amount}</b></td>
                                     </tr>");
 
             }
             pdfHtmlContent.Append($@"<tr>
-                                    <td colspan='3' style='text-align: right;'><b>TOTAL</b></td>
-                                    <td><b>{quotation.CurrencySymbol} {(quotation.Items.Sum(item => item.GrossAmount))}</b></td>
+                                    <td colspan='3' style='text-align:right;'><b>TOTAL</b></td>
+                                    <td style='text-align:right;'><b>{quotation.CurrencySymbol} {(quotation.Items.Sum(item => item.GrossAmount))}</b></td>
                                     </tr>");
 
 
@@ -3374,7 +3396,8 @@ namespace PB.Server.Repository
         public async Task<string> GetQuotationTermsPdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
         {
 
-            var quotation = await GetQuotationPdfDetailsModel(quotationID, branchID, tran);
+            //var quotation = await GetQuotationPdfDetailsModel(quotationID, branchID, tran);
+            var quotation = await GetQuotationPdfTermsPageDetailsModel(quotationID, branchID, tran);
             var pdfHtmlContent = new StringBuilder();
             pdfHtmlContent.Append($@"
                    <!DOCTYPE html>
@@ -3540,9 +3563,9 @@ namespace PB.Server.Repository
                                         <p>Regards,
                                         </p>
                                         </p>
-                                        <p>Ayesha
+                                        <p>{quotation.StaffName}
                                         </p>
-                                        <p>Mobile No- 0503505233</p>
+                                        <p>Mobile No- {quotation.StaffPhoneNo}</p>
                                         <p>Phone No- +971 65343120</p>
                                         <p>Website- <a href='www.wabcom.ae'>www.wabcom.ae</a></p>
              
@@ -4225,11 +4248,214 @@ namespace PB.Server.Repository
             string string6 = await GetQuotationItemPdfHtmlContentAndData(quotationID, branchID, tran);
             string string7 = await GetQuotationTermsPdfHtmlContentAndData(quotationID, branchID, tran);
 
-            string mergedString = string1 + string2 + string3  + string4+ string5 + string6 + string7;
+            string mergedString = string1 + string2 + string3 + string4 + string5 + string6 + string7;
             //string mergedString = string1 + string2;
             return mergedString;
         }
 
 
+
+        #region New Quuotation Pdf Apis
+
+
+        public async Task<QuotationPdfCoverPageViewModel?> GetQuotationPdfCoverPageDetailsModel(int quotationID, int branchID, IDbTransaction? tran = null)
+        {
+
+            try
+            {
+                var quotation = await _dbContext.GetByQueryAsync<QuotationPdfCoverPageViewModel>($@"
+                                                                     Select QuotationID,ProposalFor,Q.BillingAddressID,E.Name As CustomerName,EP.FirstName as ContactName,E.Phone as CustomerPhone,E.EmailAddress as CustomerEmail,
+                                                                     BA.AddressLine1 as BillingAddressLine1,BA.AddressLine2 as BillingAddressLine2,BA.AddressLine3 as BillingAddressLine3,
+                                                                     BA.State as BillingState,BA.PinCode as BillingPinCode,BC.CountryName as BillingCountry,
+                                                                     CE.Name as ClientName,CE.EmailAddress as ClientEmail,CE.Phone as ClientPhone,cV.Name as StaffName,Q.StaffPhoneNo
+                                                                     From Quotation Q
+                                                                     Left Join viEntity E ON E.EntityID=Q.CustomerEntityID
+                                                                     Left Join EntityPersonalInfo EP on EP.EntityID=E.EntityID and EP.IsDeleted=0
+                                                                     Left Join Customer Cust ON Cust.EntityID = Q.CustomerEntityID
+                                                                     Left Join EntityAddress BA on BA.AddressID=Q.BillingAddressID and BA.IsDeleted=0
+                                                                     Left Join EntityAddress SA on SA.AddressID=Q.ShippingAddressID and SA.IsDeleted=0
+                                                                     Left Join Country BC on BC.CountryID=BA.CountryID and BC.IsDeleted=0
+                                                                     Left Join Country SC on SC.CountryID=SA.CountryID and SC.IsDeleted=0
+                                                                     Left Join Media M ON M.MediaID=Q.MediaID and M.IsDeleted=0
+                                                                     Left Join Client C on C.ClientID=Q.ClientID
+                                                                     Left Join viEntity CE on CE.EntityID=C.EntityID
+                                                                     Left Join EntityAddress CEA on CEA.EntityID=CE.EntityID and CEA.IsDeleted=0
+                                                                     Left Join Country CBC on CBC.CountryID=CEA.CountryID and CBC.IsDeleted=0
+                                                                     Left Join State S on S.StateID=CEA.StateID and S.IsDeleted=0
+                                                                     Left Join viEntity cV on cV.EntityID=Q.QuotationCreatedFor
+                                                                    Where Q.IsDeleted=0 and Q.BranchID={branchID} and Q.QuotationID={quotationID}
+                ", null, tran);
+
+                quotation.DomainUrl = _config.GetValue<string>("ServerURL");
+                return quotation ?? new();
+            }
+            catch (Exception e)
+            {
+                return null;
+
+            }
+        }
+
+
+        public async Task<QuotationPdfItemPageViewModel?> GetQuotationPdfItemDetailsModel(int quotationID, int branchID, IDbTransaction? tran = null)
+        {
+
+            try
+            {
+                var quotation = await _dbContext.GetByQueryAsync<QuotationPdfItemPageViewModel>($@"
+                                                                      Select Q.QuotationID,Q.QuotationNo,Q.Date,ExpiryDate,C.GSTNo,E.Name as CustomerName,
+                                                                    Concat(CR.CurrencyName,' ( ',CR.Symbol,' )') AS CurrencyName,CR.Symbol AS CurrencySymbol,CR.MainSuffix,CR.SubSuffix,
+                                                                    BusinessTypeName,cV.Name as StaffName,StaffPhoneNo,Q.BusinessTypeID,Q.QuotationCreatedFor,
+                                                                    Description,Q.Prefix,Q.Suffix,Q.ProposalFor,Q.CustomerNote,Q.TermsandCondition
+                                                                    From Quotation Q
+                                                                    Left Join viEntity E ON E.EntityID=Q.CustomerEntityID
+                                                                    Left Join Client C on C.ClientID=Q.ClientID
+                                                                    Left Join Currency CR ON CR.CurrencyID=Q.CurrencyID AND CR.IsDeleted=0
+                                                                    Left Join BusinessType BT on BT.BusinessTypeID=Q.BusinessTypeID and BT.IsDeleted=0
+                                                                    Left Join viEntity cV on cV.EntityID=Q.QuotationCreatedFor
+                                                                    Where Q.IsDeleted=0 and Q.BranchID={branchID} and Q.QuotationID={quotationID}
+                ", null, tran);
+                if (quotation.CustomerNote != null)
+                {
+                    quotation.CustomerNoteList = quotation.CustomerNote.Split('#').ToList();
+                    if (quotation.CustomerNoteList.Count > 0)
+                    {
+                        if (string.IsNullOrEmpty(quotation.CustomerNoteList[0]))
+                        {
+                            quotation.CustomerNoteList.RemoveAt(0);
+                        }
+                    }
+                }
+
+                quotation.Items = await _dbContext.GetListByQueryAsync<QuotationItemPDFModel>($@"
+                                        Select ROW_NUMBER() OVER(ORDER BY (SELECT 1)) AS RowIndex,ItemName,QI.Description,TaxCategoryID,NetAmount,GrossAmount,TaxAmount,(Rate * Quantity) As TotalAmount,VI.Description as ItemDescription,
+                                        QI.Quantity,QI.Rate,Discount
+                                        From QuotationItem QI
+										Left Join viItem VI on VI.ItemVariantID=QI.ItemVariantID
+                                        Where QI.QuotationID={quotationID} and QI.IsDeleted=0
+                ", null, tran);
+
+                if (quotation.Items.Count > 0)
+                {
+                    foreach (var quotationItem in quotation.Items)
+                    {
+                        if (quotationItem.ItemDescription != null)
+                        {
+                            quotationItem.ItemDescriptionList = quotationItem.ItemDescription.Split('#').ToList();
+                            if (quotationItem.ItemDescriptionList.Count > 0)
+                            {
+                                if (string.IsNullOrEmpty(quotationItem.ItemDescriptionList[0]))
+                                {
+                                    quotationItem.ItemDescriptionList.RemoveAt(0);
+                                }
+                            }
+                        }
+                        quotationItem.TaxCategoryItems = await _dbContext.GetListByQueryAsync<QuotationItemTaxCategoryItemsModel>(@$"
+                                                                            Select TaxCategoryItemID,Concat(TaxCategoryItemName,'   [ ',Convert(smallint,Percentage),' ]') AS TaxCategoryItemName,Percentage,0 As Amount
+                                                                            From TaxCategoryItem T
+                                                                            Where T.TaxCategoryID={quotationItem.TaxCategoryID} AND T.IsDeleted=0", null, tran);
+
+                        if (quotationItem.TaxCategoryItems.Count > 0)
+                        {
+                            quotationItem.TaxCategoryItems
+                                .ForEach(taxCategoryItem => taxCategoryItem.Amount = Math.Round(quotationItem.NetAmount * (taxCategoryItem.Percentage / 100), 2));
+
+                        }
+                    }
+                }
+
+                decimal totalAmount = quotation.Items.Where(item => item.GrossAmount != 0).Sum(item => item.GrossAmount);
+
+                #region Total Amount to Currency conversion
+
+                var AmtToWords = new CurrencyWordsConverter(new CurrencyWordsConversionOptions
+                {
+                    Culture = Culture.International,
+                    OutputFormat = OutputFormat.English,
+                    CurrencyUnit = quotation.MainSuffix,
+                    SubCurrencyUnit = quotation.SubSuffix,
+                    CurrencyUnitSeparator = "and"
+                });
+                quotation.AmountInWords = AmtToWords.ToWords(totalAmount);
+
+                #endregion
+
+                quotation.DomainUrl = _config.GetValue<string>("ServerURL");
+                return quotation ?? new();
+            }
+            catch (Exception e)
+            {
+                return null;
+
+            }
+        }
+
+
+        public async Task<QuotationPdfTermsPageViewModel?> GetQuotationPdfTermsPageDetailsModel(int quotationID, int branchID, IDbTransaction? tran = null)
+        {
+
+            try
+            {
+                var quotation = await _dbContext.GetByQueryAsync<QuotationPdfTermsPageViewModel>($@"
+                                                                      Select Q.QuotationID,Q.QuotationNo,cV.Name as StaffName,StaffPhoneNo,Q.TermsandCondition
+                                                                    From Quotation Q
+                                                                    Left Join viEntity cV on cV.EntityID=Q.QuotationCreatedFor
+                                                                    Where Q.IsDeleted=0 and Q.BranchID={branchID} and Q.QuotationID={quotationID}
+                ", null, tran);
+                if (quotation.TermsandCondition != null)
+                {
+                    quotation.TermsList = quotation.TermsandCondition.Split('#').ToList();
+                    if (quotation.TermsList.Count > 0)
+                    {
+                        if (string.IsNullOrEmpty(quotation.TermsList[0]))
+                        {
+                            quotation.TermsList.RemoveAt(0);
+                        }
+                    }
+                }
+
+                quotation.DomainUrl = _config.GetValue<string>("ServerURL");
+                return quotation ?? new();
+            }
+            catch (Exception e)
+            {
+                return null;
+
+            }
+        }
+
+        public async Task<List<string>?> SplitIntoLines(string? text, int firstLineLength, int otherLinesLength)
+        {
+            List<string>? lines = new List<string>();
+            int textLength = text.Length;
+            int startIndex = 0;
+
+            // Add the first line with specified length
+            if (textLength > firstLineLength)
+            {
+                lines.Add(text.Substring(0, firstLineLength));
+                startIndex = firstLineLength;
+            }
+            else
+            {
+                lines.Add(text);
+                return lines;
+            }
+
+            // Add subsequent lines with specified length
+            while (startIndex < textLength)
+            {
+                int length = Math.Min(otherLinesLength, textLength - startIndex);
+                lines.Add(text.Substring(startIndex, length));
+                startIndex += length;
+            }
+
+            return lines;
+        }
+
+
+        #endregion
+
     }
+
 }

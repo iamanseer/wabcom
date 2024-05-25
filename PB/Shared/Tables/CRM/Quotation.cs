@@ -42,5 +42,8 @@ namespace PB.Shared.Tables.CRM
         public string? Description { get; set; }
         public int? QuotationCreatedFor { get; set; }
         public string? StaffPhoneNo { get; set; }
+        public string? Prefix { get; set; }
+        public int? Suffix { get; set; }
+        public string? ProposalFor { get; set; }
     }
 }

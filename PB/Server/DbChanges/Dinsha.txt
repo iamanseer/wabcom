@@ -10,3 +10,51 @@ SubscriptionExpiry date,Lat numeric(18,15),Long numeric(18,15)
 
 
 Alter Table Item Add IsSubscription bit
+
+
+
+
+--24/05/2024 Added By Dinsha
+
+--Delete view
+
+      DROP VIEW viEntity;
+
+--Create view
+
+		SET ANSI_NULLS ON
+		GO
+
+		SET QUOTED_IDENTIFIER ON
+		GO
+
+
+		CREATE VIEW [dbo].[viEntity]
+							AS
+		SELECT       
+					E.EntityID, E.EntityTypeID, CASE WHEN (P.FirstName IS NULL or P.FirstName='')  THEN EI.Name 
+					ELSE RTRIM(LTRIM(CONCAT(COALESCE (P.FirstName + ' ', ''), COALESCE (P.MiddleName + ' ', ''), 
+					COALESCE (P.LastName, '')))) END AS Name, 
+					ISNULL(P.FirstName, '') AS FirstName, ISNULL(P.MiddleName, '') AS MiddleName, 
+					ISNULL(P.LastName, '') AS LastName, ISNULL(P.NickName, '') AS NickName, 
+					P.GenderID, E.Phone, E.Phone2, E.EmailAddress, 
+					M.FileName AS ProfileImage, U.UserID, U.UserTypeID, 
+					P.EntityPersonalInfoID, E.MediaID, P.DOB, SuperiorEntityID, U.ClientID, QRCode,C.TaxNumber
+		FROM            dbo.Entity AS E 
+		LEFT OUTER JOIN	dbo.Media AS M ON M.MediaID = E.MediaID 
+		LEFT OUTER JOIN	dbo.EntityInstituteInfo AS EI ON EI.EntityID = E.EntityID 
+		LEFT OUTER JOIN	dbo.EntityPersonalInfo AS P ON P.EntityID = E.EntityID 
+		LEFT OUTER JOIN dbo.Users AS U ON U.EntityID = E.EntityID
+		LEFT OUTER JOIN dbo.Customer AS C ON C.EntityID = E.EntityID
+		WHERE        (ISNULL(E.IsDeleted, 0) = 0)
+		GO
+
+
+-- Alter quotation table
+
+Alter Table Quotation Add Prefix nvarchar(10), Suffix int, ProposalFor nvarchar(100)
+
+
+-- Update quotation prefiz and suffix
+
+	Update Quotation Set Suffix=2024,Prefix='WBS'

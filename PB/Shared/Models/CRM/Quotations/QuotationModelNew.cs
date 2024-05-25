@@ -66,6 +66,12 @@ namespace PB.Shared.Models.CRM
         public int? QuotationCreatedFor { get; set; }
         public string? StaffName { get; set; }
         public string? StaffPhoneNo { get; set; }
+        [Required(ErrorMessage = "Please enter quotation number prefix")]
+        public string? Prefix { get; set; } = "WBS";
+        [Required(ErrorMessage = "Please choose suffix")]
+        public int? Suffix { get; set; } = DateTime.UtcNow.Year;
+        [Required(ErrorMessage = "Please enter proposal for")]
+        public string? ProposalFor { get; set; }
         public List<QuotationItemModelNew> QuotationItems { get; set; } = new();
         public List<QuotationAssignee>? QuotationAssignees { get; set; }
         public List<QuotationMailRecipient>? MailReciepients { get; set; }

@@ -13,7 +13,10 @@ namespace PB.Model.Models
         public int QuotationID { get; set; }
         public string? QuotationName { get; set; }
         public DateTime? AddedOn { get; set; }
-        public DateTime? ExpireOn { get; set; } 
+        public DateTime? ExpireOn { get; set; }
+        public string? Prefix { get; set; }
+        public int? Suffix { get; set; }
+        public string? ProposalFor { get; set; }
         public int QuotationNo { get; set; }
         public string? CustomerName { get; set; }
         public string? Username { get; set; }
