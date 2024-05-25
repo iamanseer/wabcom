@@ -21,6 +21,8 @@ namespace PB.Model.Models
         public string? CustomerName { get; set; }
         public string? Username { get; set; }
         public short CurrentFollowupNature { get; set; }
+        public string? ContactName { get; set; }
+        public string? CreatedFor { get; set; }
         public string? NatureBadgeClass
         {
             get
