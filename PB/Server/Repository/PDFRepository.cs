@@ -837,9 +837,9 @@ namespace PB.Server.Repository
                 {
                     foreach (var quotationItem in quotation.Items)
                     {
-                        if (quotationItem.ItemDescription != null)
+                        if (quotationItem.Description != null)
                         {
-                            quotationItem.ItemDescriptionList = quotationItem.ItemDescription.Split('#').ToList();
+                            quotationItem.ItemDescriptionList = quotationItem.Description.Split('#').ToList();
                             if (quotationItem.ItemDescriptionList.Count > 0)
                             {
                                 if (string.IsNullOrEmpty(quotationItem.ItemDescriptionList[0]))
@@ -2604,7 +2604,7 @@ namespace PB.Server.Repository
 
                           <div class='container-co style' style='width: 21cm; height: 29.7cm;page-break-after: always;margin: 0 auto;padding: 20px;position: relative;background-image: url({DomainUrl}/assets/images/wabcom/cover-image.png);background-size: cover;'>
                             <div class='details'>
-                              <div style='position: absolute;top: 100px;right: 150px;'>
+                              <div style='position: absolute;right: 150px;'>  
                                 <h4 style='margin-bottom: 10px;'>PREPARED TO</h4>
                                 <p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.CustomerName}</p>
                                 <p style=' margin-top: 0;margin-bottom: 5px;'>{quotation.BillingAddressLine1}</p>");
@@ -2640,27 +2640,31 @@ namespace PB.Server.Repository
             pdfHtmlContent.Append($@" </div>
                             </div>
                             <div class='subject'>
-                              <h1 style='position: absolute;left: 344px;top: 297px;font-size: 22px;'> PROPOSAL For ");
+                                
+                                    <div style='position:absolute;left:355px;top:307px;max-width: 50%;'>
+                                          <h1 style='font-size:16px;font-style: normal;font-family:Arial,sans-serif;'>PROPOSAL For  {quotation.ProposalFor} </h1>
+                                                                        </div>
+                              </div>");
 
             //pdfHtmlContent.Append($@"<span style='font-weight: 44;margin-left: 0px;font-size: 17px;'> {quotation.ProposalFor}</span>");
-            foreach (var line in Lines)
-            {
-                pdfHtmlContent.Append($@"<span style='font-weight: 44;margin-left: 0px;font-size: 17px;'> {line}</span>");
-            }
+            //foreach (var line in Lines)
+            //{
+            //   // pdfHtmlContent.Append($@"<span style='font-weight: 44;margin-left: 0px;font-size: 17px;'> {line}</span>");
+            //}
 
-            pdfHtmlContent.Append($@"</h1>
-                                        </div>");
+            //pdfHtmlContent.Append($@"<h1 style='position: absolute;left: 344px;top: 297px;font-size: 22px;'> PROPOSAL For </h1>
+            //                            </div>");
 
             pdfHtmlContent.Append($@"<div style='position: absolute;top: 800px;left: 100px;'>
                                             <h5 style='margin-bottom: 10px;color: #ffffff;'>PREPARED BY</h5>
-                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff; font-size: 130%;>{quotation.ClientName}</p>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff; font-size: 130%;'>{quotation.ClientName}</p>
                                             <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>Team Business Center</p>
                                             <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>Al Samar Street</p>
                                             <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>P.O.Box: 83274</p>
                                             <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>Sharjah, UAE</p>
                                             <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>Email: {quotation.ClientEmail}</p>
-                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>{quotation.StaffName}</p>
-                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>{quotation.StaffPhoneNo}</p>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>Name : {quotation.StaffName}</p>
+                                            <p style='margin-top: 0;margin-bottom: 10px;color: #ffffff;'>Contact no: {quotation.StaffPhoneNo}</p>
                                           </div>");
 
             pdfHtmlContent.Append($@"
@@ -4328,8 +4332,8 @@ namespace PB.Server.Repository
                 }
 
                 quotation.Items = await _dbContext.GetListByQueryAsync<QuotationItemPDFModel>($@"
-                                        Select ROW_NUMBER() OVER(ORDER BY (SELECT 1)) AS RowIndex,ItemName,QI.Description,TaxCategoryID,NetAmount,GrossAmount,TaxAmount,(Rate * Quantity) As TotalAmount,VI.Description as ItemDescription,
-                                        QI.Quantity,QI.Rate,Discount
+                                        Select ROW_NUMBER() OVER(ORDER BY (SELECT 1)) AS RowIndex,ItemName,QI.Description,TaxCategoryID,NetAmount,GrossAmount,TaxAmount,(Rate * Quantity) As TotalAmount,--VI.Description as ItemDescription,
+                                        QI.Quantity,QI.Rate,Discount,Case When QI.Description is null then VI.Description else QI.Description end as ItemDescription
                                         From QuotationItem QI
 										Left Join viItem VI on VI.ItemVariantID=QI.ItemVariantID
                                         Where QI.QuotationID={quotationID} and QI.IsDeleted=0

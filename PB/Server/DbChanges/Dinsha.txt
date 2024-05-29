@@ -58,3 +58,7 @@ Alter Table Quotation Add Prefix nvarchar(10), Suffix int, ProposalFor nvarchar(
 -- Update quotation prefiz and suffix
 
 	Update Quotation Set Suffix=2024,Prefix='WBS'
+
+--29/05/2024
+
+Update EntityInstituteInfo SET Name='Wahat Al Bustan Computer TR.' Where EntityID=3
