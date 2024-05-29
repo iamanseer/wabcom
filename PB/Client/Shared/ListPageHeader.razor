@@ -18,9 +18,9 @@
             <!--Header Notify Counts-->
             @if (Settings.Notifications != null && Settings.Notifications.Count > 0)
             {
-                @foreach (var notification in Settings.Notifications.Where(item => item.NotifyCount > 0))
+                @foreach (var notification in Settings.Notifications.Where(item => item.NotifyCount > 0)) 
                 {
-                    <span class="@notification.BadgeClass">@(notification.NotifyValue + " " + notification.NotifyCount)</span>
+                    <span class="@notification.BadgeClass" @onclick="async () => await HandleToClickNotifyCount(notification.Nature)">@(notification.NotifyValue + " " + notification.NotifyCount)</span>
                 }
             }
 
@@ -416,6 +416,22 @@
     }
 
     #endregion
+
+    #region Notify Count
+    private async Task HandleToClickNotifyCount(int? natureID)
+    {
+        if (Settings.Notifications.Count>0 && Settings.Notifications != null)
+        {
+
+            FilterSearchModel.NotifyNature = natureID;
+
+        }
+        await ApplyFilterOnTheList();
+    }
+
+    #endregion
+
+
 
     #region Filter
 

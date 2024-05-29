@@ -947,6 +947,18 @@ namespace PB.Server.Controllers
                     query.WhereCondition += $"AND (vF.EnquiryID IN ({commaSeparatedEnquiryIDs}))";
                 }
             }
+            switch(searchModel.NotifyNature)
+            {
+                case -1:
+                    query.WhereCondition += $" AND vF.Days < 0 ";
+                    break;
+                case 0:
+                    query.WhereCondition += $" AND vF.Days = 0 ";
+                    break;
+                case 1:
+                    query.WhereCondition += $" AND vF.Days > 0 ";
+                    break;
+            }
             query.OrderByFieldName = searchModel.OrderByFieldName;
             query.WhereCondition += _common.GeneratePagedListFilterWhereCondition(searchModel, "CustomerName");
             result.FollowupList = await _dbContext.GetPagedList<FollowupListModel>(query, null);
