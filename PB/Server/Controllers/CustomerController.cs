@@ -277,7 +277,7 @@ namespace PB.Server.Controllers
                                                     Case
                                                         When Type={(int)CustomerTypes.Business} Then EI.Name 
                                                         Else EP.FirstName 
-                                                        End as Name,
+                                                        End as Name,EI.Name as CompanyName,EP.FirstName as Name,
                                                     EP.EntityPersonalInfoID,E.EntityTypeID,E.EmailAddress,E.Phone,E.MediaID,E.EntityID,C.EntityID,
                                                     C.Status,C.Type,C.Remarks,C.CustomerID,EntityInstituteInfoID,WC.ContactID,E.CountryID,CT.CountryName,CT.ISDCode,C.TaxNumber,
                                                     JoinedOn,C.CategoryID,CategoryName,C.BusinessTypeID,BusinessTypeName,TallyEmailID,CustomerPriority,OwnedBy,BusinessGivenInNos,

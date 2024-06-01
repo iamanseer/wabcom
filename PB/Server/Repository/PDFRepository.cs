@@ -2642,7 +2642,7 @@ namespace PB.Server.Repository
                             <div class='subject'>
                                 
                                     <div style='position:absolute;left:355px;top:307px;max-width: 50%;'>
-                                          <h1 style='font-size:16px;font-style: normal;font-family:Arial,sans-serif;'>PROPOSAL For  {quotation.ProposalFor} </h1>
+                                          <h1 style='font-size:16px;font-style: normal;font-family:Arial,sans-serif;'>Proposal For  {quotation.ProposalFor} </h1>
                                                                         </div>
                               </div>");
 
@@ -3247,6 +3247,9 @@ namespace PB.Server.Repository
                                 font-size: 14px;
                                 padding: 3px;
                             }}
+                            .particular-cls{{
+                                width: 80% !important;
+                            }}
                         </style>
                     </head>");
             pdfHtmlContent.Append($@" <body>
@@ -3260,7 +3263,7 @@ namespace PB.Server.Repository
                         <div class='content' style=' line-height: 1.3;text-align: justify;margin-top: 50px;'>
             
               
-                                <h4 style='margin: 5px;font-size: 15px;margin-top: 10%;text-align: center;'>QUOTATION: </h4>
+                                <h4 style='margin: 5px;font-size: 15px;margin-top: 10%;text-align: center;'>QUOTATION </h4>
                                 <table style='width:100%' >
                                     <tr>
                                     <th style='width:14%;'>Description </th>
@@ -3284,7 +3287,7 @@ namespace PB.Server.Repository
 
             pdfHtmlContent.Append(@" <table style='width:100%' class='second-table'>
                                     <tr>
-                                    <th style='width:60%;'>Particulars </th>
+                                    <th style='width:60%;' >Particulars </th>
                                     <th>Rate </th>
                                     <th>Qty </th>
                                     <th>Amount(AED) </th>
@@ -3294,7 +3297,7 @@ namespace PB.Server.Repository
                 foreach (var item in quotation.Items)
                 {
                     pdfHtmlContent.Append($@"  <tr>
-                                    <td style='width:60%;'>
+                                    <td style='width:60%;' >
                                         <p><b>{item.ItemName}</p>  <ul>");
                     foreach (var description in item.ItemDescriptionList)
                     {
@@ -3304,7 +3307,7 @@ namespace PB.Server.Repository
                     }
                     pdfHtmlContent.Append($@"</ul> </td>
                                     <td style='text-align:right;'><b>{item.Rate}</b></td>
-                                    <td style='text-align:right;'><b>{item.Quantity}</b></td>
+                                    <td style='text-align:center;'><b>{item.Quantity}</b></td>
                                     <td style='text-align:right;'><b>{item.TotalAmount}</b></td>
                 
                                     </tr>");
@@ -3336,7 +3339,303 @@ namespace PB.Server.Repository
             }
             pdfHtmlContent.Append($@"<tr>
                                     <td colspan='3' style='text-align:right;'><b>TOTAL</b></td>
-                                    <td style='text-align:right;'><b>{quotation.CurrencySymbol} {(quotation.Items.Sum(item => item.GrossAmount))}</b></td>
+                                    <td style='text-align:right;'><b>{(quotation.Items.Sum(item => item.GrossAmount))}</b></td>
+                                    </tr>");
+
+
+            pdfHtmlContent.Append(@"</table>
+                                    <h4>Our Bank Details: </h4>
+                                <table style='width: 100%;'>
+                                    <tr>
+                                    <th>Account Name </th>
+                                    <td>WAHAT AL BUSTAN COMPUTER TR.</td>
+                                    </tr>
+                                    <tr>
+                                    <th>Bank Name </th>
+                                    <td>RAK Bank</td>
+                                    </tr>
+                                    <tr>
+                                    <th>Account No. </th>
+                                    <td>8362389685901</td>
+                                    </tr>
+                                    <tr>
+                                    <th>IBAN No. </th>
+                                    <td>AE630400008362389685901</td>
+                                    </tr>
+                                    <tr>
+                                    <th>SWIFT CODE  </th>
+                                    <td>NRAKAEAK</td>
+                                    </tr>
+                                </table>
+                                <p>Make all cheques payable to <b>WAHAT AL BUSTAN COMPUTER TR</b> </p> <h4>Other Terms</h4>
+                                <ul>");
+            if (quotation.CustomerNoteList.Count > 0)
+            {
+                foreach (var notes in quotation.CustomerNoteList)
+                {
+                    pdfHtmlContent.Append($@" 
+                                    <li>{notes}</li>
+                                ");
+                }
+            }
+
+            pdfHtmlContent.Append($@"</ul> </div>
+                        <div style=' position: absolute;bottom: 10px;text-align: center;margin: 20px auto 0 auto;font-size: 12px;color: #666;left: 120px;'>
+                            <div class='footer-top'>
+                            <h3><b>WAHAT AL BUSTAN COMPUTER TR. </b></h3>
+                            <p>#201,Team Business Center, Al Samar Street, P.O.Box: 83274, Sharjah, UAE, Tel:- +971 6 5343120</p>
+                            <p>mail to: <a href='mailto:info@wabcomdubai.com'>info@wabcomdubai.com</a>, Website: <a href=''>www.wabcom.ae</a></p>
+                            <div class='footer-img' style='height: 50px;margin: 0 60px;'>
+                            <img src='{quotation.DomainUrl}/assets/images/wabcom/greythr.png' style='height: 50px;margin: 0 60px;' alt='GreyMatrix'>
+                            <img src='{quotation.DomainUrl}/assets/images/wabcom/dummy-logo.png' style='height: 50px;margin: 0 60px;' alt='Tally'>
+                            </div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+    
+                    </body>
+                    </html>");
+
+
+            return pdfHtmlContent.ToString();
+        }
+        public async Task<string> GetQuotationItem2PdfHtmlContentAndData(int quotationID, int branchID, IDbTransaction? tran = null)
+        {
+            string dateFormat = "dd/MM/yyyy";
+            //var quotation = await GetQuotationPdfDetailsModel(quotationID, branchID, tran);  
+            var quotation = await GetQuotationPdfItemDetailsModel(quotationID, branchID, tran);
+            decimal totalAmount = quotation.Items.Sum(i => i.TotalAmount);
+            var pdfHtmlContent = new StringBuilder();
+            pdfHtmlContent.Append($@"
+                   <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>WABCOM</title>
+                        <link rel='stylesheet' type='text/css' href='styles.css'>");
+
+            pdfHtmlContent.Append($@" <style>
+                            body {{
+                        font-family: Arial, sans-serif;
+                        margin: 0;
+                        padding: 0;
+                    }}
+
+                    .container {{
+                        width: 21cm;
+                        height: 29.7cm;
+                        page-break-after: always;
+                        margin: 0 auto;
+                        padding: 20px;
+                    }}
+                    .main{{
+                        border: 2px solid #000;
+                        padding: 30px 20px 10px 20px;
+                        background-image: url('{quotation.DomainUrl}/assets/images/wabcom/logo-bg.png');
+                        background-position: center;
+                        background-repeat: no-repeat;
+                        position: relative;
+                        height: 28.7cm;
+
+                    }}
+                    h4{{
+                        color: #000;
+                    }}
+                    .footer-img{{
+                        display: flex;
+                        justify-content: space-between;
+                    }}
+
+
+                    .header {{
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 20px;
+                    }}
+
+                    .header img {{
+                        height: 50px;
+                        margin: 0 10px;
+                    }}
+
+                    .content {{
+                        line-height: 1.3;
+                        text-align: justify;
+
+                    }}
+                    .content p{{
+                        margin: 5px;
+                        font-size: 15px;
+                    }}
+
+                    .content h2 {{
+                        color: #000;
+                        font-size: 18px;
+                        text-transform: uppercase;
+                        margin-bottom: 0;
+                        font-weight: 600;
+                    }}
+                    h3{{
+                        color: #000;
+                    }}
+
+                    .footer {{
+                        position: absolute;
+                        bottom: 10px;
+                        text-align: center;
+                        margin-top: 20px;
+                        font-size: 12px;
+                        color: #666;
+                        left: 32%;
+                        transform: translateX(-23%)
+                    }}
+
+                    .footer img {{
+                        height: 50px;
+                        margin: 0 5px;
+                    }}
+                    .style ul{{
+                        padding: 0;
+                        margin: 0;
+                    }}
+                    .style ul li{{
+                        list-style: none;
+                        line-height: 26px;
+                    }}
+                    table {{
+                                border-collapse: collapse;
+                                border-spacing: 0;
+                            }}
+
+                    td, th {{
+    		                        border: 1px solid #000;
+    		                        text-align: left;
+    		                        padding: 8px;
+    		                    }}
+                            .second-table th{{
+                                background-color: #03aad4;
+                            }}
+                            table td p{{
+                                font-size: 14px !important;
+                            }}
+                            table li, li{{
+                                font-size: 14px;
+                            }}
+                            table ul{{
+                                padding: 0 27px;
+                        margin:  0;
+                        font-weight: 400;
+                            }}
+                            .custom-list {{
+                                list-style-type: none; 
+                                padding-left: 10px; 
+                                font-weight: normal;
+                            }}
+                            .custom-list li::before {{
+                                content: '\27A3'; 
+                                color: #000000; 
+                                margin-right: 5px; 
+                            }}
+                            .style-2 h4{{
+                                margin-bottom: 0;
+                            }}
+                            .style-2 th, .style-2 td{{
+                                font-size: 14px;
+                                padding: 3px;
+                            }}
+                            .particular-cls{{
+                                width: 80% !important;
+                            }}
+                        </style>
+                    </head>");
+            pdfHtmlContent.Append($@" <body>
+    
+                        <div class='container style-2'>
+                            <div class='main'>
+                            <div class='header' style='position: relative;'>
+                            <img src='{quotation.DomainUrl}/assets/images/wabcom/logo.png' style='position: absolute;left: 20px; height: 50px;margin: 0 10px;' alt='WABCOM'>
+                            <img src='{quotation.DomainUrl}/assets/images/wabcom/partner.png' style='position: absolute;right: 20px; height: 50px;margin: 0 10px;' alt='Gold Partner'>
+                        </div>
+                        <div class='content' style=' line-height: 1.3;text-align: justify;margin-top: 50px;'>
+            
+              
+                                <h4 style='margin: 5px;font-size: 15px;margin-top: 10%;text-align: center;'>QUOTATION </h4>
+                                <table style='width:100%' >
+                                    <tr>
+                                    <th style='width:14%;'>Description </th>
+                                    <td style='width:57%;'>{quotation.Description}</td>
+                                    <th style='width:10%;'>Date </th>
+                                    <td style='width:59%;'>{(quotation.Date.HasValue ? quotation.Date.Value.ToString(dateFormat) : string.Empty)}</td>
+                                    </tr>
+                                    <tr>
+                                    <th style='width:14%;'>Type </th>
+                                    <td style='width:57%;'>{quotation.BusinessTypeName}</td>
+                                    <th style='width:10%;'>Our Ref</th>
+                                    <td style='width: 59%;'> {quotation.Prefix}-{quotation.Suffix}/{quotation.QuotationNo}</td>
+                                    </tr>
+                                    <tr>
+                                    <th style='width:14%;'>Party</th>
+                                    <td colspan='3'>{quotation.CustomerName}</td>
+                
+                                    </tr>
+                                </table>
+                                <h4>COMMERCIALS:</h4>");
+
+            pdfHtmlContent.Append(@" <table style='width:100%' class='second-table'>
+                                    <tr>
+                                    <th style='width:80%;' >Particulars </th>
+                                    <th>Rate </th>
+                                    <th>Qty </th>
+                                    <th>Amount(AED) </th>
+                                    </tr>");
+            if (quotation.Items.Count > 0)
+            {
+                foreach (var item in quotation.Items)
+                {
+                    pdfHtmlContent.Append($@"  <tr>
+                                    <td style='width:80%;' >
+                                        <p><b>{item.ItemName}</p>  <ul>");
+                    foreach (var description in item.ItemDescriptionList)
+                    {
+                        pdfHtmlContent.Append($@"
+                                        <li>{description}</li>
+                                    ");
+                    }
+                    pdfHtmlContent.Append($@"</ul> </td>
+                                    <td style='text-align:right;'><b>{item.Rate}</b></td>
+                                    <td style='text-align:center;'><b>{item.Quantity}</b></td>
+                                    <td style='text-align:right;'><b>{item.TotalAmount}</b></td>
+                
+                                    </tr>");
+                }
+            }
+            var allTaxCategoryItems = quotation.Items.SelectMany(item => item.TaxCategoryItems).ToList();
+            var groupedTaxCategoryItems = allTaxCategoryItems
+            .GroupBy(item => item.TaxCategoryItemID)
+            .Select(group => new QuotationItemTaxCategoryItemsModel
+            {
+                TaxCategoryItemID = group.Key,
+                TaxCategoryItemName = group.First().TaxCategoryItemName,
+                Percentage = group.First().Percentage,
+                Amount = group.Sum(item => item.Amount)
+            }).ToList();
+
+            pdfHtmlContent.Append($@" <tr>
+                                    <td colspan='3' style='text-align:right;'><b>SUB TOTAL</b></td>
+                                    <td style='text-align:right;'><b>{quotation.Items.Sum(item => item.TotalAmount)}</b></td>
+                                    </tr>");
+            foreach (var tax in groupedTaxCategoryItems)
+            {
+
+                pdfHtmlContent.Append($@"<tr>
+                                    <td colspan='3' style='text-align:right;'><b>{tax.TaxCategoryItemName}</b></td>
+                                    <td style='text-align:right;'><b>{tax.Amount}</b></td>
+                                    </tr>");
+
+            }
+            pdfHtmlContent.Append($@"<tr>
+                                    <td colspan='3' style='text-align:right;'><b>TOTAL</b></td>
+                                    <td style='text-align:right;'><b>{(quotation.Items.Sum(item => item.GrossAmount))}</b></td>
                                     </tr>");
 
 
@@ -4249,7 +4548,7 @@ namespace PB.Server.Repository
             string string3 = await GetQuotationAwardPdfHtmlContentAndData(quotationID, branchID, tran);
             string string4 = await GetQuotationProductPdfHtmlContentAndData(quotationID, branchID, tran);
             string string5 = await GetQuotationProduct2PdfHtmlContentAndData(quotationID, branchID, tran);
-            string string6 = await GetQuotationItemPdfHtmlContentAndData(quotationID, branchID, tran);
+            string string6 = await GetQuotationItem2PdfHtmlContentAndData(quotationID, branchID, tran);
             string string7 = await GetQuotationTermsPdfHtmlContentAndData(quotationID, branchID, tran);
 
             string mergedString = string1 + string2 + string3 + string4 + string5 + string6 + string7;
@@ -4268,13 +4567,16 @@ namespace PB.Server.Repository
             try
             {
                 var quotation = await _dbContext.GetByQueryAsync<QuotationPdfCoverPageViewModel>($@"
-                                                                     Select QuotationID,ProposalFor,Q.BillingAddressID,E.Name As CustomerName,EP.FirstName as ContactName,E.Phone as CustomerPhone,E.EmailAddress as CustomerEmail,
+                                                                     Select QuotationID,ProposalFor,Q.BillingAddressID,--E.Name As CustomerName,
+                                                                     EP.FirstName as ContactName,E.Phone as CustomerPhone,E.EmailAddress as CustomerEmail,
                                                                      BA.AddressLine1 as BillingAddressLine1,BA.AddressLine2 as BillingAddressLine2,BA.AddressLine3 as BillingAddressLine3,
                                                                      BA.State as BillingState,BA.PinCode as BillingPinCode,BC.CountryName as BillingCountry,
-                                                                     CE.Name as ClientName,CE.EmailAddress as ClientEmail,CE.Phone as ClientPhone,cV.Name as StaffName,Q.StaffPhoneNo
+                                                                     CE.Name as ClientName,CE.EmailAddress as ClientEmail,CE.Phone as ClientPhone,cV.Name as StaffName,Q.StaffPhoneNo,
+                                                                     Case When I.Name is not null then I.Name else EP.FirstName end As  CustomerName
                                                                      From Quotation Q
                                                                      Left Join viEntity E ON E.EntityID=Q.CustomerEntityID
-                                                                     Left Join EntityPersonalInfo EP on EP.EntityID=E.EntityID and EP.IsDeleted=0
+                                                                     Left Join EntityInstituteInfo I on I.EntityID=Q.CustomerEntityID and I.IsDeleted=0
+                                                                     Left Join EntityPersonalInfo EP on EP.EntityID=Q.CustomerEntityID and EP.IsDeleted=0
                                                                      Left Join Customer Cust ON Cust.EntityID = Q.CustomerEntityID
                                                                      Left Join EntityAddress BA on BA.AddressID=Q.BillingAddressID and BA.IsDeleted=0
                                                                      Left Join EntityAddress SA on SA.AddressID=Q.ShippingAddressID and SA.IsDeleted=0
@@ -4307,12 +4609,14 @@ namespace PB.Server.Repository
             try
             {
                 var quotation = await _dbContext.GetByQueryAsync<QuotationPdfItemPageViewModel>($@"
-                                                                      Select Q.QuotationID,Q.QuotationNo,Q.Date,ExpiryDate,C.GSTNo,E.Name as CustomerName,
+                                                                      Select Q.QuotationID,Q.QuotationNo,Q.Date,ExpiryDate,C.GSTNo,--E.Name as CustomerName,
                                                                     Concat(CR.CurrencyName,' ( ',CR.Symbol,' )') AS CurrencyName,CR.Symbol AS CurrencySymbol,CR.MainSuffix,CR.SubSuffix,
                                                                     BusinessTypeName,cV.Name as StaffName,StaffPhoneNo,Q.BusinessTypeID,Q.QuotationCreatedFor,
-                                                                    Description,Q.Prefix,Q.Suffix,Q.ProposalFor,Q.CustomerNote,Q.TermsandCondition
+                                                                    Description,Q.Prefix,Q.Suffix,Q.ProposalFor,Q.CustomerNote,Q.TermsandCondition,Case When I.Name is not null then I.Name else P.FirstName end As  CustomerName
                                                                     From Quotation Q
                                                                     Left Join viEntity E ON E.EntityID=Q.CustomerEntityID
+                                                                    Left Join EntityInstituteInfo I on I.EntityID=Q.CustomerEntityID and I.IsDeleted=0
+                                                                    Left Join EntityPersonalInfo P on P.EntityID=Q.CustomerEntityID and P.IsDeleted=0
                                                                     Left Join Client C on C.ClientID=Q.ClientID
                                                                     Left Join Currency CR ON CR.CurrencyID=Q.CurrencyID AND CR.IsDeleted=0
                                                                     Left Join BusinessType BT on BT.BusinessTypeID=Q.BusinessTypeID and BT.IsDeleted=0
@@ -4355,7 +4659,7 @@ namespace PB.Server.Repository
                             }
                         }
                         quotationItem.TaxCategoryItems = await _dbContext.GetListByQueryAsync<QuotationItemTaxCategoryItemsModel>(@$"
-                                                                            Select TaxCategoryItemID,Concat(TaxCategoryItemName,'   [ ',Convert(smallint,Percentage),' ]') AS TaxCategoryItemName,Percentage,0 As Amount
+                                                                            Select TaxCategoryItemID,Concat(TaxCategoryItemName,'   [ ',Convert(smallint,Percentage),' % ]') AS TaxCategoryItemName,Percentage,0 As Amount
                                                                             From TaxCategoryItem T
                                                                             Where T.TaxCategoryID={quotationItem.TaxCategoryID} AND T.IsDeleted=0", null, tran);
 

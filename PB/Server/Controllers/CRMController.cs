@@ -865,15 +865,15 @@ namespace PB.Server.Controllers
         public async Task<IActionResult> GetQuotationPagedList(PagedListPostModelWithFilter searchModel)
         {
             PagedListQueryModel query = searchModel;
-            query.Select = $@"Select QuotationID,Date As AddedOn,QuotationNo,Case When Type={(int)CustomerTypes.Individual} Then EP.Name else EP.Name end as CustomerName,
-                                    Case When Type={(int)CustomerTypes.Individual} Then I.FirstName else EP.Name end as ContactName,
+            query.Select = $@"Select QuotationID,Date As AddedOn,QuotationNo,--Case When Type={(int)CustomerTypes.Individual} Then I.FirstName else EI.Name end as CustomerName,
+                                     I.FirstName as ContactName,
                                     uE.Name As Username,CurrentFollowupNature,ExpiryDate As ExpireOn,Prefix,Suffix,
-                                    cE.Name as CreatedFor
+                                    cE.Name as CreatedFor,Case When EI.Name is not null Then EI.Name else I.FirstName end as CustomerName
                                     From Quotation Q
                                     Join Customer C on C.EntityID=Q.CustomerEntityID and C.IsDeleted=0
-                                    Left Join viEntity EP ON EP.EntityID=C.EntityID --and EP.IsDeleted=0
-                                    Left Join EntityPersonalInfo I ON I.EntityID=EP.EntityID and I.IsDeleted=0
-                                    --Left Join EntityInstituteInfo EI on EI.EntityID=C.EntityID and EI.IsDeleted=0
+                                    --Left Join viEntity EP ON EP.EntityID=C.EntityID --and EP.IsDeleted=0
+                                    Left Join EntityPersonalInfo I ON I.EntityID=Q.CustomerEntityID and I.IsDeleted=0
+                                    Left Join EntityInstituteInfo EI on EI.EntityID=Q.CustomerEntityID and EI.IsDeleted=0
                                     Left Join viEntity uE ON uE.EntityID=Q.UserEntityID
                                     Left Join viEntity cE ON cE.EntityID=Q.QuotationCreatedFor";
 
