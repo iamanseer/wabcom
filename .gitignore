@@ -235,3 +235,4 @@ _Pvt_Extensions
 
 /PB/Server/wwwroot/gallery
 /PB/Server/appsettings.Development.json
+/PB/Server/wwwroot/appsettings.json
